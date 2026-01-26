@@ -1,0 +1,76 @@
+# backend/app/core/config.py
+
+from pydantic_settings import BaseSettings
+from typing import List
+
+
+class Settings(BaseSettings):
+    """Application configuration."""
+    
+    # App
+    PROJECT_NAME: str = "ClearDrive.lk API"
+    VERSION: str = "2.1.0"
+    API_V1_PREFIX: str = "/api/v1"
+    ENVIRONMENT: str = "development"
+    
+    # Database
+    DATABASE_URL: str
+    DATABASE_SSL_MODE: str = "disable"
+    
+    # Redis
+    REDIS_URL: str
+    
+    # JWT
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    
+    # Encryption
+    ENCRYPTION_KEY: str
+    
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    
+    # PayHere
+    PAYHERE_MERCHANT_ID: str
+    PAYHERE_MERCHANT_SECRET: str
+    PAYHERE_SANDBOX: bool = True
+    
+    # Claude API
+    ANTHROPIC_API_KEY: str
+    
+    # Supabase
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+    
+    # Email
+    SMTP_HOST: str
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str
+    SMTP_PASSWORD: str
+    
+    # Sentry
+    SENTRY_DSN: str | None = None
+    
+    # Admin
+    ADMIN_EMAILS: str  # Comma-separated
+    
+    # Security
+    CLOUDFLARE_API_KEY: str | None = None
+    SECURITY_EVENT_RETENTION_DAYS: int = 30
+    MAX_FAILED_AUTH_ATTEMPTS: int = 5
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",  # Next.js dev
+        "http://localhost:19006",  # Expo dev
+    ]
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+settings = Settings()
