@@ -1,6 +1,5 @@
 # docker-compose.yml
 
-version: '3.8'
 
 services:
   # PostgreSQL Database
@@ -49,6 +48,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/cleardrive
       - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
     depends_on:
       postgres:
         condition: service_healthy
