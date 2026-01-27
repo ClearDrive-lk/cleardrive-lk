@@ -3,11 +3,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from .core.config import settings
+
+from app.core.config import settings
 from app.core.redis_client import get_redis, close_redis
 
 # Import routers
 from app.modules.auth.routes import router as auth_router
+from app.modules.vehicles.routes import router as vehicles_router  # 👈 NEW
 
 
 @asynccontextmanager
@@ -30,7 +32,7 @@ async def lifespan(app: FastAPI):
     await close_redis()
     print("✅ Redis connection closed")
 
-    
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -51,6 +53,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)  # 👈 NEW
+
 
 @app.get("/")
 async def root():
@@ -58,13 +62,19 @@ async def root():
     return {
         "message": "ClearDrive.lk API",
         "version": settings.VERSION,
-        "docs": f"{settings.API_V1_PREFIX}/docs"
+        "docs": f"{settings.API_V1_PREFIX}/docs",
+        "endpoints": {
+            "auth": f"{settings.API_V1_PREFIX}/auth",
+            "vehicles": f"{settings.API_V1_PREFIX}/vehicles",
+        }
     }
 
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint for monitoring."""
+    
+    # Test Redis connection
     try:
         redis = await get_redis()
         await redis.ping()
