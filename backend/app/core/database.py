@@ -19,6 +19,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create base class for models
 Base = declarative_base()
 
+# 👇 THIS LINE IS THE KEY
+import app.modules
+
 
 def get_db():
     """
