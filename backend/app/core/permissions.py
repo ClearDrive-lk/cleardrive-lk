@@ -1,8 +1,7 @@
 # backend/app/core/permissions.py
 
 from enum import Enum
-from typing import List, Callable
-from functools import wraps
+from typing import List
 from fastapi import HTTPException, status, Depends
 
 from app.modules.auth.models import Role, User
