@@ -16,7 +16,7 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     """
     Get current authenticated user from JWT token.
@@ -50,7 +50,7 @@ async def get_current_user(
         if token_type != "access":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type. Access token required."
+                detail="Invalid token type. Access token required.",
             )
         
         # Get user ID from token
@@ -71,14 +71,14 @@ async def get_current_user(
     if user.deleted_at is not None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account has been deleted"
+            detail="Account has been deleted",
         )
     
     return user
 
 
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """
     Get current active user (not deleted).
@@ -95,7 +95,7 @@ async def get_current_active_user(
     if current_user.deleted_at is not None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
+            detail="User account is inactive",
         )
     
     return current_user
@@ -119,7 +119,7 @@ def require_role(allowed_roles: list[Role]):
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access forbidden. Required roles: {[r.value for r in allowed_roles]}"
+                detail=f"Access forbidden. Required roles: {[r.value for r in allowed_roles]}",
             )
         return current_user
     
