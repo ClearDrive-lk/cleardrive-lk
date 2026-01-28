@@ -1,7 +1,10 @@
 # backend/app/core/redis_client.py
 
-import redis.asyncio as redis
+from __future__ import annotations
+
 from typing import Optional
+
+import redis.asyncio as redis  # type: ignore[import-untyped]
 from .config import settings
 
 # Global Redis client

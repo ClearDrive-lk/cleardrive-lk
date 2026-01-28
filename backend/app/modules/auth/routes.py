@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional, cast
 import httpx
 from uuid import UUID
 
@@ -122,7 +122,7 @@ async def google_auth(
     )
 
 
-async def verify_google_token(id_token: str) -> dict:
+async def verify_google_token(id_token: str) -> dict[str, Any]:
     """
     Verify Google ID token with Google API.
 
@@ -143,7 +143,7 @@ async def verify_google_token(id_token: str) -> dict:
         if response.status_code != 200:
             raise Exception("Invalid Google token")
 
-        user_info = response.json()
+        user_info = cast(dict[str, Any], response.json())
 
         # Verify audience (client ID)
         if user_info.get("aud") != settings.GOOGLE_CLIENT_ID:

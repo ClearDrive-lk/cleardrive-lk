@@ -1,17 +1,21 @@
 # backend/app/modules/security/models.py
 
+from __future__ import annotations
+
+import datetime as dt
+from uuid import UUID as PyUUID
+
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    DateTime,
-    ForeignKey,
     Boolean,
+    DateTime,
     Enum as SQLEnum,
+    ForeignKey,
+    Integer,
+    String,
     Text,
     func,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID, INET, JSONB
 import enum
 from app.core.database import Base
@@ -65,17 +69,17 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "file_integrity"
 
     # File info
-    file_url = Column(String(500), unique=True, nullable=False, index=True)
-    sha256_hash = Column(String(64), nullable=False, index=True)
-    file_size = Column(Integer, nullable=False)
-    mime_type = Column(String(100))
+    file_url: Mapped[str] = mapped_column(String(500), unique=True, nullable=False, index=True)
+    sha256_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    mime_type: Mapped[str | None] = mapped_column(String(100))
 
     # Upload tracking
-    uploaded_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    uploaded_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
 
     # Verification
-    last_verified = Column(DateTime(timezone=True))
-    verification_status: Column[VerificationStatus] = Column(
+    last_verified: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    verification_status: Mapped[VerificationStatus] = mapped_column(
         SQLEnum(VerificationStatus), default=VerificationStatus.PENDING, nullable=False, index=True
     )
 
@@ -89,22 +93,24 @@ class SecurityEvent(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "security_events"
 
     # Event info
-    event_type: Column[SecurityEventType] = Column(SQLEnum(SecurityEventType), nullable=False, index=True)
-    severity: Column[Severity] = Column(SQLEnum(Severity), nullable=False, index=True)
+    event_type: Mapped[SecurityEventType] = mapped_column(
+        SQLEnum(SecurityEventType), nullable=False, index=True
+    )
+    severity: Mapped[Severity] = mapped_column(SQLEnum(Severity), nullable=False, index=True)
 
     # User & source
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
-    ip_address = Column(INET)
-    user_agent = Column(Text)
-    country_code = Column(String(2))
+    user_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    ip_address: Mapped[str | None] = mapped_column(INET)
+    user_agent: Mapped[str | None] = mapped_column(Text)
+    country_code: Mapped[str | None] = mapped_column(String(2))
 
     # Details
-    details = Column(JSONB)
+    details: Mapped[dict | None] = mapped_column(JSONB)
 
     # Resolution
-    resolved = Column(Boolean, default=False, nullable=False)
-    resolved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    resolved_at = Column(DateTime(timezone=True))
+    resolved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    resolved_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    resolved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     def __repr__(self):
         return f"<SecurityEvent {self.event_type} - {self.severity}>"
@@ -115,28 +121,30 @@ class UserReputation(Base):
 
     __tablename__ = "user_reputation"
 
-    user_id = Column(
+    user_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
 
     # Trust score (0-100)
-    trust_score = Column(Integer, default=50, nullable=False)
+    trust_score: Mapped[int] = mapped_column(Integer, default=50, nullable=False)
 
     # Counters
-    successful_orders = Column(Integer, default=0, nullable=False)
-    failed_payments = Column(Integer, default=0, nullable=False)
-    kyc_rejections = Column(Integer, default=0, nullable=False)
-    security_alerts = Column(Integer, default=0, nullable=False)
+    successful_orders: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    failed_payments: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    kyc_rejections: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    security_alerts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Tier
-    current_tier: Column[UserTier] = Column(SQLEnum(UserTier), default=UserTier.STANDARD, nullable=False, index=True)
+    current_tier: Mapped[UserTier] = mapped_column(
+        SQLEnum(UserTier), default=UserTier.STANDARD, nullable=False, index=True
+    )
 
     # Behavior flags
-    impossible_travel_detected = Column(Boolean, default=False, nullable=False)
-    multiple_devices_flagged = Column(Boolean, default=False, nullable=False)
+    impossible_travel_detected: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    multiple_devices_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Timestamp
-    last_updated = Column(
+    last_updated: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
@@ -150,17 +158,17 @@ class RateLimitViolation(Base, UUIDMixin):
     __tablename__ = "rate_limit_violations"
 
     # User & source
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
-    ip_address = Column(INET, nullable=False, index=True)
-    endpoint = Column(String(255), nullable=False)
+    user_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
+    ip_address: Mapped[str] = mapped_column(INET, nullable=False, index=True)
+    endpoint: Mapped[str] = mapped_column(String(255), nullable=False)
 
     # Violation details
-    limit_tier = Column(String(20))
-    requests_attempted = Column(Integer)
-    limit_exceeded = Column(Integer)
+    limit_tier: Mapped[str | None] = mapped_column(String(20))
+    requests_attempted: Mapped[int | None] = mapped_column(Integer)
+    limit_exceeded: Mapped[int | None] = mapped_column(Integer)
 
     # Timestamp
-    violation_time = Column(
+    violation_time: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
 

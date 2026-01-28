@@ -1,11 +1,23 @@
 # backend/app/modules/orders/models.py
 
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, Text, Enum as SQLEnum, func
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import TYPE_CHECKING
+from uuid import UUID as PyUUID
+
+from sqlalchemy import Enum as SQLEnum, ForeignKey, Numeric, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 import enum
 from app.core.database import Base
 from app.core.models import TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.modules.auth.models import User
+    from app.modules.payments.models import Payment
+    from app.modules.shipping.models import ShipmentDetails
+    from app.modules.vehicles.models import Vehicle
 
 
 class OrderStatus(str, enum.Enum):
@@ -42,32 +54,38 @@ class Order(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "orders"
 
     # References
-    user_id = Column(
+    user_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    vehicle_id = Column(UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=False, index=True)
+    vehicle_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=False, index=True
+    )
 
     # Status
-    status = Column(SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False, index=True)
-    payment_status = Column(SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False)
+    status: Mapped[OrderStatus] = mapped_column(
+        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False, index=True
+    )
+    payment_status: Mapped[PaymentStatus] = mapped_column(
+        SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False
+    )
 
     # Customer details (encrypted)
-    shipping_address = Column(Text, nullable=False)  # Encrypted with AES-256
-    phone = Column(String(20), nullable=False)
+    shipping_address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted with AES-256
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Pricing
-    total_cost_lkr = Column(Numeric(12, 2))
+    total_cost_lkr: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
 
     # Relationships
-    user = relationship("User", back_populates="orders")
-    vehicle = relationship("Vehicle", back_populates="orders")
-    status_history = relationship(
+    user: Mapped[User] = relationship("User", back_populates="orders")
+    vehicle: Mapped[Vehicle] = relationship("Vehicle", back_populates="orders")
+    status_history: Mapped[list[OrderStatusHistory]] = relationship(
         "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
     )
-    payment = relationship(
+    payment: Mapped[Payment | None] = relationship(
         "Payment", back_populates="order", uselist=False, cascade="all, delete-orphan"
     )
-    shipment_details = relationship(
+    shipment_details: Mapped[ShipmentDetails | None] = relationship(
         "ShipmentDetails", back_populates="order", uselist=False, cascade="all, delete-orphan"
     )
 
@@ -80,20 +98,20 @@ class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "order_status_history"
 
-    order_id = Column(
+    order_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Status change
-    from_status = Column(SQLEnum(OrderStatus))
-    to_status = Column(SQLEnum(OrderStatus), nullable=False)
+    from_status: Mapped[OrderStatus | None] = mapped_column(SQLEnum(OrderStatus))
+    to_status: Mapped[OrderStatus] = mapped_column(SQLEnum(OrderStatus), nullable=False)
 
     # Who changed it
-    changed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    notes = Column(Text)
+    changed_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    notes: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    order = relationship("Order", back_populates="status_history")
+    order: Mapped[Order] = relationship("Order", back_populates="status_history")
 
     def __repr__(self):
         return f"<OrderStatusHistory {self.from_status} -> {self.to_status}>"

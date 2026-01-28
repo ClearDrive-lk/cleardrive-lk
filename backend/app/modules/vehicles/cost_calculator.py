@@ -245,9 +245,10 @@ def calculate_total_cost(
     Returns:
         Dictionary with complete cost breakdown
     """
-    vehicle.price_jpy = Decimal(vehicle.price_jpy)
+    # Avoid mutating SQLAlchemy model attributes inside calculators.
+    price_jpy = Decimal(str(vehicle.price_jpy))
     # Step 1: Convert vehicle price to LKR
-    vehicle_price_lkr = vehicle.price_jpy * exchange_rate
+    vehicle_price_lkr = price_jpy * exchange_rate
 
     # Step 2: Calculate shipping
     shipping_cost = calculate_shipping_cost(vehicle)
@@ -289,14 +290,14 @@ def calculate_total_cost(
     )
 
     # Calculate percentages
-    vehicle_percentage = float((vehicle_price_lkr / total_cost) * 100)
+    vehicle_percentage = (vehicle_price_lkr / total_cost * Decimal("100")).quantize(Decimal("0.01"))
     taxes_total = customs_duty + excise_duty + cess + vat
-    taxes_percentage = float((taxes_total / total_cost) * 100)
+    taxes_percentage = (taxes_total / total_cost * Decimal("100")).quantize(Decimal("0.01"))
     fees_total = shipping_cost + port_charges + clearance_fee + documentation_fee
-    fees_percentage = float((fees_total / total_cost) * 100)
+    fees_percentage = (fees_total / total_cost * Decimal("100")).quantize(Decimal("0.01"))
 
     return {
-        "vehicle_price_jpy": vehicle.price_jpy,
+        "vehicle_price_jpy": price_jpy,
         "vehicle_price_lkr": vehicle_price_lkr.quantize(Decimal("0.01")),
         "exchange_rate": exchange_rate,
         "shipping_cost_lkr": shipping_cost.quantize(Decimal("0.01")),
@@ -308,7 +309,7 @@ def calculate_total_cost(
         "clearance_fee_lkr": clearance_fee.quantize(Decimal("0.01")),
         "documentation_fee_lkr": documentation_fee.quantize(Decimal("0.01")),
         "total_cost_lkr": total_cost.quantize(Decimal("0.01")),
-        "vehicle_percentage": round(vehicle_percentage, 2),
-        "taxes_percentage": round(taxes_percentage, 2),
-        "fees_percentage": round(fees_percentage, 2),
+        "vehicle_percentage": vehicle_percentage,
+        "taxes_percentage": taxes_percentage,
+        "fees_percentage": fees_percentage,
     }
