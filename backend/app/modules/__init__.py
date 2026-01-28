@@ -1,5 +1,5 @@
 # app/models/__init__.py
-import app.modules # 👈 force model registration
+import app.modules  # 👈 force model registration
 from app.core.database import SessionLocal, engine, Base
 
 
@@ -29,4 +29,3 @@ from app.modules.gdpr.models import GDPRRequest
 
 # VEHICLES
 from app.modules.vehicles.models import Vehicle
-

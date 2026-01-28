@@ -20,14 +20,14 @@ async def get_current_user(
 ) -> User:
     """
     Get current authenticated user from JWT token.
-    
+
     Args:
         credentials: HTTP Authorization header with Bearer token
         db: Database session
-        
+
     Returns:
         Current user object
-        
+
     Raises:
         HTTPException: If token is invalid or user not found
     """
@@ -36,15 +36,15 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     try:
         # Decode token
         token = credentials.credentials
         payload = decode_token(token)
-        
+
         if payload is None:
             raise credentials_exception
-        
+
         # Verify token type
         token_type = payload.get("type")
         if token_type != "access":
@@ -52,28 +52,28 @@ async def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type. Access token required.",
             )
-        
+
         # Get user ID from token
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-        
+
     except JWTError:
         raise credentials_exception
-    
+
     # Get user from database
     user = db.query(User).filter(User.id == user_id).first()
-    
+
     if user is None:
         raise credentials_exception
-    
+
     # Check if user is deleted (GDPR)
     if user.deleted_at is not None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account has been deleted",
         )
-    
+
     return user
 
 
@@ -82,13 +82,13 @@ async def get_current_active_user(
 ) -> User:
     """
     Get current active user (not deleted).
-    
+
     Args:
         current_user: Current user from token
-        
+
     Returns:
         Current active user
-        
+
     Raises:
         HTTPException: If user is inactive
     """
@@ -97,7 +97,7 @@ async def get_current_active_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive",
         )
-    
+
     return current_user
 
 
@@ -105,16 +105,18 @@ async def get_current_active_user(
 # ROLE-BASED DEPENDENCIES
 # ============================================================================
 
+
 def require_role(allowed_roles: list[Role]):
     """
     Dependency factory to check if user has required role.
-    
+
     Args:
         allowed_roles: List of allowed roles
-        
+
     Returns:
         Dependency function
     """
+
     async def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
         if current_user.role not in allowed_roles:
             raise HTTPException(
@@ -122,7 +124,7 @@ def require_role(allowed_roles: list[Role]):
                 detail=f"Access forbidden. Required roles: {[r.value for r in allowed_roles]}",
             )
         return current_user
-    
+
     return role_checker
 
 

@@ -1,0 +1,23 @@
+# backend/.flake8
+
+[flake8]
+max-line-length = 100
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    migrations,
+    alembic,
+    .pytest_cache
+ignore = 
+    E203
+      # whitespace before ':'
+    E501
+      # line too long (handled by Black)
+    W503
+      # line break before binary operator
+    E402
+      # module level import not at top of file
+per-file-ignores =
+    __init__.py:F401

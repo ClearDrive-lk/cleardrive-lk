@@ -26,7 +26,7 @@ import app.modules
 def get_db():
     """
     Database session dependency.
-    
+
     Usage:
         @router.get("/")
         async def route(db: Session = Depends(get_db)):
