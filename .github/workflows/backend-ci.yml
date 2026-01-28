@@ -2,6 +2,10 @@
 
 name: Backend CI/CD
 
+permissions:
+  contents: read
+  pull-requests: write
+
 on:
   push:
     branches: [main, develop]
@@ -191,6 +195,7 @@ jobs:
         uses: py-cov-action/python-coverage-comment-action@v3
         with:
           GITHUB_TOKEN: ${{ github.token }}
+          COVERAGE_PATH: backend
           MINIMUM_GREEN: 70
           MINIMUM_ORANGE: 50
 
