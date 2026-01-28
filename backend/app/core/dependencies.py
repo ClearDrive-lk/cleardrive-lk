@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from jose import JWTError
+from typing import cast
 
 from .database import get_db
 from .security import decode_token
@@ -61,7 +62,7 @@ async def get_current_user(
         raise credentials_exception
 
     # Get user from database
-    user = db.query(User).filter(User.id == user_id).first()
+    user = cast(User | None, db.query(User).filter(User.id == user_id).first())
 
     if user is None:
         raise credentials_exception
