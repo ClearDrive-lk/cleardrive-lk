@@ -1,7 +1,7 @@
 # backend/app/core/permissions.py
 
 from enum import Enum
-from typing import List
+from typing import List, cast
 from fastapi import HTTPException, status, Depends
 
 from app.modules.auth.models import Role, User
@@ -145,7 +145,8 @@ def has_permission(user: User, permission: Permission) -> bool:
     Returns:
         True if user has permission, False otherwise
     """
-    user_permissions = ROLE_PERMISSIONS.get(user.role, [])
+    role = cast(Role, user.role)
+    user_permissions = ROLE_PERMISSIONS.get(role, [])
     return permission in user_permissions
 
 

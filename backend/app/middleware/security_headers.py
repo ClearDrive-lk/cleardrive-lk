@@ -8,7 +8,7 @@ Implements comprehensive security headers for all responses.
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable
+from typing import Callable, cast
 import secrets
 
 from app.core.config import settings
@@ -103,4 +103,4 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
 
-        return response
+        return cast(Response, response)
