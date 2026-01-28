@@ -179,6 +179,8 @@ jobs:
           SMTP_PASSWORD: test-password
           ADMIN_EMAILS: admin@cleardrive.lk
           ENVIRONMENT: test
+          # Ensure coverage uses repo-root config (contains relative_files=true)
+          COVERAGE_RCFILE: ../.coveragerc
         run: |
           cd backend
           pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
