@@ -1,15 +1,25 @@
 # backend/app/modules/kyc/models.py
 
-from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Text, Enum as SQLEnum, func
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+import datetime as dt
+from typing import TYPE_CHECKING
+from uuid import UUID as PyUUID
+
+from sqlalchemy import Date, DateTime, Enum as SQLEnum, ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 import enum
 from app.core.database import Base
 from app.core.models import TimestampMixin, UUIDMixin
 
+if TYPE_CHECKING:
+    from app.modules.auth.models import User
+
 
 class KYCStatus(str, enum.Enum):
     """KYC verification status."""
+
     PENDING = "PENDING"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
@@ -17,43 +27,53 @@ class KYCStatus(str, enum.Enum):
 
 class KYCDocument(Base, UUIDMixin, TimestampMixin):
     """KYC document model - user verification."""
-    
+
     __tablename__ = "kyc_documents"
-    
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
-    
+
+    user_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
     # Personal info (encrypted)
-    nic_number = Column(String(255), nullable=False)  # Encrypted
-    full_name = Column(String(255), nullable=False)
-    date_of_birth = Column(Date, nullable=False)
-    address = Column(Text, nullable=False)  # Encrypted
-    
+    nic_number: Mapped[str] = mapped_column(String(255), nullable=False)  # Encrypted
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    date_of_birth: Mapped[dt.date] = mapped_column(Date, nullable=False)
+    address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted
+
     # Document URLs
-    nic_front_url = Column(Text, nullable=False)
-    nic_back_url = Column(Text, nullable=False)
-    selfie_url = Column(Text, nullable=False)
-    
+    nic_front_url: Mapped[str] = mapped_column(Text, nullable=False)
+    nic_back_url: Mapped[str] = mapped_column(Text, nullable=False)
+    selfie_url: Mapped[str] = mapped_column(Text, nullable=False)
+
     # AI extraction results
-    extracted_data = Column(JSONB)  # Claude API extracted data
-    discrepancies = Column(JSONB)  # Differences between extracted and provided data
-    
+    extracted_data: Mapped[dict | None] = mapped_column(JSONB)  # Claude API extracted data
+    discrepancies: Mapped[dict | None] = mapped_column(
+        JSONB
+    )  # Differences between extracted and provided data
+
     # Status
-    status = Column(SQLEnum(KYCStatus), default=KYCStatus.PENDING, nullable=False, index=True)
-    
+    status: Mapped[KYCStatus] = mapped_column(
+        SQLEnum(KYCStatus), default=KYCStatus.PENDING, nullable=False, index=True
+    )
+
     # Review
-    reviewed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    reviewed_at = Column(DateTime(timezone=True))
-    rejection_reason = Column(Text)
-    
+    reviewed_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    reviewed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    rejection_reason: Mapped[str | None] = mapped_column(Text)
+
     # Relationships
-    user = relationship("User", back_populates="kyc_document", foreign_keys=[user_id])
-    reviewed_by_user = relationship(
+    user: Mapped[User] = relationship("User", back_populates="kyc_document", foreign_keys=[user_id])
+    reviewed_by_user: Mapped[User | None] = relationship(
         "User",
         foreign_keys=[reviewed_by],  # 🔑 explicit FK for reviewer
-        viewonly=True,  
+        viewonly=True,
         back_populates="reviewed_kyc_documents",
-                       # optional if you don't modify via this relationship
+        # optional if you don't modify via this relationship
     )
-    
+
     def __repr__(self):
         return f"<KYCDocument {self.user_id} - {self.status}>"

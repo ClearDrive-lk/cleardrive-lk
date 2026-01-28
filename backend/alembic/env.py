@@ -21,7 +21,12 @@ from app.modules.orders.models import Order, OrderStatusHistory
 from app.modules.payments.models import Payment, PaymentIdempotency
 from app.modules.kyc.models import KYCDocument
 from app.modules.shipping.models import ShipmentDetails, ShippingDocument
-from app.modules.security.models import FileIntegrity, SecurityEvent, UserReputation, RateLimitViolation
+from app.modules.security.models import (
+    FileIntegrity,
+    SecurityEvent,
+    UserReputation,
+    RateLimitViolation,
+)
 from app.modules.gdpr.models import GDPRRequest
 
 # ... rest of the file stays the same
@@ -69,10 +74,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
