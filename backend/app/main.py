@@ -2,21 +2,21 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.redis_client import get_redis, close_redis
+from app.middleware.security_headers import SecurityHeadersMiddleware  # 👈 NEW
 
 # Import routers
 from app.modules.auth.routes import router as auth_router
-from app.modules.vehicles.routes import router as vehicles_router  # 👈 NEW
+from app.modules.vehicles.routes import router as vehicles_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager for startup/shutdown events.
-    """
+    """Lifespan context manager for startup/shutdown events."""
     # Startup
     print("🚀 Starting ClearDrive.lk API...")
     
@@ -42,18 +42,33 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# ============================================================================
+# SECURITY MIDDLEWARE (Order matters!)
+# ============================================================================
+
+# 1. Trusted Host Middleware (prevent host header attacks)
+if settings.ENVIRONMENT == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["api.cleardrive.lk", "*.cleardrive.lk"]
+    )
+
+# 2. Security Headers Middleware
+app.add_middleware(SecurityHeadersMiddleware)  # 👈 NEW
+
+# 3. CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Count", "X-Page", "X-Page-Size"],
 )
 
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
-app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)  # 👈 NEW
+app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")
@@ -63,6 +78,7 @@ async def root():
         "message": "ClearDrive.lk API",
         "version": settings.VERSION,
         "docs": f"{settings.API_V1_PREFIX}/docs",
+        "security": "enabled",
         "endpoints": {
             "auth": f"{settings.API_V1_PREFIX}/auth",
             "vehicles": f"{settings.API_V1_PREFIX}/vehicles",
@@ -86,6 +102,7 @@ async def health_check():
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
         "version": settings.VERSION,
+        "security_headers": "enabled",
         "services": {
             "redis": redis_status,
         }
