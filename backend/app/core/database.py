@@ -15,9 +15,11 @@ engine = create_engine(
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 # Create base class for models
 class Base(DeclarativeBase):
     pass
+
 
 # 👇 THIS LINE IS THE KEY
 import app.modules

@@ -44,7 +44,9 @@ class User(Base, UUIDMixin, TimestampMixin):
     password_hash: Mapped[str | None] = mapped_column(String(255))  # For admin backup password
 
     # Role & Status
-    role: Mapped[Role] = mapped_column(SQLEnum(Role), default=Role.CUSTOMER, nullable=False, index=True)
+    role: Mapped[Role] = mapped_column(
+        SQLEnum(Role), default=Role.CUSTOMER, nullable=False, index=True
+    )
 
     # Security tracking
     failed_auth_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -64,7 +66,9 @@ class User(Base, UUIDMixin, TimestampMixin):
     sessions: Mapped[list[Session]] = relationship(
         "Session", back_populates="user", cascade="all, delete-orphan"
     )
-    orders: Mapped[list[Order]] = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    orders: Mapped[list[Order]] = relationship(
+        "Order", back_populates="user", cascade="all, delete-orphan"
+    )
     kyc_document: Mapped[KYCDocument | None] = relationship(
         "KYCDocument",
         back_populates="user",
