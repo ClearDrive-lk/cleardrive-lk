@@ -11,8 +11,7 @@ Tiers:
 
 from typing import Optional
 from fastapi import Request, HTTPException, status
-from datetime import datetime, timedelta
-import hashlib
+from datetime import datetime
 
 from app.core.redis_client import get_redis
 from app.modules.auth.models import User
@@ -165,8 +164,6 @@ async def check_rate_limit(
 # ============================================================================
 
 from functools import wraps
-from fastapi import Depends
-from app.core.dependencies import get_current_user
 
 
 def rate_limit(endpoint_type: str = "api_general"):

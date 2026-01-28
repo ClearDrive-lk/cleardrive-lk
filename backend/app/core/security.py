@@ -23,9 +23,9 @@ pwd_context = CryptContext(
 # Initialize Fernet encryption
 try:
     fernet = Fernet(settings.ENCRYPTION_KEY.encode())
-except Exception as e:
+except Exception:
     # Fallback for invalid key during development
-    print(f"⚠️  Warning: Invalid ENCRYPTION_KEY, generating temporary key")
+    print("⚠️  Warning: Invalid ENCRYPTION_KEY, generating temporary key")
     fernet = Fernet(Fernet.generate_key())
 
 
