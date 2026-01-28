@@ -51,7 +51,9 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
 
     # AI extraction results
     extracted_data: Mapped[dict | None] = mapped_column(JSONB)  # Claude API extracted data
-    discrepancies: Mapped[dict | None] = mapped_column(JSONB)  # Differences between extracted and provided data
+    discrepancies: Mapped[dict | None] = mapped_column(
+        JSONB
+    )  # Differences between extracted and provided data
 
     # Status
     status: Mapped[KYCStatus] = mapped_column(

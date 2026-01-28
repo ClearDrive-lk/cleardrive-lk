@@ -42,12 +42,16 @@ class Payment(Base, UUIDMixin, TimestampMixin):
 
     # PayHere details
     payhere_payment_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
-    idempotency_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    idempotency_key: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, index=True
+    )
 
     # Payment info
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="LKR", nullable=False)
-    status: Mapped[PaymentStatus] = mapped_column(SQLEnum(PaymentStatus), nullable=False, index=True)
+    status: Mapped[PaymentStatus] = mapped_column(
+        SQLEnum(PaymentStatus), nullable=False, index=True
+    )
 
     # Timestamps
     completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
@@ -73,7 +77,9 @@ class PaymentIdempotency(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "payment_idempotency"
 
-    idempotency_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    idempotency_key: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, index=True
+    )
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     response_data: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(String(50), nullable=False)

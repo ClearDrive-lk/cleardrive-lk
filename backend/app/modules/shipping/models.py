@@ -77,7 +77,9 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
     # Submission & Approval
     submitted_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     admin_approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
-    admin_approved_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    admin_approved_by: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id")
+    )
 
     # Relationships
     order: Mapped[Order] = relationship("Order", back_populates="shipment_details")
@@ -102,14 +104,18 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     )
 
     # Document info
-    document_type: Mapped[DocumentType] = mapped_column(SQLEnum(DocumentType), nullable=False, index=True)
+    document_type: Mapped[DocumentType] = mapped_column(
+        SQLEnum(DocumentType), nullable=False, index=True
+    )
     file_url: Mapped[str] = mapped_column(String(500), nullable=False)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     file_size: Mapped[int | None] = mapped_column(Integer)
     mime_type: Mapped[str | None] = mapped_column(String(100))
 
     # Upload info
-    uploaded_by: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    uploaded_by: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
     uploaded_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
