@@ -3,19 +3,17 @@
 name: Frontend CI/CD
 
 on:
-  # Disabled until a frontend exists.
-  # push:
-  #   branches: [main, develop]
-  #   paths:
-  #     - 'apps/web/**'
-  #     - 'packages/shared/**'
-  #     - '.github/workflows/frontend-ci.yml'
-  # pull_request:
-  #   branches: [main, develop]
-  #   paths:
-  #     - 'apps/web/**'
-  #     - 'packages/shared/**'
-  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
 
 jobs:
   # ============================================================================
