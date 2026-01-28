@@ -59,7 +59,7 @@ jobs:
       - name: Run mypy (type checking)
         run: |
           cd backend
-          mypy app/ --ignore-missing-imports
+          mypy app --explicit-package-bases --ignore-missing-imports
 
   # ============================================================================
   # SECURITY SCANNING
