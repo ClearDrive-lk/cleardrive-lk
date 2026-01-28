@@ -11,13 +11,14 @@ exclude =
     alembic,
     .pytest_cache
 ignore = 
+#   whitespace before ':'
     E203
-      # whitespace before ':'
+     # line too long (handled by Black)
     E501
-      # line too long (handled by Black)
+    # line break before binary operator
     W503
-      # line break before binary operator
+    # module level import not at top of file
     E402
-      # module level import not at top of file
+      
 per-file-ignores =
     __init__.py:F401
