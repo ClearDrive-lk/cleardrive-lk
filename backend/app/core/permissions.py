@@ -173,7 +173,7 @@ def require_permission(permission: Permission):
         if not has_permission(user, permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied. Required: {permission.value}"
+                detail=f"Permission denied. Required: {permission.value}",
             )
         return user
     
@@ -196,7 +196,7 @@ def require_any_permission(permissions: List[Permission]):
         if not user_has_any:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied. Required (any): {[p.value for p in permissions]}"
+                detail=f"Permission denied. Required (any): {[p.value for p in permissions]}",
             )
         return user
     
@@ -219,7 +219,7 @@ def require_all_permissions(permissions: List[Permission]):
         if not user_has_all:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission denied. Required (all): {[p.value for p in permissions]}"
+                detail=f"Permission denied. Required (all): {[p.value for p in permissions]}",
             )
         return user
     

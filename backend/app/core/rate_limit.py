@@ -148,7 +148,7 @@ async def check_rate_limit(
                     "limit": limit,
                     "window": "1 minute",
                     "retry_after": window,
-                }
+                },
             )
         
         return True

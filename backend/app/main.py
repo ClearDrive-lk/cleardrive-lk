@@ -49,8 +49,7 @@ app = FastAPI(
 # 1. Trusted Host Middleware (prevent host header attacks)
 if settings.ENVIRONMENT == "production":
     app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["api.cleardrive.lk", "*.cleardrive.lk"]
+        TrustedHostMiddleware, allowed_hosts=["api.cleardrive.lk", "*.cleardrive.lk"]
     )
 
 # 2. Security Headers Middleware
