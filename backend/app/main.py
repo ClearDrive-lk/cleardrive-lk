@@ -19,14 +19,14 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown events."""
     # Startup
     print("🚀 Starting ClearDrive.lk API...")
-    
+
     # Initialize Redis
     redis = await get_redis()
     await redis.ping()
     print("✅ Redis connected")
-    
+
     yield
-    
+
     # Shutdown
     print("👋 Shutting down ClearDrive.lk API...")
     await close_redis()
@@ -81,14 +81,14 @@ async def root():
         "endpoints": {
             "auth": f"{settings.API_V1_PREFIX}/auth",
             "vehicles": f"{settings.API_V1_PREFIX}/vehicles",
-        }
+        },
     }
 
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint for monitoring."""
-    
+
     # Test Redis connection
     try:
         redis = await get_redis()
@@ -96,7 +96,7 @@ async def health_check():
         redis_status = "healthy"
     except Exception as e:
         redis_status = f"unhealthy: {str(e)}"
-    
+
     return {
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
@@ -104,10 +104,11 @@ async def health_check():
         "security_headers": "enabled",
         "services": {
             "redis": redis_status,
-        }
+        },
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -20,6 +20,7 @@ from app.modules.auth.models import User
 
 class UserTier:
     """User reputation tiers."""
+
     SUSPICIOUS = "suspicious"
     STANDARD = "standard"
     TRUSTED = "trusted"
@@ -51,40 +52,40 @@ TIER_LIMITS = {
 def get_user_tier(user: Optional[User]) -> str:
     """
     Determine user tier based on behavior and status.
-    
+
     Args:
         user: User object or None (anonymous)
-        
+
     Returns:
         User tier string
     """
     if user is None:
         return UserTier.STANDARD
-    
+
     # Check for suspicious activity
     if user.failed_auth_attempts > 5:
         return UserTier.SUSPICIOUS
-    
+
     # TODO: Check security_alerts from user_reputation table
     # if user.reputation and user.reputation.security_alerts > 3:
     #     return UserTier.SUSPICIOUS
-    
+
     # Check for trusted status (KYC + completed orders)
     # TODO: Implement when KYC and Order models are connected
     # if user.kyc_verified and user.completed_orders > 5:
     #     return UserTier.TRUSTED
-    
+
     return UserTier.STANDARD
 
 
 def get_rate_limit(tier: str, endpoint_type: str = "api_general") -> int:
     """
     Get rate limit for tier and endpoint type.
-    
+
     Args:
         tier: User tier
         endpoint_type: Type of endpoint (api_general, orders, payments, kyc)
-        
+
     Returns:
         Rate limit (requests per minute)
     """
@@ -93,23 +94,21 @@ def get_rate_limit(tier: str, endpoint_type: str = "api_general") -> int:
 
 
 async def check_rate_limit(
-    request: Request,
-    user: Optional[User] = None,
-    endpoint_type: str = "api_general"
+    request: Request, user: Optional[User] = None, endpoint_type: str = "api_general"
 ) -> bool:
     """
     Check if request should be rate limited.
-    
+
     Args:
         request: FastAPI request object
         user: Current user (if authenticated)
         endpoint_type: Type of endpoint
-        
+
     Returns:
         True if within limits, raises HTTPException if exceeded
     """
     redis = await get_redis()
-    
+
     # Determine identifier (user ID or IP)
     if user:
         identifier = f"user:{user.id}"
@@ -117,29 +116,29 @@ async def check_rate_limit(
         # For anonymous users, use IP
         client_ip = request.client.host if request.client else "unknown"
         identifier = f"ip:{client_ip}"
-    
+
     # Get user tier
     tier = get_user_tier(user)
     limit = get_rate_limit(tier, endpoint_type)
-    
+
     # Redis key
     window = 60  # 1 minute window
     current_minute = datetime.utcnow().strftime("%Y%m%d%H%M")
     key = f"rate_limit:{identifier}:{endpoint_type}:{current_minute}"
-    
+
     try:
         # Increment counter
         current = await redis.incr(key)
-        
+
         # Set expiry on first request
         if current == 1:
             await redis.expire(key, window)
-        
+
         # Check if limit exceeded
         if current > limit:
             # Log rate limit violation
             # TODO: Store in rate_limit_violations table
-            
+
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
@@ -150,9 +149,9 @@ async def check_rate_limit(
                     "retry_after": window,
                 },
             )
-        
+
         return True
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -173,24 +172,26 @@ from app.core.dependencies import get_current_user
 def rate_limit(endpoint_type: str = "api_general"):
     """
     Rate limit decorator for endpoints.
-    
+
     Usage:
         @router.post("/orders")
         @rate_limit("orders")
         async def create_order(...):
             ...
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Extract request and user from kwargs
             request = kwargs.get("request")
             user = kwargs.get("current_user")
-            
+
             if request:
                 await check_rate_limit(request, user, endpoint_type)
-            
+
             return await func(*args, **kwargs)
-        
+
         return wrapper
+
     return decorator
