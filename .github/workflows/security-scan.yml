@@ -1,0 +1,87 @@
+# .github/workflows/security-scan.yml
+
+name: Security Scan (Weekly)
+
+on:
+  schedule:
+    # Run every Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  # ============================================================================
+  # OWASP ZAP SCAN
+  # ============================================================================
+  zap-scan:
+    name: OWASP ZAP Baseline Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: ZAP Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://localhost:8000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          issue_title: 'OWASP ZAP Security Issues'
+          token: ${{ secrets.GITHUB_TOKEN }}
+  
+  # ============================================================================
+  # DEPENDENCY SCANNING
+  # ============================================================================
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install safety
+      
+      - name: Run Safety check
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          safety check --full-report
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Frontend dependency check
+        run: |
+          cd apps/web
+          npm ci
+          npm audit
+  
+  # ============================================================================
+  # SECRET SCANNING
+  # ============================================================================
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: TruffleHog Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
