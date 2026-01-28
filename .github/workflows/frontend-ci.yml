@@ -1,0 +1,152 @@
+# .github/workflows/frontend-ci.yml
+
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+
+jobs:
+  # ============================================================================
+  # LINT & TYPE CHECK
+  # ============================================================================
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd apps/web
+          npm ci
+      
+      - name: Run ESLint
+        run: |
+          cd apps/web
+          npm run lint
+      
+      - name: Run TypeScript type check
+        run: |
+          cd apps/web
+          npm run type-check || npx tsc --noEmit
+  
+  # ============================================================================
+  # SECURITY SCANNING
+  # ============================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          cd apps/web
+          npm ci
+      
+      - name: Run npm audit
+        run: |
+          cd apps/web
+          npm audit --audit-level=moderate --json > npm-audit.json || true
+          npm audit --audit-level=moderate
+      
+      - name: Upload audit report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: npm-audit-report
+          path: apps/web/npm-audit.json
+          retention-days: 30
+  
+  # ============================================================================
+  # BUILD TEST
+  # ============================================================================
+  build:
+    name: Build Test
+    runs-on: ubuntu-latest
+    needs: [lint, security]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd apps/web
+          npm ci
+      
+      - name: Build application
+        env:
+          NEXT_PUBLIC_API_URL: https://api.cleardrive.lk/api/v1
+        run: |
+          cd apps/web
+          npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: nextjs-build
+          path: apps/web/.next/
+          retention-days: 7
+  
+  # ============================================================================
+  # DEPLOY (only on main branch)
+  # ============================================================================
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deployment to Vercel would happen here"
+          echo "Frontend build successful"
+      
+      # TODO: Add Vercel deployment when configured
+      # - name: Deploy to Vercel
+      #   env:
+      #     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      #     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      #     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      #   run: |
+      #     npm install -g vercel
+      #     cd apps/web
+      #     vercel --prod --token=$VERCEL_TOKEN
