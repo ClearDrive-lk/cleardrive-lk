@@ -3,7 +3,7 @@
 import secrets
 import hashlib
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, cast, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from cryptography.fernet import Fernet
@@ -44,7 +44,7 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password string
     """
-    return pwd_context.hash(password)
+    return cast(str, pwd_context.hash(password))
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -59,7 +59,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         True if password matches, False otherwise
     """
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        return cast(bool, pwd_context.verify(plain_password, hashed_password))
     except Exception:
         return False
 
@@ -101,7 +101,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         algorithm=settings.JWT_ALGORITHM,
     )
 
-    return encoded_jwt
+    return cast(str, encoded_jwt)
 
 
 def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -130,7 +130,7 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
         algorithm=settings.JWT_ALGORITHM,
     )
 
-    return encoded_jwt
+    return cast(str, encoded_jwt)
 
 
 def decode_token(token: str) -> Optional[dict]:
@@ -149,7 +149,7 @@ def decode_token(token: str) -> Optional[dict]:
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        return payload
+        return cast(dict[str, Any], payload)
     except JWTError:
         return None
 
