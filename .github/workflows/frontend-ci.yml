@@ -3,27 +3,51 @@
 name: Frontend CI/CD
 
 on:
-  # Disabled until a frontend exists.
-  # push:
-  #   branches: [main, develop]
-  #   paths:
-  #     - 'apps/web/**'
-  #     - 'packages/shared/**'
-  #     - '.github/workflows/frontend-ci.yml'
-  # pull_request:
-  #   branches: [main, develop]
-  #   paths:
-  #     - 'apps/web/**'
-  #     - 'packages/shared/**'
-  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/shared/**'
 
 jobs:
+  # ============================================================================
+  # CHECK IF FRONTEND EXISTS
+  # ============================================================================
+  check-frontend:
+    name: Check Frontend Exists
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-exists: ${{ steps.check.outputs.exists }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check if frontend directory exists
+        id: check
+        run: |
+          if [ -d "apps/web" ] && [ -f "apps/web/package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Frontend directory found"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Frontend directory not found - skipping frontend jobs"
+          fi
+
   # ============================================================================
   # LINT & TYPE CHECK
   # ============================================================================
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    needs: check-frontend
+    if: needs.check-frontend.outputs.frontend-exists == 'true'
     
     steps:
       - name: Checkout code
@@ -57,6 +81,8 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    needs: check-frontend
+    if: needs.check-frontend.outputs.frontend-exists == 'true'
     
     steps:
       - name: Checkout code
@@ -79,7 +105,7 @@ jobs:
           npm audit --audit-level=moderate
       
       - name: Upload audit report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: npm-audit-report
@@ -92,7 +118,8 @@ jobs:
   build:
     name: Build Test
     runs-on: ubuntu-latest
-    needs: [lint, security]
+    needs: [check-frontend, lint, security]
+    if: needs.check-frontend.outputs.frontend-exists == 'true'
     
     steps:
       - name: Checkout code
@@ -118,37 +145,86 @@ jobs:
           npm run build
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: nextjs-build
           path: apps/web/.next/
           retention-days: 7
   
   # ============================================================================
-  # DEPLOY (only on main branch)
+  # DEPLOY TO STAGING (develop)
   # ============================================================================
-  deploy:
-    name: Deploy to Vercel
+  deploy-staging:
+    name: Deploy Frontend to Staging (Vercel)
     runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [check-frontend, build]
+    if: |
+      needs.check-frontend.outputs.frontend-exists == 'true' &&
+      github.ref == 'refs/heads/develop' && 
+      github.event_name == 'push'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Deploy notification
-        run: |
-          echo "🚀 Deployment to Vercel would happen here"
-          echo "Frontend build successful"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
       
-      # TODO: Add Vercel deployment when configured
-      # - name: Deploy to Vercel
-      #   env:
-      #     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      #     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      #     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      #   run: |
-      #     npm install -g vercel
-      #     cd apps/web
-      #     vercel --prod --token=$VERCEL_TOKEN
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      
+      - name: Pull Vercel Environment Information
+        run: |
+          cd apps/web
+          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Build Project Artifacts
+        run: |
+          cd apps/web
+          vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Deploy to Vercel Staging
+        run: |
+          cd apps/web
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+
+  # ============================================================================
+  # DEPLOY TO PRODUCTION (main)
+  # ============================================================================
+  deploy-prod:
+    name: Deploy Frontend to Production (Vercel)
+    runs-on: ubuntu-latest
+    needs: [check-frontend, build]
+    if: |
+      needs.check-frontend.outputs.frontend-exists == 'true' &&
+      github.ref == 'refs/heads/main' && 
+      github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      
+      - name: Pull Vercel Environment Information
+        run: |
+          cd apps/web
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Build Project Artifacts
+        run: |
+          cd apps/web
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      - name: Deploy to Vercel Production
+        run: |
+          cd apps/web
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
