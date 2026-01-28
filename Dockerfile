@@ -1,4 +1,5 @@
-# backend/Dockerfile
+# Root Dockerfile – build backend when context is repo root (e.g. Railway)
+# Use backend/Dockerfile directly when build context is backend/
 
 FROM python:3.11-slim
 
@@ -12,11 +13,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
-COPY . .
+# Copy backend application only
+COPY backend/ .
 
 # Expose port
 EXPOSE 8000

@@ -19,40 +19,40 @@ logger = logging.getLogger(__name__)
 
 def create_admin_user(db: Session) -> User:
     """Create initial admin user."""
-    
-    admin_emails = settings.ADMIN_EMAILS.split(',')
+
+    admin_emails = settings.ADMIN_EMAILS.split(",")
     first_admin_email = admin_emails[0].strip()
-    
+
     # Check if admin already exists
     existing_admin = db.query(User).filter(User.email == first_admin_email).first()
     if existing_admin:
         logger.info(f"Admin user already exists: {first_admin_email}")
         return existing_admin
-    
+
     # Create admin user
     admin_user = User(
         email=first_admin_email,
         name="System Administrator",
         role=Role.ADMIN,
     )
-    
+
     db.add(admin_user)
     db.commit()
     db.refresh(admin_user)
-    
+
     logger.info(f"✅ Created admin user: {first_admin_email}")
     return admin_user
 
 
 def create_sample_vehicles(db: Session) -> None:
     """Create sample vehicles for testing."""
-    
+
     # Check if vehicles already exist
     existing_count = db.query(Vehicle).count()
     if existing_count >= 20:
         logger.info(f"Sample vehicles already exist: {existing_count} vehicles")
         return
-    
+
     sample_vehicles = [
         # Toyota Models
         {
@@ -111,7 +111,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "Blue",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Honda Models
         {
             "auction_id": "AUC-2025-005",
@@ -155,7 +154,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "Silver",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Nissan Models
         {
             "auction_id": "AUC-2025-008",
@@ -199,7 +197,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "White",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Mazda Models
         {
             "auction_id": "AUC-2025-011",
@@ -229,7 +226,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "Red",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Suzuki Models
         {
             "auction_id": "AUC-2025-013",
@@ -259,7 +255,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "Silver",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Mitsubishi Models
         {
             "auction_id": "AUC-2025-015",
@@ -275,7 +270,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "Black",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Daihatsu Models
         {
             "auction_id": "AUC-2025-016",
@@ -305,7 +299,6 @@ def create_sample_vehicles(db: Session) -> None:
             "color": "White",
             "status": VehicleStatus.AVAILABLE,
         },
-        
         # Premium/Luxury Models
         {
             "auction_id": "AUC-2025-018",
@@ -350,19 +343,19 @@ def create_sample_vehicles(db: Session) -> None:
             "status": VehicleStatus.AVAILABLE,
         },
     ]
-    
+
     # Only add vehicles that don't exist
     for vehicle_data in sample_vehicles:
-        existing = db.query(Vehicle).filter(
-            Vehicle.auction_id == vehicle_data["auction_id"]
-        ).first()
-        
+        existing = (
+            db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data["auction_id"]).first()
+        )
+
         if not existing:
             vehicle = Vehicle(**vehicle_data)
             db.add(vehicle)
-    
+
     db.commit()
-    
+
     # Count total vehicles
     total = db.query(Vehicle).count()
     logger.info(f"✅ Vehicle database ready: {total} vehicles available")
@@ -370,21 +363,21 @@ def create_sample_vehicles(db: Session) -> None:
 
 def init_database():
     """Initialize database with admin user and sample data."""
-    
+
     logger.info("🚀 Starting database initialization...")
-    
+
     # Create database session
     db = SessionLocal()
-    
+
     try:
         # Create admin user
         create_admin_user(db)
-        
+
         # Create sample vehicles
         create_sample_vehicles(db)
-        
+
         logger.info("✅ Database initialization complete!")
-        
+
     except Exception as e:
         logger.error(f"❌ Error initializing database: {e}")
         db.rollback()

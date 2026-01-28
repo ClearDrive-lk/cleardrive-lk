@@ -1,32 +1,15 @@
-# app/models/__init__.py
-import app.modules # 👈 force model registration
-from app.core.database import SessionLocal, engine, Base
+"""Application modules.
 
+Importing this package is used as a side-effect to ensure SQLAlchemy models are
+registered before metadata operations (e.g., migrations, tests).
+"""
 
-# Auth
-from app.modules.auth.models import User
-
-# Orders
-from app.modules.orders.models import Order
-
-# Payments
-from app.modules.payments.models import Payment
-
-# KYC
-from app.modules.kyc.models import KYCDocument
-
-# Vehicles
-from app.modules.vehicles.models import Vehicle
-
-# Shipping
-from app.modules.shipping.models import ShipmentDetails
-
-# Security
-from app.modules.security.models import FileIntegrity
-
-# GDPR
-from app.modules.gdpr.models import GDPRRequest
-
-# VEHICLES
-from app.modules.vehicles.models import Vehicle
-
+# Import each module's models to register them with SQLAlchemy's metadata.
+from app.modules.auth import models as _auth_models  # noqa: F401
+from app.modules.gdpr import models as _gdpr_models  # noqa: F401
+from app.modules.kyc import models as _kyc_models  # noqa: F401
+from app.modules.orders import models as _orders_models  # noqa: F401
+from app.modules.payments import models as _payments_models  # noqa: F401
+from app.modules.security import models as _security_models  # noqa: F401
+from app.modules.shipping import models as _shipping_models  # noqa: F401
+from app.modules.vehicles import models as _vehicles_models  # noqa: F401
