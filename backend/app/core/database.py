@@ -1,5 +1,6 @@
 # backend/app/core/database.py
 
+from typing import Any
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -17,7 +18,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create base class for models
-Base = declarative_base()
+Base: Any = declarative_base()
 
 # 👇 THIS LINE IS THE KEY
 import app.modules

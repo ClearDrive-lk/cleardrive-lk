@@ -75,7 +75,7 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
 
     # Verification
     last_verified = Column(DateTime(timezone=True))
-    verification_status = Column(
+    verification_status: Column[VerificationStatus] = Column(
         SQLEnum(VerificationStatus), default=VerificationStatus.PENDING, nullable=False, index=True
     )
 
@@ -89,8 +89,8 @@ class SecurityEvent(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "security_events"
 
     # Event info
-    event_type = Column(SQLEnum(SecurityEventType), nullable=False, index=True)
-    severity = Column(SQLEnum(Severity), nullable=False, index=True)
+    event_type: Column[SecurityEventType] = Column(SQLEnum(SecurityEventType), nullable=False, index=True)
+    severity: Column[Severity] = Column(SQLEnum(Severity), nullable=False, index=True)
 
     # User & source
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), index=True)
@@ -129,7 +129,7 @@ class UserReputation(Base):
     security_alerts = Column(Integer, default=0, nullable=False)
 
     # Tier
-    current_tier = Column(SQLEnum(UserTier), default=UserTier.STANDARD, nullable=False, index=True)
+    current_tier: Column[UserTier] = Column(SQLEnum(UserTier), default=UserTier.STANDARD, nullable=False, index=True)
 
     # Behavior flags
     impossible_travel_detected = Column(Boolean, default=False, nullable=False)
