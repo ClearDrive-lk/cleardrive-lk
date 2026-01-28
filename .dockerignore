@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+**/__pycache__
+**/*.py[cod]
+**/*.pyo
+**/.pytest_cache
+**/.mypy_cache
+**/htmlcov
+**/.coverage
+**/venv
+**/venv312
+**/.venv
+**/env
+
+# Node
+**/node_modules
+**/.next
+**/out
+**/dist
+**/.expo
+
+# Docs, tests, dev
+docs
+**/*.md
+!backend/**/*.md
+.zap
+.coveragerc
+
+# Other app roots (we only build backend)
+apps
+packages
+
+# Docker (don't exclude Dockerfile – build uses it)
+docker-compose.yml
+.dockerignore
+
+# Misc
+.env
+.env.*
+*.log
+.DS_Store
