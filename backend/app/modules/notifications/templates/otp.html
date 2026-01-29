@@ -1,0 +1,40 @@
+<!-- backend/app/modules/notifications/templates/otp.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">
+    Hello{% if recipient_name %} {{ recipient_name }}{% endif %}! 👋
+</div>
+
+<p class="content-text">
+    We received a request to verify your email address for ClearDrive.lk. 
+    Use the One-Time Password (OTP) below to complete your login.
+</p>
+
+<div class="code-box">
+    <div class="code-label">Your OTP Code</div>
+    <div class="code">{{ otp_code }}</div>
+</div>
+
+<div class="info-box">
+    <p>
+        <strong>⏱️ This code expires in {{ expires_in_minutes }} minutes.</strong><br>
+        Do not share this code with anyone, including ClearDrive.lk staff.
+    </p>
+</div>
+
+<p class="content-text">
+    If you didn't request this code, please ignore this email. Your account remains secure.
+</p>
+
+<div class="warning-box">
+    <p>
+        <strong>🔒 Security Tip:</strong> ClearDrive.lk will never ask you for your OTP via phone, 
+        email, or social media. Be cautious of phishing attempts.
+    </p>
+</div>
+
+<p class="content-text" style="margin-top: 30px; color: #71717a; font-size: 13px;">
+    This is an automated message. Please do not reply to this email.
+</p>
+{% endblock %}

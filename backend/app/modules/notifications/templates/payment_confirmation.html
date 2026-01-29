@@ -1,0 +1,70 @@
+<!-- backend/app/modules/notifications/templates/payment_confirmation.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">
+    Payment Received! ✅
+</div>
+
+<p class="content-text">
+    Hi {{ recipient_name }}, we've successfully received your payment. Your order is now being processed 
+    and you'll be notified at each step of the journey.
+</p>
+
+<table class="details-table">
+    <tr>
+        <td>Payment ID</td>
+        <td><strong>{{ payment_id }}</strong></td>
+    </tr>
+    <tr>
+        <td>Order ID</td>
+        <td>{{ order_id }}</td>
+    </tr>
+    <tr>
+        <td>Amount Paid</td>
+        <td><strong>LKR {{ amount_paid }}</strong></td>
+    </tr>
+    <tr>
+        <td>Payment Method</td>
+        <td>{{ payment_method }}</td>
+    </tr>
+    <tr>
+        <td>Payment Date</td>
+        <td>{{ payment_date }}</td>
+    </tr>
+    <tr>
+        <td>Transaction ID</td>
+        <td>{{ transaction_id }}</td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>🎯 What Happens Next:</strong><br>
+        • Your order moves to "Processing" status<br>
+        • We'll verify your KYC documents<br>
+        • An exporter will be assigned to source your vehicle<br>
+        • You'll receive regular status updates via email
+    </p>
+</div>
+
+<div class="button-container">
+    <a href="{{ payment_receipt_url }}" class="button">Download Receipt</a>
+</div>
+
+<p class="content-text">
+    Your payment has been securely processed through PayHere. If you notice any discrepancies, 
+    please contact our support team immediately.
+</p>
+
+<div class="warning-box">
+    <p>
+        <strong>📧 Keep this email:</strong> This serves as your payment confirmation. 
+        You may need it for reference during the import process.
+    </p>
+</div>
+
+<p class="content-text" style="margin-top: 30px; color: #71717a; font-size: 13px;">
+    Questions about your payment? Email us at payments@cleardrive.lk
+</p>
+{% endblock %}

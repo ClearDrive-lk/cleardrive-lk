@@ -1,0 +1,66 @@
+<!-- backend/app/modules/notifications/templates/order_confirmation.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">
+    Hi {{ recipient_name }}! 🎉
+</div>
+
+<p class="content-text">
+    Thank you for your order! We're excited to help you import your dream vehicle from Japan.
+    Your order has been confirmed and is now being processed.
+</p>
+
+<table class="details-table">
+    <tr>
+        <td>Order ID</td>
+        <td><strong>{{ order_id }}</strong></td>
+    </tr>
+    <tr>
+        <td>Vehicle</td>
+        <td>{{ vehicle_make }} {{ vehicle_model }} ({{ vehicle_year }})</td>
+    </tr>
+    <tr>
+        <td>Color</td>
+        <td>{{ vehicle_color }}</td>
+    </tr>
+    <tr>
+        <td>Mileage</td>
+        <td>{{ vehicle_mileage }} km</td>
+    </tr>
+    <tr>
+        <td>Total Amount</td>
+        <td><strong>LKR {{ total_amount }}</strong></td>
+    </tr>
+    <tr>
+        <td>Order Date</td>
+        <td>{{ order_date }}</td>
+    </tr>
+    <tr>
+        <td>Order Status</td>
+        <td><span style="color: #16a34a; font-weight: 600;">{{ order_status }}</span></td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>📋 Next Steps:</strong><br>
+        1. Complete payment to proceed with your order<br>
+        2. Upload your KYC documents (NIC, Passport, Proof of Address)<br>
+        3. We'll assign an exporter and begin the import process
+    </p>
+</div>
+
+<div class="button-container">
+    <a href="{{ order_url }}" class="button">View Order Details</a>
+</div>
+
+<p class="content-text">
+    You'll receive email notifications at each stage of the import process. If you have any 
+    questions, our support team is here to help.
+</p>
+
+<p class="content-text" style="margin-top: 30px; color: #71717a; font-size: 13px;">
+    Need help? Contact us at support@cleardrive.lk or call +94 11 234 5678
+</p>
+{% endblock %}

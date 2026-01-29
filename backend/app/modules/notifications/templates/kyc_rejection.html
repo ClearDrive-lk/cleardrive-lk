@@ -1,0 +1,76 @@
+<!-- backend/app/modules/notifications/templates/kyc_rejection.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">
+    Action Required: KYC Verification Issue
+</div>
+
+<p class="content-text">
+    Hi {{ recipient_name }}, we've reviewed your KYC documents but were unable to verify them 
+    at this time. Don't worry – this is common and easily resolved!
+</p>
+
+<div class="warning-box">
+    <p>
+        <strong>⚠️ Rejection Reason:</strong><br>
+        {{ rejection_reason }}
+    </p>
+</div>
+
+<table class="details-table">
+    <tr>
+        <td>Verification ID</td>
+        <td><strong>{{ kyc_id }}</strong></td>
+    </tr>
+    <tr>
+        <td>Submission Date</td>
+        <td>{{ submission_date }}</td>
+    </tr>
+    <tr>
+        <td>Review Date</td>
+        <td>{{ review_date }}</td>
+    </tr>
+    <tr>
+        <td>Status</td>
+        <td><span style="color: #dc2626; font-weight: 600;">REQUIRES RESUBMISSION</span></td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>📝 How to Fix This:</strong><br>
+        {% if rejection_details %}
+        {{ rejection_details }}
+        {% else %}
+        1. Review the rejection reason above<br>
+        2. Prepare correct/clear documents<br>
+        3. Resubmit through your dashboard<br>
+        4. Our team will review within 24-48 hours
+        {% endif %}
+    </p>
+</div>
+
+<div class="button-container">
+    <a href="{{ resubmit_url }}" class="button">Resubmit Documents</a>
+</div>
+
+<p class="content-text">
+    Common issues include:
+</p>
+<ul style="color: #52525b; font-size: 15px; margin: 10px 0 20px 20px;">
+    <li>Blurry or unclear photos</li>
+    <li>Documents not fully visible in the frame</li>
+    <li>Expired documents</li>
+    <li>Name mismatch between documents</li>
+    <li>Missing required documents</li>
+</ul>
+
+<p class="content-text">
+    Need help? Our support team is ready to assist you with document requirements.
+</p>
+
+<p class="content-text" style="margin-top: 30px; color: #71717a; font-size: 13px;">
+    Questions? Email us at kyc@cleardrive.lk or call +94 11 234 5678
+</p>
+{% endblock %}
