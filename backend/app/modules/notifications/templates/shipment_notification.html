@@ -1,0 +1,87 @@
+<!-- backend/app/modules/notifications/templates/shipment_notification.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">
+    Your Vehicle is on the Way! 🚢
+</div>
+
+<p class="content-text">
+    Exciting news, {{ recipient_name }}! Your vehicle has been shipped from Japan and is 
+    on its way to Sri Lanka. Track your shipment details below.
+</p>
+
+<table class="details-table">
+    <tr>
+        <td>Order ID</td>
+        <td><strong>{{ order_id }}</strong></td>
+    </tr>
+    <tr>
+        <td>Vehicle</td>
+        <td>{{ vehicle_make }} {{ vehicle_model }} ({{ vehicle_year }})</td>
+    </tr>
+    <tr>
+        <td>Shipping Company</td>
+        <td>{{ shipping_company }}</td>
+    </tr>
+    <tr>
+        <td>Tracking Number</td>
+        <td><strong>{{ tracking_number }}</strong></td>
+    </tr>
+    <tr>
+        <td>Departure Port</td>
+        <td>{{ departure_port }}</td>
+    </tr>
+    <tr>
+        <td>Arrival Port</td>
+        <td>{{ arrival_port }}</td>
+    </tr>
+    <tr>
+        <td>Departure Date</td>
+        <td>{{ departure_date }}</td>
+    </tr>
+    <tr>
+        <td>Estimated Arrival</td>
+        <td><strong>{{ estimated_arrival }}</strong></td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>🌊 Shipping Journey:</strong><br>
+        Your vehicle is currently in transit. Average shipping time from Japan to Sri Lanka 
+        is 2-3 weeks. You'll receive another notification once it arrives at the port.
+    </p>
+</div>
+
+{% if tracking_url %}
+<div class="button-container">
+    <a href="{{ tracking_url }}" class="button">Track Shipment</a>
+</div>
+{% endif %}
+
+<p class="content-text">
+    <strong>What happens when your vehicle arrives?</strong>
+</p>
+<ul style="color: #52525b; font-size: 15px; margin: 10px 0 20px 20px;">
+    <li>Port clearance and customs processing (3-5 days)</li>
+    <li>Payment of customs duties and taxes</li>
+    <li>Final inspection and documentation</li>
+    <li>Vehicle delivered to your address</li>
+</ul>
+
+<div class="warning-box">
+    <p>
+        <strong>📋 Important:</strong> Please ensure you have the necessary funds ready for 
+        customs duties and taxes. Our team will contact you with the exact amount before arrival.
+    </p>
+</div>
+
+<p class="content-text">
+    We'll keep you updated throughout the journey. Your dream vehicle is almost here!
+</p>
+
+<p class="content-text" style="margin-top: 30px; color: #71717a; font-size: 13px;">
+    Questions about shipping? Email us at shipping@cleardrive.lk
+</p>
+{% endblock %}

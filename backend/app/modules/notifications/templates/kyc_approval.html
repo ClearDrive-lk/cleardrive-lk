@@ -1,0 +1,66 @@
+<!-- backend/app/modules/notifications/templates/kyc_approval.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">
+    Great News! Your KYC is Approved ✅
+</div>
+
+<p class="content-text">
+    Hi {{ recipient_name }}, congratulations! Your Know Your Customer (KYC) documents have been 
+    verified and approved by our team. You can now proceed with your vehicle import.
+</p>
+
+<table class="details-table">
+    <tr>
+        <td>Verification ID</td>
+        <td><strong>{{ kyc_id }}</strong></td>
+    </tr>
+    <tr>
+        <td>Verified Name</td>
+        <td>{{ verified_name }}</td>
+    </tr>
+    <tr>
+        <td>NIC Number</td>
+        <td>{{ nic_number }}</td>
+    </tr>
+    <tr>
+        <td>Verification Date</td>
+        <td>{{ verification_date }}</td>
+    </tr>
+    <tr>
+        <td>Status</td>
+        <td><span style="color: #16a34a; font-weight: 600;">APPROVED</span></td>
+    </tr>
+</table>
+
+<div class="info-box">
+    <p>
+        <strong>✨ Documents Verified:</strong><br>
+        • National Identity Card (NIC)<br>
+        • Passport Copy<br>
+        • Proof of Address<br>
+        {% if additional_docs %}• {{ additional_docs }}{% endif %}
+    </p>
+</div>
+
+{% if order_id %}
+<p class="content-text">
+    Your order <strong>{{ order_id }}</strong> will now move forward in the import process. 
+    We'll assign an exporter and begin sourcing your vehicle from Japan.
+</p>
+
+<div class="button-container">
+    <a href="{{ order_url }}" class="button">View Order Status</a>
+</div>
+{% endif %}
+
+<p class="content-text">
+    Your verified information will be used for all legal and customs clearance procedures. 
+    If any changes are needed, please contact our support team immediately.
+</p>
+
+<p class="content-text" style="margin-top: 30px; color: #71717a; font-size: 13px;">
+    Questions about your verification? Email us at kyc@cleardrive.lk
+</p>
+{% endblock %}
