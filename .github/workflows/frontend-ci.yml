@@ -68,8 +68,8 @@ jobs:
       - name: Run ESLint
         run: |
           cd apps/web
-          # ✅ Fixed: Removed flags. Uses default behavior.
-          npx next lint
+          # ✅ NUCLEAR FIX: Use direct ESLint command instead of 'next lint'
+          npx eslint app
       
       - name: Run TypeScript type check
         run: |
