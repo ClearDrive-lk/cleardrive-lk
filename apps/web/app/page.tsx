@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { AuctionTicker } from "@/components/ui/ticker";
 import { GridBackground } from "@/components/ui/grid-background";
 import { HeroSearch } from "@/components/landing/hero-search";
