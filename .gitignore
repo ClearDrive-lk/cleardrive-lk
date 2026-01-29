@@ -255,6 +255,9 @@ out/
 build/
 dist/
 
+# Allow Next.js app lib (root lib/ is for Python)
+!apps/web/lib/
+
 # Mobile
 .expo/
 .expo-shared/
