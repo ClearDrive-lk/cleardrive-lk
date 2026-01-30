@@ -7,12 +7,11 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Index, Numeric, String
+from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Index, Numeric, String, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin
+from app.core.models import TimestampMixin, UUIDMixin, GUID
 
 if TYPE_CHECKING:
     from app.modules.orders.models import Order
@@ -34,10 +33,10 @@ class Payment(Base, UUIDMixin, TimestampMixin):
 
     # References
     order_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
     user_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # PayHere details
@@ -81,7 +80,7 @@ class PaymentIdempotency(Base, UUIDMixin, TimestampMixin):
         String(255), unique=True, nullable=False, index=True
     )
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    response_data: Mapped[dict | None] = mapped_column(JSONB)
+    response_data: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
     completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
