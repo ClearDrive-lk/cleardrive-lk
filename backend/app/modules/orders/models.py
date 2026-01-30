@@ -8,10 +8,9 @@ from uuid import UUID as PyUUID
 
 from sqlalchemy import Enum as SQLEnum, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
 import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin
+from app.core.models import TimestampMixin, UUIDMixin, GUID
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
@@ -55,10 +54,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     # References
     user_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     vehicle_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("vehicles.id"), nullable=False, index=True
+        GUID(), ForeignKey("vehicles.id"), nullable=False, index=True
     )
 
     # Status
@@ -99,7 +98,7 @@ class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "order_status_history"
 
     order_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Status change
@@ -107,7 +106,7 @@ class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
     to_status: Mapped[OrderStatus] = mapped_column(SQLEnum(OrderStatus), nullable=False)
 
     # Who changed it
-    changed_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    changed_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
     notes: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
