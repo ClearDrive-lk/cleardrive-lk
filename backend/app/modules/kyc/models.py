@@ -6,12 +6,11 @@ import datetime as dt
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import Date, DateTime, Enum as SQLEnum, ForeignKey, String, Text
+from sqlalchemy import Date, DateTime, Enum as SQLEnum, ForeignKey, String, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin
+from app.core.models import TimestampMixin, UUIDMixin, GUID
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
@@ -31,7 +30,7 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "kyc_documents"
 
     user_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
+        GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
@@ -50,9 +49,9 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     selfie_url: Mapped[str] = mapped_column(Text, nullable=False)
 
     # AI extraction results
-    extracted_data: Mapped[dict | None] = mapped_column(JSONB)  # Claude API extracted data
+    extracted_data: Mapped[dict | None] = mapped_column(JSON)  # Claude API extracted data
     discrepancies: Mapped[dict | None] = mapped_column(
-        JSONB
+        JSON
     )  # Differences between extracted and provided data
 
     # Status
@@ -61,7 +60,7 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     )
 
     # Review
-    reviewed_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    reviewed_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
     reviewed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     rejection_reason: Mapped[str | None] = mapped_column(Text)
 
