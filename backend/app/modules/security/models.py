@@ -99,9 +99,7 @@ class SecurityEvent(Base, UUIDMixin, TimestampMixin):
     severity: Mapped[Severity] = mapped_column(SQLEnum(Severity), nullable=False, index=True)
 
     # User & source
-    user_id: Mapped[PyUUID | None] = mapped_column(
-        GUID(), ForeignKey("users.id"), index=True
-    )
+    user_id: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"), index=True)
     ip_address: Mapped[str | None] = mapped_column(IPAddress())
     user_agent: Mapped[str | None] = mapped_column(Text)
     country_code: Mapped[str | None] = mapped_column(String(2))
@@ -160,9 +158,7 @@ class RateLimitViolation(Base, UUIDMixin):
     __tablename__ = "rate_limit_violations"
 
     # User & source
-    user_id: Mapped[PyUUID | None] = mapped_column(
-        GUID(), ForeignKey("users.id"), index=True
-    )
+    user_id: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"), index=True)
     ip_address: Mapped[str] = mapped_column(IPAddress(), nullable=False, index=True)
     endpoint: Mapped[str] = mapped_column(String(255), nullable=False)
 
