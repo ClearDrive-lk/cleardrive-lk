@@ -76,9 +76,7 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
     # Submission & Approval
     submitted_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     admin_approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
-    admin_approved_by: Mapped[PyUUID | None] = mapped_column(
-        GUID(), ForeignKey("users.id")
-    )
+    admin_approved_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
 
     # Relationships
     order: Mapped[Order] = relationship("Order", back_populates="shipment_details")
@@ -112,9 +110,7 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     mime_type: Mapped[str | None] = mapped_column(String(100))
 
     # Upload info
-    uploaded_by: Mapped[PyUUID] = mapped_column(
-        GUID(), ForeignKey("users.id"), nullable=False
-    )
+    uploaded_by: Mapped[PyUUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     uploaded_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
