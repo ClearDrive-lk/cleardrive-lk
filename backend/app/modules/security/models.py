@@ -14,12 +14,12 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    JSON,
 )
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import UUID, INET, JSONB
 import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin
+from app.core.models import TimestampMixin, UUIDMixin, GUID, IPAddress
 
 
 class VerificationStatus(str, enum.Enum):
@@ -75,7 +75,7 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
     mime_type: Mapped[str | None] = mapped_column(String(100))
 
     # Upload tracking
-    uploaded_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    uploaded_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
 
     # Verification
     last_verified: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
@@ -100,18 +100,18 @@ class SecurityEvent(Base, UUIDMixin, TimestampMixin):
 
     # User & source
     user_id: Mapped[PyUUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), index=True
+        GUID(), ForeignKey("users.id"), index=True
     )
-    ip_address: Mapped[str | None] = mapped_column(INET)
+    ip_address: Mapped[str | None] = mapped_column(IPAddress())
     user_agent: Mapped[str | None] = mapped_column(Text)
     country_code: Mapped[str | None] = mapped_column(String(2))
 
     # Details
-    details: Mapped[dict | None] = mapped_column(JSONB)
+    details: Mapped[dict | None] = mapped_column(JSON)
 
     # Resolution
     resolved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    resolved_by: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    resolved_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
     resolved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     def __repr__(self):
@@ -124,7 +124,7 @@ class UserReputation(Base):
     __tablename__ = "user_reputation"
 
     user_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
 
     # Trust score (0-100)
@@ -161,9 +161,9 @@ class RateLimitViolation(Base, UUIDMixin):
 
     # User & source
     user_id: Mapped[PyUUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), index=True
+        GUID(), ForeignKey("users.id"), index=True
     )
-    ip_address: Mapped[str] = mapped_column(INET, nullable=False, index=True)
+    ip_address: Mapped[str] = mapped_column(IPAddress(), nullable=False, index=True)
     endpoint: Mapped[str] = mapped_column(String(255), nullable=False)
 
     # Violation details

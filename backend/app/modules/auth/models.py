@@ -7,12 +7,10 @@ from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
 from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, func
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID, INET
 import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin
+from app.core.models import TimestampMixin, UUIDMixin, GUID, IPAddress
 
 if TYPE_CHECKING:
     from app.modules.kyc.models import KYCDocument
@@ -87,12 +85,12 @@ class Session(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "sessions"
 
     user_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Session metadata
     refresh_token_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    ip_address: Mapped[str | None] = mapped_column(INET)
+    ip_address: Mapped[str | None] = mapped_column(IPAddress())
     user_agent: Mapped[str | None] = mapped_column(String(500))
     device_info: Mapped[str | None] = mapped_column(String(255))
     location: Mapped[str | None] = mapped_column(String(255))  # City, Country
