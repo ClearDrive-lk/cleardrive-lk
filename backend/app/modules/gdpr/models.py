@@ -6,10 +6,9 @@ import datetime as dt
 from uuid import UUID as PyUUID
 
 from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID
 import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin
+from app.core.models import TimestampMixin, UUIDMixin, GUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -36,7 +35,7 @@ class GDPRRequest(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "gdpr_requests"
 
     user_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
     # Request info
