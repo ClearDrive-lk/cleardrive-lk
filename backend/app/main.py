@@ -20,17 +20,23 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Starting ClearDrive.lk API...")
 
-    # Initialize Redis
-    redis = await get_redis()
-    await redis.ping()
-    print("✅ Redis connected")
+    # Initialize Redis (best-effort; don't crash app/tests if Redis is down)
+    try:
+        redis = await get_redis()
+        await redis.ping()
+        print("✅ Redis connected")
+    except Exception as e:  # pragma: no cover - defensive logging
+        print(f"⚠️ Redis not available: {e}")
 
     yield
 
     # Shutdown
     print("👋 Shutting down ClearDrive.lk API...")
-    await close_redis()
-    print("✅ Redis connection closed")
+    try:
+        await close_redis()
+        print("✅ Redis connection closed")
+    except Exception as e:  # pragma: no cover - defensive logging
+        print(f"⚠️ Error while closing Redis: {e}")
 
 
 app = FastAPI(
