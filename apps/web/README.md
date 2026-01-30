@@ -29,8 +29,14 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy on Vercel (monorepo)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app lives in `apps/web`. To avoid **404 NOT_FOUND** on Vercel:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. In [Vercel Dashboard](https://vercel.com/dashboard) → your project → **Settings** → **General**
+2. Under **Root Directory**, click **Edit**, set to **`apps/web`**, and Save
+3. **Redeploy** the project (Deployments → ⋮ on latest → Redeploy)
+
+If Root Directory is left at the repo root, Vercel won’t find the Next.js app and will return 404.
+
+Then deploy via the [Vercel Platform](https://vercel.com/new) or [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying).
