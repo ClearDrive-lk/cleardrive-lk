@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 import httpx
 from uuid import UUID
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 from app.core.database import get_db
 from app.core.security import (
@@ -26,6 +28,7 @@ from .schemas import (
     GoogleAuthResponse,
     OTPVerifyRequest,
     OTPResendRequest,
+    DevEnsureUserRequest,
     TokenResponse,
     RefreshTokenRequest,
     SessionListResponse,
@@ -37,7 +40,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 # ============================================================================
-# GOOGLE OAUTH
+# GOOGLE OAUTH - IMPROVED VERSION
 # ============================================================================
 
 @router.post("/google", response_model=GoogleAuthResponse)
@@ -60,21 +63,35 @@ async def google_auth(
     
     # Verify Google ID token
     try:
-        google_user_info = await verify_google_token(auth_request.id_token)
+        google_user_info = verify_google_token_v2(auth_request.id_token)
     except Exception as e:
+        err_msg = str(e)
+        if "wrong audience" in err_msg.lower():
+            err_msg += (
+                " Use OAuth Playground with your app's Client ID: gear icon → "
+                "'Use your own OAuth credentials' → GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from .env."
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid Google token: {str(e)}"
+            detail=f"Invalid Google token: {err_msg}"
         )
     
     email = google_user_info.get("email")
     google_id = google_user_info.get("sub")
     name = google_user_info.get("name")
+    email_verified = google_user_info.get("email_verified", False)
     
     if not email or not google_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid Google token payload"
+        )
+    
+    # Require verified email
+    if not email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not verified with Google. Please verify your email first."
         )
     
     # Check if user exists
@@ -96,15 +113,20 @@ async def google_auth(
             existing_admin = db.query(User).filter(User.role == Role.ADMIN).first()
             if not existing_admin:
                 user.role = Role.ADMIN
+                print(f"🔐 Auto-promoted first admin: {email}")
         
         db.add(user)
         db.commit()
         db.refresh(user)
+        
+        print(f"✅ New user created: {email} (Role: {user.role})")
     else:
         # Update existing user's Google ID if not set
         if not user.google_id:
             user.google_id = google_id
             db.commit()
+        
+        print(f"✅ Existing user logged in: {email}")
     
     # Generate OTP
     otp = generate_otp()
@@ -116,19 +138,56 @@ async def google_auth(
     # TODO: Send OTP via email (we'll implement this in notifications module)
     # For now, log it (ONLY IN DEVELOPMENT!)
     if settings.ENVIRONMENT == "development":
+        print(f"\n{'='*60}")
         print(f"🔐 OTP for {email}: {otp}")
+        print(f"{'='*60}\n")
     
     return GoogleAuthResponse(
         email=email,
         name=name,
         google_id=google_id,
-        message="OTP sent to your email"
+        message="OTP sent to your email. Check console in development mode."
     )
+
+
+def verify_google_token_v2(id_token_string: str) -> dict:
+    """
+    Verify Google ID token using official Google library.
+    
+    This is the PROPER way to verify Google tokens.
+    
+    Args:
+        id_token_string: Google ID token from client
+        
+    Returns:
+        User info from Google
+        
+    Raises:
+        ValueError: If token is invalid
+    """
+    try:
+        # Verify the token
+        idinfo = id_token.verify_oauth2_token(
+            id_token_string,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID
+        )
+        
+        # Additional checks
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError('Wrong issuer.')
+        
+        # Token is valid
+        return idinfo
+        
+    except ValueError as e:
+        # Invalid token
+        raise ValueError(f"Invalid Google token: {str(e)}")
 
 
 async def verify_google_token(id_token: str) -> dict:
     """
-    Verify Google ID token with Google API.
+    Verify Google ID token with Google API (fallback method).
     
     Args:
         id_token: Google ID token from client
@@ -187,6 +246,7 @@ async def verify_otp(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OTP expired or not found. Please request a new one."
         )
+        stored_otp = stored_otp.decode()
     
     # Verify OTP (constant-time comparison to prevent timing attacks)
     if not constant_time_compare(verify_request.otp, stored_otp):
@@ -292,8 +352,35 @@ async def resend_otp(
     # TODO: Send via email
     if settings.ENVIRONMENT == "development":
         print(f"🔐 OTP for {resend_request.email}: {otp}")
+        return {"message": "If the email exists, OTP has been sent", "otp": otp}
     
     return {"message": "If the email exists, OTP has been sent"}
+
+
+# ============================================================================
+# DEV-ONLY: ENSURE TEST USER (for scripts / local testing)
+# ============================================================================
+
+@router.post("/dev/ensure-user")
+async def dev_ensure_user(
+    body: DevEnsureUserRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Create a test user if they don't exist. Only available when ENVIRONMENT=development.
+    Use before resend-otp when testing so OTP is actually stored.
+    """
+    if settings.ENVIRONMENT != "development":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    user = db.query(User).filter(User.email == body.email).first()
+    if user:
+        return {"created": False, "email": body.email, "message": "User already exists"}
+    name = body.name or body.email.split("@")[0]
+    user = User(email=body.email, name=name, role=Role.CUSTOMER)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {"created": True, "email": body.email, "name": name, "message": "User created"}
 
 
 # ============================================================================
