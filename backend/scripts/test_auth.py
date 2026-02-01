@@ -28,8 +28,6 @@ def test_auth_flow():
 
     response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email})
 
-    response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email})
-
     print(f"Response: {response.status_code}")
     print(f"Body: {response.json()}\n")
 
@@ -47,9 +45,6 @@ def test_auth_flow():
         print(f"Access Token: {tokens['access_token'][:50]}...")
         print(f"Refresh Token: {tokens['refresh_token'][:50]}...")
         print(f"User: {tokens['user']}\n")
-
-        access_token = tokens["access_token"]
-        refresh_token = tokens["refresh_token"]
 
         access_token = tokens["access_token"]
         refresh_token = tokens["refresh_token"]
