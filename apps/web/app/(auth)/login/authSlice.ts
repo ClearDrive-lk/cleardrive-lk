@@ -1,10 +1,10 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
 }
 
 interface AuthState {
@@ -20,14 +20,17 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     // Action to set user when logging in
-    setCredentials: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    setCredentials: (
+      state,
+      action: PayloadAction<{ user: User; token: string }>,
+    ) => {
       state.user = action.payload.user;
       state.isAuthenticated = true;
-      // We don't store the token in Redux state usually, 
+      // We don't store the token in Redux state usually,
       // it stays in cookies/localStorage, but the state knows we are logged in.
     },
     // Action to clear user when logging out
