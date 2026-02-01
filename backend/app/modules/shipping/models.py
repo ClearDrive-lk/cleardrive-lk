@@ -1,5 +1,3 @@
-# backend/app/modules/shipping/models.py
-
 from __future__ import annotations
 
 import datetime as dt
@@ -12,6 +10,7 @@ from sqlalchemy.dialects.postgresql import UUID
 import enum
 from app.core.database import Base
 from app.core.models import TimestampMixin, UUIDMixin
+from app.modules.shipping.enums import DocumentType
 
 if TYPE_CHECKING:
     from app.modules.orders.models import Order
@@ -111,7 +110,7 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     file_size: Mapped[int | None] = mapped_column(Integer)
     mime_type: Mapped[str | None] = mapped_column(String(100))
-
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     # Upload info
     uploaded_by: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False

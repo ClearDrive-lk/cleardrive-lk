@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -16,25 +17,6 @@ revision: str = '1e80cfeb6e0a'
 down_revision: Union[str, None] = 'a7837696f581'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
-
-# backend/alembic/versions/XXXXX_create_email_logs.py
-"""create email_logs table
-
-Revision ID: create_email_logs_v1
-Revises: 
-Create Date: 2026-01-27
-
-"""
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
-# revision identifiers, used by Alembic.
-revision = 'create_email_logs_v1'
-down_revision = None  # Update this to the previous migration ID
-branch_labels = None
-depends_on = None
 
 
 def upgrade() -> None:

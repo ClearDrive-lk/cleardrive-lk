@@ -12,6 +12,9 @@ from app.middleware.security_headers import SecurityHeadersMiddleware  # 👈 NE
 # Import routers
 from app.modules.auth.routes import router as auth_router
 from app.modules.vehicles.routes import router as vehicles_router
+from app.modules.shipping.routes.documents import router as shipping_docs_router
+app.include_router(shipping_docs_router)
+
 
 
 @asynccontextmanager
@@ -42,9 +45,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ============================================================================
+
 # SECURITY MIDDLEWARE (Order matters!)
-# ============================================================================
 
 # 1. Trusted Host Middleware (prevent host header attacks)
 if settings.ENVIRONMENT == "production":
