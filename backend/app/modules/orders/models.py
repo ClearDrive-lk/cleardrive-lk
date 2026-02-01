@@ -85,7 +85,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
         "Payment", back_populates="order", uselist=False, cascade="all, delete-orphan"
     )
     shipment_details: Mapped[ShipmentDetails | None] = relationship(
-        "ShipmentDetails", back_populates="order", uselist=False, cascade="all, delete-orphan"
+        "ShipmentDetails",
+        back_populates="order",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):
