@@ -8,7 +8,7 @@ You need to actually sign in with Google in your browser.
 """
 
 import os
-import requests
+import requests  # type: ignore
 from datetime import datetime
 import json
 import base64
