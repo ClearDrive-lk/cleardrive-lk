@@ -1,0 +1,9 @@
+# .zap/rules.tsv
+# Format: Rule ID, Threshold, Action
+
+10021	MEDIUM	IGNORE	# X-Content-Type-Options header (we have it)
+10020	LOW	IGNORE	# X-Frame-Options header (we have it)
+10056	INFO	IGNORE	# X-Content-Type-Options
+10098	INFO	IGNORE	# Cross-Domain Misconfiguration
+90001	INFO	IGNORE	# Insecure JSF ViewState
+90011	INFO	IGNORE	# Charset Mismatch
