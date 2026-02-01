@@ -73,31 +73,27 @@ async def google_auth(
                 "'Use your own OAuth credentials' → Enter your Client ID/Secret.)"
             )
         elif "wrong audience" in err_msg.lower():
-            err_msg += (
-                " (Hint: Check that GOOGLE_CLIENT_ID in backend/.env matches the Client ID used to generate the token!)"
-            )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=err_msg
-        )
+            err_msg += " (Hint: Check that GOOGLE_CLIENT_ID in backend/.env matches the Client ID used to generate the token!)"
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=err_msg)
 
     email = google_user_info.get("email")
     google_id = google_user_info.get("sub")
     name = google_user_info.get("name")
     email_verified = google_user_info.get("email_verified", False)
-    
+
     if not email or not google_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Google token payload"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Google token payload",
         )
-    
+
     # Require verified email
     if not email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email not verified with Google. Please verify your email first."
+            detail="Email not verified with Google. Please verify your email first.",
         )
-    
+
     # Check if user exists
     user = db.query(User).filter(User.email == email).first()
 
@@ -118,20 +114,20 @@ async def google_auth(
             if not existing_admin:
                 user.role = Role.ADMIN
                 print(f"🔐 Auto-promoted first admin: {email}")
-        
+
         db.add(user)
         db.commit()
         db.refresh(user)
-        
+
         print(f"✅ New user created: {email} (Role: {user.role})")
     else:
         # Update existing user's Google ID if not set
         if not user.google_id:
             user.google_id = google_id
             db.commit()
-        
+
         print(f"✅ Existing user logged in: {email}")
-    
+
     # Generate OTP
     otp = generate_otp()
 
@@ -145,45 +141,43 @@ async def google_auth(
         print(f"\n{'='*60}")
         print(f"🔐 OTP for {email}: {otp}")
         print(f"{'='*60}\n")
-    
+
     return GoogleAuthResponse(
         email=email,
         name=name,
         google_id=google_id,
-        message="OTP sent to your email. Check console in development mode."
+        message="OTP sent to your email. Check console in development mode.",
     )
 
 
 def verify_google_token_v2(id_token_string: str) -> dict:
     """
     Verify Google ID token using official Google library.
-    
+
     This is the PROPER way to verify Google tokens.
-    
+
     Args:
         id_token_string: Google ID token from client
-        
+
     Returns:
         User info from Google
-        
+
     Raises:
         ValueError: If token is invalid
     """
     try:
         # Verify the token
         idinfo = id_token.verify_oauth2_token(
-            id_token_string,
-            google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID
+            id_token_string, google_requests.Request(), settings.GOOGLE_CLIENT_ID
         )
-        
+
         # Additional checks
-        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-            raise ValueError('Wrong issuer.')
-        
+        if idinfo["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
+            raise ValueError("Wrong issuer.")
+
         # Token is valid
         return idinfo
-        
+
     except ValueError as e:
         # Invalid token
         raise ValueError(f"Invalid Google token: {str(e)}")
@@ -192,7 +186,7 @@ def verify_google_token_v2(id_token_string: str) -> dict:
 async def verify_google_token(id_token: str) -> dict:
     """
     Verify Google ID token with Google API (fallback method).
-    
+
     Args:
         id_token: Google ID token from client
 
@@ -251,7 +245,7 @@ async def verify_otp(
             detail="OTP expired or not found. Please request a new one.",
         )
         stored_otp = stored_otp.decode()
-    
+
     # Verify OTP (constant-time comparison to prevent timing attacks)
     if not constant_time_compare(verify_request.otp, stored_otp):
         # Increment failed attempts
@@ -261,7 +255,9 @@ async def verify_otp(
             user.last_failed_auth = datetime.utcnow()
             db.commit()
 
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP"
+        )
 
     # Delete OTP (one-time use)
     await redis.delete(otp_key)
@@ -270,7 +266,9 @@ async def verify_otp(
     user = db.query(User).filter(User.email == verify_request.email).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     # Reset failed attempts on successful login
     user.failed_auth_attempts = 0
@@ -291,7 +289,8 @@ async def verify_otp(
         user_agent=request.headers.get("user-agent"),
         device_info=extract_device_info(request),
         is_active=True,
-        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        expires_at=datetime.utcnow()
+        + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
     db.add(session)
@@ -352,13 +351,14 @@ async def resend_otp(
     if settings.ENVIRONMENT == "development":
         print(f"🔐 OTP for {resend_request.email}: {otp}")
         return {"message": "If the email exists, OTP has been sent", "otp": otp}
-    
+
     return {"message": "If the email exists, OTP has been sent"}
 
 
 # ============================================================================
 # DEV-ONLY: ENSURE TEST USER (for scripts / local testing)
 # ============================================================================
+
 
 @router.post("/dev/ensure-user")
 async def dev_ensure_user(
@@ -379,7 +379,12 @@ async def dev_ensure_user(
     db.add(user)
     db.commit()
     db.refresh(user)
-    return {"created": True, "email": body.email, "name": name, "message": "User created"}
+    return {
+        "created": True,
+        "email": body.email,
+        "name": name,
+        "message": "User created",
+    }
 
 
 # ============================================================================
@@ -413,7 +418,9 @@ async def refresh_token(
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     # Find session with this refresh token
     refresh_token_hash = hash_token(refresh_request.refresh_token)
@@ -505,7 +512,9 @@ async def revoke_session(
     )
 
     if not session:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
+        )
 
     session.is_active = False
     db.commit()

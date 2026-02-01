@@ -49,7 +49,9 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     selfie_url: Mapped[str] = mapped_column(Text, nullable=False)
 
     # AI extraction results
-    extracted_data: Mapped[dict | None] = mapped_column(JSON)  # Claude API extracted data
+    extracted_data: Mapped[dict | None] = mapped_column(
+        JSON
+    )  # Claude API extracted data
     discrepancies: Mapped[dict | None] = mapped_column(
         JSON
     )  # Differences between extracted and provided data
@@ -65,7 +67,9 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     rejection_reason: Mapped[str | None] = mapped_column(Text)
 
     # Relationships
-    user: Mapped[User] = relationship("User", back_populates="kyc_document", foreign_keys=[user_id])
+    user: Mapped[User] = relationship(
+        "User", back_populates="kyc_document", foreign_keys=[user_id]
+    )
     reviewed_by_user: Mapped[User | None] = relationship(
         "User",
         foreign_keys=[reviewed_by],  # 🔑 explicit FK for reviewer

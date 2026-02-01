@@ -69,7 +69,9 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "file_integrity"
 
     # File info
-    file_url: Mapped[str] = mapped_column(String(500), unique=True, nullable=False, index=True)
+    file_url: Mapped[str] = mapped_column(
+        String(500), unique=True, nullable=False, index=True
+    )
     sha256_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     mime_type: Mapped[str | None] = mapped_column(String(100))
@@ -80,7 +82,10 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
     # Verification
     last_verified: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     verification_status: Mapped[VerificationStatus] = mapped_column(
-        SQLEnum(VerificationStatus), default=VerificationStatus.PENDING, nullable=False, index=True
+        SQLEnum(VerificationStatus),
+        default=VerificationStatus.PENDING,
+        nullable=False,
+        index=True,
     )
 
     def __repr__(self):
@@ -96,10 +101,14 @@ class SecurityEvent(Base, UUIDMixin, TimestampMixin):
     event_type: Mapped[SecurityEventType] = mapped_column(
         SQLEnum(SecurityEventType), nullable=False, index=True
     )
-    severity: Mapped[Severity] = mapped_column(SQLEnum(Severity), nullable=False, index=True)
+    severity: Mapped[Severity] = mapped_column(
+        SQLEnum(Severity), nullable=False, index=True
+    )
 
     # User & source
-    user_id: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"), index=True)
+    user_id: Mapped[PyUUID | None] = mapped_column(
+        GUID(), ForeignKey("users.id"), index=True
+    )
     ip_address: Mapped[str | None] = mapped_column(IPAddress())
     user_agent: Mapped[str | None] = mapped_column(Text)
     country_code: Mapped[str | None] = mapped_column(String(2))
@@ -140,12 +149,19 @@ class UserReputation(Base):
     )
 
     # Behavior flags
-    impossible_travel_detected: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    multiple_devices_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    impossible_travel_detected: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    multiple_devices_flagged: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
 
     # Timestamp
     last_updated: Mapped[dt.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     def __repr__(self):
@@ -158,7 +174,9 @@ class RateLimitViolation(Base, UUIDMixin):
     __tablename__ = "rate_limit_violations"
 
     # User & source
-    user_id: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"), index=True)
+    user_id: Mapped[PyUUID | None] = mapped_column(
+        GUID(), ForeignKey("users.id"), index=True
+    )
     ip_address: Mapped[str] = mapped_column(IPAddress(), nullable=False, index=True)
     endpoint: Mapped[str] = mapped_column(String(255), nullable=False)
 
