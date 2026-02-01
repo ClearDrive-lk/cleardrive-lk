@@ -66,14 +66,18 @@ async def google_auth(
         google_user_info = verify_google_token_v2(auth_request.id_token)
     except Exception as e:
         err_msg = str(e)
-        if "wrong audience" in err_msg.lower():
+        if "4166288126" in err_msg:
             err_msg += (
-                " Use OAuth Playground with your app's Client ID: gear icon → "
-                "'Use your own OAuth credentials' → GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from .env."
+                " (Hint: You are using the default OAuth Playground credentials! Click Gear icon ⚙️ → "
+                "'Use your own OAuth credentials' → Enter your Client ID/Secret.)"
+            )
+        elif "wrong audience" in err_msg.lower():
+            err_msg += (
+                " (Hint: Check that GOOGLE_CLIENT_ID in backend/.env matches the Client ID used to generate the token!)"
             )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid Google token: {err_msg}"
+            detail=err_msg
         )
     
     email = google_user_info.get("email")
