@@ -14,9 +14,7 @@ import json
 import base64
 
 # Use BACKEND_URL when running inside Docker so script and API see the same host
-BASE_URL = (
-    os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/") + "/api/v1"
-)
+BASE_URL = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/") + "/api/v1"
 
 
 def test_google_oauth_flow():
@@ -96,9 +94,7 @@ def test_google_oauth_flow():
         return
 
     # Step 4: Verify OTP
-    response = requests.post(
-        f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp}
-    )
+    response = requests.post(f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp})
 
     if response.status_code == 200:
         tokens = response.json()

@@ -39,9 +39,7 @@ def test_auth_flow():
     # Step 3: Verify OTP
     print(f"Step 3: Verifying OTP...")
 
-    response = requests.post(
-        f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp}
-    )
+    response = requests.post(f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp})
 
     if response.status_code == 200:
         tokens = response.json()
@@ -73,9 +71,7 @@ def test_auth_flow():
         # Step 5: Test token refresh
         print("Step 5: Testing token refresh...")
 
-        response = requests.post(
-            f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh_token}
-        )
+        response = requests.post(f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh_token})
 
         if response.status_code == 200:
             new_tokens = response.json()

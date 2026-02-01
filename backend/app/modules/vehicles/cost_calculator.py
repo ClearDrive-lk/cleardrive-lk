@@ -290,17 +290,11 @@ def calculate_total_cost(
     )
 
     # Calculate percentages
-    vehicle_percentage = (vehicle_price_lkr / total_cost * Decimal("100")).quantize(
-        Decimal("0.01")
-    )
+    vehicle_percentage = (vehicle_price_lkr / total_cost * Decimal("100")).quantize(Decimal("0.01"))
     taxes_total = customs_duty + excise_duty + cess + vat
-    taxes_percentage = (taxes_total / total_cost * Decimal("100")).quantize(
-        Decimal("0.01")
-    )
+    taxes_percentage = (taxes_total / total_cost * Decimal("100")).quantize(Decimal("0.01"))
     fees_total = shipping_cost + port_charges + clearance_fee + documentation_fee
-    fees_percentage = (fees_total / total_cost * Decimal("100")).quantize(
-        Decimal("0.01")
-    )
+    fees_percentage = (fees_total / total_cost * Decimal("100")).quantize(Decimal("0.01"))
 
     return {
         "vehicle_price_jpy": price_jpy,

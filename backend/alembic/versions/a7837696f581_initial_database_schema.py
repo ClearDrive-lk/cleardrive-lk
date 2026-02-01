@@ -24,9 +24,7 @@ def upgrade() -> None:
         "payment_idempotency",
         sa.Column("idempotency_key", sa.String(length=255), nullable=False),
         sa.Column("request_hash", sa.String(length=64), nullable=False),
-        sa.Column(
-            "response_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("response_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.UUID(), nullable=False),
@@ -107,9 +105,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "transmission",
-            sa.Enum(
-                "MANUAL", "AUTOMATIC", "CVT", "SEMI_AUTOMATIC", name="transmission"
-            ),
+            sa.Enum("MANUAL", "AUTOMATIC", "CVT", "SEMI_AUTOMATIC", name="transmission"),
             nullable=True,
         ),
         sa.Column("auction_grade", sa.String(length=10), nullable=True),
@@ -117,9 +113,7 @@ def upgrade() -> None:
         sa.Column("image_url", sa.String(length=500), nullable=True),
         sa.Column(
             "status",
-            sa.Enum(
-                "AVAILABLE", "RESERVED", "SOLD", "UNAVAILABLE", name="vehiclestatus"
-            ),
+            sa.Enum("AVAILABLE", "RESERVED", "SOLD", "UNAVAILABLE", name="vehiclestatus"),
             nullable=False,
         ),
         sa.Column("id", sa.UUID(), nullable=False),
@@ -137,9 +131,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_vehicles_auction_id"), "vehicles", ["auction_id"], unique=True
-    )
+    op.create_index(op.f("ix_vehicles_auction_id"), "vehicles", ["auction_id"], unique=True)
     op.create_index(op.f("ix_vehicles_make"), "vehicles", ["make"], unique=False)
     op.create_index(op.f("ix_vehicles_model"), "vehicles", ["model"], unique=False)
     op.create_index(op.f("ix_vehicles_status"), "vehicles", ["status"], unique=False)
@@ -154,9 +146,7 @@ def upgrade() -> None:
         sa.Column("last_verified", sa.DateTime(timezone=True), nullable=True),
         sa.Column(
             "verification_status",
-            sa.Enum(
-                "PENDING", "VERIFIED", "FAILED", "TAMPERED", name="verificationstatus"
-            ),
+            sa.Enum("PENDING", "VERIFIED", "FAILED", "TAMPERED", name="verificationstatus"),
             nullable=False,
         ),
         sa.Column("id", sa.UUID(), nullable=False),
@@ -178,9 +168,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_file_integrity_file_url"), "file_integrity", ["file_url"], unique=True
-    )
+    op.create_index(op.f("ix_file_integrity_file_url"), "file_integrity", ["file_url"], unique=True)
     op.create_index(
         op.f("ix_file_integrity_sha256_hash"),
         "file_integrity",
@@ -198,16 +186,12 @@ def upgrade() -> None:
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
             "request_type",
-            sa.Enum(
-                "DATA_EXPORT", "DATA_DELETION", "DATA_RECTIFICATION", name="requesttype"
-            ),
+            sa.Enum("DATA_EXPORT", "DATA_DELETION", "DATA_RECTIFICATION", name="requesttype"),
             nullable=False,
         ),
         sa.Column(
             "status",
-            sa.Enum(
-                "PENDING", "PROCESSING", "COMPLETED", "FAILED", name="requeststatus"
-            ),
+            sa.Enum("PENDING", "PROCESSING", "COMPLETED", "FAILED", name="requeststatus"),
             nullable=False,
         ),
         sa.Column(
@@ -235,12 +219,8 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_gdpr_requests_status"), "gdpr_requests", ["status"], unique=False
-    )
-    op.create_index(
-        op.f("ix_gdpr_requests_user_id"), "gdpr_requests", ["user_id"], unique=False
-    )
+    op.create_index(op.f("ix_gdpr_requests_status"), "gdpr_requests", ["status"], unique=False)
+    op.create_index(op.f("ix_gdpr_requests_user_id"), "gdpr_requests", ["user_id"], unique=False)
     op.create_table(
         "kyc_documents",
         sa.Column("user_id", sa.UUID(), nullable=False),
@@ -251,12 +231,8 @@ def upgrade() -> None:
         sa.Column("nic_front_url", sa.Text(), nullable=False),
         sa.Column("nic_back_url", sa.Text(), nullable=False),
         sa.Column("selfie_url", sa.Text(), nullable=False),
-        sa.Column(
-            "extracted_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
-        sa.Column(
-            "discrepancies", postgresql.JSONB(astext_type=sa.Text()), nullable=True
-        ),
+        sa.Column("extracted_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("discrepancies", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column(
             "status",
             sa.Enum("PENDING", "APPROVED", "REJECTED", name="kycstatus"),
@@ -285,12 +261,8 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_kyc_documents_status"), "kyc_documents", ["status"], unique=False
-    )
-    op.create_index(
-        op.f("ix_kyc_documents_user_id"), "kyc_documents", ["user_id"], unique=True
-    )
+    op.create_index(op.f("ix_kyc_documents_status"), "kyc_documents", ["status"], unique=False)
+    op.create_index(op.f("ix_kyc_documents_user_id"), "kyc_documents", ["user_id"], unique=True)
     op.create_table(
         "orders",
         sa.Column("user_id", sa.UUID(), nullable=False),
@@ -346,9 +318,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_orders_status"), "orders", ["status"], unique=False)
     op.create_index(op.f("ix_orders_user_id"), "orders", ["user_id"], unique=False)
-    op.create_index(
-        op.f("ix_orders_vehicle_id"), "orders", ["vehicle_id"], unique=False
-    )
+    op.create_index(op.f("ix_orders_vehicle_id"), "orders", ["vehicle_id"], unique=False)
     op.create_table(
         "rate_limit_violations",
         sa.Column("user_id", sa.UUID(), nullable=True),
@@ -637,9 +607,7 @@ def upgrade() -> None:
         ["idempotency_key"],
         unique=True,
     )
-    op.create_index(
-        op.f("ix_payments_order_id"), "payments", ["order_id"], unique=False
-    )
+    op.create_index(op.f("ix_payments_order_id"), "payments", ["order_id"], unique=False)
     op.create_index(
         op.f("ix_payments_payhere_payment_id"),
         "payments",
@@ -757,9 +725,7 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(
-            ["shipment_id"], ["shipment_details.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["shipment_id"], ["shipment_details.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["uploaded_by"],
             ["users.id"],
@@ -787,18 +753,12 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(
-        op.f("ix_shipping_documents_shipment_id"), table_name="shipping_documents"
-    )
-    op.drop_index(
-        op.f("ix_shipping_documents_document_type"), table_name="shipping_documents"
-    )
+    op.drop_index(op.f("ix_shipping_documents_shipment_id"), table_name="shipping_documents")
+    op.drop_index(op.f("ix_shipping_documents_document_type"), table_name="shipping_documents")
     op.drop_table("shipping_documents")
     op.drop_index(op.f("ix_shipment_details_status"), table_name="shipment_details")
     op.drop_index(op.f("ix_shipment_details_order_id"), table_name="shipment_details")
-    op.drop_index(
-        op.f("ix_shipment_details_exporter_id"), table_name="shipment_details"
-    )
+    op.drop_index(op.f("ix_shipment_details_exporter_id"), table_name="shipment_details")
     op.drop_table("shipment_details")
     op.drop_index(op.f("ix_payments_user_id"), table_name="payments")
     op.drop_index(op.f("ix_payments_status"), table_name="payments")
@@ -811,9 +771,7 @@ def downgrade() -> None:
         postgresql_where=sa.text("status = 'COMPLETED'"),
     )
     op.drop_table("payments")
-    op.drop_index(
-        op.f("ix_order_status_history_order_id"), table_name="order_status_history"
-    )
+    op.drop_index(op.f("ix_order_status_history_order_id"), table_name="order_status_history")
     op.drop_table("order_status_history")
     op.drop_index(op.f("ix_user_reputation_current_tier"), table_name="user_reputation")
     op.drop_table("user_reputation")
@@ -827,12 +785,8 @@ def downgrade() -> None:
         op.f("ix_rate_limit_violations_violation_time"),
         table_name="rate_limit_violations",
     )
-    op.drop_index(
-        op.f("ix_rate_limit_violations_user_id"), table_name="rate_limit_violations"
-    )
-    op.drop_index(
-        op.f("ix_rate_limit_violations_ip_address"), table_name="rate_limit_violations"
-    )
+    op.drop_index(op.f("ix_rate_limit_violations_user_id"), table_name="rate_limit_violations")
+    op.drop_index(op.f("ix_rate_limit_violations_ip_address"), table_name="rate_limit_violations")
     op.drop_table("rate_limit_violations")
     op.drop_index(op.f("ix_orders_vehicle_id"), table_name="orders")
     op.drop_index(op.f("ix_orders_user_id"), table_name="orders")
@@ -844,9 +798,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_gdpr_requests_user_id"), table_name="gdpr_requests")
     op.drop_index(op.f("ix_gdpr_requests_status"), table_name="gdpr_requests")
     op.drop_table("gdpr_requests")
-    op.drop_index(
-        op.f("ix_file_integrity_verification_status"), table_name="file_integrity"
-    )
+    op.drop_index(op.f("ix_file_integrity_verification_status"), table_name="file_integrity")
     op.drop_index(op.f("ix_file_integrity_sha256_hash"), table_name="file_integrity")
     op.drop_index(op.f("ix_file_integrity_file_url"), table_name="file_integrity")
     op.drop_table("file_integrity")
@@ -861,8 +813,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_index(op.f("ix_users_deleted_at"), table_name="users")
     op.drop_table("users")
-    op.drop_index(
-        op.f("ix_payment_idempotency_idempotency_key"), table_name="payment_idempotency"
-    )
+    op.drop_index(op.f("ix_payment_idempotency_idempotency_key"), table_name="payment_idempotency")
     op.drop_table("payment_idempotency")
     # ### end Alembic commands ###

@@ -255,9 +255,7 @@ async def verify_otp(
             user.last_failed_auth = datetime.utcnow()
             db.commit()
 
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP")
 
     # Delete OTP (one-time use)
     await redis.delete(otp_key)
@@ -266,9 +264,7 @@ async def verify_otp(
     user = db.query(User).filter(User.email == verify_request.email).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Reset failed attempts on successful login
     user.failed_auth_attempts = 0
@@ -289,8 +285,7 @@ async def verify_otp(
         user_agent=request.headers.get("user-agent"),
         device_info=extract_device_info(request),
         is_active=True,
-        expires_at=datetime.utcnow()
-        + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
     db.add(session)
@@ -418,9 +413,7 @@ async def refresh_token(
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Find session with this refresh token
     refresh_token_hash = hash_token(refresh_request.refresh_token)
@@ -512,9 +505,7 @@ async def revoke_session(
     )
 
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     session.is_active = False
     db.commit()

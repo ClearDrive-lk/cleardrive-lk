@@ -52,15 +52,9 @@ def test_search_vehicles(client, db):
 
     # Create test vehicles
     vehicles = [
-        Vehicle(
-            auction_id="T1", make="Toyota", model="Prius", year=2020, price_jpy=1850000
-        ),
-        Vehicle(
-            auction_id="T2", make="Toyota", model="Aqua", year=2019, price_jpy=1250000
-        ),
-        Vehicle(
-            auction_id="H1", make="Honda", model="Fit", year=2020, price_jpy=1350000
-        ),
+        Vehicle(auction_id="T1", make="Toyota", model="Prius", year=2020, price_jpy=1850000),
+        Vehicle(auction_id="T2", make="Toyota", model="Aqua", year=2019, price_jpy=1250000),
+        Vehicle(auction_id="H1", make="Honda", model="Fit", year=2020, price_jpy=1350000),
     ]
 
     for v in vehicles:
