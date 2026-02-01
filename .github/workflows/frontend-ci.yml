@@ -130,6 +130,9 @@ jobs:
     needs: [check-frontend, lint, security]
     if: needs.check-frontend.outputs.frontend-exists == 'true'
 
+    env:
+      NEXT_PUBLIC_API_URL: https://api.cleardrive.lk/api/v1
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -162,8 +165,6 @@ jobs:
           fi
 
       - name: Build application
-        env:
-          NEXT_PUBLIC_API_URL: https://api.cleardrive.lk/api/v1
         run: |
           cd apps/web
           npm run build
