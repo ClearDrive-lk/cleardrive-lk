@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from typing import Any, Optional, cast
+from typing import Any, Optional, cast, Dict
 import httpx
 from uuid import UUID
 from google.auth.transport import requests as google_requests
@@ -150,7 +150,7 @@ async def google_auth(
     )
 
 
-def verify_google_token_v2(id_token_string: str) -> dict:
+def verify_google_token_v2(id_token_string: str) -> Dict[str, Any]:
     """
     Verify Google ID token using official Google library.
 
@@ -176,14 +176,14 @@ def verify_google_token_v2(id_token_string: str) -> dict:
             raise ValueError("Wrong issuer.")
 
         # Token is valid
-        return idinfo
+        return cast(Dict[str, Any], idinfo)
 
     except ValueError as e:
         # Invalid token
         raise ValueError(f"Invalid Google token: {str(e)}")
 
 
-async def verify_google_token(id_token: str) -> dict:
+async def verify_google_token(id_token: str) -> Dict[str, Any]:
     """
     Verify Google ID token with Google API (fallback method).
 
@@ -204,13 +204,13 @@ async def verify_google_token(id_token: str) -> dict:
         if response.status_code != 200:
             raise Exception("Invalid Google token")
 
-        user_info = cast(dict[str, Any], response.json())
+        user_info = cast(Dict[str, Any], response.json())
 
         # Verify audience (client ID)
         if user_info.get("aud") != settings.GOOGLE_CLIENT_ID:
             raise Exception("Invalid token audience")
 
-        return user_info
+        return user_info  # type: ignore
 
 
 # ============================================================================
