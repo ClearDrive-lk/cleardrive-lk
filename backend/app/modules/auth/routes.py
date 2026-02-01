@@ -244,6 +244,7 @@ async def verify_otp(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OTP expired or not found. Please request a new one.",
         )
+        stored_otp = stored_otp.decode()
 
     # Verify OTP (constant-time comparison to prevent timing attacks)
     if not constant_time_compare(verify_request.otp, stored_otp):
