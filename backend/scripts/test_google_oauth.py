@@ -41,6 +41,7 @@ def test_google_oauth_flow():
     print("         in Google Cloud Console. It must match your frontend URL (e.g., http://localhost:3000).")
     print("   Note: If you get 'FedCM get() rejects...', check if Third-party cookies are blocked")
     print("         in your browser (common in Incognito mode).")
+    print("   Note: If you get 'Error 401: invalid_client', check your GOOGLE_CLIENT_ID for typos/spaces.")
     print("Option B: Use this test page:")
     print("  https://accounts.google.com/gsi/select")
     print("\nFor now, let's test with the verify-otp endpoint directly.")
