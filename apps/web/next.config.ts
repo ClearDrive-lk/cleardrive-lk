@@ -14,8 +14,23 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:8000/api/v1/:path*', // Proxy to Backend
+        source: "/api/:path*",
+        destination: "http://localhost:8000/api/v1/:path*", // Proxy to Backend
+      },
+    ];
+  },
+
+  // ⭐ REQUIRED FOR FEDCM
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "identity-credentials-get=(self)",
+          },
+        ],
       },
     ];
   },
