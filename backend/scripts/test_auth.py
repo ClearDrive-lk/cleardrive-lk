@@ -4,7 +4,7 @@
 Test authentication flow in development mode.
 """
 
-import requests
+import requests  # type: ignore
 import json
 
 BASE_URL = "http://localhost:8000/api/v1"
@@ -25,6 +25,8 @@ def test_auth_flow():
 
     # Step 2: Request OTP resend (this will generate OTP for existing user)
     print(f"Step 2: Requesting OTP for {test_email}...")
+
+    response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email})
 
     response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email})
 
@@ -49,11 +51,15 @@ def test_auth_flow():
         access_token = tokens["access_token"]
         refresh_token = tokens["refresh_token"]
 
+        access_token = tokens["access_token"]
+        refresh_token = tokens["refresh_token"]
+
         # Step 4: Test protected endpoint (get sessions)
         print("Step 4: Testing protected endpoint (Get Sessions)...")
 
         response = requests.get(
-            f"{BASE_URL}/auth/sessions", headers={"Authorization": f"Bearer {access_token}"}
+            f"{BASE_URL}/auth/sessions",
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         if response.status_code == 200:
@@ -78,7 +84,8 @@ def test_auth_flow():
         print("Step 6: Testing logout...")
 
         response = requests.post(
-            f"{BASE_URL}/auth/logout", headers={"Authorization": f"Bearer {access_token}"}
+            f"{BASE_URL}/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         if response.status_code == 200:
