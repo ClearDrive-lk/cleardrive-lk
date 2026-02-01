@@ -23,9 +23,7 @@ def test_vehicle_api():
         data = response.json()
         print(f"✅ Found {data['total']} vehicles")
         print(f"   Page: {data['page']}/{data['total_pages']}")
-        print(
-            f"   First vehicle: {data['vehicles'][0]['make']} {data['vehicles'][0]['model']}\n"
-        )
+        print(f"   First vehicle: {data['vehicles'][0]['make']} {data['vehicles'][0]['model']}\n")
     else:
         print(f"❌ Failed: {response.json()}\n")
 
@@ -102,12 +100,8 @@ def test_vehicle_api():
             if response.status_code == 200:
                 cost = response.json()
                 print(f"✅ Cost breakdown:")
-                print(
-                    f"   Vehicle Price (JPY): ¥{float(cost['vehicle_price_jpy']):,.0f}"
-                )
-                print(
-                    f"   Vehicle Price (LKR): Rs. {float(cost['vehicle_price_lkr']):,.2f}"
-                )
+                print(f"   Vehicle Price (JPY): ¥{float(cost['vehicle_price_jpy']):,.0f}")
+                print(f"   Vehicle Price (LKR): Rs. {float(cost['vehicle_price_lkr']):,.2f}")
                 print(f"   Exchange Rate: {cost['exchange_rate']}")
                 print(f"   Shipping Cost: Rs. {float(cost['shipping_cost_lkr']):,.2f}")
                 print(f"   Customs Duty: Rs. {float(cost['customs_duty_lkr']):,.2f}")
@@ -115,9 +109,7 @@ def test_vehicle_api():
                 print(f"   VAT (15%): Rs. {float(cost['vat_lkr']):,.2f}")
                 print(f"   Port Charges: Rs. {float(cost['port_charges_lkr']):,.2f}")
                 print(f"   Clearance Fee: Rs. {float(cost['clearance_fee_lkr']):,.2f}")
-                print(
-                    f"   Documentation: Rs. {float(cost['documentation_fee_lkr']):,.2f}"
-                )
+                print(f"   Documentation: Rs. {float(cost['documentation_fee_lkr']):,.2f}")
                 print(f"   ─────────────────────────────────────")
                 print(f"   TOTAL COST: Rs. {float(cost['total_cost_lkr']):,.2f}")
                 print(f"\n   Breakdown:")

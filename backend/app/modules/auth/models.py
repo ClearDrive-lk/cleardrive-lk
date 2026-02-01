@@ -41,17 +41,13 @@ class User(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "users"
 
     # Basic info
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     name: Mapped[str | None] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(20))
 
     # Authentication
     google_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
-    password_hash: Mapped[str | None] = mapped_column(
-        String(255)
-    )  # For admin backup password
+    password_hash: Mapped[str | None] = mapped_column(String(255))  # For admin backup password
 
     # Role & Status
     role: Mapped[Role] = mapped_column(
@@ -59,17 +55,11 @@ class User(Base, UUIDMixin, TimestampMixin):
     )
 
     # Security tracking
-    failed_auth_attempts: Mapped[int] = mapped_column(
-        Integer, default=0, nullable=False
-    )
-    last_failed_auth: Mapped[dt.datetime | None] = mapped_column(
-        DateTime(timezone=True)
-    )
+    failed_auth_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_failed_auth: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     # GDPR
-    deleted_at: Mapped[dt.datetime | None] = mapped_column(
-        DateTime(timezone=True), index=True
-    )
+    deleted_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     # Reviewed KYC Documents
     reviewed_kyc_documents = relationship(
@@ -115,9 +105,7 @@ class Session(Base, UUIDMixin, TimestampMixin):
 
     # Session status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    expires_at: Mapped[dt.datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    expires_at: Mapped[dt.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_active: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

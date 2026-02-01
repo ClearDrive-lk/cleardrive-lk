@@ -69,9 +69,7 @@ class Order(Base, UUIDMixin, TimestampMixin):
     )
 
     # Customer details (encrypted)
-    shipping_address: Mapped[str] = mapped_column(
-        Text, nullable=False
-    )  # Encrypted with AES-256
+    shipping_address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted with AES-256
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Pricing
