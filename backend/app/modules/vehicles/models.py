@@ -74,7 +74,10 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[VehicleStatus] = mapped_column(
-        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False, index=True
+        SQLEnum(VehicleStatus),
+        default=VehicleStatus.AVAILABLE,
+        nullable=False,
+        index=True,
     )
 
     # Relationships

@@ -41,7 +41,10 @@ class GDPRRequest(Base, UUIDMixin, TimestampMixin):
     # Request info
     request_type: Mapped[RequestType] = mapped_column(SQLEnum(RequestType), nullable=False)
     status: Mapped[RequestStatus] = mapped_column(
-        SQLEnum(RequestStatus), default=RequestStatus.PENDING, nullable=False, index=True
+        SQLEnum(RequestStatus),
+        default=RequestStatus.PENDING,
+        nullable=False,
+        index=True,
     )
 
     # Timestamps
