@@ -7,7 +7,15 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Index, Numeric, String, JSON
+from sqlalchemy import (
+    DateTime,
+    Enum as SQLEnum,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    JSON,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 from app.core.database import Base
@@ -40,7 +48,9 @@ class Payment(Base, UUIDMixin, TimestampMixin):
     )
 
     # PayHere details
-    payhere_payment_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
+    payhere_payment_id: Mapped[str | None] = mapped_column(
+        String(255), unique=True, index=True
+    )
     idempotency_key: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )

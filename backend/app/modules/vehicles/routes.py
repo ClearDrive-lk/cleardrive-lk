@@ -47,7 +47,9 @@ async def get_vehicles(
     status: VehicleStatus = VehicleStatus.AVAILABLE,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("created_at", regex="^(price_jpy|year|mileage_km|created_at)$"),
+    sort_by: str = Query(
+        "created_at", regex="^(price_jpy|year|mileage_km|created_at)$"
+    ),
     sort_order: str = Query("desc", regex="^(asc|desc)$"),
     db: Session = Depends(get_db),
 ):
@@ -140,7 +142,9 @@ async def get_vehicle(
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+        )
 
     return VehicleResponse.model_validate(vehicle)
 
@@ -148,7 +152,9 @@ async def get_vehicle(
 @router.get("/{vehicle_id}/cost", response_model=CostBreakdown)
 async def calculate_cost(
     vehicle_id: UUID,
-    exchange_rate: Optional[Decimal] = Query(None, description="Custom JPY to LKR rate"),
+    exchange_rate: Optional[Decimal] = Query(
+        None, description="Custom JPY to LKR rate"
+    ),
     db: Session = Depends(get_db),
 ):
     """
@@ -160,7 +166,9 @@ async def calculate_cost(
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+        )
 
     # Use custom exchange rate or default
     rate = exchange_rate or DEFAULT_JPY_TO_LKR
@@ -189,7 +197,9 @@ async def create_vehicle(
     """
 
     # Check if auction_id already exists
-    existing = db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data.auction_id).first()
+    existing = (
+        db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data.auction_id).first()
+    )
 
     if existing:
         raise HTTPException(
@@ -223,7 +233,9 @@ async def update_vehicle(
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+        )
 
     # Update fields
     update_data = vehicle_data.model_dump(exclude_unset=True)
@@ -252,7 +264,9 @@ async def delete_vehicle(
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found"
+        )
 
     # Check if vehicle has orders
     # TODO: Add this check when Order model is imported

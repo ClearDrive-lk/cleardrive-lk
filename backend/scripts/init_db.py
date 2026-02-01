@@ -347,7 +347,9 @@ def create_sample_vehicles(db: Session) -> None:
     # Only add vehicles that don't exist
     for vehicle_data in sample_vehicles:
         existing = (
-            db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data["auction_id"]).first()
+            db.query(Vehicle)
+            .filter(Vehicle.auction_id == vehicle_data["auction_id"])
+            .first()
         )
 
         if not existing:

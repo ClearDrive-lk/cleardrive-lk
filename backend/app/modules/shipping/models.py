@@ -6,7 +6,16 @@ import datetime as dt
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import Boolean, Date, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    Enum as SQLEnum,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 from app.core.database import Base
@@ -56,7 +65,9 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
     vessel_name: Mapped[str | None] = mapped_column(String(255))
     voyage_number: Mapped[str | None] = mapped_column(String(100))
     departure_port: Mapped[str | None] = mapped_column(String(255))
-    arrival_port: Mapped[str | None] = mapped_column(String(255), default="Colombo, Sri Lanka")
+    arrival_port: Mapped[str | None] = mapped_column(
+        String(255), default="Colombo, Sri Lanka"
+    )
 
     # Dates
     departure_date: Mapped[dt.date | None] = mapped_column(Date)
@@ -70,13 +81,20 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[ShipmentStatus] = mapped_column(
-        SQLEnum(ShipmentStatus), default=ShipmentStatus.PENDING_SHIPMENT, nullable=False, index=True
+        SQLEnum(ShipmentStatus),
+        default=ShipmentStatus.PENDING_SHIPMENT,
+        nullable=False,
+        index=True,
     )
 
     # Submission & Approval
     submitted_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
-    admin_approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
-    admin_approved_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
+    admin_approved_at: Mapped[dt.datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    admin_approved_by: Mapped[PyUUID | None] = mapped_column(
+        GUID(), ForeignKey("users.id")
+    )
 
     # Relationships
     order: Mapped[Order] = relationship("Order", back_populates="shipment_details")
@@ -110,7 +128,9 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     mime_type: Mapped[str | None] = mapped_column(String(100))
 
     # Upload info
-    uploaded_by: Mapped[PyUUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
+    uploaded_by: Mapped[PyUUID] = mapped_column(
+        GUID(), ForeignKey("users.id"), nullable=False
+    )
     uploaded_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -121,7 +141,9 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     verified_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    shipment: Mapped[ShipmentDetails] = relationship("ShipmentDetails", back_populates="documents")
+    shipment: Mapped[ShipmentDetails] = relationship(
+        "ShipmentDetails", back_populates="documents"
+    )
 
     def __repr__(self):
         return f"<ShippingDocument {self.document_type} - {self.file_name}>"

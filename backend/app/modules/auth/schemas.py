@@ -85,6 +85,7 @@ class OTPResendRequest(BaseModel):
 
 class DevEnsureUserRequest(BaseModel):
     """Dev-only: ensure a test user exists (create if not)."""
+
     email: EmailStr
     name: Optional[str] = None
 

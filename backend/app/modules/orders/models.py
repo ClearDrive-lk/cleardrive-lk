@@ -69,7 +69,9 @@ class Order(Base, UUIDMixin, TimestampMixin):
     )
 
     # Customer details (encrypted)
-    shipping_address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted with AES-256
+    shipping_address: Mapped[str] = mapped_column(
+        Text, nullable=False
+    )  # Encrypted with AES-256
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Pricing
@@ -85,7 +87,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
         "Payment", back_populates="order", uselist=False, cascade="all, delete-orphan"
     )
     shipment_details: Mapped[ShipmentDetails | None] = relationship(
-        "ShipmentDetails", back_populates="order", uselist=False, cascade="all, delete-orphan"
+        "ShipmentDetails",
+        back_populates="order",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):

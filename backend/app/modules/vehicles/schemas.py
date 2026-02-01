@@ -123,7 +123,9 @@ class CostBreakdown(BaseModel):
 
     # Import costs
     shipping_cost_lkr: Decimal = Field(..., description="Estimated shipping cost")
-    customs_duty_lkr: Decimal = Field(..., description="Customs duty (based on engine CC)")
+    customs_duty_lkr: Decimal = Field(
+        ..., description="Customs duty (based on engine CC)"
+    )
     excise_duty_lkr: Decimal = Field(..., description="Excise duty")
     vat_lkr: Decimal = Field(..., description="Value Added Tax (15%)")
     cess_lkr: Decimal = Field(..., description="Cess (if applicable)")
@@ -146,7 +148,9 @@ class CostCalculatorRequest(BaseModel):
     """Cost calculator request."""
 
     vehicle_id: UUID
-    exchange_rate: Optional[Decimal] = Field(None, description="Custom exchange rate (optional)")
+    exchange_rate: Optional[Decimal] = Field(
+        None, description="Custom exchange rate (optional)"
+    )
 
 
 # ============================================================================

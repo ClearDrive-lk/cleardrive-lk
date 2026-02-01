@@ -99,7 +99,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # 10. Cache-Control for sensitive endpoints
         if any(path in request.url.path for path in ["/auth/", "/admin/", "/kyc/"]):
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+            response.headers[
+                "Cache-Control"
+            ] = "no-store, no-cache, must-revalidate, private"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
 

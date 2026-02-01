@@ -49,7 +49,9 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "vehicles"
 
     # Auction info
-    auction_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    auction_id: Mapped[str] = mapped_column(
+        String(100), unique=True, nullable=False, index=True
+    )
 
     # Vehicle details
     make: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -66,7 +68,9 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
     transmission: Mapped[Transmission | None] = mapped_column(SQLEnum(Transmission))
 
     # Condition
-    auction_grade: Mapped[str | None] = mapped_column(String(10))  # e.g., "4.5", "5", "R"
+    auction_grade: Mapped[str | None] = mapped_column(
+        String(10)
+    )  # e.g., "4.5", "5", "R"
     color: Mapped[str | None] = mapped_column(String(50))
 
     # Media
@@ -74,7 +78,10 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[VehicleStatus] = mapped_column(
-        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False, index=True
+        SQLEnum(VehicleStatus),
+        default=VehicleStatus.AVAILABLE,
+        nullable=False,
+        index=True,
     )
 
     # Relationships
