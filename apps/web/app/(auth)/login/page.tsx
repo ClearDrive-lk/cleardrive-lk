@@ -16,16 +16,11 @@ export default function LoginPage() {
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // --- FIX: GIVE THE USER A TICKET (COOKIE) ---
-    // In a real app, your backend sends this. For now, we simulate it.
-    document.cookie = "access_token=valid-vip-pass; path=/; max-age=86400"; 
-
+    // Email/password login not implemented yet — use Google to sign in
     setTimeout(() => {
-        setLoading(false);
-        // Redirect to Dashboard
-        router.push('/dashboard'); 
-    }, 1500);
+      setLoading(false);
+      alert('Please use "Continue with Google" to sign in.');
+    }, 300);
   };
 
   return (
