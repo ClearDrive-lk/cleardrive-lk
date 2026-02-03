@@ -7,11 +7,12 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.redis_client import get_redis, close_redis
-from app.middleware.security_headers import SecurityHeadersMiddleware  # 👈 NEW
+from app.middleware.security_headers import SecurityHeadersMiddleware 
 
 # Import routers
 from app.modules.auth.routes import router as auth_router
 from app.modules.vehicles.routes import router as vehicles_router
+from app.api.v1.payments import router as payments_router
 
 
 @asynccontextmanager
@@ -74,6 +75,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")
@@ -87,6 +89,7 @@ async def root():
         "endpoints": {
             "auth": f"{settings.API_V1_PREFIX}/auth",
             "vehicles": f"{settings.API_V1_PREFIX}/vehicles",
+            "payments": f"{settings.API_V1_PREFIX}/payments", 
         },
     }
 
