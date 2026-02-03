@@ -36,6 +36,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Process request
         response = await call_next(request)
 
+        # Skip strict CSP for API docs (Swagger/ReDoc load from CDNs and use inline assets)
+        docs_paths = ("/api/v1/docs", "/api/v1/redoc", "/api/v1/openapi.json")
+        if (
+            request.url.path.rstrip("/") in docs_paths
+            or request.url.path.startswith("/api/v1/docs")
+            or request.url.path.startswith("/api/v1/redoc")
+        ):
+            # Only safe headers for docs; no CSP so Swagger UI can load
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            return cast(Response, response)
+
         # Add security headers
 
         # 1. Content Security Policy (CSP) with nonce

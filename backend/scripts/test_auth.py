@@ -4,7 +4,7 @@
 Test authentication flow in development mode.
 """
 
-import requests
+import requests  # type: ignore
 import json
 
 BASE_URL = "http://localhost:8000/api/v1"
@@ -53,7 +53,8 @@ def test_auth_flow():
         print("Step 4: Testing protected endpoint (Get Sessions)...")
 
         response = requests.get(
-            f"{BASE_URL}/auth/sessions", headers={"Authorization": f"Bearer {access_token}"}
+            f"{BASE_URL}/auth/sessions",
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         if response.status_code == 200:
@@ -78,7 +79,8 @@ def test_auth_flow():
         print("Step 6: Testing logout...")
 
         response = requests.post(
-            f"{BASE_URL}/auth/logout", headers={"Authorization": f"Bearer {access_token}"}
+            f"{BASE_URL}/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
         )
 
         if response.status_code == 200:

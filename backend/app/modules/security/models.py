@@ -80,7 +80,10 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
     # Verification
     last_verified: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     verification_status: Mapped[VerificationStatus] = mapped_column(
-        SQLEnum(VerificationStatus), default=VerificationStatus.PENDING, nullable=False, index=True
+        SQLEnum(VerificationStatus),
+        default=VerificationStatus.PENDING,
+        nullable=False,
+        index=True,
     )
 
     def __repr__(self):
@@ -145,7 +148,10 @@ class UserReputation(Base):
 
     # Timestamp
     last_updated: Mapped[dt.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     def __repr__(self):

@@ -6,6 +6,7 @@ Creates initial admin user and sample data.
 """
 
 import asyncio
+from typing import cast
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, engine, Base
 from app.modules.auth.models import User, Role
@@ -27,7 +28,7 @@ def create_admin_user(db: Session) -> User:
     existing_admin = db.query(User).filter(User.email == first_admin_email).first()
     if existing_admin:
         logger.info(f"Admin user already exists: {first_admin_email}")
-        return existing_admin
+        return cast(User, existing_admin)
 
     # Create admin user
     admin_user = User(
