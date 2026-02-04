@@ -1,6 +1,6 @@
 # backend/app/core/config.py
 
-from typing import List
+from typing import List, Optional
 
 from pydantic_settings import BaseSettings
 
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
 
     # Email (SMTP)
     SMTP_HOST: str
-    SMTP_PORT: int
+    SMTP_PORT: Optional[int] = None
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
