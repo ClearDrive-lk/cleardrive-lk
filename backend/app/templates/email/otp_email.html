@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .otp-box {
+            background-color: #fff;
+            border: 2px dashed #2563eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2563eb;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        .expiry {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚗 ClearDrive.lk</div>
+            <h2>Email Verification</h2>
+        </div>
+        
+        <p>Hello {{ name }},</p>
+        
+        <p>Thank you for signing in to ClearDrive.lk. Please use the verification code below to complete your login:</p>
+        
+        <div class="otp-box">
+            <div class="otp-code">{{ otp }}</div>
+            <div class="expiry">Expires in {{ expiry_minutes }} minutes</div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Security Note:</strong> Never share this code with anyone. ClearDrive.lk will never ask for your verification code.
+        </div>
+        
+        <p>If you didn't request this code, please ignore this email and ensure your account is secure.</p>
+        
+        <div class="footer">
+            <p>This is an automated email from ClearDrive.lk</p>
+            <p>© 2026 ClearDrive.lk - Sri Lankan Vehicle Import Platform</p>
+        </div>
+    </div>
+</body>
+</html>

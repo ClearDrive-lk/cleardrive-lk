@@ -1,6 +1,7 @@
 # backend/app/modules/auth/routes.py
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import Any, Optional, cast, Dict
@@ -8,6 +9,7 @@ import httpx
 from uuid import UUID
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+import logging
 
 from app.core.database import get_db
 from app.core.security import (
@@ -18,9 +20,29 @@ from app.core.security import (
     hash_token,
     constant_time_compare,
 )
+from app.core.otp import generate_otp
 from app.core.dependencies import get_current_active_user
-from app.core.redis_client import get_redis
+from app.core.redis_client import get_redis, store_otp
 from app.core.config import settings
+from app.services.email import send_otp_email
+
+# Import Redis helper functions if they exist
+try:
+    from app.core.redis_client import (
+        get_otp,
+        delete_otp,
+        increment_otp_attempts,
+        check_otp_rate_limit
+    )
+    REDIS_HELPERS_AVAILABLE = True
+except ImportError:
+    REDIS_HELPERS_AVAILABLE = False
+
+# Import OTP helper if it exists
+try:
+    from app.core.otp import verify_otp_constant_time
+except ImportError:
+    verify_otp_constant_time = None
 
 from .models import User, Session as UserSession, Role
 from .schemas import (
@@ -36,6 +58,7 @@ from .schemas import (
     UserResponse,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
@@ -113,40 +136,49 @@ async def google_auth(
             existing_admin = db.query(User).filter(User.role == Role.ADMIN).first()
             if not existing_admin:
                 user.role = Role.ADMIN
-                print(f"🔐 Auto-promoted first admin: {email}")
+                logger.info(f"Auto-promoted first admin: {email}")
 
         db.add(user)
         db.commit()
         db.refresh(user)
 
-        print(f"✅ New user created: {email} (Role: {user.role})")
+        logger.info(f"New user created: {email} (Role: {user.role})")
     else:
         # Update existing user's Google ID if not set
         if not user.google_id:
             user.google_id = google_id
             db.commit()
 
-        print(f"✅ Existing user logged in: {email}")
+        logger.info(f"Existing user logged in: {email}")
 
     # Generate OTP
     otp = generate_otp()
 
     # Store OTP in Redis (5-minute expiry)
-    otp_key = f"otp:{email}"
-    await redis.setex(otp_key, 300, otp)  # 300 seconds = 5 minutes
+    #otp_key = f"otp:{email}"
+    #await redis.setex(otp_key, 300, otp)  # 300 seconds = 5 minutes
+    await store_otp(email, otp)
 
     # TODO: Send OTP via email (we'll implement this in notifications module)
     # For now, log it (ONLY IN DEVELOPMENT!)
-    if settings.ENVIRONMENT == "development":
-        print(f"\n{'='*60}")
-        print(f"🔐 OTP for {email}: {otp}")
-        print(f"{'='*60}\n")
+    # if settings.ENVIRONMENT == "development":
+    #     logger.info(f"\n{'='*60}")
+    #     logger.info(f"🔐 OTP for {email}: {otp}")
+    #     logger.info(f"{'='*60}\n")
+    email_sent = await send_otp_email(email, otp, name)
+
+    if not email_sent:
+        logger.error(f"Failed to send OTP email to {email}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification code. Please try again."
+        )
 
     return GoogleAuthResponse(
         email=email,
         name=name,
         google_id=google_id,
-        message="OTP sent to your email. Check console in development mode.",
+        message="Verification code sent to your email",
     )
 
 
@@ -214,7 +246,7 @@ async def verify_google_token(id_token: str) -> Dict[str, Any]:
 
 
 # ============================================================================
-# OTP VERIFICATION
+# OTP VERIFICATION - UNIFIED VERSION
 # ============================================================================
 
 
@@ -228,42 +260,127 @@ async def verify_otp(
     """
     Verify OTP and issue JWT tokens.
 
+    Rate Limit: 3 requests per 5 minutes per email (if Redis helpers available)
+    Max Attempts: 3 attempts per OTP
+
     Steps:
-    1. Verify OTP from Redis
-    2. Generate access & refresh tokens
-    3. Create session
-    4. Return tokens
+    1. Check rate limit (optional)
+    2. Verify OTP from Redis
+    3. Generate access & refresh tokens
+    4. Create session
+    5. Return tokens
+
+    Args:
+        verify_request: Email and OTP
+        request: HTTP request (for IP/device info)
+        db: Database session
+        redis: Redis client
+
+    Returns:
+        JWT tokens and user info
+
+    Raises:
+        HTTPException 429: Rate limit exceeded
+        HTTPException 400: Invalid OTP or expired
+        HTTPException 401: Invalid OTP
+        HTTPException 404: User not found
     """
 
-    # Get OTP from Redis
-    otp_key = f"otp:{verify_request.email}"
-    stored_otp = await redis.get(otp_key)
+    # Check rate limit (if helpers available)
+    if REDIS_HELPERS_AVAILABLE:
+        if not await check_otp_rate_limit(verify_request.email):
+            logger.warning(f"OTP verification rate limit exceeded for {verify_request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many verification attempts. Please try again in 5 minutes.",
+            )
 
-    if not stored_otp:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OTP expired or not found. Please request a new one.",
-        )
+    # Get OTP from Redis
+    if REDIS_HELPERS_AVAILABLE:
+        # Use helper function if available
+        otp_data = await get_otp(verify_request.email)
+        
+        if not otp_data:
+            logger.warning(f"No OTP found for {verify_request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OTP expired or not found. Please request a new one.",
+            )
+        
+        # Check max attempts
+        if otp_data.get("attempts", 0) >= 3:
+            logger.warning(f"Max OTP attempts exceeded for {verify_request.email}")
+            await delete_otp(verify_request.email)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum verification attempts exceeded. Please request a new code.",
+            )
+        
+        stored_otp = otp_data.get("otp")
+    else:
+        # Fallback: simple Redis key lookup
+        otp_key = f"otp:{verify_request.email}"
+        stored_otp = await redis.get(otp_key)
+        
+        if not stored_otp:
+            logger.warning(f"No OTP found for {verify_request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OTP expired or not found. Please request a new one.",
+            )
 
     # Verify OTP (constant-time comparison to prevent timing attacks)
-    if not constant_time_compare(verify_request.otp, stored_otp):
+    verification_func = verify_otp_constant_time if verify_otp_constant_time else constant_time_compare
+    
+    if not verification_func(stored_otp, verify_request.otp):
         # Increment failed attempts
-        user = db.query(User).filter(User.email == verify_request.email).first()
-        if user:
-            user.failed_auth_attempts += 1
-            user.last_failed_auth = datetime.utcnow()
-            db.commit()
+        if REDIS_HELPERS_AVAILABLE:
+            attempts = await increment_otp_attempts(verify_request.email)
+            logger.warning(f"Invalid OTP for {verify_request.email}. Attempt {attempts}/3")
+            
+            remaining = 3 - attempts
+            if remaining > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid verification code. {remaining} attempts remaining.",
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Maximum verification attempts exceeded. Please request a new code.",
+                )
+        else:
+            # Fallback: track in user model
+            user = db.query(User).filter(User.email == verify_request.email).first()
+            if user:
+                user.failed_auth_attempts += 1
+                user.last_failed_auth = datetime.utcnow()
+                db.commit()
+            
+            logger.warning(f"Invalid OTP for {verify_request.email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid OTP"
+            )
 
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP")
-
-    # Delete OTP (one-time use)
-    await redis.delete(otp_key)
+    # OTP verified successfully - delete it (one-time use)
+    if REDIS_HELPERS_AVAILABLE:
+        await delete_otp(verify_request.email)
+    else:
+        otp_key = f"otp:{verify_request.email}"
+        await redis.delete(otp_key)
+    
+    logger.info(f"OTP verified successfully for {verify_request.email}")
 
     # Get user
     user = db.query(User).filter(User.email == verify_request.email).first()
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        logger.error(f"User not found after OTP verification: {verify_request.email}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
 
     # Reset failed attempts on successful login
     user.failed_auth_attempts = 0
@@ -307,8 +424,15 @@ async def verify_otp(
 
         if oldest_session:
             oldest_session.is_active = False
+            logger.info(f"Revoked oldest session for {user.email} (session limit exceeded)")
 
     db.commit()
+
+    # Log successful authentication
+    logger.info(
+        f"User authenticated successfully: {user.email}",
+        extra={"user_id": str(user.id), "role": user.role.value}
+    )
 
     return TokenResponse(
         access_token=access_token,
@@ -325,28 +449,48 @@ async def resend_otp(
     db: Session = Depends(get_db),
     redis=Depends(get_redis),
 ):
-    """Resend OTP to user's email."""
+    """
+    Resend OTP to user's email.
+    
+    Security: Returns same message whether email exists or not.
+    """
 
     # Check if user exists
     user = db.query(User).filter(User.email == resend_request.email).first()
 
     if not user:
         # Don't reveal if email exists or not (security)
+        logger.warning(f"OTP resend requested for non-existent email: {resend_request.email}")
         return {"message": "If the email exists, OTP has been sent"}
 
     # Generate new OTP
     otp = generate_otp()
 
     # Store in Redis
-    otp_key = f"otp:{resend_request.email}"
-    await redis.setex(otp_key, 300, otp)
+    await store_otp(resend_request.email, otp)
 
-    # TODO: Send via email
+    logger.info(f"OTP resent for {resend_request.email}")
+
+    # Send OTP via email
+    await send_otp_email(resend_request.email, otp, user.name)
+
     if settings.ENVIRONMENT == "development":
-        print(f"🔐 OTP for {resend_request.email}: {otp}")
+        logger.info(f"🔐 OTP for {resend_request.email}: {otp}")
         return {"message": "If the email exists, OTP has been sent", "otp": otp}
 
     return {"message": "If the email exists, OTP has been sent"}
+
+
+@router.post("/request-otp")
+async def request_otp(
+    request_data: OTPResendRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """
+    Request OTP for email login.
+    """
+    return await resend_otp(request_data, db, redis)
 
 
 # ============================================================================
@@ -365,14 +509,21 @@ async def dev_ensure_user(
     """
     if settings.ENVIRONMENT != "development":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    
     user = db.query(User).filter(User.email == body.email).first()
+    
     if user:
+        logger.info(f"Dev: User already exists: {body.email}")
         return {"created": False, "email": body.email, "message": "User already exists"}
+    
     name = body.name or body.email.split("@")[0]
     user = User(email=body.email, name=name, role=Role.CUSTOMER)
     db.add(user)
     db.commit()
     db.refresh(user)
+    
+    logger.info(f"Dev: User created: {body.email}")
+    
     return {
         "created": True,
         "email": body.email,
@@ -396,6 +547,7 @@ async def refresh_token(
     Refresh access token using refresh token.
 
     Implements token rotation - old refresh token is invalidated.
+    Security: Detects token reuse and revokes all sessions if detected.
     """
 
     # Decode refresh token
@@ -428,6 +580,7 @@ async def refresh_token(
 
     if not session:
         # Token reuse detected! Revoke ALL user sessions
+        logger.warning(f"Refresh token reuse detected for user {user.email}. Revoking all sessions.")
         db.query(UserSession).filter(
             UserSession.user_id == user.id, UserSession.is_active == True
         ).update({"is_active": False})
@@ -449,6 +602,8 @@ async def refresh_token(
     session.last_active = datetime.utcnow()
 
     db.commit()
+
+    logger.info(f"Access token refreshed for user {user.email}")
 
     return TokenResponse(
         access_token=new_access_token,
@@ -482,6 +637,8 @@ async def get_sessions(
     # For now, use the most recent session
     current_session_id = sessions[0].id if sessions else None
 
+    logger.info(f"Retrieved {len(sessions)} active sessions for user {current_user.email}")
+
     return SessionListResponse(
         sessions=[SessionResponse.model_validate(s) for s in sessions],
         total=len(sessions),
@@ -509,6 +666,8 @@ async def revoke_session(
     session.is_active = False
     db.commit()
 
+    logger.info(f"Session {session_id} revoked for user {current_user.email}")
+
     return {"message": "Session revoked successfully"}
 
 
@@ -533,6 +692,7 @@ async def logout(
     if recent_session:
         recent_session.is_active = False
         db.commit()
+        logger.info(f"User {current_user.email} logged out")
 
     return {"message": "Logged out successfully"}
 
