@@ -2,6 +2,7 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 from .config import settings
 
 # Create engine
@@ -22,7 +23,6 @@ class Base(DeclarativeBase):
 
 
 # 👇 THIS LINE IS THE KEY
-import app.modules
 
 
 def get_db():

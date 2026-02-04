@@ -16,7 +16,7 @@ updates:
       prefix: "chore(deps)"
     assignees:
       - "Yasindu007"
-  
+
   # Frontend dependencies
   - package-ecosystem: "npm"
     directory: "/apps/web"
@@ -29,7 +29,7 @@ updates:
       - "frontend"
     commit-message:
       prefix: "chore(deps)"
-  
+
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

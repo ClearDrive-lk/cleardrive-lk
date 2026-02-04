@@ -2,8 +2,8 @@ export function AuctionTicker() {
   return (
     <div className="w-full bg-[#0F0F0F] border-b border-white/5 overflow-hidden py-2 select-none">
       {/* We use Array(10) to ensure the content is WAY wider than any screen.
-           The animation moves -50% of the total width. 
-           Since we have repeating patterns, as long as the pattern repeats seamlessly, 
+           The animation moves -50% of the total width.
+           Since we have repeating patterns, as long as the pattern repeats seamlessly,
            the snap back to 0% is invisible.
         */}
       <div className="flex animate-marquee whitespace-nowrap w-max">

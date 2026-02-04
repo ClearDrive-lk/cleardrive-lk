@@ -33,7 +33,11 @@ export default function DashboardPage() {
           ].map((item, i) => (
             <button
               key={i}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${item.active ? "bg-[#FE7743]/10 text-[#FE7743]" : "text-gray-400 hover:text-white hover:bg-white/5"}`}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                item.active
+                  ? "bg-[#FE7743]/10 text-[#FE7743]"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
             >
               <item.icon className="w-4 h-4" />
               {item.label}
@@ -105,7 +109,9 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div
-                      className={`text-2xl font-bold ${card.color || "text-white"}`}
+                      className={`text-2xl font-bold ${
+                        card.color || "text-white"
+                      }`}
                     >
                       {card.value}
                     </div>

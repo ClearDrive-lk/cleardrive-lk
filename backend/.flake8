@@ -2,7 +2,7 @@
 
 [flake8]
 max-line-length = 100
-exclude = 
+exclude =
     .git,
     __pycache__,
     .venv,
@@ -10,7 +10,7 @@ exclude =
     migrations,
     alembic,
     .pytest_cache
-ignore = 
+ignore =
 #   whitespace before ':'
     E203
      # line too long (handled by Black)
@@ -19,6 +19,6 @@ ignore =
     W503
     # module level import not at top of file
     E402
-      
+
 per-file-ignores =
     __init__.py:F401
