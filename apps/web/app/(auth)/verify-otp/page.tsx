@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -36,6 +36,14 @@ export default function VerifyOTPPage() {
       setLoading(false);
     }
   };
+
+  if (!email) {
+    return (
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 relative z-10">
+        <div className="text-gray-400">Redirecting to login...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -80,5 +88,19 @@ export default function VerifyOTPPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function OTPPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-gray-400">
+          Loading...
+        </div>
+      }
+    >
+      <OTPForm />
+    </Suspense>
   );
 }
