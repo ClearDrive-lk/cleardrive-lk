@@ -2,25 +2,22 @@
 """
 OTP generation and verification utilities.
 """
-import secrets
-import hmac
 import hashlib
+import hmac
+import secrets
 from datetime import datetime, timedelta
-from typing import Optional
-
-from app.core.config import settings
 
 
 def generate_otp(length: int = 6) -> str:
     """
     Generate a cryptographically secure random OTP.
-    
+
     Args:
         length: Number of digits (default: 6)
-    
+
     Returns:
         String of random digits
-    
+
     Example:
         >>> otp = generate_otp()
         >>> len(otp)
@@ -30,13 +27,13 @@ def generate_otp(length: int = 6) -> str:
     """
     if length < 4 or length > 10:
         raise ValueError("OTP length must be between 4 and 10 digits")
-    
+
     # Use secrets module for cryptographic randomness
     # Range: 10^(n-1) to 10^n - 1
     # For n=6: 100000 to 999999
     min_value = 10 ** (length - 1)
-    max_value = (10 ** length) - 1
-    
+    max_value = (10**length) - 1
+
     otp = secrets.randbelow(max_value - min_value + 1) + min_value
     return str(otp)
 
@@ -44,14 +41,14 @@ def generate_otp(length: int = 6) -> str:
 def hash_otp(otp: str, email: str) -> str:
     """
     Hash OTP with email as salt for additional security.
-    
+
     Args:
         otp: The OTP to hash
         email: User's email (used as salt)
-    
+
     Returns:
         Hex digest of hashed OTP
-    
+
     Note:
         This is optional - for most use cases, storing OTP in Redis
         with TTL is sufficient. Use this if you need additional security.
@@ -62,19 +59,19 @@ def hash_otp(otp: str, email: str) -> str:
 def verify_otp_constant_time(stored_otp: str, provided_otp: str) -> bool:
     """
     Verify OTP using constant-time comparison to prevent timing attacks.
-    
+
     Args:
         stored_otp: OTP from Redis/database
         provided_otp: OTP provided by user
-    
+
     Returns:
         True if OTPs match, False otherwise
-    
+
     Security:
         Uses hmac.compare_digest for constant-time comparison.
         This prevents timing attacks where attackers could determine
         correct digits by measuring response times.
-    
+
     Example:
         >>> verify_otp_constant_time("123456", "123456")
         True
@@ -83,25 +80,25 @@ def verify_otp_constant_time(stored_otp: str, provided_otp: str) -> bool:
     """
     if not stored_otp or not provided_otp:
         return False
-    
+
     # Ensure both are strings
     stored_otp = str(stored_otp)
     provided_otp = str(provided_otp)
-    
+
     return hmac.compare_digest(stored_otp, provided_otp)
 
 
 def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
     """
     Check if OTP has expired.
-    
+
     Args:
         created_at: When OTP was created (UTC)
         expiry_minutes: Expiry time in minutes (default: 5)
-    
+
     Returns:
         True if expired, False otherwise
-    
+
     Example:
         >>> from datetime import datetime, timedelta
         >>> # OTP created 3 minutes ago
@@ -115,7 +112,7 @@ def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
     """
     if not created_at:
         return True
-    
+
     expiry_time = created_at + timedelta(minutes=expiry_minutes)
     return datetime.utcnow() > expiry_time
 
@@ -123,14 +120,14 @@ def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
 def format_otp_for_display(otp: str, separator: str = " ") -> str:
     """
     Format OTP for better readability in emails/SMS.
-    
+
     Args:
         otp: The OTP to format
         separator: Character to use between digit groups (default: space)
-    
+
     Returns:
         Formatted OTP string
-    
+
     Example:
         >>> format_otp_for_display("123456")
         '123 456'

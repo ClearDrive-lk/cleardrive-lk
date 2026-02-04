@@ -6,7 +6,8 @@ import datetime as dt
 import uuid
 
 from sqlalchemy import DateTime, String, func
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, INET as PG_INET
+from sqlalchemy.dialects.postgresql import INET as PG_INET
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import CHAR, TypeDecorator
 

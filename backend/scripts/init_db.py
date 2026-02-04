@@ -5,14 +5,14 @@ Database initialization script.
 Creates initial admin user and sample data.
 """
 
-import asyncio
-from typing import cast
-from sqlalchemy.orm import Session
-from app.core.database import SessionLocal, engine, Base
-from app.modules.auth.models import User, Role
-from app.modules.vehicles.models import Vehicle, VehicleStatus, FuelType, Transmission
-from app.core.config import settings
 import logging
+from typing import cast
+
+from app.core.config import settings
+from app.core.database import SessionLocal
+from app.modules.auth.models import Role, User
+from app.modules.vehicles.models import FuelType, Transmission, Vehicle, VehicleStatus
+from sqlalchemy.orm import Session
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

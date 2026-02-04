@@ -1,39 +1,38 @@
 # backend/app/modules/auth/routes.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel, EmailStr
-from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-from typing import Any, Optional, cast, Dict
-import httpx
-from uuid import UUID
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 import logging
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, cast
+from uuid import UUID
 
+import httpx
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.dependencies import get_current_active_user
+from app.core.otp import generate_otp
+from app.core.redis_client import get_redis, store_otp
 from app.core.security import (
+    constant_time_compare,
     create_access_token,
     create_refresh_token,
     decode_token,
-    generate_otp,
     hash_token,
-    constant_time_compare,
 )
-from app.core.otp import generate_otp
-from app.core.dependencies import get_current_active_user
-from app.core.redis_client import get_redis, store_otp
-from app.core.config import settings
 from app.services.email import send_otp_email
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
+from sqlalchemy.orm import Session
 
 # Import Redis helper functions if they exist
 try:
     from app.core.redis_client import (
-        get_otp,
+        check_otp_rate_limit,
         delete_otp,
+        get_otp,
         increment_otp_attempts,
-        check_otp_rate_limit
     )
+
     REDIS_HELPERS_AVAILABLE = True
 except ImportError:
     REDIS_HELPERS_AVAILABLE = False
@@ -42,19 +41,21 @@ except ImportError:
 try:
     from app.core.otp import verify_otp_constant_time
 except ImportError:
-    verify_otp_constant_time = None
+    verify_otp_constant_time = None  # type: ignore
 
-from .models import User, Session as UserSession, Role
+from .models import Role
+from .models import Session as UserSession
+from .models import User
 from .schemas import (
+    DevEnsureUserRequest,
     GoogleAuthRequest,
     GoogleAuthResponse,
-    OTPVerifyRequest,
     OTPResendRequest,
-    DevEnsureUserRequest,
-    TokenResponse,
+    OTPVerifyRequest,
     RefreshTokenRequest,
     SessionListResponse,
     SessionResponse,
+    TokenResponse,
     UserResponse,
 )
 
@@ -92,11 +93,15 @@ async def google_auth(
         err_msg = str(e)
         if "4166288126" in err_msg:
             err_msg += (
-                " (Hint: You are using the default OAuth Playground credentials! Click Gear icon ⚙️ → "
-                "'Use your own OAuth credentials' → Enter your Client ID/Secret.)"
+                " (Hint: You are using the default OAuth Playground credentials! "
+                "Click Gear icon ⚙️ → 'Use your own OAuth credentials' → "
+                "Enter your Client ID/Secret.)"
             )
         elif "wrong audience" in err_msg.lower():
-            err_msg += " (Hint: Check that GOOGLE_CLIENT_ID in backend/.env matches the Client ID used to generate the token!)"
+            err_msg += (
+                " (Hint: Check that GOOGLE_CLIENT_ID in backend/.env matches the "
+                "Client ID used to generate the token!)"
+            )
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=err_msg)
 
     email = google_user_info.get("email")
@@ -155,8 +160,8 @@ async def google_auth(
     otp = generate_otp()
 
     # Store OTP in Redis (5-minute expiry)
-    #otp_key = f"otp:{email}"
-    #await redis.setex(otp_key, 300, otp)  # 300 seconds = 5 minutes
+    # otp_key = f"otp:{email}"
+    # await redis.setex(otp_key, 300, otp)  # 300 seconds = 5 minutes
     await store_otp(email, otp)
 
     # TODO: Send OTP via email (we'll implement this in notifications module)
@@ -171,7 +176,7 @@ async def google_auth(
         logger.error(f"Failed to send OTP email to {email}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again."
+            detail="Failed to send verification code. Please try again.",
         )
 
     return GoogleAuthResponse(
@@ -299,14 +304,14 @@ async def verify_otp(
     if REDIS_HELPERS_AVAILABLE:
         # Use helper function if available
         otp_data = await get_otp(verify_request.email)
-        
+
         if not otp_data:
             logger.warning(f"No OTP found for {verify_request.email}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="OTP expired or not found. Please request a new one.",
             )
-        
+
         # Check max attempts
         if otp_data.get("attempts", 0) >= 3:
             logger.warning(f"Max OTP attempts exceeded for {verify_request.email}")
@@ -315,13 +320,13 @@ async def verify_otp(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Maximum verification attempts exceeded. Please request a new code.",
             )
-        
+
         stored_otp = otp_data.get("otp")
     else:
         # Fallback: simple Redis key lookup
         otp_key = f"otp:{verify_request.email}"
         stored_otp = await redis.get(otp_key)
-        
+
         if not stored_otp:
             logger.warning(f"No OTP found for {verify_request.email}")
             raise HTTPException(
@@ -330,14 +335,16 @@ async def verify_otp(
             )
 
     # Verify OTP (constant-time comparison to prevent timing attacks)
-    verification_func = verify_otp_constant_time if verify_otp_constant_time else constant_time_compare
-    
-    if not verification_func(stored_otp, verify_request.otp):
+    verification_func = (
+        verify_otp_constant_time if verify_otp_constant_time is not None else constant_time_compare
+    )
+
+    if not verification_func(cast(str, stored_otp), verify_request.otp):
         # Increment failed attempts
         if REDIS_HELPERS_AVAILABLE:
             attempts = await increment_otp_attempts(verify_request.email)
             logger.warning(f"Invalid OTP for {verify_request.email}. Attempt {attempts}/3")
-            
+
             remaining = 3 - attempts
             if remaining > 0:
                 raise HTTPException(
@@ -356,12 +363,9 @@ async def verify_otp(
                 user.failed_auth_attempts += 1
                 user.last_failed_auth = datetime.utcnow()
                 db.commit()
-            
+
             logger.warning(f"Invalid OTP for {verify_request.email}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid OTP"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP")
 
     # OTP verified successfully - delete it (one-time use)
     if REDIS_HELPERS_AVAILABLE:
@@ -369,7 +373,7 @@ async def verify_otp(
     else:
         otp_key = f"otp:{verify_request.email}"
         await redis.delete(otp_key)
-    
+
     logger.info(f"OTP verified successfully for {verify_request.email}")
 
     # Get user
@@ -377,10 +381,7 @@ async def verify_otp(
 
     if not user:
         logger.error(f"User not found after OTP verification: {verify_request.email}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Reset failed attempts on successful login
     user.failed_auth_attempts = 0
@@ -409,7 +410,7 @@ async def verify_otp(
     # Check session limit (max 5 sessions)
     session_count = (
         db.query(UserSession)
-        .filter(UserSession.user_id == user.id, UserSession.is_active == True)
+        .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
         .count()
     )
 
@@ -417,7 +418,7 @@ async def verify_otp(
         # Revoke oldest session
         oldest_session = (
             db.query(UserSession)
-            .filter(UserSession.user_id == user.id, UserSession.is_active == True)
+            .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
             .order_by(UserSession.created_at.asc())
             .first()
         )
@@ -431,7 +432,7 @@ async def verify_otp(
     # Log successful authentication
     logger.info(
         f"User authenticated successfully: {user.email}",
-        extra={"user_id": str(user.id), "role": user.role.value}
+        extra={"user_id": str(user.id), "role": user.role.value},
     )
 
     return TokenResponse(
@@ -451,7 +452,7 @@ async def resend_otp(
 ):
     """
     Resend OTP to user's email.
-    
+
     Security: Returns same message whether email exists or not.
     """
 
@@ -509,21 +510,21 @@ async def dev_ensure_user(
     """
     if settings.ENVIRONMENT != "development":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-    
+
     user = db.query(User).filter(User.email == body.email).first()
-    
+
     if user:
         logger.info(f"Dev: User already exists: {body.email}")
         return {"created": False, "email": body.email, "message": "User already exists"}
-    
+
     name = body.name or body.email.split("@")[0]
     user = User(email=body.email, name=name, role=Role.CUSTOMER)
     db.add(user)
     db.commit()
     db.refresh(user)
-    
+
     logger.info(f"Dev: User created: {body.email}")
-    
+
     return {
         "created": True,
         "email": body.email,
@@ -573,16 +574,18 @@ async def refresh_token(
         .filter(
             UserSession.user_id == user.id,
             UserSession.refresh_token_hash == refresh_token_hash,
-            UserSession.is_active == True,
+            UserSession.is_active.is_(True),
         )
         .first()
     )
 
     if not session:
         # Token reuse detected! Revoke ALL user sessions
-        logger.warning(f"Refresh token reuse detected for user {user.email}. Revoking all sessions.")
+        logger.warning(
+            f"Refresh token reuse detected for user {user.email}. Revoking all sessions."
+        )
         db.query(UserSession).filter(
-            UserSession.user_id == user.id, UserSession.is_active == True
+            UserSession.user_id == user.id, UserSession.is_active.is_(True)
         ).update({"is_active": False})
         db.commit()
 
@@ -628,7 +631,7 @@ async def get_sessions(
 
     sessions = (
         db.query(UserSession)
-        .filter(UserSession.user_id == current_user.id, UserSession.is_active == True)
+        .filter(UserSession.user_id == current_user.id, UserSession.is_active.is_(True))
         .order_by(UserSession.last_active.desc())
         .all()
     )
@@ -684,7 +687,7 @@ async def logout(
 
     recent_session = (
         db.query(UserSession)
-        .filter(UserSession.user_id == current_user.id, UserSession.is_active == True)
+        .filter(UserSession.user_id == current_user.id, UserSession.is_active.is_(True))
         .order_by(UserSession.last_active.desc())
         .first()
     )

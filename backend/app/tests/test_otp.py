@@ -2,23 +2,13 @@
 """
 Test OTP generation, storage, and verification.
 """
-import pytest
-import asyncio
-from unittest.mock import AsyncMock
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock
 
-from app.core.otp import (
-    generate_otp,
-    verify_otp_constant_time,
-    is_otp_expired
-)
-from app.core.redis_client import (
-    store_otp,
-    get_otp,
-    delete_otp,
-    increment_otp_attempts
-)
-from app.modules.auth.models import User, Role
+import pytest
+from app.core.otp import generate_otp, is_otp_expired, verify_otp_constant_time
+from app.core.redis_client import delete_otp, get_otp, increment_otp_attempts, store_otp
+from app.modules.auth.models import Role, User
 
 
 class TestOTPGeneration:
@@ -58,7 +48,7 @@ class TestOTPVerification:
 
         # Run multiple iterations to get average
         iterations = 100
-        
+
         # Measure time for matching OTPs
         total_match = 0
         for _ in range(iterations):
@@ -167,7 +157,9 @@ class TestOTPEndpoints:
 
         # Mock the email sending function to prevent actual emails during tests
         # and to allow us to check if it was called.
-        mock_send_otp_email = mocker.patch("app.modules.auth.routes.send_otp_email", new_callable=AsyncMock)
+        mock_send_otp_email = mocker.patch(
+            "app.modules.auth.routes.send_otp_email", new_callable=AsyncMock
+        )
         mock_send_otp_email.return_value = True
 
         email = "otp_request@example.com"
@@ -180,15 +172,14 @@ class TestOTPEndpoints:
 
         try:
             # Make a request to the endpoint that should trigger the OTP email
-            response = await async_client.post(
-                "/api/v1/auth/request-otp",
-                json={"email": email}
-            )
+            response = await async_client.post("/api/v1/auth/request-otp", json={"email": email})
 
             # 1. Check if the endpoint returns a success status
             assert response.status_code == 200, "The request to the OTP endpoint failed."
             # NOTE: The response message might differ in your actual implementation.
-            assert "OTP has been sent" in response.json().get("message", ""), "Success message not found in response."
+            assert "OTP has been sent" in response.json().get(
+                "message", ""
+            ), "Success message not found in response."
 
             # 2. Check if the email sending function was called exactly once
             mock_send_otp_email.assert_called_once()
@@ -221,11 +212,7 @@ class TestOTPEndpoints:
         otp = "123456"
 
         # Create user
-        user = User(
-            email=email,
-            name="Test User",
-            role=Role.CUSTOMER
-        )
+        user = User(email=email, name="Test User", role=Role.CUSTOMER)
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -236,8 +223,7 @@ class TestOTPEndpoints:
         try:
             # Verify OTP
             response = await async_client.post(
-                "/api/v1/auth/verify-otp",
-                json={"email": email, "otp": otp}
+                "/api/v1/auth/verify-otp", json={"email": email, "otp": otp}
             )
 
             assert response.status_code == 200
@@ -254,11 +240,7 @@ class TestOTPEndpoints:
         email = "test_invalid@example.com"
 
         # Create user
-        user = User(
-            email=email,
-            name="Test User",
-            role=Role.CUSTOMER
-        )
+        user = User(email=email, name="Test User", role=Role.CUSTOMER)
         db.add(user)
         db.commit()
 
@@ -268,8 +250,7 @@ class TestOTPEndpoints:
         try:
             # Try wrong OTP
             response = await async_client.post(
-                "/api/v1/auth/verify-otp",
-                json={"email": email, "otp": "999999"}
+                "/api/v1/auth/verify-otp", json={"email": email, "otp": "999999"}
             )
 
             assert response.status_code == 400
@@ -283,39 +264,37 @@ class TestOTPEndpoints:
         email = "test_expired@example.com"
 
         # Create user
-        user = User(
-            email=email,
-            name="Test User",
-            role=Role.CUSTOMER
-        )
+        user = User(email=email, name="Test User", role=Role.CUSTOMER)
         db.add(user)
         db.commit()
 
         # Don't store OTP - it will be treated as expired/not found
         response = await async_client.post(
-            "/api/v1/auth/verify-otp",
-            json={"email": email, "otp": "123456"}
+            "/api/v1/auth/verify-otp", json={"email": email, "otp": "123456"}
         )
 
         # Should return 400 for expired/not found OTP
         assert response.status_code == 400
-        assert "expired" in response.json()["detail"].lower() or "not found" in response.json()["detail"].lower()
+        assert (
+            "expired" in response.json()["detail"].lower()
+            or "not found" in response.json()["detail"].lower()
+        )
 
     async def test_verify_otp_max_attempts(self, async_client, db, mocker):
         """Test max attempts exceeded."""
         # Mock rate limit check to avoid 429 errors during this test
         # We want to test the OTP max attempts logic, not the API rate limiter
-        mocker.patch("app.modules.auth.routes.check_otp_rate_limit", return_value=True, new_callable=AsyncMock)
+        mocker.patch(
+            "app.modules.auth.routes.check_otp_rate_limit",
+            return_value=True,
+            new_callable=AsyncMock,
+        )
 
         email = "test_maxattempts@example.com"
         correct_otp = "123456"
 
         # Create user
-        user = User(
-            email=email,
-            name="Test User",
-            role=Role.CUSTOMER
-        )
+        user = User(email=email, name="Test User", role=Role.CUSTOMER)
         db.add(user)
         db.commit()
 
@@ -326,10 +305,9 @@ class TestOTPEndpoints:
             # Try wrong OTP 3 times
             for i in range(3):
                 response = await async_client.post(
-                    "/api/v1/auth/verify-otp",
-                    json={"email": email, "otp": "999999"}
+                    "/api/v1/auth/verify-otp", json={"email": email, "otp": "999999"}
                 )
-                
+
                 if i < 2:
                     # First 2 attempts should return remaining attempts
                     assert response.status_code == 400
@@ -338,7 +316,7 @@ class TestOTPEndpoints:
                     # 3rd attempt should say max attempts exceeded
                     assert response.status_code == 400
                     assert "maximum" in response.json()["detail"].lower()
-            
+
             # Verify OTP is deleted after max attempts
             data = await get_otp(email)
             assert data is None
