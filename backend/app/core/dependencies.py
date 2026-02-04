@@ -1,14 +1,15 @@
 # backend/app/core/dependencies.py
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from jose import JWTError
 from typing import cast
+
+from app.modules.auth.models import Role, User
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
+from sqlalchemy.orm import Session
 
 from .database import get_db
 from .security import decode_token
-from app.modules.auth.models import User, Role
 
 # HTTP Bearer token scheme
 security = HTTPBearer()

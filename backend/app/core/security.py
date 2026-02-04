@@ -1,13 +1,14 @@
 # backend/app/core/security.py
 
-import secrets
+import base64
 import hashlib
+import secrets
 from datetime import datetime, timedelta
-from typing import Optional, cast, Any
+from typing import Any, Optional, cast
+
+from cryptography.fernet import Fernet
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from cryptography.fernet import Fernet
-import base64
 
 from .config import settings
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, cast
 
 import redis.asyncio as redis  # type: ignore[import-untyped]
 
@@ -28,9 +28,7 @@ async def get_redis() -> redis.Redis:
     global _redis_client
 
     if _redis_client is None:
-        _redis_client = redis.from_url(
-            settings.REDIS_URL, encoding="utf-8", decode_responses=True
-        )
+        _redis_client = redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
 
     return _redis_client
 
@@ -42,6 +40,11 @@ async def close_redis():
     if _redis_client:
         await _redis_client.close()
         _redis_client = None
+
+
+async def init_redis() -> None:
+    """Initialize Redis connection."""
+    await get_redis()
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +87,7 @@ async def get_otp(email: str) -> Optional[dict]:
     if not value:
         return None
 
-    return json.loads(value)
+    return cast(Optional[dict], json.loads(value))
 
 
 async def delete_otp(email: str) -> bool:
@@ -113,14 +116,14 @@ async def increment_otp_attempts(email: str) -> int:
 
     if data["attempts"] >= settings.OTP_MAX_ATTEMPTS:
         await delete_otp(email)
-        return data["attempts"]
+        return cast(int, data["attempts"])
 
     # Preserve the remaining TTL so the expiry window isn't reset
     ttl = await client.ttl(key)
     if ttl > 0:
         await client.setex(key, ttl, json.dumps(data))
 
-    return data["attempts"]
+    return cast(int, data["attempts"])
 
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@
 Test vehicle endpoints.
 """
 
-from app.modules.vehicles.models import Vehicle, VehicleStatus, FuelType, Transmission
+from app.modules.vehicles.models import FuelType, Transmission, Vehicle, VehicleStatus
 
 
 def test_get_vehicles_empty(client, db):

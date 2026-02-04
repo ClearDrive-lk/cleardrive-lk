@@ -1,7 +1,8 @@
 # backend/app/core/config.py
 
-from pydantic_settings import BaseSettings
 from typing import List
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -59,7 +60,7 @@ class Settings(BaseSettings):
     OTP_MAX_ATTEMPTS: int = 3
     OTP_RATE_LIMIT_REQUESTS: int = 3
     OTP_RATE_LIMIT_WINDOW_MINUTES: int = 5
-    
+
     # Sentry
     SENTRY_DSN: str | None = None
 

@@ -1,12 +1,12 @@
 # backend/app/modules/auth/schemas.py
 
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
-from .models import Role
+from pydantic import BaseModel, EmailStr, Field
 
+from .models import Role
 
 # ============================================================================
 # USER SCHEMAS
