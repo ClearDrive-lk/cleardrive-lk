@@ -7,7 +7,7 @@ Create Date: 2026-01-27 04:03:44.333880
 """
 from typing import Sequence, Union
 
-from alembic import op
+from alembic import op  # type: ignore[attr-defined]
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
@@ -58,7 +58,12 @@ def upgrade() -> None:
         sa.Column(
             "role",
             sa.Enum(
-                "CUSTOMER", "ADMIN", "CLEARING_AGENT", "FINANCE_PARTNER", "EXPORTER", name="role"
+                "CUSTOMER",
+                "ADMIN",
+                "CLEARING_AGENT",
+                "FINANCE_PARTNER",
+                "EXPORTER",
+                name="role",
             ),
             nullable=False,
         ),
@@ -165,7 +170,10 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_file_integrity_file_url"), "file_integrity", ["file_url"], unique=True)
     op.create_index(
-        op.f("ix_file_integrity_sha256_hash"), "file_integrity", ["sha256_hash"], unique=False
+        op.f("ix_file_integrity_sha256_hash"),
+        "file_integrity",
+        ["sha256_hash"],
+        unique=False,
     )
     op.create_index(
         op.f("ix_file_integrity_verification_status"),
@@ -226,7 +234,9 @@ def upgrade() -> None:
         sa.Column("extracted_data", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("discrepancies", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column(
-            "status", sa.Enum("PENDING", "APPROVED", "REJECTED", name="kycstatus"), nullable=False
+            "status",
+            sa.Enum("PENDING", "APPROVED", "REJECTED", name="kycstatus"),
+            nullable=False,
         ),
         sa.Column("reviewed_by", sa.UUID(), nullable=True),
         sa.Column("reviewed_at", sa.DateTime(timezone=True), nullable=True),
@@ -337,7 +347,10 @@ def upgrade() -> None:
         unique=False,
     )
     op.create_index(
-        op.f("ix_rate_limit_violations_user_id"), "rate_limit_violations", ["user_id"], unique=False
+        op.f("ix_rate_limit_violations_user_id"),
+        "rate_limit_violations",
+        ["user_id"],
+        unique=False,
     )
     op.create_index(
         op.f("ix_rate_limit_violations_violation_time"),
@@ -400,10 +413,16 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        op.f("ix_security_events_event_type"), "security_events", ["event_type"], unique=False
+        op.f("ix_security_events_event_type"),
+        "security_events",
+        ["event_type"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_security_events_severity"), "security_events", ["severity"], unique=False
+        op.f("ix_security_events_severity"),
+        "security_events",
+        ["severity"],
+        unique=False,
     )
     op.create_index(
         op.f("ix_security_events_user_id"), "security_events", ["user_id"], unique=False
@@ -466,7 +485,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("user_id"),
     )
     op.create_index(
-        op.f("ix_user_reputation_current_tier"), "user_reputation", ["current_tier"], unique=False
+        op.f("ix_user_reputation_current_tier"),
+        "user_reputation",
+        ["current_tier"],
+        unique=False,
     )
     op.create_table(
         "order_status_history",
@@ -536,7 +558,10 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        op.f("ix_order_status_history_order_id"), "order_status_history", ["order_id"], unique=False
+        op.f("ix_order_status_history_order_id"),
+        "order_status_history",
+        ["order_id"],
+        unique=False,
     )
     op.create_table(
         "payments",
@@ -577,11 +602,17 @@ def upgrade() -> None:
         postgresql_where=sa.text("status = 'COMPLETED'"),
     )
     op.create_index(
-        op.f("ix_payments_idempotency_key"), "payments", ["idempotency_key"], unique=True
+        op.f("ix_payments_idempotency_key"),
+        "payments",
+        ["idempotency_key"],
+        unique=True,
     )
     op.create_index(op.f("ix_payments_order_id"), "payments", ["order_id"], unique=False)
     op.create_index(
-        op.f("ix_payments_payhere_payment_id"), "payments", ["payhere_payment_id"], unique=True
+        op.f("ix_payments_payhere_payment_id"),
+        "payments",
+        ["payhere_payment_id"],
+        unique=True,
     )
     op.create_index(op.f("ix_payments_status"), "payments", ["status"], unique=False)
     op.create_index(op.f("ix_payments_user_id"), "payments", ["user_id"], unique=False)
@@ -638,10 +669,16 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
-        op.f("ix_shipment_details_exporter_id"), "shipment_details", ["exporter_id"], unique=False
+        op.f("ix_shipment_details_exporter_id"),
+        "shipment_details",
+        ["exporter_id"],
+        unique=False,
     )
     op.create_index(
-        op.f("ix_shipment_details_order_id"), "shipment_details", ["order_id"], unique=True
+        op.f("ix_shipment_details_order_id"),
+        "shipment_details",
+        ["order_id"],
+        unique=True,
     )
     op.create_index(
         op.f("ix_shipment_details_status"), "shipment_details", ["status"], unique=False
@@ -745,7 +782,8 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_security_events_event_type"), table_name="security_events")
     op.drop_table("security_events")
     op.drop_index(
-        op.f("ix_rate_limit_violations_violation_time"), table_name="rate_limit_violations"
+        op.f("ix_rate_limit_violations_violation_time"),
+        table_name="rate_limit_violations",
     )
     op.drop_index(op.f("ix_rate_limit_violations_user_id"), table_name="rate_limit_violations")
     op.drop_index(op.f("ix_rate_limit_violations_ip_address"), table_name="rate_limit_violations")
