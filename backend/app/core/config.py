@@ -45,12 +45,21 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
 
-    # Email
+    # Email (SMTP)
     SMTP_HOST: str
-    SMTP_PORT: int = 587
+    SMTP_PORT: int
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
+    SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
+    SMTP_FROM_NAME: str = "ClearDrive.lk"
 
+    # OTP
+    OTP_LENGTH: int = 6
+    OTP_EXPIRY_MINUTES: int = 5
+    OTP_MAX_ATTEMPTS: int = 3
+    OTP_RATE_LIMIT_REQUESTS: int = 3
+    OTP_RATE_LIMIT_WINDOW_MINUTES: int = 5
+    
     # Sentry
     SENTRY_DSN: str | None = None
 
