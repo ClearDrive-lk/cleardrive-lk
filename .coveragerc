@@ -2,4 +2,3 @@
 # Needed for py-cov-action/python-coverage-comment-action:
 # it cannot read coverage data with absolute file paths.
 relative_files = true
-

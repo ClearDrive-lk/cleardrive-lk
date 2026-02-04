@@ -22,7 +22,7 @@ markdown# Frontend Setup Guide - For Lehan
 ```bash
    # Install Node.js 18+ (LTS)
    # Download from: https://nodejs.org/
-   
+
    # Verify installation
    node --version  # Should be 18+
    npm --version
@@ -190,7 +190,7 @@ apiClient.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refresh_token');
-        
+
         if (!refreshToken) {
           // No refresh token, redirect to login
           window.location.href = '/login';
@@ -253,19 +253,19 @@ export const useAuthStore = create()(
       user: null,
       accessToken: null,
       refreshToken: null,
-      
+
       setAuth: (user, accessToken, refreshToken) => {
         set({ user, accessToken, refreshToken });
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', refreshToken);
       },
-      
+
       clearAuth: () => {
         set({ user: null, accessToken: null, refreshToken: null });
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
       },
-      
+
       isAuthenticated: () => {
         const { accessToken } = get();
         return !!accessToken;
@@ -295,24 +295,24 @@ export function GoogleLoginButton() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    
+
     try {
       // Initialize Google Sign-In
       // (This is a simplified version - you'll need to implement Google OAuth properly)
-      
+
       // For now, let's just redirect to OTP page for testing
       // In production, you'd get the Google ID token here
-      
+
       const response = await apiClient.post('/auth/google', {
         id_token: 'dummy-token-for-testing',
       });
-      
+
       // Store email for OTP verification
       sessionStorage.setItem('auth_email', response.data.email);
-      
+
       // Redirect to OTP page
       router.push('/verify-otp');
-      
+
     } catch (error) {
       console.error('Google login failed:', error);
       alert('Login failed. Please try again.');
@@ -322,9 +322,9 @@ export function GoogleLoginButton() {
   };
 
   return (
-    
+
       {loading ? 'Loading...' : 'Continue with Google'}
-    
+
   );
 }
 ```
@@ -338,24 +338,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function LoginPage() {
   return (
-    
-      
-        
-          
+
+
+
+
             Welcome to ClearDrive.lk
-          
-          
+
+
             Import your dream vehicle from Japan
-          
-        
-        
-          
-          
+
+
+
+
+
             By continuing, you agree to our Terms of Service and Privacy Policy
-          
-        
-      
-    
+
+
+
+
   );
 }
 ```
