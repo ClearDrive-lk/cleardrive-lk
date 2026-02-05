@@ -3,23 +3,15 @@
 from __future__ import annotations
 
 import datetime as dt
+import enum
 from uuid import UUID as PyUUID
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Enum as SQLEnum,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-    JSON,
-)
-from sqlalchemy.orm import Mapped, mapped_column
-import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin, GUID, IPAddress
+from app.core.models import GUID, IPAddress, TimestampMixin, UUIDMixin
+from sqlalchemy import JSON, Boolean, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class VerificationStatus(str, enum.Enum):
