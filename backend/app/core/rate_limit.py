@@ -9,12 +9,13 @@ Tiers:
 - TRUSTED: 200 req/min (KYC verified + 5+ orders)
 """
 
-from typing import Optional
-from fastapi import Request, HTTPException, status
 from datetime import datetime
+from functools import wraps
+from typing import Optional
 
 from app.core.redis_client import get_redis
 from app.modules.auth.models import User
+from fastapi import HTTPException, Request, status
 
 
 class UserTier:
@@ -162,8 +163,6 @@ async def check_rate_limit(
 # ============================================================================
 # RATE LIMIT DECORATORS
 # ============================================================================
-
-from functools import wraps
 
 
 def rate_limit(endpoint_type: str = "api_general"):

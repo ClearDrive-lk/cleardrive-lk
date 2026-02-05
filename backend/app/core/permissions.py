@@ -2,9 +2,10 @@
 
 from enum import Enum
 from typing import List, cast
-from fastapi import HTTPException, status, Depends
 
 from app.modules.auth.models import Role, User
+from fastapi import Depends, HTTPException, status
+
 from .dependencies import get_current_active_user
 
 
