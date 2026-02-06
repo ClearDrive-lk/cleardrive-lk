@@ -1,7 +1,5 @@
 # backend/app/core/config.py
 
-from typing import List, Optional
-
 from pydantic_settings import BaseSettings
 
 
@@ -48,7 +46,7 @@ class Settings(BaseSettings):
 
     # Email (SMTP)
     SMTP_HOST: str
-    SMTP_PORT: Optional[int] = None
+    SMTP_PORT: int | None = None
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
@@ -73,7 +71,7 @@ class Settings(BaseSettings):
     MAX_FAILED_AUTH_ATTEMPTS: int = 5
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
     ]
