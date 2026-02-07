@@ -5,11 +5,14 @@ Pytest configuration and fixtures.
 
 import asyncio
 from typing import AsyncGenerator, Generator
+from unittest.mock import AsyncMock
 
 import pytest
 from app.core.database import Base, get_db
 from app.core.redis_client import get_redis
+from app.core.security import create_access_token
 from app.main import app
+from app.modules.auth.models import Role, User
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import create_engine
@@ -164,8 +167,6 @@ def test_user(db: Session):
     Returns:
         User object
     """
-    from app.modules.auth.models import Role, User
-
     user = User(
         email="test@example.com", name="Test User", role=Role.CUSTOMER, google_id="test_google_id"
     )
@@ -186,8 +187,6 @@ def admin_user(db: Session):
     Returns:
         Admin User object
     """
-    from app.modules.auth.models import Role, User
-
     user = User(
         email="admin@example.com", name="Admin User", role=Role.ADMIN, google_id="admin_google_id"
     )
@@ -213,8 +212,6 @@ def auth_headers(test_user):
     Returns:
         Dict with Authorization header
     """
-    from app.core.security import create_access_token
-
     access_token = create_access_token(
         data={"sub": str(test_user.id), "email": test_user.email, "role": test_user.role.value}
     )
@@ -233,8 +230,6 @@ def admin_headers(admin_user):
     Returns:
         Dict with Authorization header
     """
-    from app.core.security import create_access_token
-
     access_token = create_access_token(
         data={"sub": str(admin_user.id), "email": admin_user.email, "role": admin_user.role.value}
     )
@@ -254,3 +249,54 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "asyncio: mark test as async")
     config.addinivalue_line("markers", "redis: mark test as requiring Redis")
     config.addinivalue_line("markers", "integration: mark test as integration test")
+
+
+# ============================================================================
+# STATEFUL MOCK REDIS FOR TESTS
+# ============================================================================
+
+
+@pytest.fixture(autouse=True)
+def mock_redis(mocker):
+    """
+    Stateful mock Redis for OTP tests.
+    """
+    store = {}  # In-memory store to simulate Redis
+
+    async def setex(key, expiry, value):
+        store[key] = value
+        return True
+
+    async def get(key):
+        return store.get(key)
+
+    async def delete(key):
+        return store.pop(key, None) is not None
+
+    async def incr(key):
+        value = store.get(key, "0")
+        try:
+            value = int(value)
+        except ValueError:
+            value = 0
+        value += 1
+        store[key] = str(value)
+        return value
+
+    async def expire(key, _expiry):
+        # no-op for tests
+        return True
+
+    async def ttl(key):
+        return 300  # arbitrary positive TTL
+
+    mock_client = AsyncMock()
+    mock_client.setex.side_effect = setex
+    mock_client.get.side_effect = get
+    mock_client.delete.side_effect = delete
+    mock_client.incr.side_effect = incr
+    mock_client.expire.side_effect = expire
+    mock_client.ttl.side_effect = ttl
+
+    mocker.patch("app.core.redis_client.get_redis", return_value=mock_client)
+    yield mock_client
