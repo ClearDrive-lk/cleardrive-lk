@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import redis.asyncio as redis  # type: ignore[import-untyped]
 
@@ -304,7 +304,7 @@ async def get_refresh_token(token_jti: str) -> Optional[Dict]:
     if not value:
         return None
 
-    return json.loads(value)
+    return cast(Dict[str, Any], json.loads(value))
 
 
 async def delete_refresh_token(token_jti: str) -> bool:

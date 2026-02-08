@@ -1,4 +1,4 @@
-import requests
+import requests  # type: ignore
 
 URL = "http://localhost:8000/api/v1/auth/login"
 payload = {"email": "user@example.com", "password": "password"}  # pragma: allowlist secret # nosec
