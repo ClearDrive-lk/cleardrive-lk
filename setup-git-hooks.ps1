@@ -73,7 +73,7 @@ Write-Host " Installing hook dependencies..." -ForegroundColor Cyan
 # Backend dependencies
 if (Test-Path "backend") {
     Write-Host "  Installing backend linting tools..." -ForegroundColor Gray
-    pip install black isort flake8 mypy bandit safety
+    pip install black isort flake8 mypy bandit safety pytest
 }
 
 # Frontend dependencies

@@ -31,6 +31,7 @@ except ImportError:
 
 # Import routers
 from app.modules.auth.routes import router as auth_router
+from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 
 # Configure logging
@@ -140,8 +141,8 @@ logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
-
-logger.info("✅ Routers registered: /auth, /vehicles")
+app.include_router(test_router, prefix="/api/v1")
+logger.info("✅ Routers registered: /auth, /vehicles, /test")
 
 
 # ============================================================================
