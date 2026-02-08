@@ -96,7 +96,7 @@ export default function Home() {
             import terminal in Sri Lanka. Access USS Tokyo, JAA, and CAI
             auctions in real-time.
             <span className="block mt-2 text-gray-500 text-sm font-mono">
-              AUTOMATED CIF CALCULATION INSTANT LC OPENING // CLEARING @
+              AUTOMATED CIF CALCULATION // INSTANT LC OPENING // CLEARING @
               HAMBANTOTA
             </span>
           </p>
@@ -408,90 +408,6 @@ export default function Home() {
               <li>+94 77 123 4567</li>
             </ul>
           </div>
-      </section>
-
-      {/* --- HOW IT WORKS --- */}
-      <section className="py-24 px-6 border-t border-white/5 relative bg-[#020202]">
-         <div className="max-w-7xl mx-auto relative z-10">
-             <div className="text-center mb-16 max-w-2xl mx-auto">
-                 <h2 className="text-3xl font-bold text-white tracking-tight">The ClearDrive Process</h2>
-                 <p className="text-gray-400 mt-4 text-lg">
-                    We&apos;ve automated the middleman out of existence. 
-                    From the auction floor in Tokyo to your garage in Colombo.
-                 </p>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                 <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-[#FE7743]/50 to-transparent border-t border-dashed border-white/20 z-0" />
-
-                 {[
-                     { step: "01", title: "Bid & Win", desc: "Place a refundable deposit. Our agents at USS Tokyo inspect the car and bid on your behalf.", stat: "Deposit: 100k LKR" },
-                     { step: "02", title: "Pay & Ship", desc: "Receive the invoice. Pay CIF value directly to Japan. We handle LC opening and freight.", stat: "Turnaround: 48hrs" },
-                     { step: "03", title: "Clear & Deliver", desc: "Vehicle arrives at Hambantota. We handle Excise Duty, VAT, and Port clearance.", stat: "Customs: ~4 Days" },
-                 ].map((item, i) => (
-                     <div key={i} className="relative z-10 flex flex-col items-center text-center">
-                         <div className="w-24 h-24 rounded-full bg-[#0A0A0A] border border-white/10 flex items-center justify-center mb-6 shadow-2xl relative group">
-                             <div className="absolute inset-0 bg-[#FE7743]/10 rounded-full blur-xl group-hover:bg-[#FE7743]/20 transition-all" />
-                             <span className="text-2xl font-bold text-white font-mono">{item.step}</span>
-                         </div>
-                         <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
-                         <p className="text-gray-400 leading-relaxed text-sm max-w-xs">{item.desc}</p>
-                         <Badge variant="secondary" className="mt-4 bg-[#1A1A1A] text-[#FE7743] border border-[#FE7743]/20 font-mono">
-                            {item.stat}
-                         </Badge>
-                     </div>
-                 ))}
-             </div>
-         </div>
-      </section>
-
-      {/* --- FOOTER --- */}
-      <footer className="border-t border-white/10 py-16 bg-[#050505]">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="space-y-6">
-                <div className="font-bold text-xl tracking-tighter text-white flex items-center gap-2">
-                    <Terminal className="w-5 h-5 text-[#FE7743]" />
-                    ClearDrive<span className="text-[#FE7743]">.lk</span>
-                </div>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                    The first tech-enabled vehicle import platform in Sri Lanka. 
-                    Replacing brokers with code, ensuring 100% financial transparency.
-                </p>
-            </div>
-            
-            <div>
-                <h4 className="font-bold text-white mb-6">Market Data</h4>
-                <ul className="space-y-3 text-sm text-gray-500 font-mono">
-                    <li className="hover:text-[#FE7743] cursor-pointer flex items-center gap-2"> <ArrowRight className="w-3 h-3" /> USS Tokyo Live</li>
-                    <li className="hover:text-[#FE7743] cursor-pointer flex items-center gap-2"> <ArrowRight className="w-3 h-3" /> JAA Condition Sheets</li>
-                    <li className="hover:text-[#FE7743] cursor-pointer flex items-center gap-2"> <ArrowRight className="w-3 h-3" /> Cost Calculator</li>
-                    <li className="hover:text-[#FE7743] cursor-pointer flex items-center gap-2"> <ArrowRight className="w-3 h-3" /> Past Sales (2025)</li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 className="font-bold text-white mb-6">Company</h4>
-                <ul className="space-y-3 text-sm text-gray-500">
-                    <li className="hover:text-[#FE7743] cursor-pointer">About Us</li>
-                    <li className="hover:text-[#FE7743] cursor-pointer">Careers</li>
-                    <li className="hover:text-[#FE7743] cursor-pointer">Terms of Service</li>
-                    <li className="hover:text-[#FE7743] cursor-pointer">Privacy Policy</li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 className="font-bold text-white mb-6">Support</h4>
-                <ul className="space-y-3 text-sm text-gray-500">
-                    <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500" /> Systems Operational</li>
-                    <li>Colombo 03, Sri Lanka</li>
-                    <li>support@cleardrive.lk</li>
-                    <li>+94 77 123 4567</li>
-                </ul>
-            </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 font-mono">
-            <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
-            <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 font-mono">
           <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
