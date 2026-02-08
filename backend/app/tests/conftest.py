@@ -270,8 +270,12 @@ def mock_redis(mocker):
     async def get(key):
         return store.get(key)
 
-    async def delete(key):
-        return store.pop(key, None) is not None
+    async def delete(*keys):
+        count = 0
+        for key in keys:
+            if store.pop(key, None) is not None:
+                count += 1
+        return count
 
     async def incr(key):
         value = store.get(key, "0")
@@ -290,6 +294,17 @@ def mock_redis(mocker):
     async def ttl(key):
         return 300  # arbitrary positive TTL
 
+    async def exists(key):
+        return 1 if key in store else 0
+
+    async def keys(pattern="*"):
+        if pattern == "*":
+            return list(store.keys())
+        if pattern.endswith("*"):
+            prefix = pattern[:-1]
+            return [k for k in store.keys() if k.startswith(prefix)]
+        return [k for k in store.keys() if k == pattern]
+
     mock_client = AsyncMock()
     mock_client.setex.side_effect = setex
     mock_client.get.side_effect = get
@@ -297,6 +312,9 @@ def mock_redis(mocker):
     mock_client.incr.side_effect = incr
     mock_client.expire.side_effect = expire
     mock_client.ttl.side_effect = ttl
+    mock_client.exists.side_effect = exists
+    mock_client.keys.side_effect = keys
 
     mocker.patch("app.core.redis_client.get_redis", return_value=mock_client)
+    mocker.patch("app.core.redis.get_redis", return_value=mock_client)
     yield mock_client

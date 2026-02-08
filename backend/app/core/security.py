@@ -80,6 +80,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
     Returns:
         Encoded JWT token string
+
+    Token Payload:
+        {
+            "sub": "user-uuid",           # Subject (user ID)
+            "type": "access",              # Token type
+            "jti": "token-id",             # JWT ID (for token tracking)
+            "exp": 1708246090,             # Expiration timestamp
+            "iat": 1705567890              # Issued at timestamp
+        }
     """
     to_encode = data.copy()
 
@@ -91,6 +100,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update(
         {
             "exp": expire,
+            "iat": datetime.utcnow(),
             "type": "access",
             "jti": secrets.token_urlsafe(16),  # JWT ID for token tracking
         }
@@ -115,6 +125,19 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
 
     Returns:
         Encoded JWT token string
+
+    Token Payload:
+        {
+            "sub": "user-uuid",           # Subject (user ID)
+            "type": "refresh",             # Token type
+            "jti": "token-id",             # JWT ID (for rotation tracking)
+            "exp": 1708246090,             # Expiration (30 days)
+            "iat": 1705567890              # Issued at timestamp
+        }
+
+    Note:
+        Refresh tokens contain minimal data for security.
+        Full user data retrieved from database on refresh.
     """
     to_encode = data.copy()
 
@@ -123,7 +146,14 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
     else:
         expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
-    to_encode.update({"exp": expire, "type": "refresh", "jti": secrets.token_urlsafe(16)})
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": datetime.utcnow(),
+            "type": "refresh",
+            "jti": secrets.token_urlsafe(16),
+        }
+    )
 
     encoded_jwt = jwt.encode(
         to_encode,
@@ -136,7 +166,7 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
 
 def decode_token(token: str) -> Optional[dict]:
     """
-    Decode and verify JWT token.
+    Decode and verify JWT token (generic).
 
     Args:
         token: JWT token string
@@ -151,6 +181,68 @@ def decode_token(token: str) -> Optional[dict]:
             algorithms=[settings.JWT_ALGORITHM],
         )
         return cast(dict[str, Any], payload)
+    except JWTError:
+        return None
+
+
+def decode_access_token(token: str) -> Optional[dict]:
+    """
+    Decode and validate JWT access token.
+
+    Args:
+        token: JWT access token string
+
+    Returns:
+        Decoded token payload or None if invalid
+
+    Note:
+        Validates that the token type is 'access' to prevent
+        refresh tokens from being used as access tokens.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+
+        # Verify it's actually an access token
+        if payload.get("type") != "access":
+            raise JWTError("Invalid token type")
+
+        return cast(dict[str, Any], payload)
+
+    except JWTError:
+        return None
+
+
+def decode_refresh_token(token: str) -> Optional[dict]:
+    """
+    Decode and validate JWT refresh token.
+
+    Args:
+        token: JWT refresh token string
+
+    Returns:
+        Decoded token payload or None if invalid
+
+    Note:
+        Validates that the token type is 'refresh' to prevent
+        access tokens from being used as refresh tokens.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+
+        # Verify it's actually a refresh token
+        if payload.get("type") != "refresh":
+            raise JWTError("Invalid token type")
+
+        return cast(dict[str, Any], payload)
+
     except JWTError:
         return None
 
