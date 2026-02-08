@@ -130,7 +130,7 @@ async def test_refresh_token_rotation_and_reuse_detection(async_client, db, mock
         reuse_response = await async_client.post(
             "/api/v1/auth/refresh", json={"refresh_token": old_refresh}
         )
-        assert reuse_response.status_code == 401
+        assert reuse_response.status_code == 403
         assert "reuse" in reuse_response.json().get("detail", "").lower()
 
         sessions = db.query(UserSession).filter(UserSession.user_id == user.id).all()
