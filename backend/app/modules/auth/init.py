@@ -1,7 +1,7 @@
 # backend/app/modules/auth/__init__.py
-# backend/app/modules/auth/__init__.py
 
 from .models import Role, Session, User
+from .routes import router
 from .schemas import (
     GoogleAuthRequest,
     GoogleAuthResponse,
@@ -15,6 +15,7 @@ __all__ = [
     "User",
     "Session",
     "Role",
+    "router",
     "UserResponse",
     "GoogleAuthRequest",
     "GoogleAuthResponse",

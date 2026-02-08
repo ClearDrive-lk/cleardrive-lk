@@ -129,6 +129,17 @@ repos:
         name: Check commit message format
         stages: [commit-msg]
 
+  # ============================================================================
+  # TESTING (Local)
+  # ============================================================================
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run Tests
+        entry: backend/venv312/Scripts/python.exe -m pytest
+        language: system
+        pass_filenames: false
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================

@@ -1,6 +1,7 @@
 # backend/app/modules/auth/routes.py
 
 import logging
+import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, cast
 from uuid import UUID
@@ -10,12 +11,26 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.core.otp import generate_otp
-from app.core.redis_client import get_redis, store_otp
+from app.core.redis import (
+    blacklist_token,
+    check_otp_rate_limit,
+    create_session,
+    delete_all_user_sessions,
+    delete_otp,
+    delete_refresh_token,
+    enforce_session_limit,
+    get_otp,
+    get_redis,
+    increment_otp_attempts,
+    is_token_blacklisted,
+    store_otp,
+    store_refresh_token,
+)
 from app.core.security import (
     constant_time_compare,
     create_access_token,
     create_refresh_token,
-    decode_token,
+    decode_refresh_token,
     hash_token,
 )
 from app.services.email import send_otp_email
@@ -23,19 +38,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from sqlalchemy.orm import Session
-
-# Import Redis helper functions if they exist
-try:
-    from app.core.redis_client import (
-        check_otp_rate_limit,
-        delete_otp,
-        get_otp,
-        increment_otp_attempts,
-    )
-
-    REDIS_HELPERS_AVAILABLE = True
-except ImportError:
-    REDIS_HELPERS_AVAILABLE = False
 
 # Import OTP helper if it exists
 try:
@@ -160,16 +162,9 @@ async def google_auth(
     otp = generate_otp()
 
     # Store OTP in Redis (5-minute expiry)
-    # otp_key = f"otp:{email}"
-    # await redis.setex(otp_key, 300, otp)  # 300 seconds = 5 minutes
     await store_otp(email, otp)
 
-    # TODO: Send OTP via email (we'll implement this in notifications module)
-    # For now, log it (ONLY IN DEVELOPMENT!)
-    # if settings.ENVIRONMENT == "development":
-    #     logger.info(f"\n{'='*60}")
-    #     logger.info(f"🔐 OTP for {email}: {otp}")
-    #     logger.info(f"{'='*60}\n")
+    # Send OTP via email
     email_sent = await send_otp_email(email, otp, name)
 
     if not email_sent:
@@ -265,15 +260,18 @@ async def verify_otp(
     """
     Verify OTP and issue JWT tokens.
 
-    Rate Limit: 3 requests per 5 minutes per email (if Redis helpers available)
+    Rate Limit: 3 requests per 5 minutes per email
     Max Attempts: 3 attempts per OTP
 
     Steps:
-    1. Check rate limit (optional)
+    1. Check rate limit
     2. Verify OTP from Redis
     3. Generate access & refresh tokens
-    4. Create session
-    5. Return tokens
+    4. Store refresh token metadata in Redis
+    5. Create Redis session
+    6. Create database session
+    7. Enforce session limits
+    8. Return tokens
 
     Args:
         verify_request: Email and OTP
@@ -291,48 +289,41 @@ async def verify_otp(
         HTTPException 404: User not found
     """
 
-    # Check rate limit (if helpers available)
-    if REDIS_HELPERS_AVAILABLE:
+    # ========================================================================
+    # STEP 1: Rate Limiting
+    # ========================================================================
+    if settings.ENVIRONMENT != "development":
         if not await check_otp_rate_limit(verify_request.email):
             logger.warning(f"OTP verification rate limit exceeded for {verify_request.email}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many verification attempts. Please try again in 5 minutes.",
             )
-
-    # Get OTP from Redis
-    if REDIS_HELPERS_AVAILABLE:
-        # Use helper function if available
-        otp_data = await get_otp(verify_request.email)
-
-        if not otp_data:
-            logger.warning(f"No OTP found for {verify_request.email}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="OTP expired or not found. Please request a new one.",
-            )
-
-        # Check max attempts
-        if otp_data.get("attempts", 0) >= 3:
-            logger.warning(f"Max OTP attempts exceeded for {verify_request.email}")
-            await delete_otp(verify_request.email)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Maximum verification attempts exceeded. Please request a new code.",
-            )
-
-        stored_otp = otp_data.get("otp")
     else:
-        # Fallback: simple Redis key lookup
-        otp_key = f"otp:{verify_request.email}"
-        stored_otp = await redis.get(otp_key)
+        logger.debug(f"Skipping OTP rate limit in development for {verify_request.email}")
 
-        if not stored_otp:
-            logger.warning(f"No OTP found for {verify_request.email}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="OTP expired or not found. Please request a new one.",
-            )
+    # ========================================================================
+    # STEP 2: Retrieve and Validate OTP
+    # ========================================================================
+    otp_data = await get_otp(verify_request.email)
+
+    if not otp_data:
+        logger.warning(f"No OTP found for {verify_request.email}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP expired or not found. Please request a new one.",
+        )
+
+    # Check max attempts
+    if otp_data.get("attempts", 0) >= 3:
+        logger.warning(f"Max OTP attempts exceeded for {verify_request.email}")
+        await delete_otp(verify_request.email)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum verification attempts exceeded. Please request a new code.",
+        )
+
+    stored_otp = otp_data.get("otp")
 
     # Verify OTP (constant-time comparison to prevent timing attacks)
     verification_func = (
@@ -341,42 +332,29 @@ async def verify_otp(
 
     if not verification_func(cast(str, stored_otp), verify_request.otp):
         # Increment failed attempts
-        if REDIS_HELPERS_AVAILABLE:
-            attempts = await increment_otp_attempts(verify_request.email)
-            logger.warning(f"Invalid OTP for {verify_request.email}. Attempt {attempts}/3")
+        attempts = await increment_otp_attempts(verify_request.email)
+        logger.warning(f"Invalid OTP for {verify_request.email}. Attempt {attempts}/3")
 
-            remaining = 3 - attempts
-            if remaining > 0:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Invalid verification code. {remaining} attempts remaining.",
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Maximum verification attempts exceeded. Please request a new code.",
-                )
+        remaining = 3 - attempts
+        if remaining > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid verification code. {remaining} attempts remaining.",
+            )
         else:
-            # Fallback: track in user model
-            user = db.query(User).filter(User.email == verify_request.email).first()
-            if user:
-                user.failed_auth_attempts += 1
-                user.last_failed_auth = datetime.utcnow()
-                db.commit()
-
-            logger.warning(f"Invalid OTP for {verify_request.email}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid OTP")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum verification attempts exceeded. Please request a new code.",
+            )
 
     # OTP verified successfully - delete it (one-time use)
-    if REDIS_HELPERS_AVAILABLE:
-        await delete_otp(verify_request.email)
-    else:
-        otp_key = f"otp:{verify_request.email}"
-        await redis.delete(otp_key)
+    await delete_otp(verify_request.email)
 
     logger.info(f"OTP verified successfully for {verify_request.email}")
 
-    # Get user
+    # ========================================================================
+    # STEP 3: Get User
+    # ========================================================================
     user = db.query(User).filter(User.email == verify_request.email).first()
 
     if not user:
@@ -388,14 +366,56 @@ async def verify_otp(
     user.last_failed_auth = None
     db.commit()
 
-    # Generate tokens
+    # ========================================================================
+    # STEP 4: Generate JWT Tokens
+    # ========================================================================
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email, "role": user.role.value}
     )
+
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
-    # Create session
-    session = UserSession(
+    # ========================================================================
+    # STEP 5: Decode Tokens to Get JTIs
+    # ========================================================================
+    refresh_payload = decode_refresh_token(refresh_token)
+
+    refresh_jti = refresh_payload.get("jti") if refresh_payload else None
+
+    # ========================================================================
+    # STEP 6: Store Refresh Token Metadata in Redis
+    # ========================================================================
+    if refresh_jti:
+        await store_refresh_token(
+            token_jti=refresh_jti,
+            user_id=str(user.id),
+            device_info={
+                "ip": request.client.host if request.client else "unknown",
+                "user_agent": request.headers.get("user-agent", "unknown"),
+            },
+        )
+
+        # ====================================================================
+        # STEP 7: Create Redis Session
+        # ====================================================================
+        session_id = str(uuid.uuid4())
+        await create_session(
+            user_id=str(user.id),
+            session_id=session_id,
+            token_jti=refresh_jti,
+            ip_address=request.client.host if request.client else "unknown",
+            user_agent=request.headers.get("user-agent", "unknown"),
+        )
+
+        # ====================================================================
+        # STEP 8: Enforce Session Limit (max 5 concurrent sessions)
+        # ====================================================================
+        await enforce_session_limit(str(user.id), max_sessions=5)
+
+    # ========================================================================
+    # STEP 9: Create Database Session
+    # ========================================================================
+    db_session = UserSession(
         user_id=user.id,
         refresh_token_hash=hash_token(refresh_token),
         ip_address=request.client.host if request.client else None,
@@ -405,9 +425,11 @@ async def verify_otp(
         expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
 
-    db.add(session)
+    db.add(db_session)
 
-    # Check session limit (max 5 sessions)
+    # ========================================================================
+    # STEP 10: Enforce Database Session Limit (max 5 sessions)
+    # ========================================================================
     session_count = (
         db.query(UserSession)
         .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
@@ -429,12 +451,21 @@ async def verify_otp(
 
     db.commit()
 
-    # Log successful authentication
+    # ========================================================================
+    # STEP 11: Log Successful Authentication
+    # ========================================================================
     logger.info(
         f"User authenticated successfully: {user.email}",
-        extra={"user_id": str(user.id), "role": user.role.value},
+        extra={
+            "user_id": str(user.id),
+            "role": user.role.value,
+            "session_id": session_id if refresh_jti else None,
+        },
     )
 
+    # ========================================================================
+    # STEP 12: Return Tokens and User Info
+    # ========================================================================
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -534,7 +565,7 @@ async def dev_ensure_user(
 
 
 # ============================================================================
-# TOKEN REFRESH
+# TOKEN REFRESH - ENHANCED WITH SECURITY
 # ============================================================================
 
 
@@ -547,74 +578,183 @@ async def refresh_token(
     """
     Refresh access token using refresh token.
 
-    Implements token rotation - old refresh token is invalidated.
-    Security: Detects token reuse and revokes all sessions if detected.
+    Token Rotation:
+    1. Validate old refresh token
+    2. Generate NEW token pair
+    3. Blacklist OLD refresh token
+    4. Return NEW tokens
+
+    Security:
+    - Token reuse detection (if old token used twice)
+    - Automatic session revocation on reuse
+    - Token blacklisting to prevent replay attacks
+
+    Args:
+        refresh_request: Refresh token request
+        request: HTTP request (for IP, user agent)
+        db: Database session
+
+    Returns:
+        New access and refresh tokens
+
+    Raises:
+        HTTPException 401: Invalid or expired refresh token
+        HTTPException 403: Token reuse detected
+        HTTPException 404: User not found
     """
+    try:
+        # Decode refresh token
+        payload = decode_refresh_token(refresh_request.refresh_token)
 
-    # Decode refresh token
-    payload = decode_token(refresh_request.refresh_token)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
 
-    if not payload or payload.get("type") != "refresh":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+        user_id = payload.get("sub")
+        token_jti = payload.get("jti")
+        exp_timestamp = payload.get("exp")
+
+        if not user_id or not token_jti:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
+
+        # Check if token is blacklisted (TOKEN REUSE DETECTION)
+        if await is_token_blacklisted(token_jti):
+            # 🚨 SECURITY ALERT: Token reuse detected!
+            logger.critical(
+                f"SECURITY ALERT: Refresh token reuse detected for user {user_id}",
+                extra={
+                    "user_id": user_id,
+                    "token_jti": token_jti,
+                    "ip": request.client.host if request.client else "unknown",
+                    "security_event": "token_reuse",
+                },
+            )
+
+            # Revoke ALL user sessions (security measure)
+            revoked_count = await delete_all_user_sessions(user_id)
+
+            # Also revoke all database sessions
+            (
+                db.query(UserSession)
+                .filter(UserSession.user_id == user_id, UserSession.is_active.is_(True))
+                .update({"is_active": False})
+            )
+            db.commit()
+
+            log_msg = (
+                f"Revoked {revoked_count} Redis sessions + DB sessions "
+                f"for user {user_id} due to token reuse"
+            )
+            logger.warning(log_msg)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Token reuse detected. All sessions have been revoked. " "Please sign in again."
+                ),
+            )
+
+        # Get user
+        user = db.query(User).filter(User.id == user_id).first()
+
+        if not user:
+            logger.error(f"User not found during token refresh: {user_id}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        # Find database session with this refresh token
+        refresh_token_hash = hash_token(refresh_request.refresh_token)
+        session = (
+            db.query(UserSession)
+            .filter(
+                UserSession.user_id == user.id,
+                UserSession.refresh_token_hash == refresh_token_hash,
+                UserSession.is_active.is_(True),
+            )
+            .first()
         )
 
-    user_id = payload.get("sub")
+        if not session:
+            # Token not found in database - possible reuse
+            logger.warning(
+                f"Refresh token not found in database for user {user.email}. Possible token reuse."
+            )
+            # Don't revoke all sessions here since blacklist already caught it
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
 
-    # Get user
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    # Find session with this refresh token
-    refresh_token_hash = hash_token(refresh_request.refresh_token)
-    session = (
-        db.query(UserSession)
-        .filter(
-            UserSession.user_id == user.id,
-            UserSession.refresh_token_hash == refresh_token_hash,
-            UserSession.is_active.is_(True),
+        # Generate NEW tokens (rotation)
+        new_access_token = create_access_token(
+            data={"sub": str(user.id), "email": user.email, "role": user.role.value}
         )
-        .first()
-    )
+        new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
-    if not session:
-        # Token reuse detected! Revoke ALL user sessions
-        logger.warning(
-            f"Refresh token reuse detected for user {user.email}. Revoking all sessions."
-        )
-        db.query(UserSession).filter(
-            UserSession.user_id == user.id, UserSession.is_active.is_(True)
-        ).update({"is_active": False})
+        # Decode new refresh token to get its JTI
+        new_payload = decode_refresh_token(new_refresh_token)
+        new_token_jti = new_payload.get("jti") if new_payload else None
+
+        # Blacklist OLD refresh token (prevent reuse)
+        # TTL = remaining token lifetime
+        if exp_timestamp:
+            remaining_seconds = exp_timestamp - datetime.utcnow().timestamp()
+            if remaining_seconds > 0:
+                await blacklist_token(token_jti, int(remaining_seconds))
+
+        # Delete old refresh token metadata from Redis
+        await delete_refresh_token(token_jti)
+
+        # Store NEW refresh token metadata in Redis
+        if new_token_jti:
+            await store_refresh_token(
+                token_jti=new_token_jti,
+                user_id=str(user.id),
+                device_info={
+                    "ip": request.client.host if request.client else "unknown",
+                    "user_agent": request.headers.get("user-agent", "unknown"),
+                },
+            )
+
+            # Create new Redis session
+            session_id = str(uuid.uuid4())
+            await create_session(
+                user_id=str(user.id),
+                session_id=session_id,
+                token_jti=new_token_jti,
+                ip_address=request.client.host if request.client else "unknown",
+                user_agent=request.headers.get("user-agent", "unknown"),
+            )
+
+        # Update database session with new refresh token
+        session.refresh_token_hash = hash_token(new_refresh_token)
+        session.last_active = datetime.utcnow()
         db.commit()
 
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token reuse detected. All sessions revoked.",
+        logger.info(
+            f"Token refreshed successfully for user {user.email}",
+            extra={"user_id": str(user.id)},
         )
 
-    # Generate new tokens (rotation)
-    new_access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email, "role": user.role.value}
-    )
-    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+        return TokenResponse(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=UserResponse.model_validate(user),
+        )
 
-    # Update session with new refresh token
-    session.refresh_token_hash = hash_token(new_refresh_token)
-    session.last_active = datetime.utcnow()
-
-    db.commit()
-
-    logger.info(f"Access token refreshed for user {user.email}")
-
-    return TokenResponse(
-        access_token=new_access_token,
-        refresh_token=new_refresh_token,
-        token_type="bearer",
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        user=UserResponse.model_validate(user),
-    )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
 
 
 # ============================================================================
@@ -680,24 +820,70 @@ async def logout(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Logout current user (revoke current session)."""
+    """
+    Logout user and blacklist tokens.
 
-    # In a real app, we'd get the session ID from the token's jti claim
-    # For now, revoke the most recent session
+    Actions:
+    1. Extract token JTI from current request
+    2. Blacklist current access token
+    3. Delete current session from Redis
+    4. Revoke current session in database
 
-    recent_session = (
+    Security:
+    - Prevents token reuse after logout
+    - Clears all session data
+    - Immediate token invalidation
+
+    Args:
+        request: HTTP request (to extract token)
+        current_user: Authenticated user
+        db: Database session
+
+    Returns:
+        Success message with sessions cleared count
+    """
+
+    # Get token JTI from request state (set during authentication)
+    token_jti = getattr(request.state, "token_jti", None)
+
+    logger.info(f"Logout requested for user {current_user.id} (JTI: {token_jti})")
+
+    if token_jti:
+        # Blacklist access token
+        # TTL = remaining token lifetime (max 30 minutes for access tokens)
+        await blacklist_token(token_jti, settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+
+        logger.info(
+            f"Access token blacklisted for user {current_user.email}",
+            extra={"user_id": str(current_user.id), "token_jti": token_jti},
+        )
+
+    # Delete all Redis sessions for this user
+    deleted_redis_sessions = await delete_all_user_sessions(str(current_user.id))
+
+    # Revoke all database sessions
+    db_sessions_updated = (
         db.query(UserSession)
         .filter(UserSession.user_id == current_user.id, UserSession.is_active.is_(True))
-        .order_by(UserSession.last_active.desc())
-        .first()
+        .update({"is_active": False}, synchronize_session=False)
+    )
+    db.commit()
+
+    logger.info(
+        f"User logged out: {current_user.email}. "
+        f"Deleted {deleted_redis_sessions} Redis sessions, "
+        f"revoked {db_sessions_updated} DB sessions.",
+        extra={
+            "user_id": str(current_user.id),
+            "redis_sessions": deleted_redis_sessions,
+            "db_sessions": db_sessions_updated,
+        },
     )
 
-    if recent_session:
-        recent_session.is_active = False
-        db.commit()
-        logger.info(f"User {current_user.email} logged out")
-
-    return {"message": "Logged out successfully"}
+    return {
+        "message": "Logged out successfully",
+        "sessions_cleared": deleted_redis_sessions + db_sessions_updated,
+    }
 
 
 # ============================================================================
