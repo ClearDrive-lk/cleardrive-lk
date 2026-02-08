@@ -4,11 +4,12 @@ import { useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, ShieldCheck, ArrowRight, Zap, Lock, Key, CheckCircle2 } from 'lucide-react';
+import { Loader2, ShieldCheck, ArrowRight, ArrowLeft, Zap, Lock, Key, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { useAppDispatch } from '@/lib/store/store';
 import { setCredentials } from '@/lib/store/features/auth/authSlice';
+import { saveTokens } from '@/lib/auth';
 
 function OTPForm() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -38,8 +39,8 @@ function OTPForm() {
         setTimeout(() => {
             setSuccess(true);
 
-            // 1. SET THE COOKIE
-            document.cookie = "access_token=valid-vip-pass; path=/; max-age=86400";
+            // 1. SET THE TOKENS
+            saveTokens("mock-access-token-vip-pass", "mock-refresh-token-valid");
 
             // 2. Dispatch Redux Action
             dispatch(setCredentials({
@@ -105,6 +106,19 @@ function OTPForm() {
             </div>
 
             <div className="w-full lg:w-1/2 flex items-center justify-center p-6 relative z-10">
+                {/* Floating Back Button */}
+                <div className="absolute top-8 left-8 z-20">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors group"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#FE7743]/10 group-hover:text-[#FE7743] transition-all">
+                            <ArrowLeft className="w-4 h-4" />
+                        </div>
+                        <span className="font-mono hidden sm:inline-block">RETURN HOME</span>
+                    </Link>
+                </div>
+
                 <div className="w-full max-w-md bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl shadow-2xl relative z-10">
 
                     <div className="mb-8 text-center">

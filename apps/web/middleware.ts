@@ -45,8 +45,9 @@ export function middleware(request: NextRequest) {
     response.headers.set("x-nonce", nonce);
   }
 
-  // 5. Check for the session token
-  const token = request.cookies.get("access_token")?.value;
+  // 5. Check for the session token (Refactored to check refresh_token)
+  // Since access_token is now in sessionStorage (client-side), we rely on the httpOnly refresh cookie
+  const token = request.cookies.get("refresh_token")?.value;
 
   const { pathname } = request.nextUrl;
 

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import apiClient from "@/lib/api";
+import apiClient from "@/lib/api-client";
 
 declare global {
   interface Window {
@@ -74,7 +74,7 @@ export function GoogleLoginButton() {
         const msg =
           err && typeof err === "object" && "response" in err
             ? (err as { response?: { data?: { detail?: string } } }).response
-                ?.data?.detail
+              ?.data?.detail
             : null;
         setError(
           typeof msg === "string" ? msg : "Google sign-in failed. Try again.",
