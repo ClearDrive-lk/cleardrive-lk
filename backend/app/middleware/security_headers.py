@@ -5,13 +5,13 @@ Security headers middleware.
 Implements comprehensive security headers for all responses.
 """
 
+import secrets
+from typing import Callable, cast
+
+from app.core.config import settings
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable, cast
-import secrets
-
-from app.core.config import settings
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -53,7 +53,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 1. Content Security Policy (CSP) with nonce
         csp_directives = [
             "default-src 'self'",
-            f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com https://www.googletagmanager.com",
+            f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com "
+            "https://www.googletagmanager.com",
             f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com",
             "connect-src 'self' https://api.anthropic.com https://*.supabase.co",
             "img-src 'self' data: blob: https://*.supabase.co https://www.google.com",

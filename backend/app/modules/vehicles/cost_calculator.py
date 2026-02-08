@@ -16,8 +16,8 @@ Calculates total landed cost including:
 
 from decimal import Decimal
 from typing import Dict
-from .models import Vehicle, FuelType
 
+from .models import FuelType, Vehicle
 
 # ============================================================================
 # EXCHANGE RATE

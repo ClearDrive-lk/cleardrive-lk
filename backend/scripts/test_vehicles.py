@@ -4,8 +4,8 @@
 Test vehicle API endpoints.
 """
 
+
 import requests  # type: ignore
-import json
 
 BASE_URL = "http://localhost:8000/api/v1"
 
@@ -17,7 +17,7 @@ def test_vehicle_api():
 
     # Test 1: Get all vehicles
     print("Test 1: Get all vehicles...")
-    response = requests.get(f"{BASE_URL}/vehicles")
+    response = requests.get(f"{BASE_URL}/vehicles", timeout=10)
 
     if response.status_code == 200:
         data = response.json()
@@ -29,7 +29,7 @@ def test_vehicle_api():
 
     # Test 2: Search vehicles
     print("Test 2: Search for 'Toyota'...")
-    response = requests.get(f"{BASE_URL}/vehicles", params={"search": "Toyota"})
+    response = requests.get(f"{BASE_URL}/vehicles", params={"search": "Toyota"}, timeout=10)
 
     if response.status_code == 200:
         data = response.json()
@@ -47,6 +47,7 @@ def test_vehicle_api():
             "sort_by": "price_jpy",
             "sort_order": "asc",
         },
+        timeout=10,
     )
 
     if response.status_code == 200:
@@ -64,7 +65,7 @@ def test_vehicle_api():
 
     # Test 4: Filter by fuel type
     print("Test 4: Filter by fuel type (HYBRID)...")
-    response = requests.get(f"{BASE_URL}/vehicles", params={"fuel_type": "HYBRID"})
+    response = requests.get(f"{BASE_URL}/vehicles", params={"fuel_type": "HYBRID"}, timeout=10)
 
     if response.status_code == 200:
         data = response.json()
@@ -76,16 +77,16 @@ def test_vehicle_api():
     print("Test 5: Get specific vehicle details...")
 
     # First, get a vehicle ID
-    response = requests.get(f"{BASE_URL}/vehicles", params={"limit": 1})
+    response = requests.get(f"{BASE_URL}/vehicles", params={"limit": 1}, timeout=10)
     if response.status_code == 200:
         vehicle_id = response.json()["vehicles"][0]["id"]
 
         # Now get that vehicle
-        response = requests.get(f"{BASE_URL}/vehicles/{vehicle_id}")
+        response = requests.get(f"{BASE_URL}/vehicles/{vehicle_id}", timeout=10)
 
         if response.status_code == 200:
             vehicle = response.json()
-            print(f"✅ Retrieved vehicle:")
+            print("✅ Retrieved vehicle:")
             print(f"   Make/Model: {vehicle['make']} {vehicle['model']}")
             print(f"   Year: {vehicle['year']}")
             print(f"   Price: ¥{float(vehicle['price_jpy']):,.0f}")
@@ -95,11 +96,11 @@ def test_vehicle_api():
 
             # Test 6: Calculate cost for this vehicle
             print("Test 6: Calculate import cost...")
-            response = requests.get(f"{BASE_URL}/vehicles/{vehicle_id}/cost")
+            response = requests.get(f"{BASE_URL}/vehicles/{vehicle_id}/cost", timeout=10)
 
             if response.status_code == 200:
                 cost = response.json()
-                print(f"✅ Cost breakdown:")
+                print("✅ Cost breakdown:")
                 print(f"   Vehicle Price (JPY): ¥{float(cost['vehicle_price_jpy']):,.0f}")
                 print(f"   Vehicle Price (LKR): Rs. {float(cost['vehicle_price_lkr']):,.2f}")
                 print(f"   Exchange Rate: {cost['exchange_rate']}")
@@ -110,9 +111,9 @@ def test_vehicle_api():
                 print(f"   Port Charges: Rs. {float(cost['port_charges_lkr']):,.2f}")
                 print(f"   Clearance Fee: Rs. {float(cost['clearance_fee_lkr']):,.2f}")
                 print(f"   Documentation: Rs. {float(cost['documentation_fee_lkr']):,.2f}")
-                print(f"   ─────────────────────────────────────")
+                print("   ─────────────────────────────────────")
                 print(f"   TOTAL COST: Rs. {float(cost['total_cost_lkr']):,.2f}")
-                print(f"\n   Breakdown:")
+                print("\n   Breakdown:")
                 print(f"   - Vehicle: {cost['vehicle_percentage']:.1f}%")
                 print(f"   - Taxes: {cost['taxes_percentage']:.1f}%")
                 print(f"   - Fees: {cost['fees_percentage']:.1f}%\n")
@@ -131,6 +132,7 @@ def test_vehicle_api():
             "sort_by": "price_jpy",
             "sort_order": "asc",
         },
+        timeout=10,
     )
 
     if response.status_code == 200:
@@ -139,7 +141,8 @@ def test_vehicle_api():
         if data["vehicles"]:
             for v in data["vehicles"]:
                 print(
-                    f"   - {v['make']} {v['model']} - ¥{float(v['price_jpy']):,.0f} ({v['engine_cc']}cc)"
+                    f"   - {v['make']} {v['model']} - "
+                    f"¥{float(v['price_jpy']):,.0f} ({v['engine_cc']}cc)"
                 )
         print()
     else:

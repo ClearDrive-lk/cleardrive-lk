@@ -14,7 +14,9 @@ const ACCESS_TOKEN_COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
 
 function setAuthCookie(token: string) {
   if (typeof document === "undefined") return;
-  document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=${ACCESS_TOKEN_COOKIE_MAX_AGE}; SameSite=Lax`;
+  document.cookie = `access_token=${encodeURIComponent(
+    token,
+  )}; path=/; max-age=${ACCESS_TOKEN_COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
 function OTPForm() {
