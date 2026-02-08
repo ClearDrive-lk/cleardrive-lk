@@ -3,21 +3,41 @@
 Pytest configuration and fixtures.
 """
 
-import asyncio
-from typing import AsyncGenerator, Generator
-from unittest.mock import AsyncMock
+import os
 
-import pytest
-from app.core.database import Base, get_db
-from app.core.redis_client import get_redis
-from app.core.security import create_access_token
-from app.main import app
-from app.modules.auth.models import Role, User
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+# Set test environment variables before importing app modules
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-min-32-characters-long")
+os.environ.setdefault("ENCRYPTION_KEY", "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=")
+os.environ.setdefault("GOOGLE_CLIENT_ID", "test-client-id")
+os.environ.setdefault("GOOGLE_CLIENT_SECRET", "test-client-secret")
+os.environ.setdefault("PAYHERE_MERCHANT_ID", "test-merchant-id")
+os.environ.setdefault("PAYHERE_MERCHANT_SECRET", "test-merchant-secret")
+os.environ.setdefault("ANTHROPIC_API_KEY", "test-api-key")
+os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
+os.environ.setdefault("SUPABASE_KEY", "test-key")
+os.environ.setdefault("SMTP_HOST", "smtp.gmail.com")
+os.environ.setdefault("SMTP_USERNAME", "test@gmail.com")
+os.environ.setdefault("SMTP_PASSWORD", "test-password")
+os.environ.setdefault("ADMIN_EMAILS", "admin@cleardrive.lk")
+os.environ.setdefault("ENVIRONMENT", "test")
+
+import asyncio  # noqa: E402
+from typing import AsyncGenerator, Generator  # noqa: E402
+from unittest.mock import AsyncMock  # noqa: E402
+
+import pytest  # noqa: E402
+from app.core.database import Base, get_db  # noqa: E402
+from app.core.redis_client import get_redis  # noqa: E402
+from app.core.security import create_access_token  # noqa: E402
+from app.main import app  # noqa: E402
+from app.modules.auth.models import Role, User  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from httpx import AsyncClient  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import Session, sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
 
 # Test database (in-memory SQLite)
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
