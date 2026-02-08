@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useCallback } from "react";
 import AuthGuard from "@/components/auth/AuthGuard";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Terminal, Filter, ChevronLeft, ChevronRight, Search, X, SlidersHorizontal } from "lucide-react";
+import { Terminal, ChevronLeft, ChevronRight, Search, X, SlidersHorizontal } from "lucide-react"; // Removed Filter
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,31 +73,8 @@ function VehicleCatalog() {
         }
     }, [sheetOpen, currentMinPrice, currentMaxPrice, currentMinYear, currentMaxYear, currentMaxMileage, currentTransmission]);
 
-    // -- SYNC DEBOUNCE WITH URL --
-    useEffect(() => {
-        if (debouncedSearch !== currentSearch) {
-            updateFilters({ search: debouncedSearch });
-        }
-    }, [debouncedSearch]);
-
-    // -- DATA FETCHING --
-    const { data, isLoading, isError, error } = useVehicles({
-        page: currentPage,
-        limit: 8,
-        search: currentSearch,
-        fuel: currentFuel === 'All' ? undefined : currentFuel,
-        status: currentStatus === 'All' ? undefined : currentStatus,
-        sort: currentSort,
-        minPrice: currentMinPrice,
-        maxPrice: currentMaxPrice === 50000000 ? undefined : currentMaxPrice,
-    });
-
-    const vehicles = data?.data || [];
-    const totalItems = data?.total || 0;
-    const totalPages = Math.ceil(totalItems / 8);
-
     // -- HANDLERS --
-    const updateFilters = (newParams: Record<string, string | number | undefined>) => {
+    const updateFilters = useCallback((newParams: Record<string, string | number | undefined>) => {
         const params = new URLSearchParams(searchParams.toString());
 
         Object.entries(newParams).forEach(([key, value]) => {
@@ -114,7 +91,30 @@ function VehicleCatalog() {
         }
 
         router.push(`/dashboard/vehicles?${params.toString()}`);
-    };
+    }, [searchParams, router]);
+
+    // -- SYNC DEBOUNCE WITH URL --
+    useEffect(() => {
+        if (debouncedSearch !== currentSearch) {
+            updateFilters({ search: debouncedSearch });
+        }
+    }, [debouncedSearch, currentSearch, updateFilters]);
+
+    // -- DATA FETCHING --
+    const { data, isLoading, isError } = useVehicles({
+        page: currentPage,
+        limit: 8,
+        search: currentSearch,
+        fuel: currentFuel === 'All' ? undefined : currentFuel,
+        status: currentStatus === 'All' ? undefined : currentStatus,
+        sort: currentSort,
+        minPrice: currentMinPrice,
+        maxPrice: currentMaxPrice === 50000000 ? undefined : currentMaxPrice,
+    });
+
+    const vehicles = data?.data || [];
+    const totalItems = data?.total || 0;
+    const totalPages = Math.ceil(totalItems / 8);
 
     const applyAdvancedFilters = () => {
         updateFilters({
@@ -425,7 +425,7 @@ function VehicleCatalog() {
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">No Vehicles Found</h3>
                             <p className="text-gray-400 max-w-md mx-auto mb-8">
-                                We couldn't find any vehicles matching your search criteria. Try adjusting your filters or search term.
+                                We couldn&apos;t find any vehicles matching your search criteria. Try adjusting your filters or search term.
                             </p>
                             <Button onClick={clearFilters} variant="outline" className="border-white/10 text-white hover:bg-white/5">
                                 Clear All Filters

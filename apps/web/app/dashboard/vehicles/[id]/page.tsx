@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense } from "react";
 import AuthGuard from "@/components/auth/AuthGuard";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { Terminal, ChevronLeft, Car, Calendar, Gauge, Fuel, Timer, Share2, Mail, Phone, MapPin } from "lucide-react";
+import { Terminal, ChevronLeft, Car, Gauge, Timer, Share2, Mail, MapPin } from "lucide-react"; // Removed Calendar, Fuel, Phone
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useLogout } from "@/lib/hooks/useLogout";
-import { useVehicles } from "@/lib/hooks/useVehicles"; // We might need a single vehicle fetch hook or filter by ID
+// Removed unused useVehicles
 import { apiClient } from "@/lib/api-client";
 import { Vehicle } from "@/types/vehicle";
 import { useQuery } from "@tanstack/react-query";
@@ -32,15 +32,11 @@ const useVehicle = (id: string) => {
 function VehicleDetail() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
-    const { logout, isLoading: isLogoutLoading } = useLogout();
+    // Removed unused logout, isLogoutLoading
     const { data: vehicle, isLoading, isError } = useVehicle(id);
-    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedImageOverride, setSelectedImageOverride] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (vehicle?.imageUrl) {
-            setSelectedImage(vehicle.imageUrl);
-        }
-    }, [vehicle]);
+    const displayImage = selectedImageOverride || vehicle?.imageUrl || null;
 
     // Formatters
     const formatJPY = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumSignificantDigits: 3 }).format;
@@ -113,9 +109,9 @@ function VehicleDetail() {
                     {/* LEFT COLUMN: Gallery */}
                     <div className="space-y-4">
                         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-900 border border-white/10">
-                            {selectedImage ? (
+                            {displayImage ? (
                                 <Image
-                                    src={selectedImage}
+                                    src={displayImage}
                                     alt="Vehicle Main"
                                     fill
                                     className="object-cover"
@@ -139,8 +135,8 @@ function VehicleDetail() {
                                 {images.map((img, idx) => (
                                     <button
                                         key={idx}
-                                        onClick={() => setSelectedImage(img)}
-                                        className={`relative w-24 h-16 rounded overflow-hidden border-2 transition-all flex-shrink-0 ${selectedImage === img ? 'border-[#FE7743]' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                                        onClick={() => setSelectedImageOverride(img)}
+                                        className={`relative w-24 h-16 rounded overflow-hidden border-2 transition-all flex-shrink-0 ${displayImage === img ? 'border-[#FE7743]' : 'border-transparent opacity-70 hover:opacity-100'}`}
                                     >
                                         <Image src={img} alt="Thumbnail" fill className="object-cover" />
                                     </button>

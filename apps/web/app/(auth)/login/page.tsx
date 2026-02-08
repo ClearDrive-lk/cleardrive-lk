@@ -7,7 +7,7 @@ import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Lock, ShieldCheck, Terminal, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, Lock, ShieldCheck, Terminal, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function LoginPage() {

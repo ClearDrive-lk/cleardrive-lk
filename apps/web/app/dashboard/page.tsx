@@ -3,7 +3,7 @@
 import AuthGuard from "@/components/auth/AuthGuard";
 import { useAppSelector } from "@/lib/store/store";
 import Link from "next/link";
-import { Package, Car, User, FileText, TrendingUp, CheckCircle2, ArrowRight, Terminal } from "lucide-react";
+import { Package, Car, User, FileText, TrendingUp, CheckCircle2, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLogout } from "@/lib/hooks/useLogout";

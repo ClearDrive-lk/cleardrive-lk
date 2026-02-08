@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { AuctionTicker } from "@/components/ui/ticker";
 import {
   Search,
-  ShieldCheck,
   Zap,
   Globe,
   TrendingUp,
