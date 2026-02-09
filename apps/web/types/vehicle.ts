@@ -7,8 +7,8 @@ export interface Vehicle {
   mileage: number;
   fuel: string;
   transmission: string;
-  status: 'Live' | 'Upcoming' | 'Sold';
-  condition: 'New' | 'Used';
+  status: "Live" | "Upcoming" | "Sold";
+  condition: "New" | "Used";
   imageUrl?: string;
 
   // New fields for detailed view & cards

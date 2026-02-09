@@ -74,7 +74,7 @@ export function GoogleLoginButton() {
         const msg =
           err && typeof err === "object" && "response" in err
             ? (err as { response?: { data?: { detail?: string } } }).response
-              ?.data?.detail
+                ?.data?.detail
             : null;
         setError(
           typeof msg === "string" ? msg : "Google sign-in failed. Try again.",

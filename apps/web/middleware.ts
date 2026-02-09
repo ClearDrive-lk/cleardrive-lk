@@ -31,7 +31,9 @@ export function middleware(request: NextRequest) {
       form-action 'self';
       frame-ancestors 'none';
       upgrade-insecure-requests;
-    `.replace(/\s{2,}/g, " ").trim();
+    `
+      .replace(/\s{2,}/g, " ")
+      .trim();
 
     // Set CSP and security headers (production only)
     response.headers.set("Content-Security-Policy", cspHeader);
@@ -39,7 +41,10 @@ export function middleware(request: NextRequest) {
     response.headers.set("X-Frame-Options", "DENY");
     response.headers.set("X-XSS-Protection", "1; mode=block");
     response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    response.headers.set(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=()",
+    );
 
     // Make nonce available to the app via custom header
     response.headers.set("x-nonce", nonce);
