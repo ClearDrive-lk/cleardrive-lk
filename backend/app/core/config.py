@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_EMAILS: str  # Comma-separated
 
+    # RBAC settings
+    RBAC_ENABLED: bool = True
+    RBAC_STRICT_MODE: bool = True
+
     # Security
     CLOUDFLARE_API_KEY: str | None = None
     SECURITY_EVENT_RETENTION_DAYS: int = 30
