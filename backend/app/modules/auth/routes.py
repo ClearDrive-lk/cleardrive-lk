@@ -546,10 +546,23 @@ async def dev_ensure_user(
 
     if user:
         logger.info(f"Dev: User already exists: {body.email}")
-        return {"created": False, "email": body.email, "message": "User already exists"}
+        if body.name and body.name != user.name:
+            user.name = body.name
+        if body.role and body.role != user.role:
+            user.role = body.role
+        if db.is_modified(user):
+            db.commit()
+            db.refresh(user)
+        return {
+            "created": False,
+            "email": body.email,
+            "message": "User already exists",
+            "role": user.role,
+        }
 
     name = body.name or body.email.split("@")[0]
-    user = User(email=body.email, name=name, role=Role.CUSTOMER)
+    role = body.role or Role.CUSTOMER
+    user = User(email=body.email, name=name, role=role)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -560,6 +573,7 @@ async def dev_ensure_user(
         "created": True,
         "email": body.email,
         "name": name,
+        "role": user.role,
         "message": "User created",
     }
 
