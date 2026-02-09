@@ -37,7 +37,7 @@ repos:
       - id: black
         name: Format Python code (Black)
         files: ^backend/
-        language_version: python3.12
+        language_version: python3
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
@@ -144,7 +144,7 @@ repos:
 # CONFIGURATION
 # ============================================================================
 default_language_version:
-  python: python3.12
+  python: python3
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
