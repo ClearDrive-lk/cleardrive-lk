@@ -88,6 +88,7 @@ class DevEnsureUserRequest(BaseModel):
 
     email: EmailStr
     name: Optional[str] = None
+    role: Optional[Role] = None
 
 
 # ============================================================================
