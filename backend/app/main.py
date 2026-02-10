@@ -8,6 +8,8 @@ from app.core.redis_client import close_redis, get_redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from app.modules.payments.routes import router as payments_router
+from app.modules.payments.routes import router as payments_router
 
 # Import security middleware
 try:
@@ -142,6 +144,8 @@ logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
 logger.info("✅ Routers registered: /auth, /vehicles, /test")
 
