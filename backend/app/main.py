@@ -3,7 +3,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+<<<<<<< HEAD
 from contextlib import asynccontextmanager
+=======
+from app.modules.payments.routes import router as payments_router
+from app.modules.payments.routes import router as payments_router
+>>>>>>> 3d4061c (feat: Add payment integration routes and schemas)
 
 from app.core.config import settings
 from app.core.redis_client import get_redis, close_redis
@@ -75,6 +80,18 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
+<<<<<<< HEAD
+=======
+app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(test_router, prefix="/api/v1")
+logger.info("✅ Routers registered: /auth, /vehicles, /test")
+
+
+# ============================================================================
+# ROOT & HEALTH ENDPOINTS
+# ============================================================================
+>>>>>>> 3d4061c (feat: Add payment integration routes and schemas)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 
 
