@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     # PayHere
     PAYHERE_MERCHANT_ID: str
     PAYHERE_MERCHANT_SECRET: str
+    PAYHERE_NOTIFY_URL: str
+    PAYHERE_RETURN_URL: str
+    PAYHERE_CANCEL_URL: str
     PAYHERE_SANDBOX: bool = True
 
     # Claude API

@@ -7,6 +7,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
+from typing import List
+from fastapi import Depends, HTTPException, status
 
 from .database import get_db
 from .security import decode_token
@@ -129,6 +131,22 @@ def require_role(allowed_roles: list[Role]):
         return current_user
 
     return role_checker
+
+#Tharin - 10/02/2026
+def require_permission(required_permissions: List[str]):
+    """
+    Dependency to check if user has required permissions
+    """
+    async def permission_checker(current_user = Depends(get_current_user)):
+        # For now, allow all authenticated users
+        # You can enhance this later with actual permission checking
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions"
+            )
+        return current_user
+    return permission_checker
 
 
 # Convenience dependencies for specific roles

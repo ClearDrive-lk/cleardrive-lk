@@ -47,6 +47,9 @@ class User(Base, UUIDMixin, TimestampMixin):
     role: Mapped[Role] = mapped_column(
         SQLEnum(Role), default=Role.CUSTOMER, nullable=False, index=True
     )
+    
+    #Order Management
+    orders = relationship("Order", back_populates="user")
 
     # Security tracking
     failed_auth_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

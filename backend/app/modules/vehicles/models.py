@@ -70,6 +70,9 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
     auction_grade: Mapped[str | None] = mapped_column(String(10))  # e.g., "4.5", "5", "R"
     color: Mapped[str | None] = mapped_column(String(50))
 
+    #Order Management
+    orders = relationship("Order", back_populates="vehicle")
+
     # Media
     image_url: Mapped[str | None] = mapped_column(String(500))
 

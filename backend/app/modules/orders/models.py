@@ -1,5 +1,12 @@
 # backend/app/modules/orders/models.py
 
+"""
+Order management models.
+Author: Tharin
+Epic: CD-E4
+Story: CD-30 - Order Creation Flow
+"""
+
 from __future__ import annotations
 
 import enum
@@ -21,69 +28,92 @@ if TYPE_CHECKING:
 
 
 class OrderStatus(str, enum.Enum):
-    """Order status enum - 11 states."""
-
+    """Order status enum - 11 states total."""
+    
+    # Initial states
     CREATED = "CREATED"
     PAYMENT_CONFIRMED = "PAYMENT_CONFIRMED"
+    
+    # Letter of Credit states
     LC_REQUESTED = "LC_REQUESTED"
     LC_APPROVED = "LC_APPROVED"
     LC_REJECTED = "LC_REJECTED"
+    
+    # Shipping states
     ASSIGNED_TO_EXPORTER = "ASSIGNED_TO_EXPORTER"
     SHIPMENT_DOCS_UPLOADED = "SHIPMENT_DOCS_UPLOADED"
     AWAITING_SHIPMENT_CONFIRMATION = "AWAITING_SHIPMENT_CONFIRMATION"
     SHIPPED = "SHIPPED"
     IN_TRANSIT = "IN_TRANSIT"
     ARRIVED_AT_PORT = "ARRIVED_AT_PORT"
+    
+    # Customs & Delivery
     CUSTOMS_CLEARANCE = "CUSTOMS_CLEARANCE"
     DELIVERED = "DELIVERED"
+    
+    # Terminal state
     CANCELLED = "CANCELLED"
 
 
 class PaymentStatus(str, enum.Enum):
     """Payment status enum."""
-
     PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     REFUNDED = "REFUNDED"
 
 
 class Order(Base, UUIDMixin, TimestampMixin):
-    """Order model - vehicle import orders."""
-
+    """
+    Order model for vehicle import orders.
+    
+    Flow:
+    1. Customer creates order
+    2. Customer pays via PayHere
+    3. Order goes through shipping/customs
+    4. Customer receives vehicle
+    """
+    
     __tablename__ = "orders"
-
-    # References
+    
+    # Foreign Keys
     user_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     vehicle_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("vehicles.id"), nullable=False, index=True
     )
-
-    # Status
+    
+    # Order Status
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False, index=True
     )
+    
+    # Payment Status
     payment_status: Mapped[PaymentStatus] = mapped_column(
-        SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False
+        SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False, index=True
     )
-
-    # Customer details (encrypted)
-    shipping_address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted with AES-256
+    
+    # Shipping Information (ENCRYPTED in production)
+    shipping_address: Mapped[str] = mapped_column(Text, nullable=False)  # TODO: Encrypt with AES-256
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
-
-    # Pricing
-    total_cost_lkr: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-
+    
+    # Cost Breakdown
+    vehicle_cost_lkr: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    shipping_cost_lkr: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    customs_duty_lkr: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    vat_lkr: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    total_cost_lkr: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    
     # Relationships
     user: Mapped[User] = relationship("User", back_populates="orders")
     vehicle: Mapped[Vehicle] = relationship("Vehicle", back_populates="orders")
+    payments: Mapped[list[Payment]] = relationship(
+        "Payment", back_populates="order", cascade="all, delete-orphan"
+    )
     status_history: Mapped[list[OrderStatusHistory]] = relationship(
         "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
-    )
-    payment: Mapped[Payment | None] = relationship(
-        "Payment", back_populates="order", uselist=False, cascade="all, delete-orphan"
     )
     shipment_details: Mapped[ShipmentDetails | None] = relationship(
         "ShipmentDetails",
@@ -91,30 +121,40 @@ class Order(Base, UUIDMixin, TimestampMixin):
         uselist=False,
         cascade="all, delete-orphan",
     )
-
+    
     def __repr__(self):
         return f"<Order {self.id} - {self.status}>"
 
 
 class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
-    """Order status change history."""
-
+    """
+    Track all status changes for audit trail.
+    
+    Every time order status changes, record:
+    - Who changed it
+    - When it changed
+    - What it changed from/to
+    """
+    
     __tablename__ = "order_status_history"
-
+    
     order_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
-
-    # Status change
+    
+    # Status Change
     from_status: Mapped[OrderStatus | None] = mapped_column(SQLEnum(OrderStatus))
     to_status: Mapped[OrderStatus] = mapped_column(SQLEnum(OrderStatus), nullable=False)
-
-    # Who changed it
+    
+    # Who Changed It
     changed_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
+    
+    # Optional Notes
     notes: Mapped[str | None] = mapped_column(Text)
-
+    
     # Relationships
     order: Mapped[Order] = relationship("Order", back_populates="status_history")
-
+    user: Mapped[User] = relationship("User")
+    
     def __repr__(self):
-        return f"<OrderStatusHistory {self.from_status} -> {self.to_status}>"
+        return f"<OrderStatusHistory {self.from_status} → {self.to_status}>"
