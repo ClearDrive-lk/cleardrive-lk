@@ -38,3 +38,9 @@ types-redis==4.6.0.11
 # Debugging
 ipython==8.18.1
 ipdb==0.13.13
+
+# User agent parsing
+user-agents==2.2.0
+
+# HTTP requests for GeoIP (optional)
+requests==2.31.0

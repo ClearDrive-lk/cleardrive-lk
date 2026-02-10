@@ -6,12 +6,16 @@ Redis client and utilities for OTP, token, and session management.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, cast
 
 import redis.asyncio as redis  # type: ignore[import-untyped]
 
 from .config import settings
+
+logger = logging.getLogger(__name__)
+
 
 # ============================================================================
 # CLIENT SINGLETON
@@ -396,6 +400,26 @@ async def get_user_sessions(user_id: str) -> List[Dict]:
     return sessions
 
 
+async def get_session_count(user_id: str) -> int:
+    """
+    Get number of active sessions for a user.
+
+    Args:
+        user_id: User UUID as string
+
+    Returns:
+        Number of active sessions
+
+    Example:
+        count = await get_session_count("123e4567-e89b-12d3-a456-426614174000")
+        # Returns: 3
+    """
+    client = await get_redis()
+    pattern = f"session:{user_id}:*"
+    keys = await client.keys(pattern)
+    return len(keys)
+
+
 async def delete_session(user_id: str, session_id: str) -> bool:
     """
     Delete specific session.
@@ -435,32 +459,77 @@ async def delete_all_user_sessions(user_id: str) -> int:
     return len(keys)
 
 
-async def enforce_session_limit(
-    user_id: str, max_sessions: int = settings.MAX_SESSIONS_PER_USER
-) -> bool:
+async def enforce_session_limit(user_id: str, max_sessions: Optional[int] = None) -> Dict[str, Any]:
     """
     Enforce maximum concurrent sessions per user.
 
-    If user has more than max_sessions, delete oldest ones.
+    If user has more than max_sessions, delete oldest sessions
+    until count equals max_sessions.
 
     Args:
-        user_id: User ID
-        max_sessions: Maximum allowed sessions (default: 5)
+        user_id: User UUID as string
+        max_sessions: Maximum allowed sessions (default from settings.MAX_SESSIONS_PER_USER)
 
     Returns:
-        True if enforced
+        {
+            "sessions_deleted": 2,
+            "current_count": 5,
+            "limit": 5
+        }
+
+    Example:
+        # User has 7 sessions, max is 5
+        result = await enforce_session_limit(user_id)
+        # Result: {"sessions_deleted": 2, "current_count": 5, "limit": 5}
     """
+    # Use default from settings if not provided
+    if max_sessions is None:
+        max_sessions = getattr(settings, "MAX_SESSIONS_PER_USER", 5)
+
+    # Get all user sessions
     sessions = await get_user_sessions(user_id)
 
+    result = {"sessions_deleted": 0, "current_count": len(sessions), "limit": max_sessions}
+
+    # If within limit, no action needed
     if len(sessions) <= max_sessions:
-        return True
+        return result
 
     # Sort by created_at (oldest first)
     sessions.sort(key=lambda s: s.get("created_at", ""))
 
-    # Delete oldest sessions
+    # Calculate how many to delete
     num_to_delete = len(sessions) - max_sessions
-    for session in sessions[:num_to_delete]:
-        await delete_session(user_id, session["session_id"])
 
-    return True
+    logger.info(
+        f"Enforcing session limit for user {user_id}: " f"deleting {num_to_delete} oldest sessions"
+    )
+
+    # Delete oldest sessions
+    for session in sessions[:num_to_delete]:
+        session_id = session.get("session_id")
+        token_jti = session.get("token_jti")
+
+        if session_id:
+            # Delete session
+            await delete_session(user_id, session_id)
+
+            # Blacklist associated refresh token
+            if token_jti:
+                # Blacklist for remaining TTL (max 30 days)
+                await blacklist_token(token_jti, 30 * 24 * 60 * 60)
+
+            result["sessions_deleted"] += 1
+
+    result["current_count"] = len(sessions) - result["sessions_deleted"]
+
+    logger.info(
+        f"Session limit enforced for user {user_id}",
+        extra={
+            "user_id": user_id,
+            "sessions_deleted": result["sessions_deleted"],
+            "current_count": result["current_count"],
+        },
+    )
+
+    return result
