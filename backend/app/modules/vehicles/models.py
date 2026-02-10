@@ -12,6 +12,8 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from sqlalchemy.orm import relationship
+
 if TYPE_CHECKING:
     from app.modules.orders.models import Order
 
@@ -65,6 +67,9 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
     engine_cc: Mapped[int | None] = mapped_column(Integer)
     fuel_type: Mapped[FuelType | None] = mapped_column(SQLEnum(FuelType))
     transmission: Mapped[Transmission | None] = mapped_column(SQLEnum(Transmission))
+
+    #Tharin - 10/02/2026
+    orders = relationship("Order", back_populates="vehicle")
 
     # Condition
     auction_grade: Mapped[str | None] = mapped_column(String(10))  # e.g., "4.5", "5", "R"

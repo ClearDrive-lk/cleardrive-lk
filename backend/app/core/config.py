@@ -1,7 +1,5 @@
 # backend/app/core/config.py
 
-from typing import List, Optional
-
 from pydantic_settings import BaseSettings
 
 
@@ -39,6 +37,11 @@ class Settings(BaseSettings):
     PAYHERE_MERCHANT_SECRET: str
     PAYHERE_SANDBOX: bool = True
 
+    # PayHere Configuration
+    PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
+    PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
+    PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
+
     # Claude API
     ANTHROPIC_API_KEY: str
 
@@ -48,7 +51,7 @@ class Settings(BaseSettings):
 
     # Email (SMTP)
     SMTP_HOST: str
-    SMTP_PORT: Optional[int] = None
+    SMTP_PORT: int | None = None
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
@@ -67,13 +70,21 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_EMAILS: str  # Comma-separated
 
+    # RBAC settings
+    RBAC_ENABLED: bool = True
+    RBAC_STRICT_MODE: bool = True
+
     # Security
     CLOUDFLARE_API_KEY: str | None = None
     SECURITY_EVENT_RETENTION_DAYS: int = 30
     MAX_FAILED_AUTH_ATTEMPTS: int = 5
+    TOKEN_REUSE_DETECTION_ENABLED: bool = True
+    SUSPICIOUS_ACTIVITY_THRESHOLD: int = 3
+    MAX_SESSIONS_PER_USER: int = 5
+    SESSION_CLEANUP_INTERVAL_HOURS: int = 24
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
     ]

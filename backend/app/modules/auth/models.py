@@ -14,6 +14,8 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from sqlalchemy.orm import relationship
+
 if TYPE_CHECKING:
     from app.modules.kyc.models import KYCDocument
     from app.modules.orders.models import Order
@@ -76,6 +78,8 @@ class User(Base, UUIDMixin, TimestampMixin):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    # Tharin - 10/02/2026
+    orders = relationship("Order", back_populates="user")
 
     def __repr__(self):
         return f"<User {self.email}>"

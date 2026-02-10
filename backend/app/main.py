@@ -9,6 +9,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
+from app.modules.orders.routes import router as orders_router
+
 # Import security middleware
 try:
     from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -31,6 +33,9 @@ except ImportError:
 
 # Import routers
 from app.modules.auth.routes import router as auth_router
+from app.modules.orders.routes import router as orders_router
+#from app.modules.payments.routes import router as payments_router
+from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 
 # Configure logging
@@ -140,8 +145,10 @@ logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
-
-logger.info("✅ Routers registered: /auth, /vehicles")
+app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
+#app.include_router(payments_router, prefix=settings.API_V1_PREFIX) 
+app.include_router(test_router, prefix="/api/v1")
+logger.info("✅ Routers registered: /auth, /vehicles, /orders, /test")
 
 
 # ============================================================================
@@ -161,6 +168,8 @@ async def root():
         "endpoints": {
             "auth": f"{settings.API_V1_PREFIX}/auth",
             "vehicles": f"{settings.API_V1_PREFIX}/vehicles",
+            "orders": f"{settings.API_V1_PREFIX}/orders",
+            "payments": f"{settings.API_V1_PREFIX}/payments",
             "health": "/health",
         },
     }

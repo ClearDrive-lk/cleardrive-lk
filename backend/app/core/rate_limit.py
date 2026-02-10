@@ -13,7 +13,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Optional
 
-from app.core.redis_client import get_redis
+from app.core.redis import get_redis
 from app.modules.auth.models import User
 from fastapi import HTTPException, Request, status
 
