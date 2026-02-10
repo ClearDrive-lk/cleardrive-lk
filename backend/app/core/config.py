@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_EMAILS: str  # Comma-separated
 
+    # Session Management
+    MAX_SESSIONS_PER_USER: int = 5
+    SESSION_TTL_DAYS: int = 30
+    SESSION_CLEANUP_INTERVAL_HOURS: int = 24
+
+    # GeoIP (optional)
+    GEOIP_ENABLED: bool = False
+    GEOIP_API_KEY: str | None = None
+
     # RBAC settings
     RBAC_ENABLED: bool = True
     RBAC_STRICT_MODE: bool = True
@@ -75,8 +84,6 @@ class Settings(BaseSettings):
     MAX_FAILED_AUTH_ATTEMPTS: int = 5
     TOKEN_REUSE_DETECTION_ENABLED: bool = True
     SUSPICIOUS_ACTIVITY_THRESHOLD: int = 3
-    MAX_SESSIONS_PER_USER: int = 5
-    SESSION_CLEANUP_INTERVAL_HOURS: int = 24
 
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = [
