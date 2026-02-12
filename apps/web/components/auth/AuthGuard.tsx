@@ -24,7 +24,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       }
 
       // 2. If Redux checks fail, check for cookie (persistence)
-      const hasCookie = document.cookie.includes("access_token=");
+      const hasCookie = document.cookie.includes("refresh_token=");
 
       if (hasCookie) {
         // Restore session (Hydration)
