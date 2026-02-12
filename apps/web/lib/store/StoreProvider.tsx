@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 'use client'
 
 import { useState } from 'react'
@@ -31,18 +30,4 @@ export default function StoreProvider({
       </QueryClientProvider>
     </Provider>
   )
-=======
-"use client";
-
-import { Provider } from "react-redux";
-import { store } from "./store";
-
-export default function StoreProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Simple and direct. No refs needed for now.
-  return <Provider store={store}>{children}</Provider>;
->>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
 }

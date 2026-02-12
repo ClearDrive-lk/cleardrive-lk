@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // 1. Define which routes are protected
-<<<<<<< HEAD
 const protectedRoutes = ["/dashboard", "/profile", "/orders", "/vehicles"];
 const authRoutes = ["/login", "/verify-otp"];
 
@@ -58,20 +57,6 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 6. Scenario: User IS NOT logged in
-=======
-const protectedRoutes = ["/dashboard", "/profile", "/orders"];
-const authRoutes = ["/login", "/verify-otp"];
-
-export function middleware(request: NextRequest) {
-  // 2. Check for the session token (we will use a cookie later, assuming 'access_token' for now)
-  // Note: Middleware can only read Cookies, not LocalStorage.
-  // We will update the login logic to set a cookie in CD-354.
-  const token = request.cookies.get("access_token")?.value;
-
-  const { pathname } = request.nextUrl;
-
-  // 3. Scenario: User IS NOT logged in
->>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
   if (!token) {
     // If they try to visit a protected page -> Kick them to login
     if (protectedRoutes.some((route) => pathname.startsWith(route))) {
@@ -79,11 +64,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-<<<<<<< HEAD
   // 7. Scenario: User IS logged in
-=======
-  // 4. Scenario: User IS logged in
->>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
   if (token) {
     // If they try to visit login or OTP -> Send them to dashboard
     if (authRoutes.some((route) => pathname.startsWith(route))) {
@@ -91,17 +72,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-<<<<<<< HEAD
   return response;
 }
 
 // 8. Configure which paths the middleware runs on
-=======
-  return NextResponse.next();
-}
-
-// 5. Configure which paths the middleware runs on
->>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
 export const config = {
   matcher: [
     /*
