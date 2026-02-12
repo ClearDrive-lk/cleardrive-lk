@@ -13,16 +13,24 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+<<<<<<< HEAD
     "@react-oauth/google": "^0.13.4",
+=======
+>>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
     "@reduxjs/toolkit": "^2.11.2",
     "@tanstack/react-query": "^5.90.20",
     "axios": "^1.13.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+<<<<<<< HEAD
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "radix-ui": "^1.4.3",
+=======
+    "lucide-react": "^0.563.0",
+    "next": "16.1.6",
+>>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-redux": "^9.2.0",

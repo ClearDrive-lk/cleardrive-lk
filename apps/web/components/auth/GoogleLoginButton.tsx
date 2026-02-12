@@ -4,7 +4,11 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+<<<<<<< HEAD
 import apiClient from "@/lib/api-client";
+=======
+import apiClient from "@/lib/api";
+>>>>>>> 0162e2e977b9ad541379e696dbf240da260a5f98
 
 declare global {
   interface Window {
