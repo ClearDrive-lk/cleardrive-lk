@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import datetime as dt
+import enum
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import Boolean, Date, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin, GUID
+from app.core.models import GUID, TimestampMixin, UUIDMixin
+from sqlalchemy import Boolean, Date, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.modules.orders.models import Order
@@ -70,7 +72,10 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[ShipmentStatus] = mapped_column(
-        SQLEnum(ShipmentStatus), default=ShipmentStatus.PENDING_SHIPMENT, nullable=False, index=True
+        SQLEnum(ShipmentStatus),
+        default=ShipmentStatus.PENDING_SHIPMENT,
+        nullable=False,
+        index=True,
     )
 
     # Submission & Approval

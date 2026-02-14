@@ -4,8 +4,8 @@
 Test authentication flow in development mode.
 """
 
-import requests
-import json
+
+import requests  # type: ignore
 
 BASE_URL = "http://localhost:8000/api/v1"
 
@@ -26,7 +26,7 @@ def test_auth_flow():
     # Step 2: Request OTP resend (this will generate OTP for existing user)
     print(f"Step 2: Requesting OTP for {test_email}...")
 
-    response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email})
+    response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email}, timeout=10)
 
     print(f"Response: {response.status_code}")
     print(f"Body: {response.json()}\n")
@@ -35,13 +35,15 @@ def test_auth_flow():
     otp = input("Enter OTP from console logs: ")
 
     # Step 3: Verify OTP
-    print(f"Step 3: Verifying OTP...")
+    print("Step 3: Verifying OTP...")
 
-    response = requests.post(f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp})
+    response = requests.post(
+        f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp}, timeout=10
+    )
 
     if response.status_code == 200:
         tokens = response.json()
-        print(f"✅ Authentication successful!")
+        print("✅ Authentication successful!")
         print(f"Access Token: {tokens['access_token'][:50]}...")
         print(f"Refresh Token: {tokens['refresh_token'][:50]}...")
         print(f"User: {tokens['user']}\n")
@@ -53,7 +55,9 @@ def test_auth_flow():
         print("Step 4: Testing protected endpoint (Get Sessions)...")
 
         response = requests.get(
-            f"{BASE_URL}/auth/sessions", headers={"Authorization": f"Bearer {access_token}"}
+            f"{BASE_URL}/auth/sessions",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -65,11 +69,13 @@ def test_auth_flow():
         # Step 5: Test token refresh
         print("Step 5: Testing token refresh...")
 
-        response = requests.post(f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh_token})
+        response = requests.post(
+            f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh_token}, timeout=10
+        )
 
         if response.status_code == 200:
             new_tokens = response.json()
-            print(f"✅ Tokens refreshed successfully!")
+            print("✅ Tokens refreshed successfully!")
             print(f"New Access Token: {new_tokens['access_token'][:50]}...\n")
         else:
             print(f"❌ Token refresh failed: {response.json()}\n")
@@ -78,11 +84,13 @@ def test_auth_flow():
         print("Step 6: Testing logout...")
 
         response = requests.post(
-            f"{BASE_URL}/auth/logout", headers={"Authorization": f"Bearer {access_token}"}
+            f"{BASE_URL}/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
         )
 
         if response.status_code == 200:
-            print(f"✅ Logged out successfully!\n")
+            print("✅ Logged out successfully!\n")
         else:
             print(f"❌ Logout failed: {response.json()}\n")
 
