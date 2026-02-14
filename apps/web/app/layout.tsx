@@ -4,9 +4,9 @@ import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
 
 // Define the font
-const inter = Inter({
+const inter = Inter({ 
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-sans", 
 });
 
 export const metadata: Metadata = {
@@ -23,7 +23,9 @@ export default function RootLayout({
     <html lang="en">
       {/* Apply the font variable */}
       <body className={`${inter.variable} font-sans antialiased bg-[#050505]`}>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          {children}
+        </StoreProvider>
       </body>
     </html>
   );
