@@ -187,7 +187,7 @@ async def create_vehicle(
     """
 
     # Check if auction_id already exists
-    existing = db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data.auction_id).first()
+    existing = db.query(Vehicle).filter(Vehicle.stock_no == vehicle_data.auction_id).first()
 
     if existing:
         raise HTTPException(

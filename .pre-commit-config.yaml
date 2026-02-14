@@ -136,9 +136,15 @@ repos:
     hooks:
       - id: pytest
         name: Run Tests
-        entry: backend/venv312/Scripts/python.exe -m pytest
+        # Use 'pytest' directly. `language: system` will find it in the active venv.
+        # Pytest will find the tests based on pytest.ini.
+        entry: pytest
         language: system
+        # Only run on changes to Python files.
+        types: [python]
         pass_filenames: false
+        # Always run the full suite, as any Python change could break tests.
+        always_run: true
 
 # ============================================================================
 # CONFIGURATION

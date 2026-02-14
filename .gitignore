@@ -388,3 +388,5 @@ Thumbs.db
 *.pem
 *.key
 *.cert
+.pre-commit-config.yaml
+setup-git-hooks.ps1

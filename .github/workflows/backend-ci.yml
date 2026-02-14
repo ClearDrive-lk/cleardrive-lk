@@ -57,8 +57,8 @@ jobs:
       - name: Run Flake8 (linting)
         run: |
           cd backend
-          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          # Run flake8 with standard checks, plus complexity and line length limits.
+          flake8 app/ --count --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Run mypy (type checking)
         run: |
@@ -88,14 +88,12 @@ jobs:
       - name: Run Bandit (SAST)
         run: |
           cd backend
-          bandit -r app/ -f json -o bandit-report.json || true
-          bandit -r app/ -ll -i
+          bandit -r app/ -f json -o bandit-report.json -ll -i
 
       - name: Run Safety (dependency check)
         run: |
           cd backend
-          safety check --json --output safety-report.json || true
-          safety check
+          safety check --json --output safety-report.json --exit-code
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -127,7 +125,7 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 5S
 
       redis:
         image: redis:7-alpine
