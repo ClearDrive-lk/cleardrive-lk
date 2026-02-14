@@ -15,6 +15,7 @@ from .cost_calculator import DEFAULT_JPY_TO_LKR, calculate_total_cost
 from .models import Vehicle, VehicleStatus
 from .schemas import (
     CostBreakdown,
+    PaginationInfo,
     VehicleCreate,
     VehicleListResponse,
     VehicleResponse,
@@ -114,12 +115,11 @@ async def get_vehicles(
     # Calculate total pages
     total_pages = math.ceil(total / limit) if total > 0 else 0
 
+    pagination_info = PaginationInfo(page=page, limit=limit, total=total, total_pages=total_pages)
+
     return VehicleListResponse(
         vehicles=[VehicleResponse.model_validate(v) for v in vehicles],
-        total=total,
-        page=page,
-        limit=limit,
-        total_pages=total_pages,
+        pagination=pagination_info,
     )
 
 
@@ -186,13 +186,13 @@ async def create_vehicle(
     Requires ADMIN role.
     """
 
-    # Check if auction_id already exists
-    existing = db.query(Vehicle).filter(Vehicle.stock_no == vehicle_data.auction_id).first()
+    # Check if stock_no already exists
+    existing = db.query(Vehicle).filter(Vehicle.stock_no == vehicle_data.stock_no).first()
 
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Vehicle with auction_id '{vehicle_data.auction_id}' already exists",
+            detail=f"Vehicle with stock_no '{vehicle_data.stock_no}' already exists",
         )
 
     # Create vehicle

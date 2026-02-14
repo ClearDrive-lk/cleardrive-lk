@@ -13,7 +13,7 @@ def test_get_vehicles_empty(client, db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == 0
+    assert data["pagination"]["total"] == 0
     assert data["vehicles"] == []
 
 
@@ -41,7 +41,7 @@ def test_get_vehicles_with_data(client, db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == 1
+    assert data["pagination"]["total"] == 1
     assert len(data["vehicles"]) == 1
     assert data["vehicles"][0]["make"] == "Toyota"
     assert data["vehicles"][0]["model"] == "Prius"
@@ -66,11 +66,11 @@ def test_search_vehicles(client, db):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == 2
+    assert data["pagination"]["total"] == 2
 
     # Search for Honda
     response = client.get("/api/v1/vehicles", params={"search": "Honda"})
 
     assert response.status_code == 200
     data = response.json()
-    assert data["total"] == 1
+    assert data["pagination"]["total"] == 1
