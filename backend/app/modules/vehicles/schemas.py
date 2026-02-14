@@ -10,7 +10,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .models import Drive, FuelType, Steering, Transmission, VehicleStatus, VehicleType
 
@@ -127,8 +127,7 @@ class VehicleResponse(VehicleBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True  # Allows SQLAlchemy model conversion
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -242,8 +241,8 @@ class CostBreakdownResponse(BaseModel):
     total_cost_lkr: float
     breakdown_percentage: dict
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "vehicle_id": "123e4567-e89b-12d3-a456-426614174000",
                 "vehicle_price_jpy": 2500000.0,
@@ -261,6 +260,7 @@ class CostBreakdownResponse(BaseModel):
                 },
             }
         }
+    )
 
 
 # ============================================================================
