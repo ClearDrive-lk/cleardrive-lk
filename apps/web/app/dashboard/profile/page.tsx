@@ -3,30 +3,19 @@
 import AuthGuard from "@/components/auth/AuthGuard";
 import { useAppSelector } from "@/lib/store/store";
 import Link from "next/link";
-import {
-  Package,
-  Car,
-  User,
-  FileText,
-  TrendingUp,
-  CheckCircle2,
-  Terminal,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { User, Mail, Shield, Terminal, LogOut, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useLogout } from "@/lib/hooks/useLogout";
 
-/**
- * Dashboard Page - Exact homepage template
- */
-export default function DashboardPage() {
+export default function ProfilePage() {
   const { user } = useAppSelector((state) => state.auth);
   const { logout, isLoading } = useLogout();
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
-        {/* --- NAVIGATION (Same as Homepage) --- */}
+        {/* Navigation */}
         <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
@@ -41,15 +30,9 @@ export default function DashboardPage() {
             <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
               <Link
                 href="/dashboard"
-                className="text-white transition-colors flex items-center gap-2"
+                className="hover:text-white transition-colors"
               >
-                Dashboard{" "}
-                <Badge
-                  variant="outline"
-                  className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
-                >
-                  ACTIVE
-                </Badge>
+                Dashboard
               </Link>
               <Link
                 href="/dashboard/orders"
@@ -65,9 +48,15 @@ export default function DashboardPage() {
               </Link>
               <Link
                 href="/dashboard/profile"
-                className="hover:text-white transition-colors"
+                className="text-white transition-colors flex items-center gap-2"
               >
-                Profile
+                Profile{" "}
+                <Badge
+                  variant="outline"
+                  className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
+                >
+                  ACTIVE
+                </Badge>
               </Link>
             </div>
             <Button
@@ -75,7 +64,7 @@ export default function DashboardPage() {
               disabled={isLoading}
               className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
             >
-              {isLoading ? "Signing Out..." : "Sign Out"}
+              {isLoading ? "Signing out..." : "Sign Out"}
             </Button>
           </div>
         </nav>
@@ -86,141 +75,117 @@ export default function DashboardPage() {
 
         {/* Content */}
         <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1">
-          <div className="relative z-10 max-w-7xl mx-auto">
+          <div className="relative z-10 max-w-5xl mx-auto">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#FE7743] mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FE7743] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FE7743]"></span>
               </span>
-              DASHBOARD TERMINAL :: {new Date().toLocaleDateString()}
+              ACCOUNT TERMINAL :: USER PROFILE
             </div>
 
             <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9] mb-6">
-              WELCOME{" "}
+              YOUR{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FE7743] to-orange-200">
-                {user?.name?.toUpperCase() || "USER"}.
+                PROFILE.
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-12">
-              Your personal import terminal dashboard. Monitor clearances, track
-              shipments, and manage orders in real-time.
+              Manage your account information and preferences.
             </p>
 
-            {/* Quick Links Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-              {[
-                {
-                  title: "Orders",
-                  href: "/dashboard/orders",
-                  icon: Package,
-                  code: "ORD-SYS",
-                },
-                {
-                  title: "Vehicles",
-                  href: "/dashboard/vehicles",
-                  icon: Car,
-                  code: "VEH-TRK",
-                },
-                {
-                  title: "Profile",
-                  href: "/dashboard/profile",
-                  icon: User,
-                  code: "USR-ACC",
-                },
-                {
-                  title: "Documents",
-                  href: "/dashboard/documents",
-                  icon: FileText,
-                  code: "DOC-MGT",
-                },
-              ].map((item, i) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={i}
-                    href={item.href}
-                    className="group relative h-72 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 flex flex-col justify-between overflow-hidden hover:border-[#FE7743]/50 transition-all cursor-pointer"
-                  >
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-500" />
-                    <div className="relative z-10 flex justify-between items-start">
-                      <Badge
-                        variant="outline"
-                        className="border-white/20 text-white/50 font-mono text-[10px]"
-                      >
-                        {item.code}
-                      </Badge>
-                      <Icon className="w-8 h-8 text-white/40 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="relative z-10">
-                      <h3 className="text-2xl font-bold text-white group-hover:translate-x-1 transition-transform">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FE7743] animate-pulse" />
-                        Live Access
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Stats Bar */}
-            <div className="border-b border-white/10 bg-[#0A0A0A]">
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
-                {[
-                  {
-                    label: "Active Orders",
-                    value: "0",
-                    icon: Package,
-                    sub: "In Progress",
-                  },
-                  {
-                    label: "In Transit",
-                    value: "0",
-                    icon: Car,
-                    sub: "En Route",
-                  },
-                  {
-                    label: "Completed",
-                    value: "0",
-                    icon: TrendingUp,
-                    sub: "This Month",
-                  },
-                  {
-                    label: "Avg. Time",
-                    value: "~14 Days",
-                    icon: CheckCircle2,
-                    sub: "Clearance",
-                  },
-                ].map((stat, i) => (
-                  <div
-                    key={i}
-                    className="p-8 flex items-start gap-4 group hover:bg-white/5 transition-colors cursor-default"
-                  >
+            {/* Profile Info Grid */}
+            {user && (
+              <div className="border-b border-white/10 bg-[#0A0A0A]">
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-x divide-y divide-white/10">
+                  <div className="p-8 flex items-start gap-4 group hover:bg-white/5 transition-colors">
                     <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
-                      <stat.icon className="w-5 h-5" />
+                      <User className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="text-xl font-bold text-white tracking-tight">
-                        {stat.value}
+                        {user.name}
                       </div>
                       <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
-                        {stat.label}
+                        Full Name
                       </div>
                       <div className="text-[10px] text-gray-600 font-mono mt-1">
-                        {stat.sub}
+                        Primary Account
                       </div>
                     </div>
                   </div>
-                ))}
+
+                  <div className="p-8 flex items-start gap-4 group hover:bg-white/5 transition-colors">
+                    <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold text-white tracking-tight break-all">
+                        {user.email}
+                      </div>
+                      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                        Email Address
+                      </div>
+                      <div className="text-[10px] text-gray-600 font-mono mt-1">
+                        Verified
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-8 flex items-start gap-4 group hover:bg-white/5 transition-colors">
+                    <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+                      <Shield className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold text-white tracking-tight capitalize">
+                        {user.role}
+                      </div>
+                      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                        Account Role
+                      </div>
+                      <div className="text-[10px] text-gray-600 font-mono mt-1">
+                        Access Level
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-8 flex items-start gap-4 group hover:bg-white/5 transition-colors">
+                    <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+                      <Terminal className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-mono text-white opacity-80 tracking-tight">
+                        {user.id}
+                      </div>
+                      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                        User ID
+                      </div>
+                      <div className="text-[10px] text-gray-600 font-mono mt-1">
+                        System Reference
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Actions */}
+            <div className="mt-12">
+              <Button
+                onClick={logout}
+                disabled={isLoading}
+                variant="outline"
+                className="border-white/10 hover:bg-white/5 hover:text-white gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                {isLoading ? "Signing out..." : "Sign Out & Return to Login"}
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Footer (Same as Homepage) */}
+        {/* Footer */}
         <footer className="border-t border-white/10 py-16 bg-[#050505]">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="space-y-6">
@@ -234,13 +199,9 @@ export default function DashboardPage() {
             </div>
             <div>
               <h4 className="font-bold text-white mb-6">Quick Links</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Dashboard
-                </li>
-                <li className="hover:text-[#FE7743] cursor-pointer">Orders</li>
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Vehicles
+              <ul className="space-y-3 text-sm text-gray-500 font-mono">
+                <li className="hover:text-[#FE7743] cursor-pointer flex items-center gap-2">
+                  <ArrowRight className="w-3 h-3" /> Dashboard
                 </li>
               </ul>
             </div>

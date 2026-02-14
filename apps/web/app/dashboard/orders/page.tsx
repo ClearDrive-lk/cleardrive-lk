@@ -1,32 +1,26 @@
 "use client";
 
 import AuthGuard from "@/components/auth/AuthGuard";
-import { useAppSelector } from "@/lib/store/store";
 import Link from "next/link";
 import {
   Package,
-  Car,
-  User,
-  FileText,
-  TrendingUp,
+  Clock,
   CheckCircle2,
+  TrendingUp,
   Terminal,
+  ArrowRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 import { useLogout } from "@/lib/hooks/useLogout";
 
-/**
- * Dashboard Page - Exact homepage template
- */
-export default function DashboardPage() {
-  const { user } = useAppSelector((state) => state.auth);
+export default function OrdersPage() {
   const { logout, isLoading } = useLogout();
-
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
-        {/* --- NAVIGATION (Same as Homepage) --- */}
+        {/* Navigation */}
         <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
@@ -41,21 +35,21 @@ export default function DashboardPage() {
             <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
               <Link
                 href="/dashboard"
+                className="hover:text-white transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/orders"
                 className="text-white transition-colors flex items-center gap-2"
               >
-                Dashboard{" "}
+                Orders{" "}
                 <Badge
                   variant="outline"
                   className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
                 >
                   ACTIVE
                 </Badge>
-              </Link>
-              <Link
-                href="/dashboard/orders"
-                className="hover:text-white transition-colors"
-              >
-                Orders
               </Link>
               <Link
                 href="/dashboard/vehicles"
@@ -92,106 +86,47 @@ export default function DashboardPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FE7743] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FE7743]"></span>
               </span>
-              DASHBOARD TERMINAL :: {new Date().toLocaleDateString()}
+              ORDER MANAGEMENT :: CLEARANCE TRACKING
             </div>
 
             <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9] mb-6">
-              WELCOME{" "}
+              YOUR{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FE7743] to-orange-200">
-                {user?.name?.toUpperCase() || "USER"}.
+                ORDERS.
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-12">
-              Your personal import terminal dashboard. Monitor clearances, track
-              shipments, and manage orders in real-time.
+              Track your vehicle clearance orders in real-time. View status,
+              documentation, and estimated completion.
             </p>
 
-            {/* Quick Links Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-              {[
-                {
-                  title: "Orders",
-                  href: "/dashboard/orders",
-                  icon: Package,
-                  code: "ORD-SYS",
-                },
-                {
-                  title: "Vehicles",
-                  href: "/dashboard/vehicles",
-                  icon: Car,
-                  code: "VEH-TRK",
-                },
-                {
-                  title: "Profile",
-                  href: "/dashboard/profile",
-                  icon: User,
-                  code: "USR-ACC",
-                },
-                {
-                  title: "Documents",
-                  href: "/dashboard/documents",
-                  icon: FileText,
-                  code: "DOC-MGT",
-                },
-              ].map((item, i) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={i}
-                    href={item.href}
-                    className="group relative h-72 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 flex flex-col justify-between overflow-hidden hover:border-[#FE7743]/50 transition-all cursor-pointer"
-                  >
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-500" />
-                    <div className="relative z-10 flex justify-between items-start">
-                      <Badge
-                        variant="outline"
-                        className="border-white/20 text-white/50 font-mono text-[10px]"
-                      >
-                        {item.code}
-                      </Badge>
-                      <Icon className="w-8 h-8 text-white/40 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="relative z-10">
-                      <h3 className="text-2xl font-bold text-white group-hover:translate-x-1 transition-transform">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FE7743] animate-pulse" />
-                        Live Access
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-
             {/* Stats Bar */}
-            <div className="border-b border-white/10 bg-[#0A0A0A]">
+            <div className="border-b border-white/10 bg-[#0A0A0A] mb-12">
               <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
                 {[
                   {
-                    label: "Active Orders",
+                    label: "Total Orders",
                     value: "0",
                     icon: Package,
-                    sub: "In Progress",
+                    sub: "All Time",
                   },
                   {
-                    label: "In Transit",
+                    label: "In Progress",
                     value: "0",
-                    icon: Car,
-                    sub: "En Route",
+                    icon: Clock,
+                    sub: "Active Now",
                   },
                   {
                     label: "Completed",
                     value: "0",
-                    icon: TrendingUp,
+                    icon: CheckCircle2,
                     sub: "This Month",
                   },
                   {
                     label: "Avg. Time",
                     value: "~14 Days",
-                    icon: CheckCircle2,
+                    icon: TrendingUp,
                     sub: "Clearance",
                   },
                 ].map((stat, i) => (
@@ -217,10 +152,39 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
+
+            {/* Empty State */}
+            <div className="max-w-2xl mx-auto p-1 rounded-xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
+              <div className="text-center bg-[#0A0A0A] rounded-lg p-16">
+                <div className="inline-flex p-6 rounded-full bg-[#FE7743]/10 border border-[#FE7743]/20 mb-6">
+                  <Package className="w-16 h-16 text-[#FE7743]" />
+                </div>
+                <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">
+                  No Orders Yet
+                </h2>
+                <p className="text-lg text-gray-400 mb-8 leading-relaxed">
+                  Start your first vehicle import order. Access live auction
+                  data from USS Tokyo, JAA, and CAI.
+                </p>
+                <Button className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold gap-2">
+                  Browse Auctions <ArrowRight className="w-4 h-4" />
+                </Button>
+                <div className="pt-8 flex justify-center gap-6 text-sm text-gray-500 font-mono">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#FE7743]" /> VERIFIED
+                    SHEETS
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#FE7743]" />{" "}
+                    REAL-TIME DATA
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Footer (Same as Homepage) */}
+        {/* Footer */}
         <footer className="border-t border-white/10 py-16 bg-[#050505]">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="space-y-6">
@@ -234,13 +198,9 @@ export default function DashboardPage() {
             </div>
             <div>
               <h4 className="font-bold text-white mb-6">Quick Links</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Dashboard
-                </li>
-                <li className="hover:text-[#FE7743] cursor-pointer">Orders</li>
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Vehicles
+              <ul className="space-y-3 text-sm text-gray-500 font-mono">
+                <li className="hover:text-[#FE7743] cursor-pointer flex items-center gap-2">
+                  <ArrowRight className="w-3 h-3" /> Dashboard
                 </li>
               </ul>
             </div>
@@ -249,9 +209,6 @@ export default function DashboardPage() {
               <ul className="space-y-3 text-sm text-gray-500">
                 <li className="hover:text-[#FE7743] cursor-pointer">
                   About Us
-                </li>
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Terms of Service
                 </li>
               </ul>
             </div>
@@ -262,7 +219,6 @@ export default function DashboardPage() {
                   <div className="w-2 h-2 rounded-full bg-green-500" /> Systems
                   Operational
                 </li>
-                <li>support@cleardrive.lk</li>
               </ul>
             </div>
           </div>
