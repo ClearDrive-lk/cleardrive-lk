@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import apiClient from "@/lib/api";
+import apiClient from "@/lib/api-client";
 
 declare global {
   interface Window {
