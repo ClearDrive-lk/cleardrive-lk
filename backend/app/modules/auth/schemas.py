@@ -83,6 +83,14 @@ class OTPResendRequest(BaseModel):
     email: EmailStr
 
 
+class RegisterRequest(BaseModel):
+    """Email/password registration request."""
+
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+    name: Optional[str] = None
+
+
 class DevEnsureUserRequest(BaseModel):
     """Dev-only: ensure a test user exists (create if not)."""
 
