@@ -179,7 +179,8 @@ class TestAuthEndpoints:
     async def test_protected_route_with_invalid_token(self, client):
         """Test accessing protected route with invalid token."""
         response = client.get(
-            "/api/v1/test/protected", headers={"Authorization": "Bearer invalid.token.here"}
+            "/api/v1/test/protected",
+            headers={"Authorization": "Bearer invalid.token.here"},
         )
 
         assert response.status_code == 401

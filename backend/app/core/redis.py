@@ -490,7 +490,11 @@ async def enforce_session_limit(user_id: str, max_sessions: Optional[int] = None
     # Get all user sessions
     sessions = await get_user_sessions(user_id)
 
-    result = {"sessions_deleted": 0, "current_count": len(sessions), "limit": max_sessions}
+    result = {
+        "sessions_deleted": 0,
+        "current_count": len(sessions),
+        "limit": max_sessions,
+    }
 
     # If within limit, no action needed
     if len(sessions) <= max_sessions:

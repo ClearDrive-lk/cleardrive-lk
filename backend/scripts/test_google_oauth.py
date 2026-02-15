@@ -110,7 +110,9 @@ def test_google_oauth_flow():
 
     # Step 4: Verify OTP
     response = requests.post(
-        f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp}, timeout=10
+        f"{BASE_URL}/auth/verify-otp",
+        json={"email": test_email, "otp": otp},
+        timeout=10,
     )
 
     if response.status_code == 200:
