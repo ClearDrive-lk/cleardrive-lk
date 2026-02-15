@@ -1,5 +1,4 @@
 # backend/alembic/env.py
-# backend/alembic/env.py
 
 import sys
 from logging.config import fileConfig
@@ -15,6 +14,19 @@ from app.core.config import settings  # noqa: E402
 from app.core.database import Base  # noqa: E402
 
 # Import ALL models so Alembic can detect them
+from app.modules.auth.models import Session, User
+from app.modules.gdpr.models import GDPRRequest
+from app.modules.kyc.models import KYCDocument
+from app.modules.orders.models import Order, OrderStatusHistory
+from app.modules.payments.models import Payment, PaymentIdempotency
+from app.modules.security.models import (
+    FileIntegrity,
+    RateLimitViolation,
+    SecurityEvent,
+    UserReputation,
+)
+from app.modules.shipping.models import ShipmentDetails, ShippingDocument
+from app.modules.vehicles.models import Vehicle
 
 # ... rest of the file stays the same
 
