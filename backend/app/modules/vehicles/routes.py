@@ -1,8 +1,8 @@
 """
-Vehicle API endpoints.
-Author: Parindra
+Vehicle Pydantic schemas for request/response validation.
+Author: Parindra Chameekara
 Epic: CD-E3 - Vehicle Management System
-Stories: CD-21 (Search & Filter), CD-22 (Detail & Cost)
+Story: CD-140 - Vehicle detail and cost calculation endpoints
 """
 
 import math
