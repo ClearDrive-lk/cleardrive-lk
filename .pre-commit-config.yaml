@@ -107,6 +107,8 @@ repos:
         files: ^apps/web/
         types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
         args: ["--write"]
+        additional_dependencies:
+          - prettier@3.8.1
 
   # ============================================================================
   # SECRETS DETECTION
