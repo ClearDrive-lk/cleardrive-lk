@@ -182,7 +182,7 @@ jobs:
   deploy-staging:
     name: Deploy Frontend to Staging (Vercel)
     runs-on: ubuntu-latest
-    needs: [lint, security, build]
+    needs: [check-frontend, lint, security, build]
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/develop' &&
@@ -219,7 +219,7 @@ jobs:
   deploy-prod:
     name: Deploy Frontend to Production (Vercel)
     runs-on: ubuntu-latest
-    needs: [lint, security, build]
+    needs: [check-frontend, lint, security, build]
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/main' &&
