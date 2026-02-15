@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { useLogout } from "@/lib/hooks/useLogout";
 // Removed unused useVehicles
 import { apiClient } from "@/lib/api-client";
 import { Vehicle } from "@/types/vehicle";
