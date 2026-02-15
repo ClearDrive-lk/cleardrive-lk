@@ -100,12 +100,19 @@ def upgrade() -> None:
         sa.Column("engine_cc", sa.Integer(), nullable=True),
         sa.Column(
             "fuel_type",
-            sa.Enum("PETROL", "DIESEL", "HYBRID", "ELECTRIC", "CNG", name="fueltype"),
+            sa.Enum(
+                "Gasoline",
+                "Diesel",
+                "Gasoline/hybrid",
+                "Electric",
+                "Plugin Hybrid",
+                name="fueltype",
+            ),
             nullable=True,
         ),
         sa.Column(
             "transmission",
-            sa.Enum("MANUAL", "AUTOMATIC", "CVT", "SEMI_AUTOMATIC", name="transmission"),
+            sa.Enum("Automatic", "Manual", "CVT", name="transmission"),
             nullable=True,
         ),
         sa.Column("auction_grade", sa.String(length=10), nullable=True),
