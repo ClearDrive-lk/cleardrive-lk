@@ -205,7 +205,7 @@ async def list_models(
     query = db.query(Vehicle.model).distinct()
 
     if make:
-        query = query.filter(Vehicle.make == make)
+        query = query.filter(Vehicle.make.ilike(f"%{make}%"))
 
     models = query.order_by(Vehicle.model).all()
     return {"models": [model[0] for model in models]}
