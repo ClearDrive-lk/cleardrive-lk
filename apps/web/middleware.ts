@@ -12,6 +12,11 @@ export function middleware(request: NextRequest) {
   // 3. Create the response
   const response = NextResponse.next();
 
+  // 👉 NEW: Extract backend API origin from NEXT_PUBLIC_API_URL
+  const apiOrigin = process.env.NEXT_PUBLIC_API_URL
+    ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+    : "";
+
   // 4. Only apply strict CSP in production (development needs inline styles for HMR)
   if (!isDevelopment) {
     // Generate a unique nonce for this request (cryptographically secure)
@@ -24,7 +29,7 @@ export function middleware(request: NextRequest) {
       style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' blob: data: https:;
-      connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com;
+      connect-src 'self' ${apiOrigin} https://accounts.google.com https://oauth2.googleapis.com;
       frame-src 'self' https://accounts.google.com;
       object-src 'none';
       base-uri 'self';
