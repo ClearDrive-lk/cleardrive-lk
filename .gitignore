@@ -388,3 +388,7 @@ Thumbs.db
 *.pem
 *.key
 *.cert
+
+# Keep Next.js source lib tracked (overrides Python `lib/` ignore above)
+!apps/web/lib/
+!apps/web/lib/**

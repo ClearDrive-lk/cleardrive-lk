@@ -1,6 +1,7 @@
 """
 Test endpoints to verify authentication.
 """
+
 from app.core.dependencies import get_current_active_user
 from app.modules.auth.models import User
 from fastapi import APIRouter, Depends

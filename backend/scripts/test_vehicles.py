@@ -4,7 +4,6 @@
 Test vehicle API endpoints.
 """
 
-
 import requests  # type: ignore
 
 BASE_URL = "http://localhost:8000/api/v1"

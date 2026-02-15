@@ -177,7 +177,7 @@ jobs:
           SMTP_HOST: smtp.gmail.com
           SMTP_USERNAME: test@gmail.com
           SMTP_PASSWORD: test-password # pragma: allowlist secret
-          ADMIN_EMAILS: admin@cleardrive.lk
+          ADMIN_EMAILS: cleardrivelk@gmail.com
           ENVIRONMENT: test
           # Ensure coverage uses repo-root config (contains relative_files=true)
           COVERAGE_RCFILE: ../.coveragerc
