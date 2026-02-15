@@ -32,6 +32,7 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_refresh_token,
+    hash_password,
     hash_token,
 )
 from app.services.email import send_otp_email
@@ -64,6 +65,7 @@ from .schemas import (
     OTPResendRequest,
     OTPVerifyRequest,
     RefreshTokenRequest,
+    RegisterRequest,
     SessionInfo,
     SessionLocation,
     SessionRevokeResponse,
@@ -520,6 +522,49 @@ async def request_otp(
 ):
     """Request OTP for email login."""
     return await resend_otp(request_data, db, redis)
+
+
+@router.post("/register")
+async def register(
+    register_request: RegisterRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """
+    Register a user with email/password and send OTP verification email.
+
+    This endpoint is production-safe and does not rely on dev-only helpers.
+    """
+    existing_user = db.query(User).filter(User.email == register_request.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered. Please sign in.",
+        )
+
+    name = register_request.name or register_request.email.split("@")[0]
+    user = User(
+        email=register_request.email,
+        name=name,
+        password_hash=hash_password(register_request.password),
+        role=Role.CUSTOMER,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    otp = generate_otp()
+    await store_otp(register_request.email, otp)
+    email_sent = await send_otp_email(register_request.email, otp, user.name)
+
+    if not email_sent:
+        logger.error(f"Failed to send OTP email to {register_request.email} after registration")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Account created, but failed to send verification code. Please resend OTP.",
+        )
+
+    return {"message": "Account created. Verification code sent to your email."}
 
 
 # ============================================================================

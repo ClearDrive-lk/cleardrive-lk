@@ -38,10 +38,10 @@ export default function RegisterPage() {
       setLoading(true);
       setError(null);
 
-      await apiClient
-        .post("/auth/dev/ensure-user", { email: normalizedEmail })
-        .catch(() => undefined);
-      await apiClient.post("/auth/request-otp", { email: normalizedEmail });
+      await apiClient.post("/auth/register", {
+        email: normalizedEmail,
+        password,
+      });
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem("otp_email", normalizedEmail);
