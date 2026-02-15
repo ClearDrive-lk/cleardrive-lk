@@ -12,10 +12,15 @@ export function middleware(request: NextRequest) {
   // 3. Create the response
   const response = NextResponse.next();
 
-  // 👉 NEW: Extract backend API origin from NEXT_PUBLIC_API_URL
-  const apiOrigin = process.env.NEXT_PUBLIC_API_URL
-    ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
-    : "";
+  // Extract backend API origin from NEXT_PUBLIC_API_URL (if valid).
+  let apiOrigin = "";
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    try {
+      apiOrigin = new URL(process.env.NEXT_PUBLIC_API_URL).origin;
+    } catch {
+      apiOrigin = "";
+    }
+  }
 
   // 4. Only apply strict CSP in production (development needs inline styles for HMR)
   if (!isDevelopment) {
