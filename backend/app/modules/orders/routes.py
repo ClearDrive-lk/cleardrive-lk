@@ -9,6 +9,9 @@ from app.core.permissions import (
 )
 from app.modules.auth.models import User
 from app.modules.orders.models import Order
+
+from app.modules.orders.models import Order, OrderStatus, PaymentStatus
+
 from app.modules.orders.schemas import (
     CD30OrderCreate,
     InspectionData,
@@ -21,8 +24,7 @@ from sqlalchemy.orm import Session
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
-@router.post("")
-@require_permission_decorator(Permission.CREATE_ORDER)
+@router.post("", response_model=OrderResponse, status_code=201)
 async def create_order(
     order_data: OrderCreate,
     current_user: User = Depends(get_current_active_user),
@@ -32,9 +34,48 @@ async def create_order(
     Create a new order.
     Requires: CREATE_ORDER permission
     """
-    # Permission already checked by decorator
-    # ... create order logic
-    pass
+    from app.modules.vehicles.models import Vehicle
+    from decimal import Decimal
+    
+    # Manual permission check
+    if not has_permission(current_user, Permission.CREATE_ORDER):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # 1. Verify vehicle exists and is available
+    vehicle = db.query(Vehicle).filter(Vehicle.id == order_data.vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+    
+    if vehicle.status != "AVAILABLE":
+        raise HTTPException(status_code=400, detail="Vehicle is not available")
+    
+    # 2. Calculate total cost
+    vehicle_cost_lkr = Decimal(str(vehicle.price_jpy)) * Decimal("2.80")  # Exchange rate
+    shipping_cost_lkr = Decimal("500000.00")  # Fixed shipping
+    customs_duty_lkr = vehicle_cost_lkr * Decimal("0.15")  # 15% duty
+    vat_lkr = (vehicle_cost_lkr + shipping_cost_lkr + customs_duty_lkr) * Decimal("0.15")  # 15% VAT
+    total_cost_lkr = vehicle_cost_lkr + shipping_cost_lkr + customs_duty_lkr + vat_lkr
+    
+    # 3. Create the order (only with fields that exist in the model)
+    new_order = Order(
+        user_id=current_user.id,
+        vehicle_id=order_data.vehicle_id,
+        shipping_address=order_data.shipping_address,
+        phone=order_data.phone,
+        status=OrderStatus.CREATED,
+        payment_status=PaymentStatus.PENDING,
+        total_cost_lkr=total_cost_lkr,  # Only this cost field exists
+    )
+    
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+    
+    # 4. Update vehicle status to RESERVED
+    vehicle.status = "RESERVED"
+    db.commit()
+    
+    return new_order
 
 
 @router.get("/{order_id}")
@@ -79,42 +120,3 @@ async def delete_order(
     pass
 
 
-@router.post("/cd30", response_model=OrderResponse, status_code=201)
-async def create_cd30_order(
-    order_data: CD30OrderCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Create a new CD30 order with vehicle inspection data.
-    
-    Story: CD-30
-    """
-    # Verify vehicle exists
-    vehicle = db.query(Vehicle).filter(Vehicle.id == order_data.vehicle_id).first()
-    if not vehicle:
-        raise HTTPException(status_code=404, detail="Vehicle not found")
-    
-    # Calculate costs (you'll need your cost calculation logic)
-    # ... cost calculation ...
-    
-    # Create order with inspection data
-    new_order = Order(
-        user_id=current_user.id,
-        vehicle_id=order_data.vehicle_id,
-        shipping_address=order_data.shipping_address,
-        phone=order_data.phone,
-        # Add inspection fields
-        inspection_status=order_data.inspection_data.status,
-        inspector_notes=order_data.inspection_data.notes,
-        inspection_images=json.dumps(order_data.inspection_data.images),
-        inspection_date=order_data.inspection_data.date,
-        inspector_id=current_user.id,
-        # ... add cost fields ...
-    )
-    
-    db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
-    
-    return new_order

@@ -14,6 +14,8 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.modules.orders.models import Order
+
 from sqlalchemy.orm import relationship
 
 if TYPE_CHECKING:
@@ -68,8 +70,12 @@ class User(Base, UUIDMixin, TimestampMixin):
     sessions: Mapped[list[Session]] = relationship(
         "Session", back_populates="user", cascade="all, delete-orphan"
     )
-    orders: Mapped[list[Order]] = relationship(
-        "Order", back_populates="user", cascade="all, delete-orphan"
+    orders: Mapped[list["Order"]] = relationship(
+    "Order", 
+    back_populates="user", 
+    cascade="all, delete-orphan",
+    foreign_keys="[Order.user_id]",
+    overlaps="user"  
     )
     kyc_document: Mapped[KYCDocument | None] = relationship(
         "KYCDocument",
@@ -78,9 +84,7 @@ class User(Base, UUIDMixin, TimestampMixin):
         uselist=False,
         cascade="all, delete-orphan",
     )
-    # Tharin - 10/02/2026
-    orders = relationship("Order", back_populates="user")
-
+    
     def __repr__(self):
         return f"<User {self.email}>"
 

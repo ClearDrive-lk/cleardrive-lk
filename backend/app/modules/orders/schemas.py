@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -43,6 +44,7 @@ class OrderResponse(OrderBase):
     user_id: UUID
     
     # Inspection fields
+    total_cost_lkr: Decimal | None
     inspection_status: Optional[str] = None
     inspector_notes: Optional[str] = None
     inspection_images: Optional[List[str]] = None
