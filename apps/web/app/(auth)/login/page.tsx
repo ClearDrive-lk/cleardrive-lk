@@ -7,34 +7,67 @@ import { GoogleLoginButton } from "@/components/auth/GoogleLoginButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Lock, ShieldCheck, Terminal, ArrowLeft } from "lucide-react";
+import {
+  Loader2,
+  Lock,
+  ShieldCheck,
+  Terminal,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { removeTokens } from "@/lib/auth";
+import apiClient from "@/lib/api-client";
+import { AxiosError } from "axios";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   // --- AUTO-CLEANUP: Log out user when they visit Login Page ---
   useEffect(() => {
     // This ensures we start with a clean state every time
-    // Clear tokens matching new auth strategy
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("access_token");
-      document.cookie = "refresh_token=; path=/; Max-Age=0";
-    }
+    removeTokens();
   }, []);
 
-  const handleEmailLogin = (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password.trim()) {
+      setError("Email and password are required.");
+      return;
+    }
 
-    // --- STEP 1: AUTHENTICATION CHECK ---
-    // We do NOT set the cookie here. We pass the user to the Security Gateway (OTP).
-    setTimeout(() => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      // Dev convenience: ensure user exists when backend supports this endpoint.
+      await apiClient
+        .post("/auth/dev/ensure-user", { email: normalizedEmail })
+        .catch(() => undefined);
+
+      await apiClient.post("/auth/request-otp", { email: normalizedEmail });
+
       setLoading(false);
-      // Redirect to OTP Page with a fake email param for the UI
-      router.push("/verify-otp?email=agent@cleardrive.lk");
-    }, 1500);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("otp_email", normalizedEmail);
+      }
+      router.push(`/verify-otp?email=${encodeURIComponent(normalizedEmail)}`);
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;
+      setError(
+        axiosErr.response?.data?.detail ||
+          axiosErr.response?.data?.message ||
+          "Failed to send OTP. Please try again.",
+      );
+      setLoading(false);
+    }
   };
 
   return (
@@ -135,7 +168,7 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleEmailLogin} className="space-y-5">
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label
                 htmlFor="email"
                 className="text-xs font-mono text-gray-400 uppercase"
@@ -144,8 +177,11 @@ export default function LoginPage() {
               </Label>
               <Input
                 id="email"
-                placeholder="agent@cleardrive.lk"
+                placeholder="cleardrivelk@gmail.com"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="bg-black/40 border-white/10 text-white placeholder:text-gray-700 focus:border-[#FE7743] focus:ring-1 focus:ring-[#FE7743]/50 h-12 font-mono transition-all"
               />
             </div>
@@ -167,10 +203,27 @@ export default function LoginPage() {
               </div>
               <Input
                 id="password"
-                type="password"
-                className="bg-black/40 border-white/10 text-white focus:border-[#FE7743] focus:ring-1 focus:ring-[#FE7743]/50 h-12 font-mono tracking-widest transition-all"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-black/40 border-white/10 text-white focus:border-[#FE7743] focus:ring-1 focus:ring-[#FE7743]/50 h-12 font-mono tracking-widest transition-all pr-12"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-[38px] text-gray-500 hover:text-white transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
+
+            {error && <p className="text-sm text-red-400">{error}</p>}
 
             <Button
               type="submit"
@@ -201,12 +254,12 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t border-white/5 text-center text-sm text-gray-500">
-            New Dealer?{" "}
+            New customer?{" "}
             <Link
               href="/register"
               className="text-white hover:text-[#FE7743] font-medium transition-colors"
             >
-              Request API Access
+              Sign up
             </Link>
           </div>
         </div>
