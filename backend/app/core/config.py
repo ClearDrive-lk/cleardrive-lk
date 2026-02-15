@@ -1,7 +1,6 @@
 # backend/app/core/config.py
 
 from pydantic_settings import BaseSettings
-from typing import List
 
 
 class Settings(BaseSettings):
@@ -45,11 +44,20 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
 
-    # Email
+    # Email (SMTP)
     SMTP_HOST: str
-    SMTP_PORT: int = 587
+    SMTP_PORT: int | None = None
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
+    SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
+    SMTP_FROM_NAME: str = "ClearDrive.lk"
+
+    # OTP
+    OTP_LENGTH: int = 6
+    OTP_EXPIRY_MINUTES: int = 5
+    OTP_MAX_ATTEMPTS: int = 3
+    OTP_RATE_LIMIT_REQUESTS: int = 3
+    OTP_RATE_LIMIT_WINDOW_MINUTES: int = 5
 
     # Sentry
     SENTRY_DSN: str | None = None
@@ -57,13 +65,27 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_EMAILS: str  # Comma-separated
 
+    # Session Management
+    MAX_SESSIONS_PER_USER: int = 5
+    SESSION_TTL_DAYS: int = 30
+    SESSION_CLEANUP_INTERVAL_HOURS: int = 24
+
+    # GeoIP (optional)
+    GEOIP_ENABLED: bool = False
+    GEOIP_API_KEY: str | None = None
+    # RBAC settings
+    RBAC_ENABLED: bool = True
+    RBAC_STRICT_MODE: bool = True
+
     # Security
     CLOUDFLARE_API_KEY: str | None = None
     SECURITY_EVENT_RETENTION_DAYS: int = 30
     MAX_FAILED_AUTH_ATTEMPTS: int = 5
+    TOKEN_REUSE_DETECTION_ENABLED: bool = True
+    SUSPICIOUS_ACTIVITY_THRESHOLD: int = 3
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
     ]

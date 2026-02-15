@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+import enum
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum as SQLEnum, Integer, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-import enum
 from app.core.database import Base
 from app.core.models import TimestampMixin, UUIDMixin
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Integer, Numeric, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.modules.orders.models import Order
@@ -74,7 +75,10 @@ class Vehicle(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[VehicleStatus] = mapped_column(
-        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False, index=True
+        SQLEnum(VehicleStatus),
+        default=VehicleStatus.AVAILABLE,
+        nullable=False,
+        index=True,
     )
 
     # Relationships

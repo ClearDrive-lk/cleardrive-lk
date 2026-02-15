@@ -3,23 +3,15 @@
 from __future__ import annotations
 
 import datetime as dt
+import enum
 from uuid import UUID as PyUUID
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Enum as SQLEnum,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-    JSON,
-)
-from sqlalchemy.orm import Mapped, mapped_column
-import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin, GUID, IPAddress
+from app.core.models import GUID, IPAddress, TimestampMixin, UUIDMixin
+from sqlalchemy import JSON, Boolean, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class VerificationStatus(str, enum.Enum):
@@ -80,7 +72,10 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
     # Verification
     last_verified: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     verification_status: Mapped[VerificationStatus] = mapped_column(
-        SQLEnum(VerificationStatus), default=VerificationStatus.PENDING, nullable=False, index=True
+        SQLEnum(VerificationStatus),
+        default=VerificationStatus.PENDING,
+        nullable=False,
+        index=True,
     )
 
     def __repr__(self):
@@ -145,7 +140,10 @@ class UserReputation(Base):
 
     # Timestamp
     last_updated: Mapped[dt.datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
     def __repr__(self):

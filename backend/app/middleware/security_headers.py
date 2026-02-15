@@ -5,13 +5,13 @@ Security headers middleware.
 Implements comprehensive security headers for all responses.
 """
 
+import secrets
+from typing import Callable, cast
+
+from app.core.config import settings
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable, cast
-import secrets
-
-from app.core.config import settings
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -36,12 +36,25 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Process request
         response = await call_next(request)
 
+        # Skip strict CSP for API docs (Swagger/ReDoc load from CDNs and use inline assets)
+        docs_paths = ("/api/v1/docs", "/api/v1/redoc", "/api/v1/openapi.json")
+        if (
+            request.url.path.rstrip("/") in docs_paths
+            or request.url.path.startswith("/api/v1/docs")
+            or request.url.path.startswith("/api/v1/redoc")
+        ):
+            # Only safe headers for docs; no CSP so Swagger UI can load
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            return cast(Response, response)
+
         # Add security headers
 
         # 1. Content Security Policy (CSP) with nonce
         csp_directives = [
             "default-src 'self'",
-            f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com https://www.googletagmanager.com",
+            f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com "
+            "https://www.googletagmanager.com",
             f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com",
             "connect-src 'self' https://api.anthropic.com https://*.supabase.co",
             "img-src 'self' data: blob: https://*.supabase.co https://www.google.com",
@@ -68,9 +81,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # 4. Strict-Transport-Security (HSTS)
         if settings.ENVIRONMENT == "production":
-            response.headers[
-                "Strict-Transport-Security"
-            ] = "max-age=31536000; includeSubDomains; preload"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
 
         # 5. Referrer-Policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

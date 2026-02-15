@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+import enum
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import Enum as SQLEnum, ForeignKey, Numeric, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin, GUID
+from app.core.models import GUID, TimestampMixin, UUIDMixin
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
@@ -85,7 +86,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
         "Payment", back_populates="order", uselist=False, cascade="all, delete-orphan"
     )
     shipment_details: Mapped[ShipmentDetails | None] = relationship(
-        "ShipmentDetails", back_populates="order", uselist=False, cascade="all, delete-orphan"
+        "ShipmentDetails",
+        back_populates="order",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self):
