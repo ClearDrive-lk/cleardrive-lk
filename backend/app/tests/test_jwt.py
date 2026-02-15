@@ -1,6 +1,7 @@
 """
 Test JWT token management.
 """
+
 from datetime import datetime, timedelta
 
 import pytest

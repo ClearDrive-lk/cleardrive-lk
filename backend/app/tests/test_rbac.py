@@ -1,6 +1,7 @@
 """
 Test RBAC system.
 """
+
 import pytest
 from app.core.permissions import (
     Permission,

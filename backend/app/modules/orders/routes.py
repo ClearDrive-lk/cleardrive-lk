@@ -1,6 +1,8 @@
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
-from app.core.permissions import Permission
+from app.core.permissions import (
+    Permission,
+)
 from app.core.permissions import admin_only_decorator as admin_only
 from app.core.permissions import (
     has_permission,
