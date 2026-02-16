@@ -7,7 +7,6 @@ Epic: CD-E3
 Story: CD-120 - Static Vehicle Dataset
 """
 
-
 import requests
 
 BASE_URL = "http://localhost:8000/api/v1"

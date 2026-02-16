@@ -83,7 +83,12 @@ def parse_device_info(user_agent: str) -> Dict[str, str]:
     # Get OS and version
     os = f"{ua.os.family} {ua.os.version_string}"
 
-    return {"device_type": device_type, "device_name": device_name, "browser": browser, "os": os}
+    return {
+        "device_type": device_type,
+        "device_name": device_name,
+        "browser": browser,
+        "os": os,
+    }
 
 
 async def get_location_from_ip(ip_address: str) -> Optional[Dict[str, Any]]:
