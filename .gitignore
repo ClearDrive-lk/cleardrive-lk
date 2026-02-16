@@ -352,6 +352,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+pip_install_log.txt
+apps/web/build_log.txt
 
 # ============================================================================
 # ENV FILES
