@@ -89,23 +89,25 @@ function VehicleCatalog() {
   const [selectedTransmission, setSelectedTransmission] =
     useState(currentTransmission);
 
-  // Sync Sheet State when it opens
-  useEffect(() => {
-    if (sheetOpen) {
-      setPriceRange([currentMinPrice, currentMaxPrice]);
-      setYearRange([currentMinYear, currentMaxYear]);
-      setMileageLimit([currentMaxMileage]);
-      setSelectedTransmission(currentTransmission);
-    }
-  }, [
-    sheetOpen,
-    currentMinPrice,
-    currentMaxPrice,
-    currentMinYear,
-    currentMaxYear,
-    currentMaxMileage,
-    currentTransmission,
-  ]);
+  const handleSheetOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        setPriceRange([currentMinPrice, currentMaxPrice]);
+        setYearRange([currentMinYear, currentMaxYear]);
+        setMileageLimit([currentMaxMileage]);
+        setSelectedTransmission(currentTransmission);
+      }
+      setSheetOpen(open);
+    },
+    [
+      currentMinPrice,
+      currentMaxPrice,
+      currentMinYear,
+      currentMaxYear,
+      currentMaxMileage,
+      currentTransmission,
+    ],
+  );
 
   // -- HANDLERS --
   const updateFilters = useCallback(
@@ -329,7 +331,7 @@ function VehicleCatalog() {
                 </Select>
 
                 {/* Advanced Filter Sheet */}
-                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"

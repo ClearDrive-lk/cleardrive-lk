@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import apiClient from "@/lib/api-client";
+import { AxiosError } from "axios";
 
 declare global {
   interface Window {
@@ -71,11 +72,29 @@ export function GoogleLoginButton() {
         }
         setError("Invalid response from server");
       } catch (err: unknown) {
+        const axiosErr = err as AxiosError<{
+          detail?: string | { message?: string };
+          message?: string;
+        }>;
+        const detail = axiosErr.response?.data?.detail;
         const msg =
-          err && typeof err === "object" && "response" in err
-            ? (err as { response?: { data?: { detail?: string } } }).response
-                ?.data?.detail
-            : null;
+          (typeof detail === "string" && detail) ||
+          (typeof detail === "object" &&
+            detail &&
+            "message" in detail &&
+            typeof detail.message === "string" &&
+            detail.message) ||
+          axiosErr.response?.data?.message ||
+          axiosErr.message ||
+          null;
+        if (axiosErr.code === "ERR_NETWORK") {
+          const apiBase =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+          setError(
+            `Cannot reach API server (${apiBase}). Start backend and try again.`,
+          );
+          return;
+        }
         setError(
           typeof msg === "string" ? msg : "Google sign-in failed. Try again.",
         );
@@ -115,9 +134,31 @@ export function GoogleLoginButton() {
     }
     setLoading(true);
     try {
-      window.google.accounts.id.prompt();
-      // If user dismisses One Tap without selecting, clear loading after 12s
-      setTimeout(() => setLoading(false), 12000);
+      window.google.accounts.id.prompt((notification: unknown) => {
+        const n = notification as {
+          isNotDisplayed?: () => boolean;
+          isSkippedMoment?: () => boolean;
+          getNotDisplayedReason?: () => string;
+          getSkippedReason?: () => string;
+        };
+
+        // FedCM can cancel prompt flow without this being an application error.
+        // Clear loading state and only surface actionable prompt issues.
+        setLoading(false);
+
+        if (n?.isNotDisplayed?.()) {
+          const reason = n.getNotDisplayedReason?.() || "unknown";
+          setError(`Google sign-in prompt unavailable (${reason}).`);
+          return;
+        }
+
+        if (n?.isSkippedMoment?.()) {
+          const reason = n.getSkippedReason?.();
+          if (reason && reason !== "user_cancel") {
+            setError(`Google sign-in was skipped (${reason}).`);
+          }
+        }
+      });
     } catch {
       setError("Google Sign-In failed");
       setLoading(false);

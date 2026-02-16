@@ -188,7 +188,10 @@ def test_user(db: Session):
         User object
     """
     user = User(
-        email="test@example.com", name="Test User", role=Role.CUSTOMER, google_id="test_google_id"
+        email="test@example.com",
+        name="Test User",
+        role=Role.CUSTOMER,
+        google_id="test_google_id",
     )
     db.add(user)
     db.commit()
@@ -208,7 +211,10 @@ def admin_user(db: Session):
         Admin User object
     """
     user = User(
-        email="admin@example.com", name="Admin User", role=Role.ADMIN, google_id="admin_google_id"
+        email="admin@example.com",
+        name="Admin User",
+        role=Role.ADMIN,
+        google_id="admin_google_id",
     )
     db.add(user)
     db.commit()
@@ -233,7 +239,11 @@ def auth_headers(test_user):
         Dict with Authorization header
     """
     access_token = create_access_token(
-        data={"sub": str(test_user.id), "email": test_user.email, "role": test_user.role.value}
+        data={
+            "sub": str(test_user.id),
+            "email": test_user.email,
+            "role": test_user.role.value,
+        }
     )
 
     return {"Authorization": f"Bearer {access_token}"}
@@ -251,7 +261,11 @@ def admin_headers(admin_user):
         Dict with Authorization header
     """
     access_token = create_access_token(
-        data={"sub": str(admin_user.id), "email": admin_user.email, "role": admin_user.role.value}
+        data={
+            "sub": str(admin_user.id),
+            "email": admin_user.email,
+            "role": admin_user.role.value,
+        }
     )
 
     return {"Authorization": f"Bearer {access_token}"}

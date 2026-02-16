@@ -2,6 +2,7 @@
 """
 Test OTP generation, storage, and verification.
 """
+
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
 

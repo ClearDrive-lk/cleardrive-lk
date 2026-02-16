@@ -389,7 +389,8 @@ def require_permission_decorator(*permissions: Union[Permission, str]):
 
             if not current_user:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required",
                 )
 
             # Get user permissions
@@ -402,7 +403,10 @@ def require_permission_decorator(*permissions: Union[Permission, str]):
                 logger.warning(
                     f"Permission denied for user {current_user.email}. "
                     f"Required: {permissions}, Has: {user_permissions}",
-                    extra={"user_id": str(current_user.id), "security_event": "permission_denied"},
+                    extra={
+                        "user_id": str(current_user.id),
+                        "security_event": "permission_denied",
+                    },
                 )
 
                 raise HTTPException(
@@ -443,7 +447,8 @@ def require_all_permissions_decorator(*permissions: Permission):
 
             if not current_user:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required",
                 )
 
             user_permissions = get_role_permissions(current_user.role)
@@ -493,7 +498,8 @@ def admin_only_decorator():
 
             if not current_user:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required",
                 )
 
             if current_user.role != Role.ADMIN:
@@ -506,7 +512,8 @@ def admin_only_decorator():
                 )
 
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Admin access required",
                 )
 
             return await func(*args, **kwargs)
@@ -589,11 +596,15 @@ def verify_exporter_assignment(user: User, order_exporter_id: Optional[UUID]) ->
     if not order_exporter_id or str(user.id) != str(order_exporter_id):
         logger.warning(
             f"Exporter tried to access non-assigned order: {user.email}",
-            extra={"user_id": str(user.id), "security_event": "unauthorized_exporter_access"},
+            extra={
+                "user_id": str(user.id),
+                "security_event": "unauthorized_exporter_access",
+            },
         )
 
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="You are not assigned to this order"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not assigned to this order",
         )
 
     return True
@@ -620,7 +631,8 @@ def verify_clearing_agent_assignment(user: User, order_agent_id: Optional[UUID])
     # Verify agent role
     if user.role != Role.CLEARING_AGENT:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Clearing agent access required"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Clearing agent access required",
         )
 
     # Check assignment
@@ -631,7 +643,8 @@ def verify_clearing_agent_assignment(user: User, order_agent_id: Optional[UUID])
         )
 
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="You are not assigned to this order"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not assigned to this order",
         )
 
     return True

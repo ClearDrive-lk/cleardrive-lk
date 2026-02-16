@@ -388,5 +388,7 @@ Thumbs.db
 *.pem
 *.key
 *.cert
-.pre-commit-config.yaml
-setup-git-hooks.ps1
+
+# Keep Next.js source lib tracked (overrides Python `lib/` ignore above)
+!apps/web/lib/
+!apps/web/lib/**
