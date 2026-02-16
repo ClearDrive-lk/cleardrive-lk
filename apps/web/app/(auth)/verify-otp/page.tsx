@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, Suspense, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,19 +19,39 @@ import { Badge } from "@/components/ui/badge";
 import { useAppDispatch } from "@/lib/store/store";
 import { setCredentials } from "@/lib/store/features/auth/authSlice";
 import { saveTokens } from "@/lib/auth";
+import apiClient from "@/lib/api-client";
+import { AxiosError } from "axios";
 
 function OTPForm() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(30);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "agent@cleardrive.lk";
+  const emailFromQuery = searchParams.get("email");
+  const emailFromSession =
+    typeof window !== "undefined" ? sessionStorage.getItem("otp_email") : null;
+  const email = useMemo(
+    () => emailFromQuery || emailFromSession || "cleardrivelk@gmail.com",
+    [emailFromQuery, emailFromSession],
+  );
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setResendSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendSeconds]);
 
   const handleChange = (index: number, value: string) => {
-    if (isNaN(Number(value))) return;
+    if (!/^\d?$/.test(value)) return;
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -43,33 +63,106 @@ function OTPForm() {
       inputRefs.current[index - 1]?.focus();
   };
 
+  const handlePaste = (
+    index: number,
+    e: React.ClipboardEvent<HTMLInputElement>,
+  ) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (!pasted) return;
+
+    const nextOtp = [...otp];
+    let cursor = index;
+
+    for (const digit of pasted) {
+      if (cursor > 5) break;
+      nextOtp[cursor] = digit;
+      cursor += 1;
+    }
+
+    setOtp(nextOtp);
+
+    const focusIndex = Math.min(cursor, 5);
+    inputRefs.current[focusIndex]?.focus();
+  };
+
   const handleVerify = async () => {
-    setLoading(true);
+    const otpCode = otp.join("");
+    if (otpCode.length !== 6) return;
 
-    setTimeout(() => {
+    try {
+      setLoading(true);
+      setError(null);
+      setStatusMessage(null);
+
+      const { data } = await apiClient.post<{
+        access_token: string;
+        refresh_token: string;
+        user: {
+          id: string;
+          email: string;
+          name: string;
+          role: string;
+        };
+      }>("/auth/verify-otp", {
+        email,
+        otp: otpCode,
+      });
+
       setSuccess(true);
+      saveTokens({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
 
-      // 1. SET THE TOKENS
-      saveTokens("mock-access-token-vip-pass", "mock-refresh-token-valid");
-
-      // 2. Dispatch Redux Action
       dispatch(
         setCredentials({
           user: {
-            id: "USR-8829-XJ",
-            email: email,
-            name: "Agent",
-            role: "admin",
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name || "User",
+            role: data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
           },
-          token: "valid-vip-pass",
+          token: data.access_token,
         }),
       );
 
-      setTimeout(() => {
-        // 3. Redirect to Dashboard
-        router.push("/dashboard");
-      }, 1000);
-    }, 1500);
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("otp_email");
+      }
+
+      setTimeout(() => router.push("/dashboard"), 800);
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;
+      setError(
+        axiosErr.response?.data?.detail ||
+          axiosErr.response?.data?.message ||
+          "OTP verification failed. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendSeconds > 0 || resendLoading) return;
+    try {
+      setResendLoading(true);
+      setError(null);
+      setStatusMessage(null);
+      await apiClient.post("/auth/resend-otp", { email });
+      setStatusMessage("A new OTP has been sent.");
+      setResendSeconds(30);
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;
+      setError(
+        axiosErr.response?.data?.detail ||
+          axiosErr.response?.data?.message ||
+          "Failed to resend OTP. Please try again.",
+      );
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   return (
@@ -175,6 +268,7 @@ function OTPForm() {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={(e) => handlePaste(index, e)}
                   className="w-12 h-14 text-center text-xl bg-black/40 border-white/10 focus:border-[#FE7743] focus:ring-[#FE7743]/20 transition-all text-white font-mono rounded-lg"
                 />
               ))}
@@ -200,10 +294,28 @@ function OTPForm() {
 
             <div className="text-center text-xs text-gray-500 font-mono">
               Didn&apos;t receive code?{" "}
-              <button className="hover:text-white transition-colors underline decoration-[#FE7743]">
-                Resend in 30s
+              <button
+                onClick={handleResend}
+                disabled={resendSeconds > 0 || resendLoading}
+                className="hover:text-white disabled:text-gray-600 disabled:no-underline transition-colors underline decoration-[#FE7743]"
+              >
+                {resendLoading
+                  ? "Resending..."
+                  : resendSeconds > 0
+                    ? `Resend in ${resendSeconds}s`
+                    : "Resend now"}
               </button>
             </div>
+            {statusMessage && (
+              <p className="text-center text-xs text-green-400 font-mono">
+                {statusMessage}
+              </p>
+            )}
+            {error && (
+              <p className="text-center text-xs text-red-400 font-mono">
+                {error}
+              </p>
+            )}
           </div>
 
           <div className="mt-8 pt-6 border-t border-white/5 text-center">
