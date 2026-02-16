@@ -37,7 +37,11 @@ repos:
       - id: black
         name: Format Python code (Black)
         files: ^backend/
-        language_version: python3.12
+        pass_filenames: false
+        args:
+          - --check
+          - --diff
+          - backend/app
 
   - repo: https://github.com/pycqa/isort
     rev: 7.0.0
@@ -45,7 +49,12 @@ repos:
       - id: isort
         name: Sort Python imports (isort)
         files: ^backend/
-        args: ["--profile", "black"]
+        pass_filenames: false
+        args:
+          - --profile
+          - black
+          - --check-only
+          - backend/app
 
   - repo: https://github.com/pycqa/flake8
     rev: 7.3.0
@@ -54,10 +63,13 @@ repos:
         name: Lint Python code (Flake8)
         files: ^backend/
         exclude: ^backend/(scripts|alembic)/
+        pass_filenames: false
         args:
-          - --max-line-length=100
-          - --extend-ignore=E203,W503
-          - --exclude=venv,venv312,migrations,__pycache__
+          - backend/app
+          - --config=backend/.flake8
+          - --count
+          - --statistics
+          - --show-source
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.19.1
@@ -65,10 +77,11 @@ repos:
       - id: mypy
         name: Type check Python (mypy)
         files: ^backend/app/
+        pass_filenames: false
         args:
+          - backend/app
           - --explicit-package-bases
           - --ignore-missing-imports
-          - --no-warn-unused-ignores
         additional_dependencies:
           - pydantic
           - sqlalchemy
@@ -80,35 +93,35 @@ repos:
       - id: bandit
         name: Security check Python (Bandit)
         files: ^backend/
-        args: ["-ll", "-i", "--format", "custom", "--msg-template", "{abspath}:{line}: {test_id}: {severity}: {msg}"]
-        exclude: ^backend/tests/
+        pass_filenames: false
+        args: ["-r", "backend/app", "-ll", "-i"]
+        exclude: ^backend/app/tests/
 
   # ============================================================================
   # JAVASCRIPT/TYPESCRIPT - FRONTEND
   # ============================================================================
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v10.0.0
+  - repo: local
     hooks:
-      - id: eslint
+      - id: frontend-eslint
         name: Lint JavaScript/TypeScript (ESLint)
         files: ^apps/web/
-        types: [javascript, jsx, ts, tsx]
-        args: ["--fix"]
-        additional_dependencies:
-          - eslint@8.56.0
-          - "@typescript-eslint/parser@6.19.0"
-          - "@typescript-eslint/eslint-plugin@6.19.0"
+        pass_filenames: false
+        entry: npx --prefix apps/web eslint --config apps/web/eslint.config.mjs apps/web/app
+        language: system
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
-    hooks:
-      - id: prettier
-        name: Format code (Prettier)
+      - id: frontend-prettier
+        name: Check code format (Prettier)
         files: ^apps/web/
-        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
-        args: ["--write"]
-        additional_dependencies:
-          - prettier@3.8.1
+        pass_filenames: false
+        entry: npx --prefix apps/web prettier apps/web --check
+        language: system
+
+      - id: frontend-typecheck
+        name: Type check frontend
+        files: ^apps/web/
+        pass_filenames: false
+        entry: npm --prefix apps/web run type-check
+        language: system
 
   # ============================================================================
   # SECRETS DETECTION
@@ -138,9 +151,7 @@ repos:
     hooks:
       - id: pytest
         name: Run Tests
-        # Use 'pytest' directly. `language: system` will find it in the active venv.
-        # Pytest will find the tests based on pytest.ini.
-        entry: pytest
+        entry: python backend/scripts/run_local_ci_pytest.py
         language: system
         # Only run on changes to Python files.
         types: [python]
@@ -152,7 +163,7 @@ repos:
 # CONFIGURATION
 # ============================================================================
 default_language_version:
-  python: python3.12
+  python: python3
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
