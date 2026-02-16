@@ -29,4 +29,4 @@ ipdb==0.13.13
 user-agents==2.2.0
 
 # HTTP requests for GeoIP (optional)
-requests==2.31.0
+requests==2.32.5
