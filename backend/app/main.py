@@ -34,6 +34,7 @@ from app.modules.auth.routes import router as auth_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
+from app.modules.gdpr.routes import router as gdpr_router
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -130,6 +131,7 @@ app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
 logger.info("Routers registered: /auth, /vehicles, /test")
+app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")
@@ -228,3 +230,4 @@ if __name__ == "__main__":
     logger.info(f"Starting server on {host}:{port}")
 
     uvicorn.run(app, host=host, port=port, log_level="info")  # nosec B104
+# backend/app/main.py
