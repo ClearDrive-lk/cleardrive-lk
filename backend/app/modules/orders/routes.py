@@ -1,6 +1,8 @@
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
-from app.core.permissions import Permission
+from app.core.permissions import (
+    Permission,
+)
 from app.core.permissions import admin_only_decorator as admin_only
 from app.core.permissions import (
     has_permission,
@@ -9,11 +11,7 @@ from app.core.permissions import (
 )
 from app.modules.auth.models import User
 from app.modules.orders.models import Order, OrderStatus, PaymentStatus
-
-from app.modules.orders.schemas import (
-    OrderCreate,
-    OrderResponse,
-)
+from app.modules.orders.schemas import OrderCreate, OrderResponse
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -31,6 +29,7 @@ async def create_order(
     Requires: CREATE_ORDER permission
     """
     from decimal import Decimal
+
     from app.modules.vehicles.models import Vehicle
 
     # Manual permission check
