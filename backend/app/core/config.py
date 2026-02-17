@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     PAYHERE_MERCHANT_ID: str
     PAYHERE_MERCHANT_SECRET: str
     PAYHERE_SANDBOX: bool = True
+    PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
+    PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
+    PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
 
     # Claude API
     ANTHROPIC_API_KEY: str
