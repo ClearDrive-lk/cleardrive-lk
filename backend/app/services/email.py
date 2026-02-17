@@ -6,6 +6,7 @@ Email service for sending OTPs and notifications.
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import parseaddr
 from typing import Optional
 
 import aiosmtplib
@@ -22,6 +23,14 @@ template_env = Environment(
 )
 
 
+def _is_valid_email_address(value: str) -> bool:
+    _, addr = parseaddr(value)
+    if not addr or "@" not in addr:
+        return False
+    domain = addr.split("@", 1)[1]
+    return "." in domain
+
+
 async def _send_email_via_resend_api(
     to_email: str,
     subject: str,
@@ -33,7 +42,14 @@ async def _send_email_via_resend_api(
     if not api_key:
         return False
 
-    from_email = settings.RESEND_FROM_EMAIL or settings.SMTP_FROM_EMAIL
+    configured_from_email = settings.RESEND_FROM_EMAIL or settings.SMTP_FROM_EMAIL
+    from_email = configured_from_email
+    if not _is_valid_email_address(from_email):
+        logger.error(
+            "Invalid sender email configured (%s). Falling back to onboarding@resend.dev",
+            configured_from_email,
+        )
+        from_email = "onboarding@resend.dev"
     payload = {
         "from": f"{settings.SMTP_FROM_NAME} <{from_email}>",
         "to": [to_email],
@@ -78,6 +94,12 @@ async def _send_email_via_resend_api(
                     to_email,
                 )
                 return True
+            logger.error(
+                "Fallback sender also rejected by Resend for %s: status=%s body=%s",
+                to_email,
+                sandbox_response.status_code,
+                sandbox_response.text,
+            )
 
         logger.error(
             "Failed to send email to %s via Resend API: status=%s body=%s",
@@ -108,8 +130,7 @@ async def send_email(
     """
     # Prefer HTTPS API when a Resend API key is configured to avoid blocked SMTP ports.
     if settings.RESEND_API_KEY:
-        if await _send_email_via_resend_api(to_email, subject, html_content, text_content):
-            return True
+        return await _send_email_via_resend_api(to_email, subject, html_content, text_content)
 
     try:
         # Create message
