@@ -81,9 +81,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # 4. Strict-Transport-Security (HSTS)
         if settings.ENVIRONMENT == "production":
-            response.headers[
-                "Strict-Transport-Security"
-            ] = "max-age=31536000; includeSubDomains; preload"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
 
         # 5. Referrer-Policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

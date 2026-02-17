@@ -2,6 +2,7 @@
 """
 Email service for sending OTPs and notifications.
 """
+
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText

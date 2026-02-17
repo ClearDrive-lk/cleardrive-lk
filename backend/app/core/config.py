@@ -37,11 +37,6 @@ class Settings(BaseSettings):
     PAYHERE_MERCHANT_SECRET: str
     PAYHERE_SANDBOX: bool = True
 
-    # PayHere Configuration
-    PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
-    PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
-    PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
-
     # Claude API
     ANTHROPIC_API_KEY: str
 
@@ -70,6 +65,14 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_EMAILS: str  # Comma-separated
 
+    # Session Management
+    MAX_SESSIONS_PER_USER: int = 5
+    SESSION_TTL_DAYS: int = 30
+    SESSION_CLEANUP_INTERVAL_HOURS: int = 24
+
+    # GeoIP (optional)
+    GEOIP_ENABLED: bool = False
+    GEOIP_API_KEY: str | None = None
     # RBAC settings
     RBAC_ENABLED: bool = True
     RBAC_STRICT_MODE: bool = True
@@ -80,8 +83,6 @@ class Settings(BaseSettings):
     MAX_FAILED_AUTH_ATTEMPTS: int = 5
     TOKEN_REUSE_DETECTION_ENABLED: bool = True
     SUSPICIOUS_ACTIVITY_THRESHOLD: int = 3
-    MAX_SESSIONS_PER_USER: int = 5
-    SESSION_CLEANUP_INTERVAL_HOURS: int = 24
 
     # CORS
     BACKEND_CORS_ORIGINS: list[str] = [
