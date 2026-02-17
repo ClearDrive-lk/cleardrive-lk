@@ -20,6 +20,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start backend server
+        env:
+          # Use dummy variables for the server to start
+          DATABASE_URL: "postgresql://user:pass@localhost/db" # pragma: allowlist secret
+          REDIS_URL: "redis://localhost:6379/0"
+          JWT_SECRET_KEY: "test-secret-key-min-32-characters-long" # pragma: allowlist secret
+          ENCRYPTION_KEY: "test-encryption-key-32-chars!!"
+          ENVIRONMENT: "test"
+        run: |
+          cd backend
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          # Wait for the server to be ready
+          sleep 15
+
       - name: ZAP Scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
@@ -53,7 +78,7 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          safety check --full-report
+          safety scan --full-report
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

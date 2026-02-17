@@ -150,7 +150,11 @@ repos:
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py
         language: system
+        # Only run on changes to Python files.
+        types: [python]
         pass_filenames: false
+        # Always run the full suite, as any Python change could break tests.
+        always_run: true
 
 # ============================================================================
 # CONFIGURATION
