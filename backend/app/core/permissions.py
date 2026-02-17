@@ -389,12 +389,8 @@ def require_permission_decorator(*permissions: Union[Permission, str]):
 
             if not current_user:
                 raise HTTPException(
-<<<<<<< HEAD
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Authentication required",
-=======
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 )
 
             # Get user permissions
@@ -407,14 +403,10 @@ def require_permission_decorator(*permissions: Union[Permission, str]):
                 logger.warning(
                     f"Permission denied for user {current_user.email}. "
                     f"Required: {permissions}, Has: {user_permissions}",
-<<<<<<< HEAD
                     extra={
                         "user_id": str(current_user.id),
                         "security_event": "permission_denied",
                     },
-=======
-                    extra={"user_id": str(current_user.id), "security_event": "permission_denied"},
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 )
 
                 raise HTTPException(
@@ -455,12 +447,8 @@ def require_all_permissions_decorator(*permissions: Permission):
 
             if not current_user:
                 raise HTTPException(
-<<<<<<< HEAD
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Authentication required",
-=======
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 )
 
             user_permissions = get_role_permissions(current_user.role)
@@ -510,12 +498,8 @@ def admin_only_decorator():
 
             if not current_user:
                 raise HTTPException(
-<<<<<<< HEAD
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Authentication required",
-=======
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 )
 
             if current_user.role != Role.ADMIN:
@@ -528,12 +512,8 @@ def admin_only_decorator():
                 )
 
                 raise HTTPException(
-<<<<<<< HEAD
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Admin access required",
-=======
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 )
 
             return await func(*args, **kwargs)
@@ -616,7 +596,6 @@ def verify_exporter_assignment(user: User, order_exporter_id: Optional[UUID]) ->
     if not order_exporter_id or str(user.id) != str(order_exporter_id):
         logger.warning(
             f"Exporter tried to access non-assigned order: {user.email}",
-<<<<<<< HEAD
             extra={
                 "user_id": str(user.id),
                 "security_event": "unauthorized_exporter_access",
@@ -626,13 +605,6 @@ def verify_exporter_assignment(user: User, order_exporter_id: Optional[UUID]) ->
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not assigned to this order",
-=======
-            extra={"user_id": str(user.id), "security_event": "unauthorized_exporter_access"},
-        )
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="You are not assigned to this order"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
     return True
@@ -659,12 +631,8 @@ def verify_clearing_agent_assignment(user: User, order_agent_id: Optional[UUID])
     # Verify agent role
     if user.role != Role.CLEARING_AGENT:
         raise HTTPException(
-<<<<<<< HEAD
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Clearing agent access required",
-=======
-            status_code=status.HTTP_403_FORBIDDEN, detail="Clearing agent access required"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
     # Check assignment
@@ -675,12 +643,8 @@ def verify_clearing_agent_assignment(user: User, order_agent_id: Optional[UUID])
         )
 
         raise HTTPException(
-<<<<<<< HEAD
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not assigned to this order",
-=======
-            status_code=status.HTTP_403_FORBIDDEN, detail="You are not assigned to this order"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
     return True

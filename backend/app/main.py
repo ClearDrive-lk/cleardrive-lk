@@ -49,42 +49,23 @@ async def lifespan(app: FastAPI):
     - Redis connection initialization
     - Graceful shutdown of services
     """
-<<<<<<< HEAD
-    logger.info("Starting ClearDrive.lk API...")
-=======
     # ========================================================================
     # STARTUP
     # ========================================================================
     logger.info("🚀 Starting ClearDrive.lk API...")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # Initialize Redis (best-effort; don't crash app/tests if Redis is down)
     if REDIS_INIT_AVAILABLE and init_redis is not None:
         try:
             await init_redis()
-<<<<<<< HEAD
             logger.info("Redis connection initialized (using init_redis)")
         except Exception as e:
             logger.warning(f"Redis init_redis() failed: {e}")
-=======
-            logger.info("✅ Redis connection initialized (using init_redis)")
-        except Exception as e:
-            logger.warning(f"⚠️ Redis init_redis() failed: {e}")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # Fallback: Try to ping Redis using redis_client
     try:
         redis = await get_redis()
         await redis.ping()
-<<<<<<< HEAD
-        logger.info("Redis connected and responsive")
-    except Exception as e:
-        logger.warning(f"Redis not available: {e}")
-
-    yield
-
-    logger.info("Shutting down ClearDrive.lk API...")
-=======
         logger.info("✅ Redis connected and responsive")
     except Exception as e:
         logger.warning(f"⚠️ Redis not available: {e}")
@@ -95,32 +76,18 @@ async def lifespan(app: FastAPI):
     # SHUTDOWN
     # ========================================================================
     logger.info("👋 Shutting down ClearDrive.lk API...")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # Close Redis connection (try both methods)
     if REDIS_INIT_AVAILABLE and redis_close is not None:
         try:
             await redis_close()
-<<<<<<< HEAD
-            logger.info("Redis connection closed (using close_redis)")
-        except Exception as e:
-            logger.warning(f"Error while closing Redis (close_redis): {e}")
-=======
             logger.info("✅ Redis connection closed (using close_redis)")
         except Exception as e:
             logger.warning(f"⚠️ Error while closing Redis (close_redis): {e}")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # Fallback: close using redis_client
     try:
         await close_redis()
-<<<<<<< HEAD
-        logger.info("Redis connection closed (using redis_client)")
-    except Exception as e:
-        logger.warning(f"Error while closing Redis (redis_client): {e}")
-
-
-=======
         logger.info("✅ Redis connection closed (using redis_client)")
     except Exception as e:
         logger.warning(f"⚠️ Error while closing Redis (redis_client): {e}")
@@ -130,7 +97,6 @@ async def lifespan(app: FastAPI):
 # CREATE FASTAPI APP
 # ============================================================================
 
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -141,12 +107,6 @@ app = FastAPI(
 )
 
 
-<<<<<<< HEAD
-# 1. Trusted Host Middleware (prevent host header attacks)
-if settings.ENVIRONMENT == "production":
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.BACKEND_ALLOWED_HOSTS)
-    logger.info(f"Trusted Host Middleware enabled (production): {settings.BACKEND_ALLOWED_HOSTS}")
-=======
 # ============================================================================
 # SECURITY MIDDLEWARE (Order matters!)
 # ============================================================================
@@ -157,35 +117,24 @@ if settings.ENVIRONMENT == "production":
         TrustedHostMiddleware, allowed_hosts=["api.cleardrive.lk", "*.cleardrive.lk"]
     )
     logger.info("✅ Trusted Host Middleware enabled (production)")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # 2. Security Headers Middleware
 if SECURITY_MIDDLEWARE_AVAILABLE:
     app.add_middleware(SecurityHeadersMiddleware)
-<<<<<<< HEAD
-    logger.info("Security Headers Middleware enabled")
-else:
-    logger.warning("Security Headers Middleware not available")
-=======
     logger.info("✅ Security Headers Middleware enabled")
 else:
     logger.warning("⚠️ Security Headers Middleware not available")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # 3. CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
-<<<<<<< HEAD
     allow_origin_regex=settings.BACKEND_CORS_ORIGIN_REGEX,
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Total-Count", "X-Page", "X-Page-Size"],
 )
-<<<<<<< HEAD
 logger.info(
     "CORS enabled for origins: "
     f"{settings.BACKEND_CORS_ORIGINS}, "
@@ -193,7 +142,6 @@ logger.info(
 )
 
 
-=======
 logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 
 
@@ -201,22 +149,17 @@ logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 # INCLUDE ROUTERS
 # ============================================================================
 
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
-<<<<<<< HEAD
 logger.info("Routers registered: /auth, /vehicles, /test")
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
-=======
-logger.info("✅ Routers registered: /auth, /vehicles, /test")
 
 
 # ============================================================================
 # ROOT & HEALTH ENDPOINTS
 # ============================================================================
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 
 @app.get("/")
@@ -246,11 +189,8 @@ async def health_check():
     - Redis connection
     - Environment configuration
     """
-<<<<<<< HEAD
-=======
 
     # Test Redis connection
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     redis_status = "unknown"
     try:
         redis = await get_redis()
@@ -272,16 +212,13 @@ async def health_check():
     }
 
 
-<<<<<<< HEAD
 @app.get("/api/v1/health")
 async def health_check_v1():
     return await health_check()
-=======
 # ============================================================================
 # LEGACY EVENT HANDLERS (Deprecated in favor of lifespan)
 # ============================================================================
 # Note: These are kept for backward compatibility but lifespan is preferred
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 
 @app.on_event("startup")
@@ -292,10 +229,7 @@ async def startup_event():
     """
     logger.info("Legacy startup event triggered (use lifespan instead)")
 
-<<<<<<< HEAD
-=======
     # Initialize Redis using helper if available
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     if REDIS_INIT_AVAILABLE and init_redis is not None:
         try:
             await init_redis()
@@ -312,10 +246,7 @@ async def shutdown_event():
     """
     logger.info("Legacy shutdown event triggered (use lifespan instead)")
 
-<<<<<<< HEAD
-=======
     # Close Redis using helper if available
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     if REDIS_INIT_AVAILABLE and redis_close is not None:
         try:
             await redis_close()
@@ -324,29 +255,20 @@ async def shutdown_event():
             logger.warning(f"Error closing Redis (legacy event): {e}")
 
 
-<<<<<<< HEAD
-=======
 # ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
 
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 if __name__ == "__main__":
     import os
 
     import uvicorn
 
-<<<<<<< HEAD
-=======
     # Default to localhost for safety; container platforms can set HOST=0.0.0.0
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "8000"))
 
     logger.info(f"Starting server on {host}:{port}")
 
     uvicorn.run(app, host=host, port=port, log_level="info")  # nosec B104
-<<<<<<< HEAD
 # backend/app/main.py
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
