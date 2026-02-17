@@ -83,6 +83,13 @@ class OTPResendRequest(BaseModel):
     email: EmailStr
 
 
+class LoginRequest(BaseModel):
+    """Email/password login request."""
+
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=128)
+
+
 class RegisterRequest(BaseModel):
     """Email/password registration request."""
 

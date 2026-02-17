@@ -82,7 +82,11 @@ jobs:
       - name: Run TypeScript Type Check
         run: |
           cd apps/web
-          npm run type-check || npx tsc --noEmit
+          npm run type-check
+
+      - name: Verify no generated file drift
+        run: |
+          git diff --exit-code
 
   # ============================================================================
   # 3. SECURITY SCAN

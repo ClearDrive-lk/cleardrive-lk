@@ -54,6 +54,11 @@ jobs:
           cd backend
           black --check app/
 
+      - name: Run isort (import order check)
+        run: |
+          cd backend
+          isort --profile black --check-only app/
+
       - name: Run Flake8 (linting)
         run: |
           cd backend

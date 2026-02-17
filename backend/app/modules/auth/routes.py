@@ -1,4 +1,4 @@
-# backend/app/modules/auth/routes.py
+﻿# backend/app/modules/auth/routes.py
 
 import logging
 import uuid
@@ -34,6 +34,7 @@ from app.core.security import (
     decode_refresh_token,
     hash_password,
     hash_token,
+    verify_password,
 )
 from app.services.email import send_otp_email
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -62,6 +63,7 @@ from .schemas import (
     DevEnsureUserRequest,
     GoogleAuthRequest,
     GoogleAuthResponse,
+    LoginRequest,
     OTPResendRequest,
     OTPVerifyRequest,
     RefreshTokenRequest,
@@ -107,7 +109,7 @@ async def google_auth(
         if "4166288126" in err_msg:
             err_msg += (
                 " (Hint: You are using the default OAuth Playground credentials! "
-                "Click Gear icon ⚙️ → 'Use your own OAuth credentials' → "
+                "Click Gear icon âš™ï¸ â†’ 'Use your own OAuth credentials' â†’ "
                 "Enter your Client ID/Secret.)"
             )
         elif "wrong audience" in err_msg.lower():
@@ -361,7 +363,7 @@ async def verify_otp(
 
         if suspicious.get("is_suspicious"):
             logger.warning(
-                f"⚠️ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
+                f"âš ï¸ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
                 f"{', '.join(suspicious.get('reasons', []))}",
                 extra={
                     "user_id": str(user.id),
@@ -468,7 +470,7 @@ async def verify_otp(
     # STEP 12: Log and Return
     # ========================================================================
     logger.info(
-        f"✅ Authentication successful for user {user.email}. "
+        f"âœ… Authentication successful for user {user.email}. "
         f"Session {session_id or 'N/A'} created. "
         f"Active sessions: {limit_result.get('current_count', 'N/A')}/"
         f"{limit_result.get('limit', 5)}",
@@ -508,7 +510,7 @@ async def resend_otp(
     await send_otp_email(resend_request.email, otp, user.name)
 
     if settings.ENVIRONMENT == "development":
-        logger.info(f"🔐 OTP for {resend_request.email}: {otp}")
+        logger.info(f"ðŸ” OTP for {resend_request.email}: {otp}")
         return {"message": "If the email exists, OTP has been sent", "otp": otp}
 
     return {"message": "If the email exists, OTP has been sent"}
@@ -522,6 +524,57 @@ async def request_otp(
 ):
     """Request OTP for email login."""
     return await resend_otp(request_data, db, redis)
+
+
+@router.post("/login")
+async def login(
+    login_request: LoginRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """
+    Email/password login step.
+
+    Validates credentials and then sends OTP for second-factor verification.
+    """
+    email = login_request.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+
+    # Keep message generic to avoid account enumeration.
+    invalid_credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid email or password.",
+    )
+
+    if not user or not user.password_hash:
+        logger.warning(f"Login failed for {email}: user not found or no password set")
+        raise invalid_credentials_error
+
+    if not verify_password(login_request.password, user.password_hash):
+        user.failed_auth_attempts = (user.failed_auth_attempts or 0) + 1
+        user.last_failed_auth = datetime.utcnow()
+        db.commit()
+        logger.warning(
+            f"Login failed for {email}: invalid password " f"(attempt {user.failed_auth_attempts})"
+        )
+        raise invalid_credentials_error
+
+    user.failed_auth_attempts = 0
+    user.last_failed_auth = None
+    db.commit()
+
+    otp = generate_otp()
+    await store_otp(email, otp)
+    email_sent = await send_otp_email(email, otp, user.name)
+
+    if not email_sent:
+        logger.error(f"Failed to send OTP email after login for {email}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification code. Please try again.",
+        )
+
+    return {"message": "Verification code sent to your email."}
 
 
 @router.post("/register")
@@ -640,7 +693,7 @@ async def refresh_token(
     4. Return NEW tokens
 
     Security:
-    - Token reuse detection (if old token used twice → revoke ALL sessions)
+    - Token reuse detection (if old token used twice â†’ revoke ALL sessions)
     - Token blacklisting to prevent replay attacks
     """
     try:
@@ -960,7 +1013,7 @@ async def revoke_all_sessions(
     """
     Revoke ALL sessions for the current user.
 
-    ⚠️ WARNING: Logs the user out from ALL devices including this one.
+    âš ï¸ WARNING: Logs the user out from ALL devices including this one.
 
     Actions performed:
     1. Blacklist all associated refresh tokens

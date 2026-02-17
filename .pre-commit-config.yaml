@@ -39,8 +39,6 @@ repos:
         files: ^backend/
         pass_filenames: false
         args:
-          - --check
-          - --diff
           - backend/app
 
   - repo: https://github.com/pycqa/isort
@@ -53,7 +51,6 @@ repos:
         args:
           - --profile
           - black
-          - --check-only
           - backend/app
 
   - repo: https://github.com/pycqa/flake8
@@ -113,7 +110,7 @@ repos:
         name: Check code format (Prettier)
         files: ^apps/web/
         pass_filenames: false
-        entry: npx --prefix apps/web prettier apps/web --check
+        entry: npx --prefix apps/web prettier apps/web --write
         language: system
 
       - id: frontend-typecheck
@@ -166,8 +163,7 @@ fail_fast: false  # Run all hooks even if one fails
 
 exclude: |
   (?x)^(
-    backend/venv/.*|
-    backend/venv312/.*|
+    backend/(venv|venv[^/]*|\.venv)/.*|
     backend/.pytest_cache/.*|
     backend/__pycache__/.*|
     backend/htmlcov/.*|
