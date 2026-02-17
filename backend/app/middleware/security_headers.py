@@ -54,8 +54,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         csp_directives = [
             "default-src 'self'",
             f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com "
-            "https://www.googletagmanager.com",
-            f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com",
+            "https://accounts.gstatic.com https://www.googletagmanager.com "
+            "https://vercel.live",
+            f"script-src-elem 'self' 'nonce-{nonce}' https://accounts.google.com "
+            "https://accounts.gstatic.com https://www.googletagmanager.com "
+            "https://vercel.live",
+            f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com "
+            "https://accounts.google.com",
+            f"style-src-elem 'self' 'nonce-{nonce}' https://fonts.googleapis.com "
+            "https://accounts.google.com",
             "connect-src 'self' https://api.anthropic.com https://*.supabase.co",
             "img-src 'self' data: blob: https://*.supabase.co https://www.google.com",
             "font-src 'self' https://fonts.gstatic.com",
