@@ -194,7 +194,7 @@ export default function LoginPage() {
                   Access Key
                 </Label>
                 <Link
-                  href="#"
+                  href="/forgot-password"
                   className="text-xs text-[#FE7743] hover:text-[#FE7743]/80 transition-colors"
                 >
                   Lost Key?

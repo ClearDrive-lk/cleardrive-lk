@@ -61,6 +61,7 @@ from .models import User
 from .schemas import (
     AllSessionsRevokeResponse,
     DevEnsureUserRequest,
+    ForgotPasswordRequest,
     GoogleAuthRequest,
     GoogleAuthResponse,
     LoginRequest,
@@ -68,6 +69,7 @@ from .schemas import (
     OTPVerifyRequest,
     RefreshTokenRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     SessionInfo,
     SessionLocation,
     SessionRevokeResponse,
@@ -524,6 +526,108 @@ async def request_otp(
 ):
     """Request OTP for email login."""
     return await resend_otp(request_data, db, redis)
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request_data: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """
+    Request OTP for password reset.
+
+    Returns a generic success message to avoid account enumeration.
+    """
+    user = db.query(User).filter(User.email == request_data.email).first()
+
+    if not user:
+        logger.warning(f"Password reset requested for non-existent email: {request_data.email}")
+        return {"message": "If the email exists, a reset code has been sent"}
+
+    otp = generate_otp()
+    await store_otp(request_data.email, otp)
+    email_sent = await send_otp_email(request_data.email, otp, user.name)
+
+    if not email_sent:
+        logger.error(f"Failed to send password reset OTP to {request_data.email}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send reset code. Please try again.",
+        )
+
+    if settings.ENVIRONMENT == "development":
+        logger.info(f"Password reset OTP for {request_data.email}: {otp}")
+        return {
+            "message": "If the email exists, a reset code has been sent",
+            "otp": otp,
+        }
+
+    return {"message": "If the email exists, a reset code has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    reset_request: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """Reset password using email, OTP and new password."""
+    email = reset_request.email.strip().lower()
+    otp_data = await get_otp(email)
+
+    if not otp_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP expired or not found. Please request a new code.",
+        )
+
+    if otp_data.get("attempts", 0) >= 3:
+        await delete_otp(email)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum verification attempts exceeded. Please request a new code.",
+        )
+
+    stored_otp = otp_data.get("otp")
+    verification_func = (
+        verify_otp_constant_time if verify_otp_constant_time is not None else constant_time_compare
+    )
+    if not verification_func(cast(str, stored_otp), reset_request.otp):
+        attempts = await increment_otp_attempts(email)
+        remaining = 3 - attempts
+        if remaining > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid verification code. {remaining} attempts remaining.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum verification attempts exceeded. Please request a new code.",
+        )
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        await delete_otp(email)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user.password_hash = hash_password(reset_request.new_password)
+    user.failed_auth_attempts = 0
+    user.last_failed_auth = None
+    db.commit()
+    await delete_otp(email)
+
+    # Security hygiene: invalidate active sessions after password change.
+    await delete_all_user_sessions(str(user.id))
+    (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
+        .update({"is_active": False}, synchronize_session=False)
+    )
+    db.commit()
+
+    logger.info(f"Password reset successful for {email}")
+    return {"message": "Password reset successful. Please sign in again."}
 
 
 @router.post("/login")

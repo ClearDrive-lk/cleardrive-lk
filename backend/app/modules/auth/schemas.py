@@ -98,6 +98,20 @@ class RegisterRequest(BaseModel):
     name: Optional[str] = None
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Request OTP for password reset."""
+
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password with email + OTP."""
+
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP")
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 class DevEnsureUserRequest(BaseModel):
     """Dev-only: ensure a test user exists (create if not)."""
 
