@@ -146,6 +146,13 @@ repos:
   # ============================================================================
   - repo: local
     hooks:
+      - id: safety
+        name: Dependency vulnerability scan (Safety)
+        entry: python backend/scripts/run_local_ci_safety.py
+        language: system
+        files: ^backend/(requirements\.txt|requirements-dev\.txt|pyproject\.toml)$
+        pass_filenames: false
+
       - id: pytest
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py

@@ -103,8 +103,8 @@ jobs:
       - name: Run Safety (dependency check)
         run: |
           cd backend
-          safety scan --output json > safety-report.json || true
-          safety scan
+          python -m safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json || true
+          python -m safety check -r requirements.txt -r requirements-dev.txt --full-report
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
