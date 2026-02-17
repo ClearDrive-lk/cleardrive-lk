@@ -82,11 +82,15 @@ async def send_otp_email(email: str, otp: str, name: Optional[str] = None) -> bo
     Returns:
         True if sent successfully
     """
-    # Render template
-    template = template_env.get_template("otp_email.html")
-    html_content = template.render(
-        otp=otp, name=name or "User", expiry_minutes=settings.OTP_EXPIRY_MINUTES
-    )
+    try:
+        # Render template
+        template = template_env.get_template("otp_email.html")
+        html_content = template.render(
+            otp=otp, name=name or "User", expiry_minutes=settings.OTP_EXPIRY_MINUTES
+        )
+    except Exception as e:
+        logger.error(f"Failed to render OTP email template for {email}: {str(e)}")
+        return False
 
     # Plain text fallback
     text_content = f"""

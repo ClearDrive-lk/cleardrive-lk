@@ -668,8 +668,23 @@ async def login(
     db.commit()
 
     otp = generate_otp()
-    await store_otp(email, otp)
-    email_sent = await send_otp_email(email, otp, user.name)
+    try:
+        await store_otp(email, otp)
+    except Exception as e:
+        logger.exception(f"Failed to store OTP for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Verification service temporarily unavailable. Please try again.",
+        )
+
+    try:
+        email_sent = await send_otp_email(email, otp, user.name)
+    except Exception as e:
+        logger.exception(f"Unexpected email send failure for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
 
     if not email_sent:
         logger.error(f"Failed to send OTP email after login for {email}")
