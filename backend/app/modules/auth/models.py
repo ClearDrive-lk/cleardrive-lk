@@ -66,8 +66,12 @@ class User(Base, UUIDMixin, TimestampMixin):
     sessions: Mapped[list[Session]] = relationship(
         "Session", back_populates="user", cascade="all, delete-orphan"
     )
-    orders: Mapped[list[Order]] = relationship(
-        "Order", back_populates="user", cascade="all, delete-orphan"
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="[Order.user_id]",
+        overlaps="user",
     )
     kyc_document: Mapped[KYCDocument | None] = relationship(
         "KYCDocument",
