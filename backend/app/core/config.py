@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
     SMTP_FROM_NAME: str = "ClearDrive.lk"
+    SMTP_TIMEOUT_SECONDS: float = 10.0
+    RESEND_API_KEY: str | None = None
 
     # OTP
     OTP_LENGTH: int = 6
