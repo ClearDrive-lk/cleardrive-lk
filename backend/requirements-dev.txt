@@ -22,7 +22,7 @@ detect-secrets==1.5.0
 types-redis==4.6.0.11
 
 # Debugging
-ipython==8.18.1
+ipython==9.10.0
 ipdb==0.13.13
 
 # User agent parsing
