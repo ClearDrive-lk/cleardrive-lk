@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
@@ -39,17 +39,17 @@ export default function PaymentSuccessPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {orderId && (
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-600">Order ID</p>
               <p className="font-mono font-semibold">{orderId}</p>
             </div>
           )}
 
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">✅ Payment confirmed</p>
-            <p className="text-sm text-gray-600">✅ Order is being processed</p>
+            <p className="text-sm text-gray-600">Payment confirmed</p>
+            <p className="text-sm text-gray-600">Order is being processed</p>
             <p className="text-sm text-gray-600">
-              ✅ Confirmation email will be sent shortly
+              Confirmation email will be sent shortly
             </p>
           </div>
 
@@ -71,5 +71,15 @@ export default function PaymentSuccessPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={<div className="container mx-auto py-8">Loading...</div>}
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

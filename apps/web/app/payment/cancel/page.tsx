@@ -3,6 +3,7 @@
 
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -14,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { XCircle } from "lucide-react";
 
-export default function PaymentCancelPage() {
+function PaymentCancelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
@@ -69,5 +70,15 @@ export default function PaymentCancelPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense
+      fallback={<div className="container mx-auto py-8">Loading...</div>}
+    >
+      <PaymentCancelContent />
+    </Suspense>
   );
 }
