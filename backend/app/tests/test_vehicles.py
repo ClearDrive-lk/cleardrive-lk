@@ -1,10 +1,24 @@
-# backend/tests/test_vehicles.py
+# backend/app/tests/test_vehicles.py
 
 """
 Test vehicle endpoints.
+Author: Parindra Chameekara
+Epic: CD-E3 - Vehicle Management System
+Story: CD-130 - Vehicle Search & Filter API
 """
 
-from app.modules.vehicles.models import FuelType, Transmission, Vehicle, VehicleStatus
+from app.modules.vehicles.models import (
+    Drive,
+    FuelType,
+    Steering,
+    Transmission,
+    Vehicle,
+    VehicleStatus,
+)
+
+# ============================================================================
+# PUBLIC ENDPOINTS TESTS (No authentication required)
+# ============================================================================
 
 
 def test_get_vehicles_empty(client, db):
@@ -15,6 +29,9 @@ def test_get_vehicles_empty(client, db):
     data = response.json()
     assert data["pagination"]["total"] == 0
     assert data["vehicles"] == []
+    assert data["pagination"]["page"] == 1
+    assert data["pagination"]["limit"] == 20
+    assert data["pagination"]["total_pages"] == 0
 
 
 def test_get_vehicles_with_data(client, db):
@@ -45,10 +62,12 @@ def test_get_vehicles_with_data(client, db):
     assert len(data["vehicles"]) == 1
     assert data["vehicles"][0]["make"] == "Toyota"
     assert data["vehicles"][0]["model"] == "Prius"
+    assert data["vehicles"][0]["year"] == 2020
+    assert data["vehicles"][0]["stock_no"] == "TEST-001"
 
 
-def test_search_vehicles(client, db):
-    """Test vehicle search functionality."""
+def test_search_vehicles_by_make(client, db):
+    """Test vehicle search by make."""
 
     # Create test vehicles
     vehicles = [

@@ -1,8 +1,8 @@
 """
-Vehicle API endpoints.
-Author: Parindra
+Vehicle Pydantic schemas for request/response validation.
+Author: Parindra Chameekara
 Epic: CD-E3 - Vehicle Management System
-Stories: CD-21 (Search & Filter), CD-22 (Detail & Cost)
+Story: CD-140 - Vehicle detail and cost calculation endpoints
 """
 
 import math
@@ -205,7 +205,7 @@ async def list_models(
     query = db.query(Vehicle.model).distinct()
 
     if make:
-        query = query.filter(Vehicle.make == make)
+        query = query.filter(Vehicle.make.ilike(f"%{make}%"))
 
     models = query.order_by(Vehicle.model).all()
     return {"models": [model[0] for model in models]}

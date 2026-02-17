@@ -1,8 +1,8 @@
 """
 Vehicle Pydantic schemas for request/response validation.
-Author: Parindra
+Author: Parindra Chameekara
 Epic: CD-E3 - Vehicle Management System
-Story: CD-21 - Vehicle Search & Filter API
+Story: CD-130 - Vehicle Search & Filter API
 """
 
 from datetime import datetime
