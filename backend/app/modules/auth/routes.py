@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿# backend/app/modules/auth/routes.py
+=======
+# backend/app/modules/auth/routes.py
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 import logging
 import uuid
@@ -32,9 +36,13 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_refresh_token,
+<<<<<<< HEAD
     hash_password,
     hash_token,
     verify_password,
+=======
+    hash_token,
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 )
 from app.services.email import send_otp_email
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -61,6 +69,7 @@ from .models import User
 from .schemas import (
     AllSessionsRevokeResponse,
     DevEnsureUserRequest,
+<<<<<<< HEAD
     ForgotPasswordRequest,
     GoogleAuthRequest,
     GoogleAuthResponse,
@@ -70,6 +79,13 @@ from .schemas import (
     RefreshTokenRequest,
     RegisterRequest,
     ResetPasswordRequest,
+=======
+    GoogleAuthRequest,
+    GoogleAuthResponse,
+    OTPResendRequest,
+    OTPVerifyRequest,
+    RefreshTokenRequest,
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     SessionInfo,
     SessionLocation,
     SessionRevokeResponse,
@@ -111,7 +127,11 @@ async def google_auth(
         if "4166288126" in err_msg:
             err_msg += (
                 " (Hint: You are using the default OAuth Playground credentials! "
+<<<<<<< HEAD
                 "Click Gear icon âš™ï¸ â†’ 'Use your own OAuth credentials' â†’ "
+=======
+                "Click Gear icon ⚙️ → 'Use your own OAuth credentials' → "
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 "Enter your Client ID/Secret.)"
             )
         elif "wrong audience" in err_msg.lower():
@@ -166,6 +186,7 @@ async def google_auth(
         logger.info(f"Existing user logged in: {email}")
 
     otp = generate_otp()
+<<<<<<< HEAD
     try:
         await store_otp(email, otp)
     except Exception as e:
@@ -183,12 +204,22 @@ async def google_auth(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Email service temporarily unavailable. Please try again.",
         )
+=======
+    await store_otp(email, otp)
+
+    email_sent = await send_otp_email(email, otp, name)
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     if not email_sent:
         logger.error(f"Failed to send OTP email to {email}")
         raise HTTPException(
+<<<<<<< HEAD
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Email service temporarily unavailable. Please try again.",
+=======
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification code. Please try again.",
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
     return GoogleAuthResponse(
@@ -343,7 +374,11 @@ async def verify_otp(
     logger.info(f"Extracting session metadata for user {user.email}")
 
     if extract_session_metadata is not None:
+<<<<<<< HEAD
         session_metadata = await extract_session_metadata(
+=======
+        session_metadata = extract_session_metadata(
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
             ip_address=request.client.host if request.client else "unknown",
             user_agent=request.headers.get("user-agent", "unknown"),
             include_location=True,
@@ -379,7 +414,11 @@ async def verify_otp(
 
         if suspicious.get("is_suspicious"):
             logger.warning(
+<<<<<<< HEAD
                 f"âš ï¸ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
+=======
+                f"⚠️ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
                 f"{', '.join(suspicious.get('reasons', []))}",
                 extra={
                     "user_id": str(user.id),
@@ -486,7 +525,11 @@ async def verify_otp(
     # STEP 12: Log and Return
     # ========================================================================
     logger.info(
+<<<<<<< HEAD
         f"âœ… Authentication successful for user {user.email}. "
+=======
+        f"✅ Authentication successful for user {user.email}. "
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         f"Session {session_id or 'N/A'} created. "
         f"Active sessions: {limit_result.get('current_count', 'N/A')}/"
         f"{limit_result.get('limit', 5)}",
@@ -526,7 +569,11 @@ async def resend_otp(
     await send_otp_email(resend_request.email, otp, user.name)
 
     if settings.ENVIRONMENT == "development":
+<<<<<<< HEAD
         logger.info(f"ðŸ” OTP for {resend_request.email}: {otp}")
+=======
+        logger.info(f"🔐 OTP for {resend_request.email}: {otp}")
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         return {"message": "If the email exists, OTP has been sent", "otp": otp}
 
     return {"message": "If the email exists, OTP has been sent"}
@@ -542,6 +589,7 @@ async def request_otp(
     return await resend_otp(request_data, db, redis)
 
 
+<<<<<<< HEAD
 @router.post("/forgot-password")
 async def forgot_password(
     request_data: ForgotPasswordRequest,
@@ -753,6 +801,8 @@ async def register(
     return {"message": "Account created. Verification code sent to your email."}
 
 
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 # ============================================================================
 # DEV-ONLY: ENSURE TEST USER
 # ============================================================================
@@ -826,7 +876,11 @@ async def refresh_token(
     4. Return NEW tokens
 
     Security:
+<<<<<<< HEAD
     - Token reuse detection (if old token used twice â†’ revoke ALL sessions)
+=======
+    - Token reuse detection (if old token used twice → revoke ALL sessions)
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     - Token blacklisting to prevent replay attacks
     """
     try:
@@ -1146,7 +1200,11 @@ async def revoke_all_sessions(
     """
     Revoke ALL sessions for the current user.
 
+<<<<<<< HEAD
     âš ï¸ WARNING: Logs the user out from ALL devices including this one.
+=======
+    ⚠️ WARNING: Logs the user out from ALL devices including this one.
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     Actions performed:
     1. Blacklist all associated refresh tokens

@@ -9,7 +9,10 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "localhost" },
+<<<<<<< HEAD
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     ],
   },
   async rewrites() {

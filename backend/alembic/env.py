@@ -1,4 +1,8 @@
 # backend/alembic/env.py
+<<<<<<< HEAD
+=======
+# backend/alembic/env.py
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 import sys
 from logging.config import fileConfig
@@ -14,6 +18,7 @@ from app.core.config import settings  # noqa: E402
 from app.core.database import Base  # noqa: E402
 
 # Import ALL models so Alembic can detect them
+<<<<<<< HEAD
 from app.modules.auth.models import Session, User
 from app.modules.gdpr.models import GDPRRequest
 from app.modules.kyc.models import KYCDocument
@@ -27,6 +32,8 @@ from app.modules.security.models import (
 )
 from app.modules.shipping.models import ShipmentDetails, ShippingDocument
 from app.modules.vehicles.models import Vehicle
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # ... rest of the file stays the same
 
@@ -39,9 +46,14 @@ from app.modules.vehicles.models import Vehicle
 # this is the Alembic Config object
 config = context.config
 
+<<<<<<< HEAD
 # Prefer a dedicated migration URL (direct DB), fallback to app DATABASE_URL.
 alembic_database_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
 config.set_main_option("sqlalchemy.url", alembic_database_url)
+=======
+# Set sqlalchemy.url from our settings
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:

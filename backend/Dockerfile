@@ -22,4 +22,8 @@ COPY . .
 EXPOSE 8000
 
 # Run application (Railway provides PORT env var)
+<<<<<<< HEAD
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+=======
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7

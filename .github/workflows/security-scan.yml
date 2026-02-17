@@ -20,6 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+<<<<<<< HEAD
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -45,6 +46,8 @@ jobs:
           # Wait for the server to be ready
           sleep 15
 
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
       - name: ZAP Scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
@@ -78,7 +81,11 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
+<<<<<<< HEAD
           safety scan --full-report
+=======
+          safety check --full-report
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

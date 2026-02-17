@@ -352,8 +352,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+<<<<<<< HEAD
 pip_install_log.txt
 apps/web/build_log.txt
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # ============================================================================
 # ENV FILES
@@ -390,7 +393,10 @@ Thumbs.db
 *.pem
 *.key
 *.cert
+<<<<<<< HEAD
 
 # Keep Next.js source lib tracked (overrides Python `lib/` ignore above)
 !apps/web/lib/
 !apps/web/lib/**
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7

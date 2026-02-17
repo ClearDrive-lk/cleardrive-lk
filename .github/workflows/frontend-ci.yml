@@ -82,11 +82,15 @@ jobs:
       - name: Run TypeScript Type Check
         run: |
           cd apps/web
+<<<<<<< HEAD
           npm run type-check
 
       - name: Verify no generated file drift
         run: |
           git diff --exit-code
+=======
+          npm run type-check || npx tsc --noEmit
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
   # ============================================================================
   # 3. SECURITY SCAN
@@ -131,7 +135,11 @@ jobs:
   build:
     name: Build Test
     runs-on: ubuntu-latest
+<<<<<<< HEAD
     needs: check-frontend
+=======
+    needs: [check-frontend, lint, security]
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     if: needs.check-frontend.outputs.frontend-exists == 'true'
 
     env:
@@ -149,7 +157,11 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Cache Next.js build cache
+<<<<<<< HEAD
         uses: actions/cache@v4
+=======
+        uses: actions/cache@v3
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         with:
           path: apps/web/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('apps/web/package-lock.json') }}
@@ -186,7 +198,11 @@ jobs:
   deploy-staging:
     name: Deploy Frontend to Staging (Vercel)
     runs-on: ubuntu-latest
+<<<<<<< HEAD
     needs: [check-frontend, lint, security, build]
+=======
+    needs: [check-frontend, build]
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/develop' &&
@@ -223,7 +239,11 @@ jobs:
   deploy-prod:
     name: Deploy Frontend to Production (Vercel)
     runs-on: ubuntu-latest
+<<<<<<< HEAD
     needs: [check-frontend, lint, security, build]
+=======
+    needs: [check-frontend, build]
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/main' &&
@@ -252,4 +272,8 @@ jobs:
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel Production
+<<<<<<< HEAD
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+=======
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7

@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 """
 Vehicle Pydantic schemas for request/response validation.
 Author: Parindra Chameekara
 Epic: CD-E3 - Vehicle Management System
 Story: CD-140 - Vehicle detail and cost calculation endpoints
 """
+=======
+# backend/app/modules/vehicles/routes.py
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 import math
 from decimal import Decimal
@@ -12,15 +16,27 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
+<<<<<<< HEAD
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 from app.modules.vehicles.schemas import (
     CostBreakdown,
     PaginationInfo,
+=======
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import asc, desc, or_
+from sqlalchemy.orm import Session
+
+from .cost_calculator import DEFAULT_JPY_TO_LKR, calculate_total_cost
+from .models import Vehicle, VehicleStatus
+from .schemas import (
+    CostBreakdown,
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     VehicleCreate,
     VehicleListResponse,
     VehicleResponse,
     VehicleUpdate,
 )
+<<<<<<< HEAD
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
@@ -37,6 +53,8 @@ except ImportError:
     SHIPPING_COST_JPY = Decimal("150000")
     CUSTOMS_DUTY_RATE = Decimal("0.25")
     VAT_RATE = Decimal("0.15")
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
@@ -48,6 +66,7 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
 @router.get("", response_model=VehicleListResponse)
 async def get_vehicles(
+<<<<<<< HEAD
     # Search & Filter Parameters
     search: Optional[str] = Query(None, description="Search in make/model"),
     make: Optional[str] = Query(None, description="Filter by manufacturer"),
@@ -94,6 +113,27 @@ async def get_vehicles(
     **Returns:**
     - List of vehicles matching filters
     - Pagination information
+=======
+    search: Optional[str] = None,
+    make: Optional[str] = None,
+    model: Optional[str] = None,
+    year_min: Optional[int] = Query(None, ge=1990),
+    year_max: Optional[int] = Query(None, le=2026),
+    price_min: Optional[Decimal] = Query(None, ge=0),
+    price_max: Optional[Decimal] = None,
+    mileage_max: Optional[int] = Query(None, ge=0),
+    fuel_type: Optional[str] = None,
+    transmission: Optional[str] = None,
+    status: VehicleStatus = VehicleStatus.AVAILABLE,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    sort_by: str = Query("created_at", regex="^(price_jpy|year|mileage_km|created_at)$"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    db: Session = Depends(get_db),
+):
+    """
+    Get paginated list of vehicles with filters.
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     Public endpoint - no authentication required.
     """
@@ -160,6 +200,7 @@ async def get_vehicles(
 
     return VehicleListResponse(
         vehicles=[VehicleResponse.model_validate(v) for v in vehicles],
+<<<<<<< HEAD
         pagination=PaginationInfo(page=page, limit=limit, total=total, total_pages=total_pages),
     )
 
@@ -211,12 +252,22 @@ async def list_models(
     return {"models": [model[0] for model in models]}
 
 
+=======
+        total=total,
+        page=page,
+        limit=limit,
+        total_pages=total_pages,
+    )
+
+
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
 async def get_vehicle(
     vehicle_id: UUID,
     db: Session = Depends(get_db),
 ):
     """
+<<<<<<< HEAD
     Get detailed information about a specific vehicle.
 
     **Path Parameters:**
@@ -227,6 +278,9 @@ async def get_vehicle(
 
     **Errors:**
     - 404: Vehicle not found
+=======
+    Get vehicle by ID.
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     Public endpoint - no authentication required.
     """
@@ -234,9 +288,13 @@ async def get_vehicle(
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
+<<<<<<< HEAD
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Vehicle with ID {vehicle_id} not found"
         )
+=======
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     return VehicleResponse.model_validate(vehicle)
 
@@ -250,6 +308,7 @@ async def calculate_cost(
     """
     Calculate total import cost for a vehicle.
 
+<<<<<<< HEAD
     **Cost Breakdown:**
     1. Vehicle price (JPY → LKR conversion)
     2. Shipping cost
@@ -270,19 +329,26 @@ async def calculate_cost(
     **Errors:**
     - 404: Vehicle not found
 
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     Public endpoint - no authentication required.
     """
 
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
+<<<<<<< HEAD
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Vehicle with ID {vehicle_id} not found"
         )
+=======
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # Use custom exchange rate or default
     rate = exchange_rate or DEFAULT_JPY_TO_LKR
 
+<<<<<<< HEAD
     # Calculate cost using dedicated calculator if available
     if HAS_COST_CALCULATOR:
         try:
@@ -331,6 +397,12 @@ async def calculate_cost(
         }
 
     # Pass Decimals directly; Pydantic handles coercion
+=======
+    # Calculate cost
+    cost_data = calculate_total_cost(vehicle, rate)
+
+    # Pass Decimals directly; Pydantic handles coercion for float fields
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     return CostBreakdown(**cost_data)  # type: ignore[arg-type]
 
 
@@ -348,6 +420,7 @@ async def create_vehicle(
     """
     Create a new vehicle.
 
+<<<<<<< HEAD
     **Request Body:**
     - Vehicle data (see VehicleCreate schema)
 
@@ -362,11 +435,22 @@ async def create_vehicle(
 
     # Check if stock_no already exists
     existing = db.query(Vehicle).filter(Vehicle.stock_no == vehicle_data.stock_no).first()
+=======
+    Requires ADMIN role.
+    """
+
+    # Check if auction_id already exists
+    existing = db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data.auction_id).first()
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+<<<<<<< HEAD
             detail=f"Vehicle with stock_no '{vehicle_data.stock_no}' already exists",
+=======
+            detail=f"Vehicle with auction_id '{vehicle_data.auction_id}' already exists",
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
     # Create vehicle
@@ -389,6 +473,7 @@ async def update_vehicle(
     """
     Update a vehicle.
 
+<<<<<<< HEAD
     **Path Parameters:**
     - `vehicle_id`: UUID of the vehicle
 
@@ -401,6 +486,8 @@ async def update_vehicle(
     **Errors:**
     - 404: Vehicle not found
 
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     Requires ADMIN role.
     """
 
@@ -430,6 +517,7 @@ async def delete_vehicle(
     """
     Delete a vehicle.
 
+<<<<<<< HEAD
     **Path Parameters:**
     - `vehicle_id`: UUID of the vehicle
 
@@ -440,6 +528,8 @@ async def delete_vehicle(
     - 404: Vehicle not found
     - 400: Cannot delete vehicle with existing orders
 
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     Requires ADMIN role.
     """
 

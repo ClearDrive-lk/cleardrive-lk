@@ -83,12 +83,16 @@ def parse_device_info(user_agent: str) -> Dict[str, str]:
     # Get OS and version
     os = f"{ua.os.family} {ua.os.version_string}"
 
+<<<<<<< HEAD
     return {
         "device_type": device_type,
         "device_name": device_name,
         "browser": browser,
         "os": os,
     }
+=======
+    return {"device_type": device_type, "device_name": device_name, "browser": browser, "os": os}
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 
 async def get_location_from_ip(ip_address: str) -> Optional[Dict[str, Any]]:
@@ -181,7 +185,11 @@ async def get_location_from_ip(ip_address: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+<<<<<<< HEAD
 async def extract_session_metadata(
+=======
+def extract_session_metadata(
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     ip_address: str, user_agent: str, include_location: bool = True
 ) -> Dict[str, Any]:
     """
@@ -221,6 +229,11 @@ async def extract_session_metadata(
         ...     include_location=True
         ... )
     """
+<<<<<<< HEAD
+=======
+    import asyncio
+
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     # Base metadata
     metadata: Dict[str, Any] = {
         "ip_address": ip_address,
@@ -236,7 +249,11 @@ async def extract_session_metadata(
     # Add location (optional, requires async)
     if include_location:
         try:
+<<<<<<< HEAD
             location = await get_location_from_ip(ip_address)
+=======
+            location = asyncio.run(get_location_from_ip(ip_address))
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
             if location:
                 metadata["location"] = location
         except Exception as e:

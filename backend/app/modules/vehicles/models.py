@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 Vehicle database models.
 Author: Parindra Chameekara
@@ -17,11 +18,33 @@ from sqlalchemy.orm import relationship
 
 
 class VehicleStatus(str, Enum):
+=======
+# backend/app/modules/vehicles/models.py
+
+from __future__ import annotations
+
+import enum
+from decimal import Decimal
+from typing import TYPE_CHECKING
+
+from app.core.database import Base
+from app.core.models import TimestampMixin, UUIDMixin
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Integer, Numeric, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+if TYPE_CHECKING:
+    from app.modules.orders.models import Order
+
+
+class VehicleStatus(str, enum.Enum):
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     """Vehicle availability status."""
 
     AVAILABLE = "AVAILABLE"
     RESERVED = "RESERVED"
     SOLD = "SOLD"
+<<<<<<< HEAD
 
 
 class FuelType(str, Enum):
@@ -199,3 +222,69 @@ class Vehicle(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+=======
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class FuelType(str, enum.Enum):
+    """Fuel type enum."""
+
+    PETROL = "PETROL"
+    DIESEL = "DIESEL"
+    HYBRID = "HYBRID"
+    ELECTRIC = "ELECTRIC"
+    CNG = "CNG"
+
+
+class Transmission(str, enum.Enum):
+    """Transmission type enum."""
+
+    MANUAL = "MANUAL"
+    AUTOMATIC = "AUTOMATIC"
+    CVT = "CVT"
+    SEMI_AUTOMATIC = "SEMI_AUTOMATIC"
+
+
+class Vehicle(Base, UUIDMixin, TimestampMixin):
+    """Vehicle model - imported vehicles."""
+
+    __tablename__ = "vehicles"
+
+    # Auction info
+    auction_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+
+    # Vehicle details
+    make: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    model: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+
+    # Pricing
+    price_jpy: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+
+    # Specifications
+    mileage_km: Mapped[int | None] = mapped_column(Integer)
+    engine_cc: Mapped[int | None] = mapped_column(Integer)
+    fuel_type: Mapped[FuelType | None] = mapped_column(SQLEnum(FuelType))
+    transmission: Mapped[Transmission | None] = mapped_column(SQLEnum(Transmission))
+
+    # Condition
+    auction_grade: Mapped[str | None] = mapped_column(String(10))  # e.g., "4.5", "5", "R"
+    color: Mapped[str | None] = mapped_column(String(50))
+
+    # Media
+    image_url: Mapped[str | None] = mapped_column(String(500))
+
+    # Status
+    status: Mapped[VehicleStatus] = mapped_column(
+        SQLEnum(VehicleStatus),
+        default=VehicleStatus.AVAILABLE,
+        nullable=False,
+        index=True,
+    )
+
+    # Relationships
+    orders: Mapped[list[Order]] = relationship("Order", back_populates="vehicle")
+
+    def __repr__(self):
+        return f"<Vehicle {self.make} {self.model} ({self.year})>"
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7

@@ -4,6 +4,10 @@
 Test authentication flow in development mode.
 """
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 import requests  # type: ignore
 
 BASE_URL = "http://localhost:8000/api/v1"
@@ -37,9 +41,13 @@ def test_auth_flow():
     print("Step 3: Verifying OTP...")
 
     response = requests.post(
+<<<<<<< HEAD
         f"{BASE_URL}/auth/verify-otp",
         json={"email": test_email, "otp": otp},
         timeout=10,
+=======
+        f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp}, timeout=10
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     )
 
     if response.status_code == 200:
@@ -71,9 +79,13 @@ def test_auth_flow():
         print("Step 5: Testing token refresh...")
 
         response = requests.post(
+<<<<<<< HEAD
             f"{BASE_URL}/auth/refresh",
             json={"refresh_token": refresh_token},
             timeout=10,
+=======
+            f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh_token}, timeout=10
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
         if response.status_code == 200:

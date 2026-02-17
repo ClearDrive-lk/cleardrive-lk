@@ -35,7 +35,11 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
+<<<<<<< HEAD
         uses: actions/cache@v4
+=======
+        uses: actions/cache@v3
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
@@ -49,6 +53,7 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+<<<<<<< HEAD
       - name: Install pre-commit
         run: pip install pre-commit
 
@@ -63,6 +68,23 @@ jobs:
 
       - name: Run mypy via pre-commit
         run: pre-commit run mypy --all-files
+=======
+      - name: Run Black (format check)
+        run: |
+          cd backend
+          black --check app/
+
+      - name: Run Flake8 (linting)
+        run: |
+          cd backend
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Run mypy (type checking)
+        run: |
+          cd backend
+          mypy app --explicit-package-bases --ignore-missing-imports
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
   # ============================================================================
   # SECURITY SCANNING
@@ -80,6 +102,7 @@ jobs:
         with:
           python-version: '3.11'
 
+<<<<<<< HEAD
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -94,17 +117,32 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
+=======
+      - name: Install security tools
+        run: |
+          pip install bandit safety
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Run Bandit (SAST)
         run: |
           cd backend
+<<<<<<< HEAD
           bandit -r app/ -f json -o bandit-report.json -ll -i
+=======
+          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ -ll -i
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Run Safety (dependency check)
         run: |
           cd backend
+<<<<<<< HEAD
           safety scan --output json > safety-report.json || true
           safety scan
+=======
+          safety check --json --output safety-report.json || true
+          safety check
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -158,7 +196,11 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
+<<<<<<< HEAD
         uses: actions/cache@v4
+=======
+        uses: actions/cache@v3
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
@@ -171,8 +213,33 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run tests with coverage
+<<<<<<< HEAD
         run: |
           python backend/scripts/run_local_ci_pytest.py
+=======
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cleardrive_test # pragma: allowlist secret
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: test-secret-key-min-32-characters-long # pragma: allowlist secret
+          ENCRYPTION_KEY: test-encryption-key-32-chars!!
+          GOOGLE_CLIENT_ID: test-client-id
+          GOOGLE_CLIENT_SECRET: test-client-secret # pragma: allowlist secret
+          PAYHERE_MERCHANT_ID: test-merchant-id
+          PAYHERE_MERCHANT_SECRET: test-merchant-secret # pragma: allowlist secret
+          ANTHROPIC_API_KEY: test-api-key # pragma: allowlist secret
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_KEY: test-key
+          SMTP_HOST: smtp.gmail.com
+          SMTP_USERNAME: test@gmail.com
+          SMTP_PASSWORD: test-password # pragma: allowlist secret
+          ADMIN_EMAILS: admin@cleardrive.lk
+          ENVIRONMENT: test
+          # Ensure coverage uses repo-root config (contains relative_files=true)
+          COVERAGE_RCFILE: ../.coveragerc
+        run: |
+          cd backend
+          pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4

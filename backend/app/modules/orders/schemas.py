@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -18,6 +21,7 @@ class OrderCreate(OrderBase):
     pass
 
 
+<<<<<<< HEAD
 # 1. Inspection data schema
 class InspectionData(BaseModel):
     status: str
@@ -35,6 +39,8 @@ class CD30OrderCreate(BaseModel):
 
 
 # 3. Order response with inspection fields
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 class OrderResponse(OrderBase):
     """Schema for order response."""
 
@@ -43,6 +49,7 @@ class OrderResponse(OrderBase):
     payment_status: str
     user_id: UUID
 
+<<<<<<< HEAD
     # Inspection fields
     total_cost_lkr: Decimal | None
     inspection_status: Optional[str] = None
@@ -50,4 +57,6 @@ class OrderResponse(OrderBase):
     inspection_images: Optional[List[str]] = None
     inspection_date: Optional[datetime] = None
 
+=======
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     model_config = ConfigDict(from_attributes=True)

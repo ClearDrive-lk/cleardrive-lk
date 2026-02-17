@@ -1,8 +1,12 @@
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
+<<<<<<< HEAD
 from app.core.permissions import (
     Permission,
 )
+=======
+from app.core.permissions import Permission
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from app.core.permissions import admin_only_decorator as admin_only
 from app.core.permissions import (
     has_permission,
@@ -10,15 +14,25 @@ from app.core.permissions import (
     verify_resource_ownership,
 )
 from app.modules.auth.models import User
+<<<<<<< HEAD
 from app.modules.orders.models import Order, OrderStatus, PaymentStatus
 from app.modules.orders.schemas import OrderCreate, OrderResponse
+=======
+from app.modules.orders.models import Order
+from app.modules.orders.schemas import OrderCreate
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
+<<<<<<< HEAD
 @router.post("", response_model=OrderResponse, status_code=201)
+=======
+@router.post("")
+@require_permission_decorator(Permission.CREATE_ORDER)
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 async def create_order(
     order_data: OrderCreate,
     current_user: User = Depends(get_current_active_user),
@@ -28,6 +42,7 @@ async def create_order(
     Create a new order.
     Requires: CREATE_ORDER permission
     """
+<<<<<<< HEAD
     from decimal import Decimal
 
     from app.modules.vehicles.models import Vehicle
@@ -71,6 +86,11 @@ async def create_order(
     db.commit()
 
     return new_order
+=======
+    # Permission already checked by decorator
+    # ... create order logic
+    pass
+>>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 
 @router.get("/{order_id}")
