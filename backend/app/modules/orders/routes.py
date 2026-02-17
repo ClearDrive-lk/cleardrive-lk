@@ -8,13 +8,9 @@ from app.core.permissions import (
     verify_resource_ownership,
 )
 from app.modules.auth.models import User
-from app.modules.orders.models import Order
-
 from app.modules.orders.models import Order, OrderStatus, PaymentStatus
 
 from app.modules.orders.schemas import (
-    CD30OrderCreate,
-    InspectionData,
     OrderCreate,
     OrderResponse,
 )
@@ -34,28 +30,28 @@ async def create_order(
     Create a new order.
     Requires: CREATE_ORDER permission
     """
-    from app.modules.vehicles.models import Vehicle
     from decimal import Decimal
-    
+    from app.modules.vehicles.models import Vehicle
+
     # Manual permission check
     if not has_permission(current_user, Permission.CREATE_ORDER):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
-    
+
     # 1. Verify vehicle exists and is available
     vehicle = db.query(Vehicle).filter(Vehicle.id == order_data.vehicle_id).first()
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    
+
     if vehicle.status != "AVAILABLE":
         raise HTTPException(status_code=400, detail="Vehicle is not available")
-    
+
     # 2. Calculate total cost
     vehicle_cost_lkr = Decimal(str(vehicle.price_jpy)) * Decimal("2.80")  # Exchange rate
     shipping_cost_lkr = Decimal("500000.00")  # Fixed shipping
     customs_duty_lkr = vehicle_cost_lkr * Decimal("0.15")  # 15% duty
     vat_lkr = (vehicle_cost_lkr + shipping_cost_lkr + customs_duty_lkr) * Decimal("0.15")  # 15% VAT
     total_cost_lkr = vehicle_cost_lkr + shipping_cost_lkr + customs_duty_lkr + vat_lkr
-    
+
     # 3. Create the order (only with fields that exist in the model)
     new_order = Order(
         user_id=current_user.id,
@@ -66,15 +62,15 @@ async def create_order(
         payment_status=PaymentStatus.PENDING,
         total_cost_lkr=total_cost_lkr,  # Only this cost field exists
     )
-    
+
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
-    
+
     # 4. Update vehicle status to RESERVED
     vehicle.status = "RESERVED"
     db.commit()
-    
+
     return new_order
 
 
@@ -118,5 +114,3 @@ async def delete_order(
     # Admin permission already checked
     # ... delete order logic
     pass
-
-

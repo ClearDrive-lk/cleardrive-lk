@@ -1,29 +1,29 @@
 // apps/web/components/payment/PaymentButton.tsx
 // CD-206: Reusable payment button component
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface PaymentButtonProps {
   orderId: string;
   amount: number;
   currency?: string;
   className?: string;
-  variant?: 'default' | 'outline' | 'ghost' | 'destructive';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: "default" | "outline" | "ghost" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
 export default function PaymentButton({
   orderId,
   amount,
-  currency = 'LKR',
+  currency = "LKR",
   className,
-  variant = 'default',
-  size = 'default',
+  variant = "default",
+  size = "default",
 }: PaymentButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export default function PaymentButton({
   const initiatePayment = async () => {
     // Check if already initiated
     if (paymentInitiated) {
-      console.log('Payment already initiated');
+      console.log("Payment already initiated");
       return;
     }
 
@@ -48,19 +48,19 @@ export default function PaymentButton({
       const initiateResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/initiate`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             // Add auth token if you have it
             // 'Authorization': `Bearer ${getToken()}`
           },
           body: JSON.stringify({ order_id: orderId }),
-        }
+        },
       );
 
       if (!initiateResponse.ok) {
         const errorData = await initiateResponse.json();
-        throw new Error(errorData.detail || 'Payment initiation failed');
+        throw new Error(errorData.detail || "Payment initiation failed");
       }
 
       const { payment_id } = await initiateResponse.json();
@@ -69,17 +69,17 @@ export default function PaymentButton({
       const urlResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/generate-url`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ payment_id }),
-        }
+        },
       );
 
       if (!urlResponse.ok) {
         const errorData = await urlResponse.json();
-        throw new Error(errorData.detail || 'Failed to generate payment URL');
+        throw new Error(errorData.detail || "Failed to generate payment URL");
       }
 
       const { payment_url, params } = await urlResponse.json();
@@ -87,8 +87,8 @@ export default function PaymentButton({
       // Step 3: Redirect to PayHere
       redirectToPayHere(payment_url, params);
     } catch (err) {
-      console.error('Payment error:', err);
-      setError(err instanceof Error ? err.message : 'Payment failed');
+      console.error("Payment error:", err);
+      setError(err instanceof Error ? err.message : "Payment failed");
       setPaymentInitiated(false);
       setLoading(false);
     }
@@ -96,14 +96,14 @@ export default function PaymentButton({
 
   const redirectToPayHere = (url: string, params: Record<string, string>) => {
     // Create a hidden form and submit it
-    const form = document.createElement('form');
-    form.method = 'POST';
+    const form = document.createElement("form");
+    form.method = "POST";
     form.action = url;
 
     // Add all PayHere parameters as hidden inputs
     Object.keys(params).forEach((key) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
+      const input = document.createElement("input");
+      input.type = "hidden";
       input.name = key;
       input.value = params[key];
       form.appendChild(input);
@@ -132,9 +132,7 @@ export default function PaymentButton({
           `Pay ${currency} ${amount.toLocaleString()}`
         )}
       </Button>
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }
