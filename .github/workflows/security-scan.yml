@@ -78,7 +78,7 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          safety check --full-report
+          safety scan --full-report
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

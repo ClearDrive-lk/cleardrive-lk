@@ -38,7 +38,8 @@ export default function LoginPage() {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail || !password.trim()) {
+    const trimmedPassword = password.trim();
+    if (!normalizedEmail || !trimmedPassword) {
       setError("Email and password are required.");
       return;
     }
@@ -47,12 +48,10 @@ export default function LoginPage() {
       setError(null);
       setLoading(true);
 
-      // Dev convenience: ensure user exists when backend supports this endpoint.
-      await apiClient
-        .post("/auth/dev/ensure-user", { email: normalizedEmail })
-        .catch(() => undefined);
-
-      await apiClient.post("/auth/request-otp", { email: normalizedEmail });
+      await apiClient.post("/auth/login", {
+        email: normalizedEmail,
+        password: trimmedPassword,
+      });
 
       setLoading(false);
       if (typeof window !== "undefined") {
@@ -195,7 +194,7 @@ export default function LoginPage() {
                   Access Key
                 </Label>
                 <Link
-                  href="#"
+                  href="/forgot-password"
                   className="text-xs text-[#FE7743] hover:text-[#FE7743]/80 transition-colors"
                 >
                   Lost Key?

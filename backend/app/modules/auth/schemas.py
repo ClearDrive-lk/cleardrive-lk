@@ -83,12 +83,33 @@ class OTPResendRequest(BaseModel):
     email: EmailStr
 
 
+class LoginRequest(BaseModel):
+    """Email/password login request."""
+
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=128)
+
+
 class RegisterRequest(BaseModel):
     """Email/password registration request."""
 
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     name: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Request OTP for password reset."""
+
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password with email + OTP."""
+
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP")
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 class DevEnsureUserRequest(BaseModel):

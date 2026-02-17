@@ -1,4 +1,4 @@
-# backend/app/modules/auth/routes.py
+﻿# backend/app/modules/auth/routes.py
 
 import logging
 import uuid
@@ -34,6 +34,7 @@ from app.core.security import (
     decode_refresh_token,
     hash_password,
     hash_token,
+    verify_password,
 )
 from app.services.email import send_otp_email
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -60,12 +61,15 @@ from .models import User
 from .schemas import (
     AllSessionsRevokeResponse,
     DevEnsureUserRequest,
+    ForgotPasswordRequest,
     GoogleAuthRequest,
     GoogleAuthResponse,
+    LoginRequest,
     OTPResendRequest,
     OTPVerifyRequest,
     RefreshTokenRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     SessionInfo,
     SessionLocation,
     SessionRevokeResponse,
@@ -107,7 +111,7 @@ async def google_auth(
         if "4166288126" in err_msg:
             err_msg += (
                 " (Hint: You are using the default OAuth Playground credentials! "
-                "Click Gear icon ⚙️ → 'Use your own OAuth credentials' → "
+                "Click Gear icon âš™ï¸ â†’ 'Use your own OAuth credentials' â†’ "
                 "Enter your Client ID/Secret.)"
             )
         elif "wrong audience" in err_msg.lower():
@@ -162,15 +166,29 @@ async def google_auth(
         logger.info(f"Existing user logged in: {email}")
 
     otp = generate_otp()
-    await store_otp(email, otp)
+    try:
+        await store_otp(email, otp)
+    except Exception as e:
+        logger.exception(f"Failed to store Google OTP for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Verification service temporarily unavailable. Please try again.",
+        )
 
-    email_sent = await send_otp_email(email, otp, name)
+    try:
+        email_sent = await send_otp_email(email, otp, name)
+    except Exception as e:
+        logger.exception(f"Unexpected Google OTP email failure for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
 
     if not email_sent:
         logger.error(f"Failed to send OTP email to {email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     return GoogleAuthResponse(
@@ -325,7 +343,7 @@ async def verify_otp(
     logger.info(f"Extracting session metadata for user {user.email}")
 
     if extract_session_metadata is not None:
-        session_metadata = extract_session_metadata(
+        session_metadata = await extract_session_metadata(
             ip_address=request.client.host if request.client else "unknown",
             user_agent=request.headers.get("user-agent", "unknown"),
             include_location=True,
@@ -361,7 +379,7 @@ async def verify_otp(
 
         if suspicious.get("is_suspicious"):
             logger.warning(
-                f"⚠️ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
+                f"âš ï¸ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
                 f"{', '.join(suspicious.get('reasons', []))}",
                 extra={
                     "user_id": str(user.id),
@@ -468,7 +486,7 @@ async def verify_otp(
     # STEP 12: Log and Return
     # ========================================================================
     logger.info(
-        f"✅ Authentication successful for user {user.email}. "
+        f"âœ… Authentication successful for user {user.email}. "
         f"Session {session_id or 'N/A'} created. "
         f"Active sessions: {limit_result.get('current_count', 'N/A')}/"
         f"{limit_result.get('limit', 5)}",
@@ -508,7 +526,7 @@ async def resend_otp(
     await send_otp_email(resend_request.email, otp, user.name)
 
     if settings.ENVIRONMENT == "development":
-        logger.info(f"🔐 OTP for {resend_request.email}: {otp}")
+        logger.info(f"ðŸ” OTP for {resend_request.email}: {otp}")
         return {"message": "If the email exists, OTP has been sent", "otp": otp}
 
     return {"message": "If the email exists, OTP has been sent"}
@@ -522,6 +540,174 @@ async def request_otp(
 ):
     """Request OTP for email login."""
     return await resend_otp(request_data, db, redis)
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request_data: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """
+    Request OTP for password reset.
+
+    Returns a generic success message to avoid account enumeration.
+    """
+    user = db.query(User).filter(User.email == request_data.email).first()
+
+    if not user:
+        logger.warning(f"Password reset requested for non-existent email: {request_data.email}")
+        return {"message": "If the email exists, a reset code has been sent"}
+
+    otp = generate_otp()
+    await store_otp(request_data.email, otp)
+    email_sent = await send_otp_email(request_data.email, otp, user.name)
+
+    if not email_sent:
+        logger.error(f"Failed to send password reset OTP to {request_data.email}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
+
+    if settings.ENVIRONMENT == "development":
+        logger.info(f"Password reset OTP for {request_data.email}: {otp}")
+        return {
+            "message": "If the email exists, a reset code has been sent",
+            "otp": otp,
+        }
+
+    return {"message": "If the email exists, a reset code has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    reset_request: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """Reset password using email, OTP and new password."""
+    email = reset_request.email.strip().lower()
+    otp_data = await get_otp(email)
+
+    if not otp_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP expired or not found. Please request a new code.",
+        )
+
+    if otp_data.get("attempts", 0) >= 3:
+        await delete_otp(email)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum verification attempts exceeded. Please request a new code.",
+        )
+
+    stored_otp = otp_data.get("otp")
+    verification_func = (
+        verify_otp_constant_time if verify_otp_constant_time is not None else constant_time_compare
+    )
+    if not verification_func(cast(str, stored_otp), reset_request.otp):
+        attempts = await increment_otp_attempts(email)
+        remaining = 3 - attempts
+        if remaining > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid verification code. {remaining} attempts remaining.",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum verification attempts exceeded. Please request a new code.",
+        )
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        await delete_otp(email)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    user.password_hash = hash_password(reset_request.new_password)
+    user.failed_auth_attempts = 0
+    user.last_failed_auth = None
+    db.commit()
+    await delete_otp(email)
+
+    # Security hygiene: invalidate active sessions after password change.
+    await delete_all_user_sessions(str(user.id))
+    (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
+        .update({"is_active": False}, synchronize_session=False)
+    )
+    db.commit()
+
+    logger.info(f"Password reset successful for {email}")
+    return {"message": "Password reset successful. Please sign in again."}
+
+
+@router.post("/login")
+async def login(
+    login_request: LoginRequest,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis),
+):
+    """
+    Email/password login step.
+
+    Validates credentials and then sends OTP for second-factor verification.
+    """
+    email = login_request.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+
+    # Keep message generic to avoid account enumeration.
+    invalid_credentials_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid email or password.",
+    )
+
+    if not user or not user.password_hash:
+        logger.warning(f"Login failed for {email}: user not found or no password set")
+        raise invalid_credentials_error
+
+    if not verify_password(login_request.password, user.password_hash):
+        user.failed_auth_attempts = (user.failed_auth_attempts or 0) + 1
+        user.last_failed_auth = datetime.utcnow()
+        db.commit()
+        logger.warning(
+            f"Login failed for {email}: invalid password " f"(attempt {user.failed_auth_attempts})"
+        )
+        raise invalid_credentials_error
+
+    user.failed_auth_attempts = 0
+    user.last_failed_auth = None
+    db.commit()
+
+    otp = generate_otp()
+    try:
+        await store_otp(email, otp)
+    except Exception as e:
+        logger.exception(f"Failed to store OTP for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Verification service temporarily unavailable. Please try again.",
+        )
+
+    try:
+        email_sent = await send_otp_email(email, otp, user.name)
+    except Exception as e:
+        logger.exception(f"Unexpected email send failure for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
+
+    if not email_sent:
+        logger.error(f"Failed to send OTP email after login for {email}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
+
+    return {"message": "Verification code sent to your email."}
 
 
 @router.post("/register")
@@ -560,8 +746,8 @@ async def register(
     if not email_sent:
         logger.error(f"Failed to send OTP email to {register_request.email} after registration")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Account created, but failed to send verification code. Please resend OTP.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Account created, but email service is temporarily unavailable. Please resend OTP.",
         )
 
     return {"message": "Account created. Verification code sent to your email."}
@@ -640,7 +826,7 @@ async def refresh_token(
     4. Return NEW tokens
 
     Security:
-    - Token reuse detection (if old token used twice → revoke ALL sessions)
+    - Token reuse detection (if old token used twice â†’ revoke ALL sessions)
     - Token blacklisting to prevent replay attacks
     """
     try:
@@ -960,7 +1146,7 @@ async def revoke_all_sessions(
     """
     Revoke ALL sessions for the current user.
 
-    ⚠️ WARNING: Logs the user out from ALL devices including this one.
+    âš ï¸ WARNING: Logs the user out from ALL devices including this one.
 
     Actions performed:
     1. Blacklist all associated refresh tokens

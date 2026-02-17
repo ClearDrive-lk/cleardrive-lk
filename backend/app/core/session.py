@@ -181,7 +181,7 @@ async def get_location_from_ip(ip_address: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def extract_session_metadata(
+async def extract_session_metadata(
     ip_address: str, user_agent: str, include_location: bool = True
 ) -> Dict[str, Any]:
     """
@@ -221,8 +221,6 @@ def extract_session_metadata(
         ...     include_location=True
         ... )
     """
-    import asyncio
-
     # Base metadata
     metadata: Dict[str, Any] = {
         "ip_address": ip_address,
@@ -238,7 +236,7 @@ def extract_session_metadata(
     # Add location (optional, requires async)
     if include_location:
         try:
-            location = asyncio.run(get_location_from_ip(ip_address))
+            location = await get_location_from_ip(ip_address)
             if location:
                 metadata["location"] = location
         except Exception as e:
