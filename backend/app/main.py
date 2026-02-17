@@ -180,6 +180,11 @@ async def health_check():
     }
 
 
+@app.get("/api/v1/health")
+async def health_check_v1():
+    return await health_check()
+
+
 @app.on_event("startup")
 async def startup_event():
     """

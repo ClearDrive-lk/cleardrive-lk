@@ -27,8 +27,8 @@ export function middleware(request: NextRequest) {
     // Build Content Security Policy (CSP) header for XSS protection
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' https://accounts.google.com https://accounts.gstatic.com https://www.googletagmanager.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      script-src 'self' 'unsafe-inline' https://accounts.google.com https://accounts.gstatic.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' blob: data: https:;
       connect-src 'self' ${apiOrigin} https://accounts.google.com https://oauth2.googleapis.com;
