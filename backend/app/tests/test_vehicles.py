@@ -8,9 +8,7 @@ Story: CD-130 - Vehicle Search & Filter API
 """
 
 from app.modules.vehicles.models import (
-    Drive,
     FuelType,
-    Steering,
     Transmission,
     Vehicle,
     VehicleStatus,
