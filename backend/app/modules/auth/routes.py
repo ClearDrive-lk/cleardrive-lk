@@ -166,15 +166,29 @@ async def google_auth(
         logger.info(f"Existing user logged in: {email}")
 
     otp = generate_otp()
-    await store_otp(email, otp)
+    try:
+        await store_otp(email, otp)
+    except Exception as e:
+        logger.exception(f"Failed to store Google OTP for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Verification service temporarily unavailable. Please try again.",
+        )
 
-    email_sent = await send_otp_email(email, otp, name)
+    try:
+        email_sent = await send_otp_email(email, otp, name)
+    except Exception as e:
+        logger.exception(f"Unexpected Google OTP email failure for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
 
     if not email_sent:
         logger.error(f"Failed to send OTP email to {email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     return GoogleAuthResponse(
@@ -329,7 +343,7 @@ async def verify_otp(
     logger.info(f"Extracting session metadata for user {user.email}")
 
     if extract_session_metadata is not None:
-        session_metadata = extract_session_metadata(
+        session_metadata = await extract_session_metadata(
             ip_address=request.client.host if request.client else "unknown",
             user_agent=request.headers.get("user-agent", "unknown"),
             include_location=True,
@@ -552,8 +566,8 @@ async def forgot_password(
     if not email_sent:
         logger.error(f"Failed to send password reset OTP to {request_data.email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send reset code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     if settings.ENVIRONMENT == "development":
@@ -668,14 +682,29 @@ async def login(
     db.commit()
 
     otp = generate_otp()
-    await store_otp(email, otp)
-    email_sent = await send_otp_email(email, otp, user.name)
+    try:
+        await store_otp(email, otp)
+    except Exception as e:
+        logger.exception(f"Failed to store OTP for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Verification service temporarily unavailable. Please try again.",
+        )
+
+    try:
+        email_sent = await send_otp_email(email, otp, user.name)
+    except Exception as e:
+        logger.exception(f"Unexpected email send failure for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
 
     if not email_sent:
         logger.error(f"Failed to send OTP email after login for {email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     return {"message": "Verification code sent to your email."}
@@ -717,8 +746,8 @@ async def register(
     if not email_sent:
         logger.error(f"Failed to send OTP email to {register_request.email} after registration")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Account created, but failed to send verification code. Please resend OTP.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Account created, but email service is temporarily unavailable. Please resend OTP.",
         )
 
     return {"message": "Account created. Verification code sent to your email."}

@@ -13,7 +13,7 @@ engine_kwargs: Dict[str, Any] = {
 }
 
 # SQLite does not support pool_size/max_overflow
-if "sqlite" not in settings.DATABASE_URL:
+if "sqlite" not in str(settings.DATABASE_URL):
     engine_kwargs.update(
         {
             "pool_size": 5,
@@ -34,9 +34,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create base class for models
 class Base(DeclarativeBase):
     pass
-
-
-# 👇 THIS LINE IS THE KEY
 
 
 def get_db():
