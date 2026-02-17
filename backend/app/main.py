@@ -48,53 +48,43 @@ async def lifespan(app: FastAPI):
     - Redis connection initialization
     - Graceful shutdown of services
     """
-    # ========================================================================
-    # STARTUP
-    # ========================================================================
-    logger.info("🚀 Starting ClearDrive.lk API...")
+    logger.info("Starting ClearDrive.lk API...")
 
     # Initialize Redis (best-effort; don't crash app/tests if Redis is down)
     if REDIS_INIT_AVAILABLE and init_redis is not None:
         try:
             await init_redis()
-            logger.info("✅ Redis connection initialized (using init_redis)")
+            logger.info("Redis connection initialized (using init_redis)")
         except Exception as e:
-            logger.warning(f"⚠️ Redis init_redis() failed: {e}")
+            logger.warning(f"Redis init_redis() failed: {e}")
 
     # Fallback: Try to ping Redis using redis_client
     try:
         redis = await get_redis()
         await redis.ping()
-        logger.info("✅ Redis connected and responsive")
+        logger.info("Redis connected and responsive")
     except Exception as e:
-        logger.warning(f"⚠️ Redis not available: {e}")
+        logger.warning(f"Redis not available: {e}")
 
     yield
 
-    # ========================================================================
-    # SHUTDOWN
-    # ========================================================================
-    logger.info("👋 Shutting down ClearDrive.lk API...")
+    logger.info("Shutting down ClearDrive.lk API...")
 
     # Close Redis connection (try both methods)
     if REDIS_INIT_AVAILABLE and redis_close is not None:
         try:
             await redis_close()
-            logger.info("✅ Redis connection closed (using close_redis)")
+            logger.info("Redis connection closed (using close_redis)")
         except Exception as e:
-            logger.warning(f"⚠️ Error while closing Redis (close_redis): {e}")
+            logger.warning(f"Error while closing Redis (close_redis): {e}")
 
     # Fallback: close using redis_client
     try:
         await close_redis()
-        logger.info("✅ Redis connection closed (using redis_client)")
+        logger.info("Redis connection closed (using redis_client)")
     except Exception as e:
-        logger.warning(f"⚠️ Error while closing Redis (redis_client): {e}")
+        logger.warning(f"Error while closing Redis (redis_client): {e}")
 
-
-# ============================================================================
-# CREATE FASTAPI APP
-# ============================================================================
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -106,50 +96,40 @@ app = FastAPI(
 )
 
 
-# ============================================================================
-# SECURITY MIDDLEWARE (Order matters!)
-# ============================================================================
-
 # 1. Trusted Host Middleware (prevent host header attacks)
 if settings.ENVIRONMENT == "production":
-    app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=["api.cleardrive.lk", "*.cleardrive.lk"]
-    )
-    logger.info("✅ Trusted Host Middleware enabled (production)")
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.BACKEND_ALLOWED_HOSTS)
+    logger.info(f"Trusted Host Middleware enabled (production): {settings.BACKEND_ALLOWED_HOSTS}")
 
 # 2. Security Headers Middleware
 if SECURITY_MIDDLEWARE_AVAILABLE:
     app.add_middleware(SecurityHeadersMiddleware)
-    logger.info("✅ Security Headers Middleware enabled")
+    logger.info("Security Headers Middleware enabled")
 else:
-    logger.warning("⚠️ Security Headers Middleware not available")
+    logger.warning("Security Headers Middleware not available")
 
 # 3. CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origin_regex=settings.BACKEND_CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Total-Count", "X-Page", "X-Page-Size"],
 )
-logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
+logger.info(
+    "CORS enabled for origins: "
+    f"{settings.BACKEND_CORS_ORIGINS}, "
+    f"regex: {settings.BACKEND_CORS_ORIGIN_REGEX or 'none'}"
+)
 
-
-# ============================================================================
-# INCLUDE ROUTERS
-# ============================================================================
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
-logger.info("✅ Routers registered: /auth, /vehicles, /test")
-
-
-# ============================================================================
-# ROOT & HEALTH ENDPOINTS
-# ============================================================================
+logger.info("Routers registered: /auth, /vehicles, /test")
 
 
 @app.get("/")
@@ -179,8 +159,6 @@ async def health_check():
     - Redis connection
     - Environment configuration
     """
-
-    # Test Redis connection
     redis_status = "unknown"
     try:
         redis = await get_redis()
@@ -202,12 +180,6 @@ async def health_check():
     }
 
 
-# ============================================================================
-# LEGACY EVENT HANDLERS (Deprecated in favor of lifespan)
-# ============================================================================
-# Note: These are kept for backward compatibility but lifespan is preferred
-
-
 @app.on_event("startup")
 async def startup_event():
     """
@@ -216,7 +188,6 @@ async def startup_event():
     """
     logger.info("Legacy startup event triggered (use lifespan instead)")
 
-    # Initialize Redis using helper if available
     if REDIS_INIT_AVAILABLE and init_redis is not None:
         try:
             await init_redis()
@@ -233,7 +204,6 @@ async def shutdown_event():
     """
     logger.info("Legacy shutdown event triggered (use lifespan instead)")
 
-    # Close Redis using helper if available
     if REDIS_INIT_AVAILABLE and redis_close is not None:
         try:
             await redis_close()
@@ -242,16 +212,11 @@ async def shutdown_event():
             logger.warning(f"Error closing Redis (legacy event): {e}")
 
 
-# ============================================================================
-# MAIN ENTRY POINT
-# ============================================================================
-
 if __name__ == "__main__":
     import os
 
     import uvicorn
 
-    # Default to localhost for safety; container platforms can set HOST=0.0.0.0
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "8000"))
 
