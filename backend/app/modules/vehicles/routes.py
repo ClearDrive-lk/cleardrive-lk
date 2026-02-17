@@ -331,7 +331,7 @@ async def calculate_cost(
         }
 
     # Pass Decimals directly; Pydantic handles coercion
-    return CostBreakdown(**cost_data)  # type: ignore[arg-type]
+    return CostBreakdown(**cost_data)
 
 
 # ============================================================================

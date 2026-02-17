@@ -101,10 +101,11 @@ jobs:
           bandit -r app/ -f json -o bandit-report.json -ll -i
 
       - name: Run Safety (dependency check)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           cd backend
-          safety scan --output json > safety-report.json || true
-          safety scan
+          safety scan --output json > safety-report.json
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -162,6 +163,8 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
