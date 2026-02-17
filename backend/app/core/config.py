@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    ALEMBIC_DATABASE_URL: str | None = None
     DATABASE_SSL_MODE: str = "disable"
 
     # Redis
