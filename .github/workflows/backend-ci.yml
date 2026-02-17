@@ -49,6 +49,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Install pre-commit
+        run: pip install pre-commit
+
       - name: Run Black via pre-commit
         run: pre-commit run black --all-files
 
