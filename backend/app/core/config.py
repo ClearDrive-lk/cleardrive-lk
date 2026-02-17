@@ -89,6 +89,13 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
     ]
+    BACKEND_CORS_ORIGIN_REGEX: str | None = None
+    BACKEND_ALLOWED_HOSTS: list[str] = [
+        "localhost",
+        "127.0.0.1",
+        "api.cleardrive.lk",
+        "*.cleardrive.lk",
+    ]
 
     class Config:
         env_file = ".env"

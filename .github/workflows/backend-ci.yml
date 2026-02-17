@@ -49,20 +49,20 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Run Black (format check)
-        run: |
-          cd backend
-          black --check app/
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Run Flake8 (linting)
-        run: |
-          cd backend
-          flake8 app --config .flake8 --count --statistics --show-source
+      - name: Run Black via pre-commit
+        run: pre-commit run black --all-files
 
-      - name: Run mypy (type checking)
-        run: |
-          cd backend
-          mypy app --explicit-package-bases --ignore-missing-imports
+      - name: Run isort via pre-commit
+        run: pre-commit run isort --all-files
+
+      - name: Run Flake8 via pre-commit
+        run: pre-commit run flake8 --all-files
+
+      - name: Run mypy via pre-commit
+        run: pre-commit run mypy --all-files
 
   # ============================================================================
   # SECURITY SCANNING
