@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "ClearDrive.lk"
     SMTP_TIMEOUT_SECONDS: float = 10.0
     RESEND_API_KEY: str | None = None
+    RESEND_FROM_EMAIL: str | None = None
 
     # OTP
     OTP_LENGTH: int = 6

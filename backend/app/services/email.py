@@ -33,8 +33,9 @@ async def _send_email_via_resend_api(
     if not api_key:
         return False
 
+    from_email = settings.RESEND_FROM_EMAIL or settings.SMTP_FROM_EMAIL
     payload = {
-        "from": f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>",
+        "from": f"{settings.SMTP_FROM_NAME} <{from_email}>",
         "to": [to_email],
         "subject": subject,
         "html": html_content,
@@ -56,6 +57,27 @@ async def _send_email_via_resend_api(
         if 200 <= response.status_code < 300:
             logger.info(f"Email sent successfully to {to_email} via Resend API")
             return True
+
+        # If sender domain is not verified in Resend, retry once with sandbox sender.
+        if response.status_code == 403 and from_email != "onboarding@resend.dev":
+            sandbox_payload = dict(payload)
+            sandbox_payload["from"] = f"{settings.SMTP_FROM_NAME} <onboarding@resend.dev>"
+            async with httpx.AsyncClient(timeout=settings.SMTP_TIMEOUT_SECONDS) as client:
+                sandbox_response = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=sandbox_payload,
+                )
+            if 200 <= sandbox_response.status_code < 300:
+                logger.warning(
+                    "Primary sender domain rejected by Resend; sent via onboarding@resend.dev "
+                    "to %s",
+                    to_email,
+                )
+                return True
 
         logger.error(
             "Failed to send email to %s via Resend API: status=%s body=%s",
@@ -84,6 +106,11 @@ async def send_email(
     Returns:
         True if sent successfully, False otherwise
     """
+    # Prefer HTTPS API when a Resend API key is configured to avoid blocked SMTP ports.
+    if settings.RESEND_API_KEY:
+        if await _send_email_via_resend_api(to_email, subject, html_content, text_content):
+            return True
+
     try:
         # Create message
         message = MIMEMultipart("alternative")
@@ -116,7 +143,9 @@ async def send_email(
 
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")
-        if await _send_email_via_resend_api(to_email, subject, html_content, text_content):
+        if not settings.RESEND_API_KEY and await _send_email_via_resend_api(
+            to_email, subject, html_content, text_content
+        ):
             return True
         return False
 

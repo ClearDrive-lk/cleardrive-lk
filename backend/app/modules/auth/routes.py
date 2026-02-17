@@ -187,8 +187,8 @@ async def google_auth(
     if not email_sent:
         logger.error(f"Failed to send OTP email to {email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     return GoogleAuthResponse(
@@ -566,8 +566,8 @@ async def forgot_password(
     if not email_sent:
         logger.error(f"Failed to send password reset OTP to {request_data.email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send reset code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     if settings.ENVIRONMENT == "development":
@@ -703,8 +703,8 @@ async def login(
     if not email_sent:
         logger.error(f"Failed to send OTP email after login for {email}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
         )
 
     return {"message": "Verification code sent to your email."}
@@ -746,8 +746,8 @@ async def register(
     if not email_sent:
         logger.error(f"Failed to send OTP email to {register_request.email} after registration")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Account created, but failed to send verification code. Please resend OTP.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Account created, but email service is temporarily unavailable. Please resend OTP.",
         )
 
     return {"message": "Account created. Verification code sent to your email."}
