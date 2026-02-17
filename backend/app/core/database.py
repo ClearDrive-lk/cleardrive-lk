@@ -18,7 +18,7 @@ if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
 # SQLite does not support pool_size/max_overflow
-if "sqlite" not in db_url:
+if "sqlite" not in str(settings.DATABASE_URL):
     engine_kwargs.update(
         {
             "pool_size": 5,

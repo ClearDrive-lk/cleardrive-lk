@@ -41,11 +41,6 @@ config = context.config
 
 # Prefer a dedicated migration URL (direct DB), fallback to app DATABASE_URL.
 alembic_database_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
-
-# Fix for "postgres://" in DATABASE_URL (SQLAlchemy 1.4+ requires "postgresql://")
-if alembic_database_url and alembic_database_url.startswith("postgres://"):
-    alembic_database_url = alembic_database_url.replace("postgres://", "postgresql://", 1)
-
 config.set_main_option("sqlalchemy.url", alembic_database_url)
 
 # Interpret the config file for Python logging
