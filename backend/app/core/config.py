@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    ALEMBIC_DATABASE_URL: str | None = None
     DATABASE_SSL_MODE: str = "disable"
 
     # Redis
@@ -36,6 +37,9 @@ class Settings(BaseSettings):
     PAYHERE_MERCHANT_ID: str
     PAYHERE_MERCHANT_SECRET: str
     PAYHERE_SANDBOX: bool = True
+    PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
+    PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
+    PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
 
     # Claude API
     ANTHROPIC_API_KEY: str
@@ -51,6 +55,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
     SMTP_FROM_NAME: str = "ClearDrive.lk"
+    SMTP_TIMEOUT_SECONDS: float = 10.0
+    RESEND_API_KEY: str | None = None
+    RESEND_FROM_EMAIL: str | None = None
 
     # OTP
     OTP_LENGTH: int = 6
@@ -88,6 +95,13 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
+    ]
+    BACKEND_CORS_ORIGIN_REGEX: str | None = None
+    BACKEND_ALLOWED_HOSTS: list[str] = [
+        "localhost",
+        "127.0.0.1",
+        "api.cleardrive.lk",
+        "*.cleardrive.lk",
     ]
 
     class Config:

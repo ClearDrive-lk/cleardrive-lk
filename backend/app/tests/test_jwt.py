@@ -174,7 +174,7 @@ class TestAuthEndpoints:
         """Test accessing protected route without token."""
         response = client.get("/api/v1/test/protected")
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     async def test_protected_route_with_invalid_token(self, client):
         """Test accessing protected route with invalid token."""

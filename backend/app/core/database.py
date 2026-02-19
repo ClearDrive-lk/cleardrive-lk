@@ -12,8 +12,13 @@ engine_kwargs: Dict[str, Any] = {
     "pool_pre_ping": True,  # Verify connections before using
 }
 
+# Fix for "postgres://" in DATABASE_URL (SQLAlchemy 1.4+ requires "postgresql://")
+db_url = str(settings.DATABASE_URL)
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 # SQLite does not support pool_size/max_overflow
-if "sqlite" not in settings.DATABASE_URL:
+if "sqlite" not in str(settings.DATABASE_URL):
     engine_kwargs.update(
         {
             "pool_size": 5,
@@ -23,7 +28,7 @@ if "sqlite" not in settings.DATABASE_URL:
 
 # Create engine
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
     **engine_kwargs,
 )
 
@@ -34,9 +39,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create base class for models
 class Base(DeclarativeBase):
     pass
-
-
-# 👇 THIS LINE IS THE KEY
 
 
 def get_db():

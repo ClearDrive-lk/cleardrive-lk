@@ -39,8 +39,9 @@ from app.modules.vehicles.models import Vehicle
 # this is the Alembic Config object
 config = context.config
 
-# Set sqlalchemy.url from our settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Prefer a dedicated migration URL (direct DB), fallback to app DATABASE_URL.
+alembic_database_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
+config.set_main_option("sqlalchemy.url", alembic_database_url)
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:

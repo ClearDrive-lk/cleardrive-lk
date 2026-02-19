@@ -80,6 +80,7 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           safety scan --full-report
 
       - name: Setup Node.js

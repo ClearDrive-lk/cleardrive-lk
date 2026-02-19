@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // 1. Define which routes are protected
 const protectedRoutes = ["/dashboard", "/profile", "/orders", "/vehicles"];
-const authRoutes = ["/login", "/verify-otp"];
+const authRoutes = ["/login", "/register", "/verify-otp", "/forgot-password"];
 
 export function middleware(request: NextRequest) {
   // 2. Check if we're in development mode
@@ -24,14 +24,13 @@ export function middleware(request: NextRequest) {
 
   // 4. Only apply strict CSP in production (development needs inline styles for HMR)
   if (!isDevelopment) {
-    // Generate a unique nonce for this request (cryptographically secure)
-    const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-
     // Build Content Security Policy (CSP) header for XSS protection
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https: http: 'unsafe-inline';
-      style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com;
+      script-src 'self' 'unsafe-inline' https://accounts.google.com https://accounts.gstatic.com https://www.googletagmanager.com https://vercel.live;
+      script-src-elem 'self' 'unsafe-inline' https://accounts.google.com https://accounts.gstatic.com https://www.googletagmanager.com https://vercel.live;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
+      style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' blob: data: https:;
       connect-src 'self' ${apiOrigin} https://accounts.google.com https://oauth2.googleapis.com;
@@ -55,9 +54,6 @@ export function middleware(request: NextRequest) {
       "Permissions-Policy",
       "camera=(), microphone=(), geolocation=()",
     );
-
-    // Make nonce available to the app via custom header
-    response.headers.set("x-nonce", nonce);
   }
 
   // 5. Check for the session token (Refactored to check refresh_token)
