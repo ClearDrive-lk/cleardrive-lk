@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .security import decode_access_token
 
-# Let this dependency return 401 consistently for missing/invalid credentials.
+# HTTP Bearer token scheme.\n# auto_error=False lets us return a consistent 401 for missing/malformed auth.
 security = HTTPBearer(auto_error=False)
 
 
@@ -50,6 +50,9 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if credentials is None:
+        raise credentials_exception
 
     try:
         if credentials is None:
@@ -193,3 +196,4 @@ get_current_clearing_agent = require_role([Role.CLEARING_AGENT, Role.ADMIN])
 
 # Finance partner or admin access
 get_current_finance_partner = require_role([Role.FINANCE_PARTNER, Role.ADMIN])
+
