@@ -2,16 +2,14 @@ import logging`nfrom uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
-from app.core.permissions import (
-    Permission,
-)
-from app.core.security import encrypt_field
+from app.core.permissions import Permission
 from app.core.permissions import admin_only_decorator as admin_only
 from app.core.permissions import (
     has_permission,
     require_permission_decorator,
     verify_resource_ownership,
 )
+from app.core.security import encrypt_field
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.orders.models import Order, OrderStatus, PaymentStatus
