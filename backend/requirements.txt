@@ -27,3 +27,4 @@ user-agents==2.2.0
 # HTTP requests for GeoIP (optional)
 geoip2==4.7.0
 resend==2.22.0  # Resend email service integration
+supabase==2.18.1
