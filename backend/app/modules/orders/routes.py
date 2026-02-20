@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.core.permissions import (
@@ -73,11 +75,11 @@ async def create_order(
     return new_order
 
 
-@router.get("/{order_id}")
+@router.get("/{order_id}", response_model=OrderResponse)
 # @require_permission(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
 @require_permission_decorator(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
 async def get_order(
-    order_id: str,
+    order_id: UUID,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -88,7 +90,7 @@ async def get_order(
     order = db.query(Order).filter(Order.id == order_id).first()
 
     if not order:
-        raise HTTPException(404, "Order not found")
+        raise HTTPException(status_code=404, detail="Order not found")
 
     # If user has VIEW_ALL_ORDERS, allow access
     if has_permission(current_user, Permission.VIEW_ALL_ORDERS):
@@ -97,7 +99,7 @@ async def get_order(
     # Otherwise, verify ownership
     verify_resource_ownership(current_user, order.user_id)
 
-    return order
+    return OrderResponse.model_validate(order)
 
 
 @router.delete("/{order_id}")
