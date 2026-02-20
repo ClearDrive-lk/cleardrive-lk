@@ -74,6 +74,30 @@ export default function Footer() {
         <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
         <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
       </div>
+
+      {/*cookie banner*/}
+      <nav aria-label="Legal links">
+        <Link
+          href="/cookie-preferences"
+          className="text-sm text-gray-500 hover:text-gray-700"
+        >
+          Cookie Preferences
+        </Link>
+        <Link
+          href="/api/v1/gdpr/privacy-policy"
+          target="_blank"
+          className="text-sm text-gray-500 hover:text-gray-700"
+        >
+          Privacy Policy
+        </Link>
+        <Link
+          href="/api/v1/gdpr/cookie-policy"
+          target="_blank"
+          className="text-sm text-gray-500 hover:text-gray-700"
+        >
+          Cookie Policy
+        </Link>
+      </nav>
     </footer>
   );
 }
