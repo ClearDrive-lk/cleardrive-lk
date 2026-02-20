@@ -128,7 +128,9 @@ async def create_order(
         text_content=text_content,
     )
     if not email_sent:
-        logger.warning("Order created but confirmation email failed for user_id=%s", current_user.id)
+        logger.warning(
+            "Order created but confirmation email failed for user_id=%s", current_user.id
+        )
 
     return new_order
 
