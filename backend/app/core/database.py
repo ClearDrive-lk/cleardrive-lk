@@ -12,6 +12,11 @@ engine_kwargs: Dict[str, Any] = {
     "pool_pre_ping": True,  # Verify connections before using
 }
 
+# Fix for "postgres://" in DATABASE_URL (SQLAlchemy 1.4+ requires "postgresql://")
+db_url = str(settings.DATABASE_URL)
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 # SQLite does not support pool_size/max_overflow
 if "sqlite" not in str(settings.DATABASE_URL):
     engine_kwargs.update(
@@ -23,7 +28,7 @@ if "sqlite" not in str(settings.DATABASE_URL):
 
 # Create engine
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
     **engine_kwargs,
 )
 
