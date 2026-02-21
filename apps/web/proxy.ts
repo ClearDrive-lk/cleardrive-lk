@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ["/dashboard", "/profile", "/orders", "/vehicles"];
 const authRoutes = ["/login", "/register", "/verify-otp", "/forgot-password"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // 2. Check if we're in development mode
   const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -81,7 +81,7 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-// 8. Configure which paths the middleware runs on
+// 8. Configure which paths the proxy runs on
 export const config = {
   matcher: [
     /*

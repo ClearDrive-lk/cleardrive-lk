@@ -1,10 +1,16 @@
 # backend/app/core/config.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application configuration."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
     # App
     PROJECT_NAME: str = "ClearDrive.lk API"
@@ -103,10 +109,6 @@ class Settings(BaseSettings):
         "api.cleardrive.lk",
         "*.cleardrive.lk",
     ]
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 
 settings = Settings()
