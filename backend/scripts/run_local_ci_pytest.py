@@ -8,11 +8,11 @@ import sys
 from pathlib import Path
 
 
-def _has_sqlalchemy(python_exe: str) -> bool:
-    """Return True if the interpreter can import sqlalchemy."""
+def _has_backend_test_deps(python_exe: str) -> bool:
+    """Return True if the interpreter has core backend test dependencies."""
     try:
         result = subprocess.run(
-            [python_exe, "-c", "import sqlalchemy"],
+            [python_exe, "-c", "import pytest, sqlalchemy, supabase"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
@@ -24,10 +24,10 @@ def _has_sqlalchemy(python_exe: str) -> bool:
 
 def _pick_python(repo_root: Path, backend_dir: Path) -> str:
     """
-    Pick a Python interpreter that has backend deps.
+    Pick a Python interpreter that has backend test deps.
 
     Preference:
-    1. Active virtualenv (if it has sqlalchemy)
+    1. Active virtualenv (if it has test deps)
     2. Common project venv locations (cross-platform)
     3. Current interpreter (CI/system fallback)
     """
@@ -52,7 +52,7 @@ def _pick_python(repo_root: Path, backend_dir: Path) -> str:
     candidates.append(Path(sys.executable))
 
     for candidate in candidates:
-        if candidate.exists() and _has_sqlalchemy(str(candidate)):
+        if candidate.exists() and _has_backend_test_deps(str(candidate)):
             return str(candidate)
 
     return str(sys.executable)
@@ -91,10 +91,11 @@ def main() -> int:
         python_exe,
         "-m",
         "pytest",
+        "-q",
+        "-ra",
         "--cov=app",
         "--cov-report=xml",
         "--cov-report=html",
-        "--cov-report=term",
     ]
     return subprocess.call(cmd, cwd=backend_dir, env=env)
 

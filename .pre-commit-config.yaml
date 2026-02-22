@@ -176,6 +176,8 @@ repos:
         pass_filenames: false
         # Always run the full suite, as any Python change could break tests.
         always_run: true
+        # Show pytest output even when tests pass, so progress is visible.
+        verbose: true
 
 # ============================================================================
 # CONFIGURATION
