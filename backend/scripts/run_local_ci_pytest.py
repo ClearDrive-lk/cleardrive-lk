@@ -105,24 +105,28 @@ def main() -> int:
     ]
     # Capture pytest output to avoid Git-for-Windows hook shell crashes caused by
     # streaming large test output through the hook pipeline.
-    result = subprocess.run(
-        cmd,
-        cwd=backend_dir,
-        env=env,
-        stdin=subprocess.DEVNULL,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=backend_dir,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=180,
+        )
+    except subprocess.TimeoutExpired:
+        print("Backend tests timed out after 180s in pre-push hook.")
+        print("Run `pre-commit run --hook-stage pre-push --all-files -v` to debug locally.")
+        return 124
+
     if result.returncode == 0:
         print("Backend tests passed.")
         return 0
 
-    print("Backend tests failed.")
-    if result.stdout:
-        print(result.stdout[-4000:])
-    if result.stderr:
-        print(result.stderr[-4000:], file=sys.stderr)
+    print("Backend tests failed in pre-push hook.")
+    print("Run `pre-commit run --hook-stage pre-push --all-files -v` for detailed output.")
     return int(result.returncode)
 
 
