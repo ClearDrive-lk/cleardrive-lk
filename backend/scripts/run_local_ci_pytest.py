@@ -103,8 +103,8 @@ def main() -> int:
         "--cov-report=xml",
         "--cov-report=html",
     ]
-    # Capture pytest output to avoid Git-for-Windows hook shell crashes caused by
-    # streaming large test output through the hook pipeline.
+    # Capture pytest output to avoid crash (exit 3221226505) when streaming
+    # large output through the hook pipeline (even with PowerShell wrapper).
     try:
         result = subprocess.run(
             cmd,

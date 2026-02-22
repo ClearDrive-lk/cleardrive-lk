@@ -171,11 +171,9 @@ repos:
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py
         language: system
-        # Keep as manual-only on Windows due Git-for-Windows hook runtime crashes.
-        # CI still enforces tests on every PR/push.
         stages: [manual]
-        pass_filenames: false
         always_run: true
+        pass_filenames: false
         # Show pytest output even when tests pass, so progress is visible.
         verbose: true
 
