@@ -103,7 +103,26 @@ def main() -> int:
         "--cov-report=xml",
         "--cov-report=html",
     ]
-    return subprocess.call(cmd, cwd=backend_dir, env=env)
+    # Capture pytest output to avoid Git-for-Windows hook shell crashes caused by
+    # streaming large test output through the hook pipeline.
+    result = subprocess.run(
+        cmd,
+        cwd=backend_dir,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode == 0:
+        print("Backend tests passed.")
+        return 0
+
+    print("Backend tests failed.")
+    if result.stdout:
+        print(result.stdout[-4000:])
+    if result.stderr:
+        print(result.stderr[-4000:], file=sys.stderr)
+    return int(result.returncode)
 
 
 if __name__ == "__main__":
