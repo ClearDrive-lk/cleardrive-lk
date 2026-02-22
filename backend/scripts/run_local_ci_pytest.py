@@ -109,6 +109,7 @@ def main() -> int:
         cmd,
         cwd=backend_dir,
         env=env,
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         check=False,
