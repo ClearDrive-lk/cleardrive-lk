@@ -17,7 +17,7 @@ anthropic==0.8.1
 httpx==0.26.0
 python-dotenv==1.0.0
 requests>=2.31.0
-google-auth==2.26.2\
+google-auth==2.26.2
 markdown==3.5.1
 # Email
 aiosmtplib==3.0.1  # Async SMTP client
