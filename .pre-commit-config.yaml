@@ -169,7 +169,7 @@ repos:
 
       - id: pytest
         name: Run Tests
-        entry: python backend/scripts/run_local_ci_pytest.py --skip-coverage --timeout-seconds 420
+        entry: python backend/scripts/run_local_ci_pytest.py
         language: system
         stages: [manual]
         always_run: true
