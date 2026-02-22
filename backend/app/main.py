@@ -29,12 +29,15 @@ except ImportError:
     init_redis = None  # type: ignore
     redis_close = None  # type: ignore
 
+from app.modules.admin.routes import router as admin_router
+
 # Import routers
 from app.modules.auth.routes import router as auth_router
+from app.modules.gdpr.routes import router as gdpr_router
+from app.modules.kyc.routes import router as kyc_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
-from app.modules.gdpr.routes import router as gdpr_router
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -150,10 +153,12 @@ logger.info(f"✅ CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 # ============================================================================
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
+app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
-logger.info("Routers registered: /auth, /vehicles, /test")
+logger.info("Routers registered: /auth, /kyc, /vehicles, /orders, /admin, /test")
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 
 
@@ -215,6 +220,8 @@ async def health_check():
 @app.get("/api/v1/health")
 async def health_check_v1():
     return await health_check()
+
+
 # ============================================================================
 # LEGACY EVENT HANDLERS (Deprecated in favor of lifespan)
 # ============================================================================

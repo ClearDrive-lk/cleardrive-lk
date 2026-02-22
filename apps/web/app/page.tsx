@@ -5,10 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { AuctionTicker } from "@/components/ui/ticker";
 import {
   Search,
-<<<<<<< HEAD
-=======
-  ShieldCheck,
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
   Zap,
   Globe,
   TrendingUp,
@@ -99,11 +95,7 @@ export default function Home() {
             import terminal in Sri Lanka. Access USS Tokyo, JAA, and CAI
             auctions in real-time.
             <span className="block mt-2 text-gray-500 text-sm font-mono">
-<<<<<<< HEAD
               AUTOMATED CIF CALCULATION // INSTANT LC OPENING // CLEARING @
-=======
-              AUTOMATED CIF CALCULATION INSTANT LC OPENING // CLEARING @
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
               HAMBANTOTA
             </span>
           </p>

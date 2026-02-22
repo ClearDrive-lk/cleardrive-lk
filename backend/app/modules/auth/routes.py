@@ -1,4 +1,4 @@
-﻿﻿# backend/app/modules/auth/routes.py
+# backend/app/modules/auth/routes.py
 
 import logging
 import uuid
@@ -175,8 +175,6 @@ async def google_auth(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Email service temporarily unavailable. Please try again.",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to send verification code. Please try again.",
         )
 
     return GoogleAuthResponse(
@@ -1134,12 +1132,7 @@ async def revoke_all_sessions(
     """
     Revoke ALL sessions for the current user.
 
-<<<<<<< HEAD
     âš ï¸ WARNING: Logs the user out from ALL devices including this one.
-=======
-    ⚠️ WARNING: Logs the user out from ALL devices including this one.
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
     Actions performed:
     1. Blacklist all associated refresh tokens
     2. Delete all Redis sessions

@@ -5,10 +5,6 @@ Revises:
 Create Date: 2026-01-27 04:03:44.333880
 
 """
-<<<<<<< HEAD
-
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -104,7 +100,6 @@ def upgrade() -> None:
         sa.Column("engine_cc", sa.Integer(), nullable=True),
         sa.Column(
             "fuel_type",
-<<<<<<< HEAD
             sa.Enum(
                 "Gasoline",
                 "Diesel",
@@ -113,18 +108,11 @@ def upgrade() -> None:
                 "Plugin Hybrid",
                 name="fueltype",
             ),
-=======
-            sa.Enum("PETROL", "DIESEL", "HYBRID", "ELECTRIC", "CNG", name="fueltype"),
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
             nullable=True,
         ),
         sa.Column(
             "transmission",
-<<<<<<< HEAD
             sa.Enum("Automatic", "Manual", "CVT", name="transmission"),
-=======
-            sa.Enum("MANUAL", "AUTOMATIC", "CVT", "SEMI_AUTOMATIC", name="transmission"),
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
             nullable=True,
         ),
         sa.Column("auction_grade", sa.String(length=10), nullable=True),

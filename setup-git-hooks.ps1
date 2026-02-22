@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ﻿# setup-git-hooks.ps1
 # Install and configure pre-commit hooks (Windows)
 
@@ -11,11 +10,6 @@ if ($PSVersionTable -eq $null) {
 }
 
 
-=======
-# setup-git-hooks.ps1
-# Install and configure pre-commit hooks (Windows)
-
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 Write-Host " Setting up Git hooks for ClearDrive.lk..." -ForegroundColor Green
 Write-Host ""
 
@@ -23,12 +17,7 @@ Write-Host ""
 # CHECK PREREQUISITES
 # ============================================================================
 
-<<<<<<< HEAD
 Write-Host " Checking prerequisites..." -ForegroundColor Cyan
-=======
-Write-Host "📋 Checking prerequisites..." -ForegroundColor Cyan
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
 # Check if Python is installed
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     Write-Host " Python 3 is not installed. Please install Python 3.11+" -ForegroundColor Red
@@ -44,7 +33,6 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 Write-Host " Prerequisites OK" -ForegroundColor Green
 Write-Host ""
 
-<<<<<<< HEAD
 # Check for virtual environment
 if (-not ($env:VIRTUAL_ENV)) {
     Write-Host " It looks like you're not in a Python virtual environment." -ForegroundColor Yellow
@@ -54,13 +42,10 @@ if (-not ($env:VIRTUAL_ENV)) {
 
 Write-Host ""
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 # ============================================================================
 # INSTALL PRE-COMMIT
 # ============================================================================
 
-<<<<<<< HEAD
 if ($env:VIRTUAL_ENV) {
     $python = Join-Path $env:VIRTUAL_ENV "Scripts\\python.exe"
 } else {
@@ -88,12 +73,6 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "pip install pre-commit failed"
     }
-=======
-Write-Host " Installing pre-commit..." -ForegroundColor Cyan
-
-try {
-    pip install pre-commit
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     Write-Host " pre-commit installed" -ForegroundColor Green
 } catch {
     Write-Host " Failed to install pre-commit" -ForegroundColor Red
@@ -106,12 +85,7 @@ Write-Host ""
 # INSTALL GIT HOOKS
 # ============================================================================
 
-<<<<<<< HEAD
 Write-Host " Installing Git hooks..." -ForegroundColor Cyan
-=======
-Write-Host "🔧 Installing Git hooks..." -ForegroundColor Cyan
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
 try {
     pre-commit install
     Write-Host " Git hooks installed" -ForegroundColor Green
@@ -136,7 +110,6 @@ Write-Host ""
 Write-Host " Installing hook dependencies..." -ForegroundColor Cyan
 
 # Backend dependencies
-<<<<<<< HEAD
 if (Test-Path "backend/requirements.txt") {
     Write-Host "  Installing backend dependencies..." -ForegroundColor Gray
     & $python -m pip install -r backend/requirements.txt
@@ -160,22 +133,6 @@ if (Test-Path "apps/web/package.json") {
     } else {
         npm install
     }
-=======
-if (Test-Path "backend") {
-    Write-Host "  Installing backend linting tools..." -ForegroundColor Gray
-    pip install black isort flake8 mypy bandit safety pytest
-}
-
-# Frontend dependencies
-if (Test-Path "apps/web") {
-    Write-Host "  Installing frontend linting tools..." -ForegroundColor Gray
-    Push-Location apps/web
-    npm install --save-dev `
-        eslint `
-        prettier `
-        "@typescript-eslint/parser" `
-        "@typescript-eslint/eslint-plugin"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     Pop-Location
 }
 
@@ -189,7 +146,6 @@ Write-Host ""
 Write-Host " Creating secrets baseline..." -ForegroundColor Cyan
 
 try {
-<<<<<<< HEAD
     & $python -m pip install detect-secrets
     if ($LASTEXITCODE -ne 0) {
         throw "pip install detect-secrets failed"
@@ -199,9 +155,6 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "detect-secrets scan failed"
     }
-=======
-    detect-secrets scan > .secrets.baseline 2>$null
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 } catch {
     Write-Host "  detect-secrets not found, skipping baseline creation" -ForegroundColor Yellow
 }
@@ -234,11 +187,7 @@ Write-Host ""
 Write-Host " Git hooks setup complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host " What happens now:" -ForegroundColor Cyan
-<<<<<<< HEAD
 Write-Host "   - Before each commit, pre-commit will automatically:"
-=======
-Write-Host "   • Before each commit, pre-commit will automatically:"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 Write-Host "     - Format Python code with Black"
 Write-Host "     - Sort imports with isort"
 Write-Host "     - Lint with Flake8"
@@ -249,18 +198,9 @@ Write-Host "     - Lint frontend with ESLint"
 Write-Host "     - Check for secrets"
 Write-Host ""
 Write-Host " Useful commands:" -ForegroundColor Cyan
-<<<<<<< HEAD
 Write-Host "   - Skip hooks (not recommended): git commit --no-verify"
 Write-Host "   - Run hooks manually: pre-commit run --all-files"
 Write-Host "   - Update hooks: pre-commit autoupdate"
 Write-Host "   - Uninstall hooks: pre-commit uninstall"
 Write-Host ""
 Write-Host "You're all set. Happy coding." -ForegroundColor Green
-=======
-Write-Host "   • Skip hooks (not recommended): git commit --no-verify"
-Write-Host "   • Run hooks manually: pre-commit run --all-files"
-Write-Host "   • Update hooks: pre-commit autoupdate"
-Write-Host "   • Uninstall hooks: pre-commit uninstall"
-Write-Host ""
-Write-Host " You're all set! Happy coding!" -ForegroundColor Green
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7

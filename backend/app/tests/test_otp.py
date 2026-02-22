@@ -2,10 +2,7 @@
 """
 Test OTP generation, storage, and verification.
 """
-<<<<<<< HEAD
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
 

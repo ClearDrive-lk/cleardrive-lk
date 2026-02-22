@@ -7,23 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-<<<<<<< HEAD
     "type-check": "tsc --noEmit --incremental false"
-=======
-    "type-check": "tsc --noEmit"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
-<<<<<<< HEAD
     "@react-oauth/google": "^0.13.4",
     "@reduxjs/toolkit": "^2.11.2",
     "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-table": "^8.11.2",
     "axios": "^1.13.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.564.0",
     "next": "16.1.6",
@@ -32,19 +29,6 @@
     "react-dom": "19.2.3",
     "react-redux": "^9.2.0",
     "tailwind-merge": "^3.4.1",
-=======
-    "@reduxjs/toolkit": "^2.11.2",
-    "@tanstack/react-query": "^5.90.20",
-    "axios": "^1.13.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.563.0",
-    "next": "16.1.6",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-redux": "^9.2.0",
-    "tailwind-merge": "^3.4.0",
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     "tailwindcss-animate": "^1.0.7",
     "zustand": "^5.0.10"
   },
@@ -53,13 +37,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-<<<<<<< HEAD
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.56.0",
-=======
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.54.0",
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.1.6",

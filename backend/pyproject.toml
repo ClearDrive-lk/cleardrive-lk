@@ -32,11 +32,6 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --cov=app --cov-report=term-missing --cov-report=html"
-<<<<<<< HEAD
 norecursedirs = [".*", ".tox", "build", "dist", "migrations", "venv", ".venv", "scripts"]
-=======
-norecursedirs = [".*", ".tox", "build", "dist", "migrations", "venv", "venv312", "scripts"]
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
 [tool.coverage.run]
 relative_files = true

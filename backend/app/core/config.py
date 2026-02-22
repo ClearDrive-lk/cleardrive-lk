@@ -1,10 +1,16 @@
 # backend/app/core/config.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application configuration."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
     # App
     PROJECT_NAME: str = "ClearDrive.lk API"
@@ -14,10 +20,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
-<<<<<<< HEAD
     ALEMBIC_DATABASE_URL: str | None = None
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     DATABASE_SSL_MODE: str = "disable"
 
     # Redis
@@ -40,12 +43,9 @@ class Settings(BaseSettings):
     PAYHERE_MERCHANT_ID: str
     PAYHERE_MERCHANT_SECRET: str
     PAYHERE_SANDBOX: bool = True
-<<<<<<< HEAD
     PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
     PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
     PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # Claude API
     ANTHROPIC_API_KEY: str
@@ -61,12 +61,9 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str
     SMTP_FROM_EMAIL: str = "noreply@cleardrive.lk"
     SMTP_FROM_NAME: str = "ClearDrive.lk"
-<<<<<<< HEAD
     SMTP_TIMEOUT_SECONDS: float = 10.0
     RESEND_API_KEY: str | None = None
     RESEND_FROM_EMAIL: str | None = None
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     # OTP
     OTP_LENGTH: int = 6
@@ -89,10 +86,7 @@ class Settings(BaseSettings):
     # GeoIP (optional)
     GEOIP_ENABLED: bool = False
     GEOIP_API_KEY: str | None = None
-<<<<<<< HEAD
-=======
 
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     # RBAC settings
     RBAC_ENABLED: bool = True
     RBAC_STRICT_MODE: bool = True
@@ -109,7 +103,6 @@ class Settings(BaseSettings):
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
     ]
-<<<<<<< HEAD
     BACKEND_CORS_ORIGIN_REGEX: str | None = None
     BACKEND_ALLOWED_HOSTS: list[str] = [
         "localhost",
@@ -117,12 +110,6 @@ class Settings(BaseSettings):
         "api.cleardrive.lk",
         "*.cleardrive.lk",
     ]
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 
 settings = Settings()

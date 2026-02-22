@@ -4,13 +4,8 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-<<<<<<< HEAD
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
-=======
-import apiClient from "@/lib/api";
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
 declare global {
   interface Window {
     google?: {
@@ -76,7 +71,6 @@ export function GoogleLoginButton() {
         }
         setError("Invalid response from server");
       } catch (err: unknown) {
-<<<<<<< HEAD
         const axiosErr = err as AxiosError<{
           detail?: string | { message?: string };
           message?: string;
@@ -100,13 +94,6 @@ export function GoogleLoginButton() {
           );
           return;
         }
-=======
-        const msg =
-          err && typeof err === "object" && "response" in err
-            ? (err as { response?: { data?: { detail?: string } } }).response
-                ?.data?.detail
-            : null;
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         setError(
           typeof msg === "string" ? msg : "Google sign-in failed. Try again.",
         );
@@ -146,7 +133,6 @@ export function GoogleLoginButton() {
     }
     setLoading(true);
     try {
-<<<<<<< HEAD
       window.google.accounts.id.prompt((notification: unknown) => {
         const n = notification as {
           isNotDisplayed?: () => boolean;
@@ -172,11 +158,6 @@ export function GoogleLoginButton() {
           }
         }
       });
-=======
-      window.google.accounts.id.prompt();
-      // If user dismisses One Tap without selecting, clear loading after 12s
-      setTimeout(() => setLoading(false), 12000);
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     } catch {
       setError("Google Sign-In failed");
       setLoading(false);

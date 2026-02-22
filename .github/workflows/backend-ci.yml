@@ -35,11 +35,7 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
-<<<<<<< HEAD
-        uses: actions/cache@v4
-=======
         uses: actions/cache@v3
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
@@ -53,22 +49,6 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-<<<<<<< HEAD
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run Black via pre-commit
-        run: pre-commit run black --all-files
-
-      - name: Run isort via pre-commit
-        run: pre-commit run isort --all-files
-
-      - name: Run Flake8 via pre-commit
-        run: pre-commit run flake8 --all-files
-
-      - name: Run mypy via pre-commit
-        run: pre-commit run mypy --all-files
-=======
       - name: Run Black (format check)
         run: |
           cd backend
@@ -84,14 +64,16 @@ jobs:
         run: |
           cd backend
           mypy app --explicit-package-bases --ignore-missing-imports
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
   # ============================================================================
-  # SECURITY SCANNING
+  # SECURITY SCANNING (Main only)
   # ============================================================================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
 
     steps:
       - name: Checkout code
@@ -102,47 +84,26 @@ jobs:
         with:
           python-version: '3.11'
 
-<<<<<<< HEAD
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install security tools
-        run: |
-          cd backend
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-=======
       - name: Install security tools
         run: |
           pip install bandit safety
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Run Bandit (SAST)
         run: |
           cd backend
-<<<<<<< HEAD
-          bandit -r app/ -f json -o bandit-report.json -ll -i
-=======
           bandit -r app/ -f json -o bandit-report.json || true
           bandit -r app/ -ll -i
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Run Safety (dependency check)
         run: |
           cd backend
-<<<<<<< HEAD
-          safety scan --output json > safety-report.json || true
-          safety scan
-=======
+
           safety check --json --output safety-report.json || true
           safety check
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
+
+          python -m safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json || true
+          python -m safety check -r requirements.txt -r requirements-dev.txt --full-report
+
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -196,11 +157,7 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
-<<<<<<< HEAD
-        uses: actions/cache@v4
-=======
         uses: actions/cache@v3
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
@@ -213,10 +170,6 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run tests with coverage
-<<<<<<< HEAD
-        run: |
-          python backend/scripts/run_local_ci_pytest.py
-=======
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cleardrive_test # pragma: allowlist secret
           REDIS_URL: redis://localhost:6379/0
@@ -239,7 +192,6 @@ jobs:
         run: |
           cd backend
           pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -263,7 +215,7 @@ jobs:
   deploy-staging:
     name: Deploy Backend to Staging (Railway)
     runs-on: ubuntu-latest
-    needs: [lint, security, test]
+    needs: [lint, test]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     steps:

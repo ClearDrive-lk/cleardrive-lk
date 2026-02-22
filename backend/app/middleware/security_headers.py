@@ -54,7 +54,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         csp_directives = [
             "default-src 'self'",
             f"script-src 'self' 'nonce-{nonce}' https://accounts.google.com "
-<<<<<<< HEAD
             "https://accounts.gstatic.com https://www.googletagmanager.com "
             "https://vercel.live",
             f"script-src-elem 'self' 'nonce-{nonce}' https://accounts.google.com "
@@ -64,10 +63,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "https://accounts.google.com",
             f"style-src-elem 'self' 'nonce-{nonce}' https://fonts.googleapis.com "
             "https://accounts.google.com",
-=======
-            "https://www.googletagmanager.com",
-            f"style-src 'self' 'nonce-{nonce}' https://fonts.googleapis.com",
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
             "connect-src 'self' https://api.anthropic.com https://*.supabase.co",
             "img-src 'self' data: blob: https://*.supabase.co https://www.google.com",
             "font-src 'self' https://fonts.gstatic.com",
@@ -93,16 +88,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # 4. Strict-Transport-Security (HSTS)
         if settings.ENVIRONMENT == "production":
-<<<<<<< HEAD
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains; preload"
             )
-=======
-            response.headers[
-                "Strict-Transport-Security"
-            ] = "max-age=31536000; includeSubDomains; preload"
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
         # 5. Referrer-Policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 

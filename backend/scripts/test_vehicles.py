@@ -1,7 +1,6 @@
 # backend/scripts/test_vehicles.py
 
 """
-<<<<<<< HEAD
 Test vehicle endpoints.
 Author: Parindra Chameekara
 Epic: CD-E3
@@ -9,14 +8,6 @@ Story: CD-120 - Static Vehicle Dataset
 """
 
 import requests
-=======
-Test vehicle API endpoints.
-"""
-
-
-import requests  # type: ignore
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
 BASE_URL = "http://localhost:8000/api/v1"
 
 

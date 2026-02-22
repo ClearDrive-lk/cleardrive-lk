@@ -7,11 +7,7 @@ repos:
   # GENERAL FILE CHECKS
   # ============================================================================
   - repo: https://github.com/pre-commit/pre-commit-hooks
-<<<<<<< HEAD
     rev: v6.0.0
-=======
-    rev: v4.5.0
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: trailing-whitespace
         name: Trim trailing whitespace
@@ -36,33 +32,24 @@ repos:
   # PYTHON - BACKEND
   # ============================================================================
   - repo: https://github.com/psf/black
-<<<<<<< HEAD
     rev: 26.1.0
-=======
-    rev: 23.12.1
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: black
         name: Format Python code (Black)
         files: ^backend/
-<<<<<<< HEAD
+
+        always_run: true
         pass_filenames: false
         args:
           - backend/app
 
   - repo: https://github.com/pycqa/isort
     rev: 7.0.0
-=======
-        language_version: python3.12
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: isort
         name: Sort Python imports (isort)
         files: ^backend/
-<<<<<<< HEAD
+        always_run: true
         pass_filenames: false
         args:
           - --profile
@@ -70,19 +57,14 @@ repos:
           - backend/app
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
-=======
-        args: ["--profile", "black"]
-
-  - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: flake8
         name: Lint Python code (Flake8)
         files: ^backend/
         exclude: ^backend/(scripts|alembic)/
-<<<<<<< HEAD
+
+        always_run: true
         pass_filenames: false
         args:
           - backend/app
@@ -93,82 +75,36 @@ repos:
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.19.1
-=======
-        args:
-          - --max-line-length=100
-          - --extend-ignore=E203,W503
-          - --exclude=venv,venv312,migrations,__pycache__
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: mypy
         name: Type check Python (mypy)
         files: ^backend/app/
-<<<<<<< HEAD
+        always_run: true
         pass_filenames: false
         args:
           - backend/app
           - --explicit-package-bases
           - --ignore-missing-imports
-=======
-        args:
-          - --explicit-package-bases
-          - --ignore-missing-imports
-          - --no-warn-unused-ignores
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         additional_dependencies:
           - pydantic
           - sqlalchemy
           - types-redis
+          - types-Markdown
+
 
   - repo: https://github.com/PyCQA/bandit
-<<<<<<< HEAD
     rev: 1.9.3
-=======
-    rev: 1.7.6
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: bandit
         name: Security check Python (Bandit)
         files: ^backend/
-<<<<<<< HEAD
         pass_filenames: false
         args: ["-r", "backend/app", "-ll", "-i"]
         exclude: ^backend/app/tests/
-=======
-        args: ["-ll", "-i", "--format", "custom", "--msg-template", "{abspath}:{line}: {test_id}: {severity}: {msg}"]
-        exclude: ^backend/tests/
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
   # ============================================================================
   # JAVASCRIPT/TYPESCRIPT - FRONTEND
   # ============================================================================
-<<<<<<< HEAD
-  - repo: local
-    hooks:
-      - id: frontend-eslint
-        name: Lint JavaScript/TypeScript (ESLint)
-        files: ^apps/web/
-        pass_filenames: false
-        entry: npx --prefix apps/web eslint --config apps/web/eslint.config.mjs apps/web/app
-        language: system
-
-      - id: frontend-prettier
-        name: Check code format (Prettier)
-        files: ^apps/web/
-        pass_filenames: false
-        entry: npx --prefix apps/web prettier apps/web --write
-        language: system
-
-      - id: frontend-typecheck
-        name: Type check frontend
-        files: ^apps/web/
-        pass_filenames: false
-        entry: npm --prefix apps/web run type-check
-        language: system
-=======
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.56.0
     hooks:
@@ -190,17 +126,12 @@ repos:
         files: ^apps/web/
         types_or: [javascript, jsx, ts, tsx, json, yaml, markdown]
         args: ["--write"]
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
   # ============================================================================
   # SECRETS DETECTION
   # ============================================================================
   - repo: https://github.com/Yelp/detect-secrets
-<<<<<<< HEAD
     rev: v1.5.0
-=======
-    rev: v1.4.0
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: detect-secrets
         name: Detect secrets
@@ -211,11 +142,7 @@ repos:
   # COMMIT MESSAGE VALIDATION
   # ============================================================================
   - repo: https://github.com/commitizen-tools/commitizen
-<<<<<<< HEAD
-    rev: v4.13.7
-=======
     rev: v3.13.0
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     hooks:
       - id: commitizen
         name: Check commit message format
@@ -226,43 +153,49 @@ repos:
   # ============================================================================
   - repo: local
     hooks:
+      - id: frontend-audit
+        name: Frontend dependency audit (prod)
+        files: ^apps/web/(package\.json|package-lock\.json)$
+        always_run: true
+        pass_filenames: false
+        entry: python scripts/run_on_main.py --label "Frontend audit" -- npm --prefix apps/web audit --omit=dev --audit-level=moderate
+        language: system
+
+      - id: bandit-main
+        name: Security check Python (Bandit, main only)
+        files: ^backend/
+        pass_filenames: false
+        always_run: true
+        entry: python scripts/run_on_main.py --label "Bandit" -- python -m bandit -r backend/app -ll -i
+        language: system
+
+      - id: safety
+        name: Dependency vulnerability scan (Safety, main only)
+        entry: python scripts/run_on_main.py --label "Safety" -- python backend/scripts/run_local_ci_safety.py
+        language: system
+        files: ^backend/(requirements\.txt|requirements-dev\.txt|pyproject\.toml)$
+        always_run: true
+        pass_filenames: false
+
       - id: pytest
         name: Run Tests
-<<<<<<< HEAD
-        entry: python backend/scripts/run_local_ci_pytest.py
-        language: system
-        # Only run on changes to Python files.
-        types: [python]
-        pass_filenames: false
-        # Always run the full suite, as any Python change could break tests.
-        always_run: true
-=======
-        entry: backend/venv312/Scripts/python.exe -m pytest
+        entry: python -c "import subprocess, sys; sys.exit(subprocess.call([sys.executable, '-m', 'pytest'], cwd='backend'))"
         language: system
         pass_filenames: false
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 default_language_version:
-<<<<<<< HEAD
-  python: python3
-=======
   python: python3.12
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
 
 exclude: |
   (?x)^(
-<<<<<<< HEAD
-    backend/(venv|venv[^/]*|\.venv)/.*|
-=======
     backend/venv/.*|
     backend/venv312/.*|
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     backend/.pytest_cache/.*|
     backend/__pycache__/.*|
     backend/htmlcov/.*|

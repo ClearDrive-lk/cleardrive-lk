@@ -1,35 +1,24 @@
-<<<<<<< HEAD
 """
 Vehicle Pydantic schemas for request/response validation.
 Author: Parindra Chameekara
 Epic: CD-E3 - Vehicle Management System
 Story: CD-130 - Vehicle Search & Filter API
 """
-=======
-# backend/app/modules/vehicles/schemas.py
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-<<<<<<< HEAD
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .models import Drive, FuelType, Steering, Transmission, VehicleStatus, VehicleType
-=======
-from pydantic import BaseModel, Field, validator
-
-from .models import FuelType, Transmission, VehicleStatus
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 # ============================================================================
 # VEHICLE SCHEMAS
 # ============================================================================
 
 
-<<<<<<< HEAD
 def _coerce_enum_by_name(value, enum_cls):
     if value is None:
         return None
@@ -59,20 +48,10 @@ class VehicleBase(BaseModel):
     body_type: Optional[str] = Field(None, max_length=100)
     grade: Optional[str] = Field(None, max_length=100)
 
-=======
-class VehicleBase(BaseModel):
-    """Base vehicle schema."""
-
-    auction_id: str = Field(..., description="Unique auction ID")
-    make: str = Field(..., min_length=1, max_length=100)
-    model: str = Field(..., min_length=1, max_length=100)
-    year: int = Field(..., ge=1990, le=2026, description="Vehicle year (1990-2026)")
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     price_jpy: Decimal = Field(..., gt=0, description="Price in Japanese Yen")
 
     mileage_km: Optional[int] = Field(None, ge=0, description="Mileage in kilometers")
     engine_cc: Optional[int] = Field(None, ge=0, description="Engine capacity in cc")
-<<<<<<< HEAD
     engine_model: Optional[str] = Field(None, max_length=100)
     fuel_type: Optional[FuelType] = None
     transmission: Optional[Transmission] = None
@@ -130,28 +109,11 @@ class VehicleCreate(VehicleBase):
 
 class VehicleUpdate(BaseModel):
     """Schema for updating a vehicle (admin only)."""
-=======
-    fuel_type: Optional[FuelType] = None
-    transmission: Optional[Transmission] = None
-    auction_grade: Optional[str] = Field(None, max_length=10)
-    color: Optional[str] = Field(None, max_length=50)
-    image_url: Optional[str] = Field(None, max_length=500)
-    status: VehicleStatus = VehicleStatus.AVAILABLE
-
-
-class VehicleCreate(VehicleBase):
-    """Vehicle creation schema."""
-
-
-class VehicleUpdate(BaseModel):
-    """Vehicle update schema."""
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     price_jpy: Optional[Decimal] = Field(None, gt=0)
     mileage_km: Optional[int] = Field(None, ge=0)
     status: Optional[VehicleStatus] = None
     image_url: Optional[str] = None
-<<<<<<< HEAD
     color: Optional[str] = None
     location: Optional[str] = None
     options: Optional[str] = None
@@ -160,23 +122,12 @@ class VehicleUpdate(BaseModel):
 
 class VehicleResponse(VehicleBase):
     """Schema for vehicle response."""
-=======
-
-
-class VehicleResponse(VehicleBase):
-    """Vehicle response schema."""
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
     id: UUID
     created_at: datetime
     updated_at: datetime
 
-<<<<<<< HEAD
     model_config = ConfigDict(from_attributes=True)
-=======
-    class Config:
-        from_attributes = True
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 
 # ============================================================================
@@ -193,23 +144,15 @@ class VehicleFilters(BaseModel):
     # Filters
     make: Optional[str] = None
     model: Optional[str] = None
-<<<<<<< HEAD
     vehicle_type: Optional[VehicleType] = None
     year_min: Optional[int] = Field(None, ge=1980)
     year_max: Optional[int] = Field(None, le=2027)
-=======
-    year_min: Optional[int] = Field(None, ge=1990)
-    year_max: Optional[int] = Field(None, le=2026)
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     price_min: Optional[Decimal] = Field(None, ge=0)
     price_max: Optional[Decimal] = None
     mileage_max: Optional[int] = Field(None, ge=0)
     fuel_type: Optional[FuelType] = None
     transmission: Optional[Transmission] = None
-<<<<<<< HEAD
     drive: Optional[Drive] = None
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     status: Optional[VehicleStatus] = VehicleStatus.AVAILABLE
 
     # Pagination
@@ -220,21 +163,14 @@ class VehicleFilters(BaseModel):
     sort_by: Optional[str] = Field("created_at", description="Field to sort by")
     sort_order: Optional[str] = Field("desc", pattern="^(asc|desc)$")
 
-<<<<<<< HEAD
     @field_validator("sort_by")
     def validate_sort_field(cls, v):
         allowed_fields = ["price_jpy", "year", "reg_year", "mileage_km", "created_at"]
-=======
-    @validator("sort_by")
-    def validate_sort_field(cls, v):
-        allowed_fields = ["price_jpy", "year", "mileage_km", "created_at"]
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         if v not in allowed_fields:
             raise ValueError(f"Invalid sort field. Allowed: {allowed_fields}")
         return v
 
 
-<<<<<<< HEAD
 class PaginationInfo(BaseModel):
     """Pagination metadata for list responses."""
 
@@ -249,16 +185,6 @@ class VehicleListResponse(BaseModel):
 
     vehicles: list[VehicleResponse]
     pagination: PaginationInfo
-=======
-class VehicleListResponse(BaseModel):
-    """Paginated vehicle list response."""
-
-    vehicles: list[VehicleResponse]
-    total: int
-    page: int
-    limit: int
-    total_pages: int
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 
 
 # ============================================================================
@@ -302,7 +228,6 @@ class CostCalculatorRequest(BaseModel):
     exchange_rate: Optional[Decimal] = Field(None, description="Custom exchange rate (optional)")
 
 
-<<<<<<< HEAD
 class CostBreakdownResponse(BaseModel):
     """Response schema for cost calculation."""
 
@@ -338,8 +263,6 @@ class CostBreakdownResponse(BaseModel):
     )
 
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 # ============================================================================
 # POPULAR VEHICLES SCHEMAS
 # ============================================================================

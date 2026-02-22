@@ -83,7 +83,6 @@ class OTPResendRequest(BaseModel):
     email: EmailStr
 
 
-<<<<<<< HEAD
 class LoginRequest(BaseModel):
     """Email/password login request."""
 
@@ -113,8 +112,6 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 class DevEnsureUserRequest(BaseModel):
     """Dev-only: ensure a test user exists (create if not)."""
 

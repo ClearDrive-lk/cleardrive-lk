@@ -5,11 +5,13 @@ Revises: a7837696f581
 Create Date: 2026-02-15 07:12:59.371808
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
+from .config import settings
 
+# revision = "11598ea177e4"  # pragma: allowlist secret
+revision = str(settings.hibye)  # pragma: allowlist secret
 
-revision = "11598ea177e4"
 down_revision = "a7837696f581"
 branch_labels = None
 depends_on = None

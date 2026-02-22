@@ -1,15 +1,17 @@
 # backend/app/modules/shipping/schemas.py
 
-from pydantic import BaseModel
-from typing import Optional, Dict
-from datetime import datetime, date
-from uuid import UUID
+from datetime import date, datetime
 from enum import Enum
+from typing import Dict, Optional
+from uuid import UUID
+
+from pydantic import BaseModel
 
 
 # ============== ENUMS ==============
 class DocumentType(str, Enum):
     """Shipping document types."""
+
     BILL_OF_LANDING = "BILL_OF_LANDING"
     PACKING_LIST = "PACKING_LIST"
     EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
@@ -20,6 +22,7 @@ class DocumentType(str, Enum):
 # ============== SHIPMENT SCHEMAS ==============
 class ShippingDetailsSubmit(BaseModel):
     """Schema for submitting shipping details (CD-71)."""
+
     vessel_name: str
     voyage_number: str
     departure_port: str
@@ -33,6 +36,7 @@ class ShippingDetailsSubmit(BaseModel):
 
 class ShippingDetailsResponse(BaseModel):
     """Response schema for shipment details."""
+
     id: UUID
     order_id: UUID
 
@@ -61,6 +65,7 @@ class ShippingDetailsResponse(BaseModel):
 # ============== DOCUMENT SCHEMAS ==============
 class DocumentUploadResponse(BaseModel):
     """Response schema for document upload (CD-72)."""
+
     id: UUID
     shipment_id: UUID
     order_id: UUID
@@ -79,6 +84,7 @@ class DocumentUploadResponse(BaseModel):
 
 class DocumentListItem(BaseModel):
     """Schema for document list item."""
+
     id: UUID
     shipment_id: UUID
     order_id: UUID
@@ -97,11 +103,13 @@ class DocumentListItem(BaseModel):
 
 class DocumentVerifyRequest(BaseModel):
     """Request schema for verifying/unverifying a document."""
+
     verified: bool
 
 
 class RequiredDocumentsCheck(BaseModel):
     """Response schema for required documents check (CD-72.5)."""
+
     order_id: UUID
     total_required: int
     total_uploaded: int
@@ -113,6 +121,7 @@ class RequiredDocumentsCheck(BaseModel):
 
 class DocumentStats(BaseModel):
     """Response schema for document statistics."""
+
     total_documents: int
     verified_documents: int
     pending_verification: int
@@ -121,4 +130,5 @@ class DocumentStats(BaseModel):
 
 class ExporterAssignment(BaseModel):
     """Schema for assigning exporter to order."""
+
     exporter_id: UUID

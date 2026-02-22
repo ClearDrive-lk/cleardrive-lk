@@ -1,10 +1,7 @@
 """
 Test JWT token management.
 """
-<<<<<<< HEAD
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from datetime import datetime, timedelta
 
 import pytest
@@ -177,17 +174,13 @@ class TestAuthEndpoints:
         """Test accessing protected route without token."""
         response = client.get("/api/v1/test/protected")
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     async def test_protected_route_with_invalid_token(self, client):
         """Test accessing protected route with invalid token."""
         response = client.get(
-<<<<<<< HEAD
             "/api/v1/test/protected",
             headers={"Authorization": "Bearer invalid.token.here"},
-=======
-            "/api/v1/test/protected", headers={"Authorization": "Bearer invalid.token.here"}
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
         assert response.status_code == 401

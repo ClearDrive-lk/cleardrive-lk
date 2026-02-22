@@ -2,7 +2,6 @@
 """
 Email service for sending OTPs and notifications.
 """
-<<<<<<< HEAD
 
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -12,14 +11,6 @@ from typing import Optional
 
 import aiosmtplib
 import httpx
-=======
-import logging
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from typing import Optional
-
-import aiosmtplib
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 from app.core.config import settings
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -32,7 +23,6 @@ template_env = Environment(
 )
 
 
-<<<<<<< HEAD
 def _is_valid_email_address(value: str) -> bool:
     _, addr = parseaddr(value)
     if not addr or "@" not in addr:
@@ -123,8 +113,6 @@ async def _send_email_via_resend_api(
         return False
 
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
 async def send_email(
     to_email: str, subject: str, html_content: str, text_content: Optional[str] = None
 ) -> bool:
@@ -140,13 +128,10 @@ async def send_email(
     Returns:
         True if sent successfully, False otherwise
     """
-<<<<<<< HEAD
     # Prefer HTTPS API when a Resend API key is configured to avoid blocked SMTP ports.
     if settings.RESEND_API_KEY:
         return await _send_email_via_resend_api(to_email, subject, html_content, text_content)
 
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
     try:
         # Create message
         message = MIMEMultipart("alternative")
@@ -171,10 +156,7 @@ async def send_email(
             username=settings.SMTP_USERNAME,
             password=settings.SMTP_PASSWORD,
             start_tls=True,
-<<<<<<< HEAD
             timeout=settings.SMTP_TIMEOUT_SECONDS,
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         )
 
         logger.info(f"Email sent successfully to {to_email}")
@@ -182,13 +164,10 @@ async def send_email(
 
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")
-<<<<<<< HEAD
         if not settings.RESEND_API_KEY and await _send_email_via_resend_api(
             to_email, subject, html_content, text_content
         ):
             return True
-=======
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
         return False
 
 
@@ -204,7 +183,6 @@ async def send_otp_email(email: str, otp: str, name: Optional[str] = None) -> bo
     Returns:
         True if sent successfully
     """
-<<<<<<< HEAD
     try:
         # Render template
         template = template_env.get_template("otp_email.html")
@@ -214,14 +192,6 @@ async def send_otp_email(email: str, otp: str, name: Optional[str] = None) -> bo
     except Exception as e:
         logger.error(f"Failed to render OTP email template for {email}: {str(e)}")
         return False
-=======
-    # Render template
-    template = template_env.get_template("otp_email.html")
-    html_content = template.render(
-        otp=otp, name=name or "User", expiry_minutes=settings.OTP_EXPIRY_MINUTES
-    )
->>>>>>> 2b6c4e0f3e2bdec671123c59cab390bd0dde93d7
-
     # Plain text fallback
     text_content = f"""
 Hello {name or 'User'},
