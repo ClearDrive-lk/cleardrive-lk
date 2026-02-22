@@ -3,7 +3,7 @@ Admin user management endpoints.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -12,7 +12,7 @@ from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 class UserListItem(BaseModel):
     """User item in list response."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     name: str
@@ -36,9 +38,6 @@ class UserListItem(BaseModel):
     created_at: str
     last_login: Optional[str] = None
     is_active: bool = True
-
-    class Config:
-        from_attributes = True
 
 
 class UserListResponse(BaseModel):
@@ -346,7 +345,7 @@ async def change_user_role(
 
     # Update user role
     user.role = new_role
-    user.updated_at = datetime.utcnow()
+    user.updated_at = datetime.now(UTC)
 
     # Persist role change
     db.commit()
@@ -373,5 +372,5 @@ async def change_user_role(
         old_role=old_role.value,
         new_role=new_role.value,
         changed_by=current_user.email,
-        changed_at=datetime.utcnow().isoformat(),
+        changed_at=datetime.now(UTC).isoformat(),
     )

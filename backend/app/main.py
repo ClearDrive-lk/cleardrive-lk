@@ -192,38 +192,6 @@ async def health_check_v1():
     return await health_check()
 
 
-@app.on_event("startup")
-async def startup_event():
-    """
-    DEPRECATED: Use lifespan context manager instead.
-    Kept for backward compatibility.
-    """
-    logger.info("Legacy startup event triggered (use lifespan instead)")
-
-    if REDIS_INIT_AVAILABLE and init_redis is not None:
-        try:
-            await init_redis()
-            logger.info("Redis connection initialized (legacy event)")
-        except Exception as e:
-            logger.warning(f"Redis initialization failed (legacy event): {e}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """
-    DEPRECATED: Use lifespan context manager instead.
-    Kept for backward compatibility.
-    """
-    logger.info("Legacy shutdown event triggered (use lifespan instead)")
-
-    if REDIS_INIT_AVAILABLE and redis_close is not None:
-        try:
-            await redis_close()
-            logger.info("Redis connection closed (legacy event)")
-        except Exception as e:
-            logger.warning(f"Error closing Redis (legacy event): {e}")
-
-
 if __name__ == "__main__":
     import os
 

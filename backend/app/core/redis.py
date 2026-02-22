@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional, cast
 
 import redis.asyncio as redis  # type: ignore[import-untyped]
@@ -45,7 +45,7 @@ async def close_redis():
     global _redis_client
 
     if _redis_client:
-        await _redis_client.close()
+        await _redis_client.aclose()
         _redis_client = None
 
 
@@ -85,7 +85,7 @@ async def store_otp(email: str, otp: str, expiry_minutes: int = 5) -> bool:
     value = json.dumps(
         {
             "otp": otp,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "attempts": 0,
         }
     )
@@ -211,7 +211,7 @@ async def blacklist_token(token_jti: str, ttl_seconds: int) -> bool:
     client = await get_redis()
     key = f"blacklist:{token_jti}"
 
-    value = json.dumps({"blacklisted_at": datetime.utcnow().isoformat(), "reason": "logout"})
+    value = json.dumps({"blacklisted_at": datetime.now(UTC).isoformat(), "reason": "logout"})
 
     await client.setex(key, ttl_seconds, value)
     return True
@@ -283,7 +283,7 @@ async def store_refresh_token(
         {
             "user_id": user_id,
             "device_info": device_info,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -366,8 +366,8 @@ async def create_session(
             "token_jti": token_jti,
             "ip_address": ip_address,
             "user_agent": user_agent,
-            "created_at": datetime.utcnow().isoformat(),
-            "last_active": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
+            "last_active": datetime.now(UTC).isoformat(),
         }
     )
 

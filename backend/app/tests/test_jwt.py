@@ -2,7 +2,7 @@
 Test JWT token management.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from app.core.redis import (
@@ -204,7 +204,7 @@ class TestAuthEndpoints:
             user_id=user.id,
             refresh_token_hash=hash_token(refresh_token),
             is_active=True,
-            expires_at=datetime.utcnow() + timedelta(days=30),
+            expires_at=datetime.now(UTC) + timedelta(days=30),
         )
         db.add(db_session)
         db.commit()
