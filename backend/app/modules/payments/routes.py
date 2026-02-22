@@ -363,8 +363,8 @@ async def payhere_webhook(
             # Create status history
             history = OrderStatusHistory(
                 order_id=order.id,
-                old_status=old_status.value,
-                new_status=OrderStatus.PAYMENT_CONFIRMED.value,
+                from_status=old_status,
+                to_status=OrderStatus.PAYMENT_CONFIRMED,
                 notes=f"Payment completed: {payment_id}"
             )
             db.add(history)

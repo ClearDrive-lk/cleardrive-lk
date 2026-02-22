@@ -32,6 +32,7 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --cov=app --cov-report=term-missing --cov-report=html"
+norecursedirs = [".*", ".tox", "build", "dist", "migrations", "venv", ".venv", "scripts"]
 
 [tool.coverage.run]
 relative_files = true

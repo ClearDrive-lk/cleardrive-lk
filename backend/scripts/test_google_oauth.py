@@ -7,11 +7,11 @@ IMPORTANT: This script requires manual interaction with Google.
 You need to actually sign in with Google in your browser.
 """
 
-import os
-import requests  # type: ignore
-from datetime import datetime
-import json
 import base64
+import json
+import os
+
+import requests  # type: ignore
 
 # Use BACKEND_URL when running inside Docker so script and API see the same host
 BASE_URL = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/") + "/api/v1"
@@ -37,11 +37,20 @@ def test_google_oauth_flow():
     print("-" * 70)
     print("To test this properly, you need a REAL Google ID token.")
     print("\nOption A: Use frontend (when Lehan builds it)")
-    print("   Note: If you get 'Can't continue with google.com', check 'Authorized JavaScript origins'")
-    print("         in Google Cloud Console. It must match your frontend URL (e.g., http://localhost:3000).")
+    print(
+        "   Note: If you get 'Can't continue with google.com', check "
+        "'Authorized JavaScript origins'"
+    )
+    print(
+        "         in Google Cloud Console. It must match your frontend URL "
+        "(e.g., http://localhost:3000)."
+    )
     print("   Note: If you get 'FedCM get() rejects...', check if Third-party cookies are blocked")
     print("         in your browser (common in Incognito mode).")
-    print("   Note: If you get 'Error 401: invalid_client', check your GOOGLE_CLIENT_ID for typos/spaces.")
+    print(
+        "   Note: If you get 'Error 401: invalid_client', check your GOOGLE_CLIENT_ID "
+        "for typos/spaces."
+    )
     print("Option B: Use this test page:")
     print("  https://accounts.google.com/gsi/select")
     print("\nFor now, let's test with the verify-otp endpoint directly.")
@@ -54,10 +63,11 @@ def test_google_oauth_flow():
         test_email = "cleardrivelk@gmail.com"
 
     # Step 1b: Ensure test user exists (dev-only; so resend-otp actually stores OTP)
-    print(f"\n📋 Step 1b: Ensuring test user exists...")
+    print("\n📋 Step 1b: Ensuring test user exists...")
     ensure_resp = requests.post(
         f"{BASE_URL}/auth/dev/ensure-user",
         json={"email": test_email, "name": test_email.split("@")[0]},
+        timeout=10,
     )
     if ensure_resp.status_code == 200:
         data = ensure_resp.json()
@@ -68,7 +78,7 @@ def test_google_oauth_flow():
     print(f"\n📧 Step 2: Requesting OTP for {test_email}...")
     print("-" * 70)
 
-    response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email})
+    response = requests.post(f"{BASE_URL}/auth/resend-otp", json={"email": test_email}, timeout=10)
 
     if response.status_code != 200:
         print(f"❌ Failed: {response.json()}")
@@ -79,7 +89,7 @@ def test_google_oauth_flow():
     if otp:
         print(f"✅ OTP sent (development): {otp}")
     else:
-        print(f"✅ OTP sent (check backend logs: docker-compose logs backend)")
+        print("✅ OTP sent (check backend logs: docker-compose logs backend)")
     print(f"Response: {data}")
 
     # Step 3: Get OTP from user (or use the one from response in dev)
@@ -99,15 +109,19 @@ def test_google_oauth_flow():
         return
 
     # Step 4: Verify OTP
-    response = requests.post(f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp})
+    response = requests.post(
+        f"{BASE_URL}/auth/verify-otp",
+        json={"email": test_email, "otp": otp},
+        timeout=10,
+    )
 
     if response.status_code == 200:
         tokens = response.json()
-        print(f"\n✅ Authentication successful!")
+        print("\n✅ Authentication successful!")
         print("-" * 70)
         print(f"Access Token: {tokens['access_token'][:50]}...")
         print(f"Refresh Token: {tokens['refresh_token'][:50]}...")
-        print(f"\nUser Info:")
+        print("\nUser Info:")
         print(f"  Email: {tokens['user']['email']}")
         print(f"  Name: {tokens['user']['name']}")
         print(f"  Role: {tokens['user']['role']}")
@@ -116,17 +130,18 @@ def test_google_oauth_flow():
         access_token = tokens["access_token"]
 
         # Step 5: Test protected endpoint
-        print(f"\n📋 Step 4: Testing Protected Endpoint")
+        print("\n📋 Step 4: Testing Protected Endpoint")
         print("-" * 70)
 
         response = requests.get(
             f"{BASE_URL}/auth/sessions",
             headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
         )
 
         if response.status_code == 200:
             sessions = response.json()
-            print(f"✅ Protected endpoint works!")
+            print("✅ Protected endpoint works!")
             print(f"Active sessions: {sessions['total']}")
         else:
             print(f"❌ Protected endpoint failed: {response.json()}")
@@ -177,18 +192,22 @@ def test_with_real_google_token():
     print("=" * 70)
 
     print(
-        "\nTo get a real Google ID token (must use YOUR app's client, or you'll get 'wrong audience'):"
+        "\nTo get a real Google ID token (must use YOUR app's client, "
+        "or you'll get 'wrong audience'):"
     )
     print("1. Visit: https://developers.google.com/oauthplayground/")
     print("2. Click the gear icon (⚙️) → check 'Use your own OAuth credentials'")
     print(
-        "   Enter your Client ID and Client Secret from backend/.env (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)"
+        "   Enter your Client ID and Client Secret from backend/.env "
+        "(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)"
     )
     print(
-        "   (NOTE: If you skip this, you'll get a token for the default Playground ID: 4166288126-...)"
+        "   (NOTE: If you skip this, you'll get a token for the default Playground ID: "
+        "4166288126-...)"
     )
     print(
-        "3. In Step 1, select scope: https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid"
+        "3. In Step 1, select scope: https://www.googleapis.com/auth/userinfo.email "
+        "https://www.googleapis.com/auth/userinfo.profile openid"
     )
     print("4. Click 'Authorize APIs' and sign in with Google")
     print("5. In Step 2, click 'Exchange authorization code for tokens'")
@@ -202,7 +221,7 @@ def test_with_real_google_token():
 
     # Debug info
     aud = decode_jwt_audience(id_token)
-    print(f"\n🔍 Token Debug Info:")
+    print("\n🔍 Token Debug Info:")
     print(f"   Token Audience (aud): {aud}")
 
     # Check what the container thinks the ID is
@@ -210,14 +229,15 @@ def test_with_real_google_token():
     print(f"   Backend Config ID:    {env_id}")
     if env_id != aud:
         print(
-            f"   ⚠️  MISMATCH: Backend has old ID. Run 'docker-compose up -d backend' to reload .env!"
+            "   ⚠️  MISMATCH: Backend has old ID. Run 'docker-compose up -d backend' "
+            "to reload .env!"
         )
 
-    response = requests.post(f"{BASE_URL}/auth/google", json={"id_token": id_token})
+    response = requests.post(f"{BASE_URL}/auth/google", json={"id_token": id_token}, timeout=10)
 
     if response.status_code == 200:
         data = response.json()
-        print(f"\n✅ Google OAuth successful!")
+        print("\n✅ Google OAuth successful!")
         print(f"Email: {data['email']}")
         print(f"Name: {data['name']}")
         print(f"Message: {data['message']}")

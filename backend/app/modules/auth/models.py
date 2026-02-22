@@ -3,22 +3,16 @@
 from __future__ import annotations
 
 import datetime as dt
+import enum
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Enum as SQLEnum,
-    ForeignKey,
-    Integer,
-    String,
-    func,
-)
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-import enum
 from app.core.database import Base
-from app.core.models import TimestampMixin, UUIDMixin, GUID, IPAddress
+from app.core.models import GUID, IPAddress, TimestampMixin, UUIDMixin
+from sqlalchemy import Boolean, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.modules.kyc.models import KYCDocument
@@ -72,8 +66,12 @@ class User(Base, UUIDMixin, TimestampMixin):
     sessions: Mapped[list[Session]] = relationship(
         "Session", back_populates="user", cascade="all, delete-orphan"
     )
-    orders: Mapped[list[Order]] = relationship(
-        "Order", back_populates="user", cascade="all, delete-orphan"
+    orders: Mapped[list["Order"]] = relationship(
+        "Order",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="[Order.user_id]",
+        overlaps="user",
     )
     kyc_document: Mapped[KYCDocument | None] = relationship(
         "KYCDocument",

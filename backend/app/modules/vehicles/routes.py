@@ -1,28 +1,25 @@
 # backend/app/modules/vehicles/routes.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, desc, asc
+import math
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID
-from decimal import Decimal
-import math
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_active_user, get_current_admin
-from app.core.permissions import Permission, require_permission
+from app.core.dependencies import get_current_admin
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import asc, desc, or_
+from sqlalchemy.orm import Session
 
+from .cost_calculator import DEFAULT_JPY_TO_LKR, calculate_total_cost
 from .models import Vehicle, VehicleStatus
 from .schemas import (
-    VehicleResponse,
-    VehicleCreate,
-    VehicleUpdate,
-    VehicleFilters,
-    VehicleListResponse,
     CostBreakdown,
-    CostCalculatorRequest,
+    VehicleCreate,
+    VehicleListResponse,
+    VehicleResponse,
+    VehicleUpdate,
 )
-from .cost_calculator import calculate_total_cost, DEFAULT_JPY_TO_LKR
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
@@ -168,7 +165,8 @@ async def calculate_cost(
     # Calculate cost
     cost_data = calculate_total_cost(vehicle, rate)
 
-    return CostBreakdown(**cost_data)
+    # Pass Decimals directly; Pydantic handles coercion for float fields
+    return CostBreakdown(**cost_data)  # type: ignore[arg-type]
 
 
 # ============================================================================

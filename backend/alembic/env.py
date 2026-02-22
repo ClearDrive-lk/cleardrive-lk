@@ -1,33 +1,20 @@
 # backend/alembic/env.py
 # backend/alembic/env.py
 
-from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from alembic import context  # type: ignore
 import sys
+from logging.config import fileConfig
 from pathlib import Path
+
+from alembic import context  # type: ignore
+from sqlalchemy import engine_from_config, pool
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from app.core.config import settings
-from app.core.database import Base
+from app.core.config import settings  # noqa: E402
+from app.core.database import Base  # noqa: E402
 
 # Import ALL models so Alembic can detect them
-from app.modules.auth.models import User, Session
-from app.modules.vehicles.models import Vehicle
-from app.modules.orders.models import Order, OrderStatusHistory
-from app.modules.payments.models import Payment, PaymentIdempotency
-from app.modules.kyc.models import KYCDocument
-from app.modules.shipping.models import ShipmentDetails, ShippingDocument
-from app.modules.security.models import (
-    FileIntegrity,
-    SecurityEvent,
-    UserReputation,
-    RateLimitViolation,
-)
-from app.modules.gdpr.models import GDPRRequest
 
 # ... rest of the file stays the same
 
@@ -40,8 +27,9 @@ from app.modules.gdpr.models import GDPRRequest
 # this is the Alembic Config object
 config = context.config
 
-# Set sqlalchemy.url from our settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Prefer a dedicated migration URL (direct DB), fallback to app DATABASE_URL.
+alembic_database_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
+config.set_main_option("sqlalchemy.url", alembic_database_url)
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:

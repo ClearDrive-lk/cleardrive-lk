@@ -13,7 +13,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -27,9 +27,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("access_token");
+      sessionStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       document.cookie = "access_token=; path=/; max-age=0";
+      document.cookie = "refresh_token=; path=/; max-age=0";
       window.location.href = "/login";
     }
     return Promise.reject(error);
