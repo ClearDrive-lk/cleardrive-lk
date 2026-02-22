@@ -14,6 +14,7 @@ from app.core.config import settings  # noqa: E402
 from app.core.database import Base  # noqa: E402
 
 # Import ALL models so Alembic can detect them
+from app.models.audit_log import AuditLog
 from app.modules.auth.models import Session, User
 from app.modules.gdpr.models import GDPRRequest
 from app.modules.kyc.models import KYCDocument

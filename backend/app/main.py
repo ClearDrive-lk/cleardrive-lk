@@ -29,6 +29,7 @@ except ImportError:
     init_redis = None  # type: ignore
     redis_close = None  # type: ignore
 
+from app.modules.admin import routes as admin_routes
 from app.modules.admin.routes import router as admin_router
 
 # Import routers
@@ -128,6 +129,7 @@ logger.info(
 )
 
 
+app.include_router(admin_routes.router, prefix="/api/v1")
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
