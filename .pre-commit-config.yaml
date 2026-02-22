@@ -171,10 +171,9 @@ repos:
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py
         language: system
-        # Only run on changes to Python files.
-        types: [python]
+        # Run before push to avoid flaky Windows git-commit hook runtime crashes.
+        stages: [pre-push]
         pass_filenames: false
-        # Always run the full suite, as any Python change could break tests.
         always_run: true
         # Show pytest output even when tests pass, so progress is visible.
         verbose: true
@@ -187,6 +186,7 @@ default_language_version:
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
+default_stages: [pre-commit]
 
 exclude: |
   (?x)^(
