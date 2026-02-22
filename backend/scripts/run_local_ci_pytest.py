@@ -59,6 +59,12 @@ def main() -> int:
         action="store_true",
         help="Skip coverage reports (faster local run)",
     )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=180,
+        help="Pytest timeout in seconds",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -113,11 +119,11 @@ def main() -> int:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
-            timeout=180,
+            timeout=args.timeout_seconds,
         )
     except subprocess.TimeoutExpired:
-        print("Backend tests timed out after 180s in hook.")
-        print("Run `pre-commit run --hook-stage manual pytest --all-files -v` to debug.")
+        print(f"Backend tests timed out after {args.timeout_seconds}s in hook.")
+        print("Run `pre-commit run --hook-stage pre-commit pytest --all-files -v` to debug.")
         return 124
 
     if result.returncode == 0:
@@ -125,7 +131,7 @@ def main() -> int:
         return 0
 
     print("Backend tests failed in hook.")
-    print("Run `pre-commit run --hook-stage manual pytest --all-files -v` for details.")
+    print("Run `pre-commit run --hook-stage pre-commit pytest --all-files -v` for details.")
     return int(result.returncode)
 
 
