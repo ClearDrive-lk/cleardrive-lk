@@ -1,4 +1,8 @@
 # backend/app/modules/kyc/models.py
+"""
+KYC (Know Your Customer) data model.
+Story: CD-50 - KYC Document Upload
+"""
 
 from __future__ import annotations
 
@@ -27,7 +31,17 @@ class KYCStatus(str, enum.Enum):
 
 
 class KYCDocument(Base, UUIDMixin, TimestampMixin):
-    """KYC document model - user verification."""
+    """
+    KYC document submission model.
+
+    Story: CD-50
+
+    Stores:
+    - User's NIC information (extracted by CD-51 OCR)
+    - Document URLs (Supabase Storage)
+    - Verification status
+    - Extracted data and discrepancies from Claude API
+    """
 
     __tablename__ = "kyc_documents"
 
@@ -39,20 +53,20 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
         index=True,
     )
 
-    # Personal info (encrypted)
+    # Personal info (encrypted) - populated by CD-51 OCR
     nic_number: Mapped[str | None] = mapped_column(String(255))  # Encrypted
     full_name: Mapped[str | None] = mapped_column(String(255))
     date_of_birth: Mapped[dt.date | None] = mapped_column(Date)
     address: Mapped[str | None] = mapped_column(Text)  # Encrypted
-    gender: Mapped[str | None] = mapped_column(String(10))
+    gender: Mapped[str | None] = mapped_column(String(10))  # from CD-50
 
-    # Document URLs
+    # Document URLs (Supabase Storage)
     nic_front_url: Mapped[str] = mapped_column(Text, nullable=False)
     nic_back_url: Mapped[str] = mapped_column(Text, nullable=False)
     selfie_url: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # AI extraction results
-    extracted_data: Mapped[dict | None] = mapped_column(JSON)  # Claude API extracted data
+    # AI extraction results (Claude API / CD-51 OCR)
+    extracted_data: Mapped[dict | None] = mapped_column(JSON)
     discrepancies: Mapped[dict | None] = mapped_column(
         JSON
     )  # Differences between extracted and provided data
