@@ -14,7 +14,7 @@ httpx==0.26.0
 black==26.1.0
 flake8==7.3.0
 mypy==1.19.1
-isort==7.0.0
+isort==8.0.0
 bandit==1.9.3
 safety>=3.7.0
 autoflake==2.3.1
