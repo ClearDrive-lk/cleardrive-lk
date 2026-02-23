@@ -10,12 +10,12 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'backend/**'
+      - "backend/**"
 
 jobs:
   # ============================================================================
@@ -32,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -61,7 +61,7 @@ jobs:
       - name: Run Flake8 via pre-commit
         run: pre-commit run flake8 --all-files
 
-      - name: Run mypy via pre-commit
+      - name: Run mypy via manual
         run: pre-commit run mypy --all-files
 
   # ============================================================================
@@ -78,7 +78,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -155,7 +155,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Cache dependencies
         uses: actions/cache@v4
