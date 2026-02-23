@@ -40,10 +40,11 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     )
 
     # Personal info (encrypted)
-    nic_number: Mapped[str] = mapped_column(String(255), nullable=False)  # Encrypted
-    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    date_of_birth: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted
+    nic_number: Mapped[str | None] = mapped_column(String(255))  # Encrypted
+    full_name: Mapped[str | None] = mapped_column(String(255))
+    date_of_birth: Mapped[dt.date | None] = mapped_column(Date)
+    address: Mapped[str | None] = mapped_column(Text)  # Encrypted
+    gender: Mapped[str | None] = mapped_column(String(10))
 
     # Document URLs
     nic_front_url: Mapped[str] = mapped_column(Text, nullable=False)
@@ -70,10 +71,9 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     user: Mapped[User] = relationship("User", back_populates="kyc_document", foreign_keys=[user_id])
     reviewed_by_user: Mapped[User | None] = relationship(
         "User",
-        foreign_keys=[reviewed_by],  # 🔑 explicit FK for reviewer
+        foreign_keys=[reviewed_by],
         viewonly=True,
         back_populates="reviewed_kyc_documents",
-        # optional if you don't modify via this relationship
     )
 
     def __repr__(self):
