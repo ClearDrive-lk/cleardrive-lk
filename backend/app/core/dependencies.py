@@ -12,14 +12,13 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .security import decode_access_token
 
-# HTTP Bearer token scheme.
-# auto_error=False lets us return a consistent 401 for missing/malformed auth.
-security = HTTPBearer(auto_error=False)
+# HTTP Bearer token scheme
+security = HTTPBearer()
 
 
 async def get_current_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
     """
@@ -51,9 +50,6 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-    if credentials is None:
-        raise credentials_exception
 
     try:
         # Decode token
