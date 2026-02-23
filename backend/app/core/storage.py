@@ -7,28 +7,40 @@ Story: CD-50
 """
 
 import os
-from typing import Dict
+from typing import Any, Dict
 
-from supabase import Client, create_client
+try:
+    from supabase import Client, create_client
+except ModuleNotFoundError:  # pragma: no cover - optional dependency in some CI jobs
+    Client = Any  # type: ignore[misc,assignment]
+    create_client = None
 
 
 class SupabaseStorage:
     """Supabase Storage client wrapper."""
 
     def __init__(self):
-        """Initialize Supabase client."""
+        """Initialize storage wrapper without connecting immediately."""
+        self.client: Client | None = None
 
-        # Get credentials from environment
+    def _ensure_client(self) -> Client:
+        """Create Supabase client lazily to avoid import-time failures in tests."""
+        if self.client is not None:
+            return self.client
+
+        if create_client is None:
+            raise RuntimeError("Supabase dependency is not installed")
+
         supabase_url = os.getenv("SUPABASE_URL")
         supabase_key = os.getenv("SUPABASE_KEY")
 
         if not supabase_url or not supabase_key:
-            raise ValueError(
-                "Missing Supabase credentials. " "Set SUPABASE_URL and SUPABASE_KEY in .env"
+            raise RuntimeError(
+                "Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_KEY in .env"
             )
 
-        # Create Supabase client
-        self.client: Client = create_client(supabase_url, supabase_key)
+        self.client = create_client(supabase_url, supabase_key)
+        return self.client
 
     async def upload_file(
         self,
@@ -51,13 +63,15 @@ class SupabaseStorage:
         """
 
         try:
+            client = self._ensure_client()
+
             # Upload to Supabase Storage
-            self.client.storage.from_(bucket).upload(
+            client.storage.from_(bucket).upload(
                 path=file_path, file=file_content, file_options={"content-type": content_type}
             )
 
             # Get public URL
-            public_url = self.client.storage.from_(bucket).get_public_url(file_path)
+            public_url = client.storage.from_(bucket).get_public_url(file_path)
 
             return {"url": public_url, "path": file_path}
 
@@ -67,7 +81,7 @@ class SupabaseStorage:
     async def download_file(self, bucket: str, file_path: str) -> bytes:
         """Download file from Supabase Storage."""
         try:
-            response = self.client.storage.from_(bucket).download(file_path)
+            response = self._ensure_client().storage.from_(bucket).download(file_path)
             return response
         except Exception as e:
             raise Exception(f"Supabase download failed: {str(e)}")
@@ -75,7 +89,7 @@ class SupabaseStorage:
     async def delete_file(self, bucket: str, file_path: str) -> bool:
         """Delete file from Supabase Storage."""
         try:
-            self.client.storage.from_(bucket).remove([file_path])
+            self._ensure_client().storage.from_(bucket).remove([file_path])
             return True
         except Exception as e:
             raise Exception(f"Supabase delete failed: {str(e)}")
