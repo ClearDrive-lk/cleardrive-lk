@@ -15,7 +15,7 @@ from app.core.storage import storage
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.kyc.schemas import KYCStatusResponse, KYCUploadResponse
-from app.modules.security.models import FileIntegrity
+from app.modules.security.models import FileIntegrity, VerificationStatus
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -187,7 +187,7 @@ async def upload_kyc_documents(
             mime_type=file_data["mime_type"],
             sha256_hash=checksums[file_name],
             uploaded_by=current_user.id,
-            verification_status="VALID",
+            verification_status=VerificationStatus.VERIFIED,
         )
 
         db.add(integrity_record)
