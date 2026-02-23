@@ -1,4 +1,8 @@
 # backend/app/modules/kyc/models.py
+"""
+KYC (Know Your Customer) data model.
+Story: CD-50 - KYC Document Upload
+"""
 
 from __future__ import annotations
 
@@ -27,7 +31,17 @@ class KYCStatus(str, enum.Enum):
 
 
 class KYCDocument(Base, UUIDMixin, TimestampMixin):
-    """KYC document model - user verification."""
+    """
+    KYC document submission model.
+
+    Story: CD-50
+
+    Stores:
+    - User's NIC information (extracted by CD-51 OCR)
+    - Document URLs (Supabase Storage)
+    - Verification status
+    - Extracted data and discrepancies from Claude API
+    """
 
     __tablename__ = "kyc_documents"
 
@@ -39,19 +53,20 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
         index=True,
     )
 
-    # Personal info (encrypted)
-    nic_number: Mapped[str] = mapped_column(String(255), nullable=False)  # Encrypted
-    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    date_of_birth: Mapped[dt.date] = mapped_column(Date, nullable=False)
-    address: Mapped[str] = mapped_column(Text, nullable=False)  # Encrypted
+    # Personal info (encrypted) - populated by CD-51 OCR
+    nic_number: Mapped[str | None] = mapped_column(String(255))  # Encrypted
+    full_name: Mapped[str | None] = mapped_column(String(255))
+    date_of_birth: Mapped[dt.date | None] = mapped_column(Date)
+    address: Mapped[str | None] = mapped_column(Text)  # Encrypted
+    gender: Mapped[str | None] = mapped_column(String(10))  # from CD-50
 
-    # Document URLs
+    # Document URLs (Supabase Storage)
     nic_front_url: Mapped[str] = mapped_column(Text, nullable=False)
     nic_back_url: Mapped[str] = mapped_column(Text, nullable=False)
     selfie_url: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # AI extraction results
-    extracted_data: Mapped[dict | None] = mapped_column(JSON)  # Claude API extracted data
+    # AI extraction results (Claude API / CD-51 OCR)
+    extracted_data: Mapped[dict | None] = mapped_column(JSON)
     discrepancies: Mapped[dict | None] = mapped_column(
         JSON
     )  # Differences between extracted and provided data
@@ -70,10 +85,9 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     user: Mapped[User] = relationship("User", back_populates="kyc_document", foreign_keys=[user_id])
     reviewed_by_user: Mapped[User | None] = relationship(
         "User",
-        foreign_keys=[reviewed_by],  # 🔑 explicit FK for reviewer
+        foreign_keys=[reviewed_by],
         viewonly=True,
         back_populates="reviewed_kyc_documents",
-        # optional if you don't modify via this relationship
     )
 
     def __repr__(self):

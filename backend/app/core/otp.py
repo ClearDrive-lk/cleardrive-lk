@@ -79,17 +79,14 @@ def verify_otp_constant_time(stored_otp: str, provided_otp: str) -> bool:
         >>> verify_otp_constant_time("123456", "654321")
         False
     """
-    # Normalize inputs to fixed digest lengths before comparison.
-    # This makes timing less sensitive to input length/content variance.
-    stored_otp_str = "" if stored_otp is None else str(stored_otp)
-    provided_otp_str = "" if provided_otp is None else str(provided_otp)
+    if not stored_otp or not provided_otp:
+        return False
 
-    stored_digest = hashlib.sha256(stored_otp_str.encode()).digest()
-    provided_digest = hashlib.sha256(provided_otp_str.encode()).digest()
-    digest_match = hmac.compare_digest(stored_digest, provided_digest)
+    # Ensure both are strings
+    stored_otp = str(stored_otp)
+    provided_otp = str(provided_otp)
 
-    # Preserve original behavior: empty/missing OTPs are always invalid.
-    return bool(stored_otp_str) and bool(provided_otp_str) and digest_match
+    return hmac.compare_digest(stored_otp, provided_otp)
 
 
 def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:

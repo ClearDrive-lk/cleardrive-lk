@@ -96,7 +96,24 @@ def main() -> int:
         "--cov-report=html",
         "--cov-report=term",
     ]
-    return subprocess.call(cmd, cwd=backend_dir, env=env)
+    timeout_seconds = int(os.environ.get("PYTEST_HOOK_TIMEOUT_SECONDS", "300"))
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=backend_dir,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            check=False,
+            timeout=timeout_seconds,
+        )
+        return result.returncode
+    except subprocess.TimeoutExpired:
+        print(
+            f"Backend tests timed out after {timeout_seconds}s in hook. "
+            "Run `cd backend; pytest -vv -x app/tests` for details.",
+            file=sys.stderr,
+        )
+        return 124
 
 
 if __name__ == "__main__":

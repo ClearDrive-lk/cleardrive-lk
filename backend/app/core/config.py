@@ -6,12 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application configuration."""
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=True,
-        extra="ignore",
-    )
-
     # App
     PROJECT_NAME: str = "ClearDrive.lk API"
     VERSION: str = "2.1.0"
@@ -53,6 +47,7 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    SUPABASE_ANON_KEY: str | None = None
 
     # Email (SMTP)
     SMTP_HOST: str
@@ -110,6 +105,12 @@ class Settings(BaseSettings):
         "api.cleardrive.lk",
         "*.cleardrive.lk",
     ]
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 settings = Settings()

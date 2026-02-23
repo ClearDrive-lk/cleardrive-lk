@@ -1,0 +1,236 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.9, pytest-8.2.0, pluggy-1.6.0
+rootdir: E:\projects\cleardrive-lk
+configfile: pytest.ini
+testpaths: backend/app/tests
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-4.1.0, mock-3.15.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 71 items
+
+backend\app\tests\test_admin_users.py ...........                        [ 15%]
+backend\app\tests\test_auth.py ....                                      [ 21%]
+backend\app\tests\test_jwt.py .................                          [ 45%]
+backend\app\tests\test_main.py ..                                        [ 47%]
+backend\app\tests\test_otp.py ................                           [ 70%]
+backend\app\tests\test_rbac.py ...............                           [ 91%]
+backend\app\tests\test_security_headers.py ..                            [ 94%]
+backend\app\tests\test_smoke.py .                                        [ 95%]
+backend\app\tests\test_vehicles.py ...                                   [100%]
+
+============================== warnings summary ===============================
+backend\app\modules\admin\routes.py:28
+  E:\projects\cleardrive-lk\backend\app\modules\admin\routes.py:28: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class UserListItem(BaseModel):
+
+backend\app\modules\auth\schemas.py:37
+  E:\projects\cleardrive-lk\backend\app\modules\auth\schemas.py:37: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class UserResponse(UserBase):
+
+backend\app\modules\auth\schemas.py:160
+  E:\projects\cleardrive-lk\backend\app\modules\auth\schemas.py:160: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class SessionResponse(BaseModel):
+
+backend\app\modules\kyc\schemas.py:16
+  E:\projects\cleardrive-lk\backend\app\modules\kyc\schemas.py:16: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class KYCUploadResponse(BaseModel):
+
+backend\app\main.py:195
+  E:\projects\cleardrive-lk\backend\app\main.py:195: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    @app.on_event("startup")
+
+C:\Users\malit\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\applications.py:4573
+C:\Users\malit\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\applications.py:4573
+  C:\Users\malit\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\applications.py:4573: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    return self.router.on_event(event_type)
+
+backend\app\main.py:211
+  E:\projects\cleardrive-lk\backend\app\main.py:211: DeprecationWarning:
+          on_event is deprecated, use lifespan event handlers instead.
+
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+
+    @app.on_event("shutdown")
+
+backend/app/tests/test_admin_users.py: 11 warnings
+backend/app/tests/test_auth.py: 4 warnings
+backend/app/tests/test_jwt.py: 6 warnings
+backend/app/tests/test_otp.py: 1 warning
+backend/app/tests/test_rbac.py: 2 warnings
+  E:\projects\cleardrive-lk\backend\app\core\security.py:98: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+backend/app/tests/test_admin_users.py: 11 warnings
+backend/app/tests/test_auth.py: 4 warnings
+backend/app/tests/test_jwt.py: 7 warnings
+backend/app/tests/test_otp.py: 1 warning
+backend/app/tests/test_rbac.py: 2 warnings
+  E:\projects\cleardrive-lk\backend\app\core\security.py:103: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "iat": datetime.utcnow(),
+
+backend/app/tests/test_admin_users.py: 11 warnings
+backend/app/tests/test_jwt.py: 5 warnings
+backend/app/tests/test_main.py: 2 warnings
+backend/app/tests/test_rbac.py: 2 warnings
+backend/app/tests/test_security_headers.py: 2 warnings
+backend/app/tests/test_vehicles.py: 3 warnings
+  E:\projects\cleardrive-lk\backend\app\core\redis_client.py:42: DeprecationWarning: Call to deprecated close. (Use aclose() instead) -- Deprecated since version 5.0.0.
+    await _redis_client.close()
+
+backend/app/tests/test_admin_users.py::TestChangeUserRole::test_change_user_role
+backend/app/tests/test_admin_users.py::TestRoleChangeSideEffects::test_role_change_persists_updated_role
+  E:\projects\cleardrive-lk\backend\app\modules\admin\routes.py:349: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    user.updated_at = datetime.utcnow()
+
+backend/app/tests/test_admin_users.py::TestChangeUserRole::test_change_user_role
+backend/app/tests/test_admin_users.py::TestRoleChangeSideEffects::test_role_change_persists_updated_role
+  E:\projects\cleardrive-lk\backend\app\modules\admin\routes.py:376: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    changed_at=datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_access_token_expiry_minutes
+backend/app/tests/test_auth.py::test_refresh_token_expiry_days
+  E:\projects\cleardrive-lk\backend\app\tests\test_auth.py:23: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    exp = datetime.utcfromtimestamp(claims["exp"])
+
+backend/app/tests/test_auth.py::test_access_token_expiry_minutes
+backend/app/tests/test_auth.py::test_refresh_token_expiry_days
+  E:\projects\cleardrive-lk\backend\app\tests\test_auth.py:24: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return (exp - datetime.utcnow()).total_seconds()
+
+backend/app/tests/test_auth.py: 4 warnings
+backend/app/tests/test_jwt.py: 5 warnings
+backend/app/tests/test_otp.py: 1 warning
+  E:\projects\cleardrive-lk\backend\app\core\security.py:147: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+backend/app/tests/test_auth.py: 4 warnings
+backend/app/tests/test_jwt.py: 5 warnings
+backend/app/tests/test_otp.py: 1 warning
+  E:\projects\cleardrive-lk\backend\app\core\security.py:152: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "iat": datetime.utcnow(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_otp.py::TestOTPRedis::test_store_and_get_otp
+backend/app/tests/test_otp.py::TestOTPRedis::test_delete_otp
+backend/app/tests/test_otp.py::TestOTPRedis::test_increment_attempts
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_invalid
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_max_attempts
+  E:\projects\cleardrive-lk\backend\app\core\redis_client.py:74: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "created_at": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+  E:\projects\cleardrive-lk\backend\app\core\session.py:228: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "created_at": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+  E:\projects\cleardrive-lk\backend\app\core\session.py:229: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "last_active": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_jwt.py::TestRefreshTokenStorage::test_store_and_get_refresh_token
+backend/app/tests/test_jwt.py::TestRefreshTokenStorage::test_delete_refresh_token
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+  E:\projects\cleardrive-lk\backend\app\core\redis.py:286: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "created_at": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+  E:\projects\cleardrive-lk\backend\app\core\redis.py:369: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "created_at": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+  E:\projects\cleardrive-lk\backend\app\core\redis.py:370: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "last_active": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success
+  E:\projects\cleardrive-lk\backend\app\modules\auth\routes.py:459: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+
+backend/app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens
+  E:\projects\cleardrive-lk\backend\app\tests\test_auth.py:83: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    delta = session.expires_at - datetime.utcnow()
+
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+  E:\projects\cleardrive-lk\backend\app\modules\auth\routes.py:918: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    remaining_seconds = exp_timestamp - datetime.utcnow().timestamp()
+
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_jwt.py::TestTokenBlacklist::test_blacklist_token
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_logout
+  E:\projects\cleardrive-lk\backend\app\core\redis.py:214: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    value = json.dumps({"blacklisted_at": datetime.utcnow().isoformat(), "reason": "logout"})
+
+backend/app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+  E:\projects\cleardrive-lk\backend\app\modules\auth\routes.py:944: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    session.last_active = datetime.utcnow()
+
+backend/app/tests/test_jwt.py::TestTokenValidation::test_decode_expired_access_token
+  E:\projects\cleardrive-lk\backend\app\core\security.py:96: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expire = datetime.utcnow() + expires_delta
+
+backend/app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh
+  E:\projects\cleardrive-lk\backend\app\tests\test_jwt.py:207: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() + timedelta(days=30),
+
+backend/app/tests/test_otp.py::TestOTPExpiry::test_otp_not_expired
+  E:\projects\cleardrive-lk\backend\app\tests\test_otp.py:80: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow()
+
+backend/app/tests/test_otp.py::TestOTPExpiry::test_otp_not_expired
+backend/app/tests/test_otp.py::TestOTPExpiry::test_otp_expired
+  E:\projects\cleardrive-lk\backend\app\core\otp.py:121: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow() > expiry_time
+
+backend/app/tests/test_otp.py::TestOTPExpiry::test_otp_expired
+  E:\projects\cleardrive-lk\backend\app\tests\test_otp.py:85: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow() - timedelta(minutes=10)
+
+backend/app/tests/test_otp.py::TestOTPEndpoints::test_request_otp_sends_email
+  E:\projects\cleardrive-lk\backend\app\core\redis.py:88: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "created_at": datetime.utcnow().isoformat(),
+
+backend/app/tests/test_vehicles.py::test_get_vehicles_with_data
+backend/app/tests/test_vehicles.py::test_get_vehicles_with_data
+backend/app/tests/test_vehicles.py::test_search_vehicles_by_make
+backend/app/tests/test_vehicles.py::test_search_vehicles_by_make
+backend/app/tests/test_vehicles.py::test_search_vehicles_by_make
+backend/app/tests/test_vehicles.py::test_search_vehicles_by_make
+backend/app/tests/test_vehicles.py::test_search_vehicles_by_make
+backend/app/tests/test_vehicles.py::test_search_vehicles_by_make
+  C:\Users\malit\AppData\Local\Programs\Python\Python313\Lib\site-packages\sqlalchemy\sql\schema.py:3596: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+====================== 71 passed, 169 warnings in 0.89s =======================
