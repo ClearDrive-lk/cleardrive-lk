@@ -62,4 +62,3 @@ export function JourneyTimeline({ currentStep }: JourneyTimelineProps) {
     </ol>
   );
 }
-

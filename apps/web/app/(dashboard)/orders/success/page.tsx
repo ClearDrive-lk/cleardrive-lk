@@ -25,7 +25,9 @@ function OrderSuccessContent() {
                 <CheckCircle2 className="h-10 w-10 text-emerald-400" />
               </span>
             </div>
-            <CardTitle className="text-3xl font-bold">Order Confirmed</CardTitle>
+            <CardTitle className="text-3xl font-bold">
+              Order Confirmed
+            </CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-6 text-center">
@@ -34,7 +36,9 @@ function OrderSuccessContent() {
             </p>
 
             <div className="rounded-md border border-white/10 bg-black/30 p-4">
-              <p className="text-xs uppercase tracking-widest text-zinc-400">Order ID</p>
+              <p className="text-xs uppercase tracking-widest text-zinc-400">
+                Order ID
+              </p>
               <p className="font-mono text-lg text-[#FE7743]">{orderId}</p>
             </div>
 
@@ -65,4 +69,3 @@ export default function OrderSuccessPage() {
     </AuthGuard>
   );
 }
-

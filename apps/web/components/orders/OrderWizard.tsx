@@ -9,7 +9,13 @@ import { Lock, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -149,7 +155,9 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
     }
 
     setDirection(1);
-    setStep((previousStep) => Math.min(previousStep + 1, STEP_TITLES.length - 1));
+    setStep((previousStep) =>
+      Math.min(previousStep + 1, STEP_TITLES.length - 1),
+    );
   };
 
   const previousStep = () => {
@@ -177,7 +185,9 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
       const params = responseData.params;
 
       if (!paymentUrl || !params || typeof params !== "object") {
-        throw new Error("Payment initialization failed. Invalid server response.");
+        throw new Error(
+          "Payment initialization failed. Invalid server response.",
+        );
       }
 
       const { orderData, hash } = buildPayHereOrderDataFromParams(params);
@@ -189,12 +199,20 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const apiMessage =
-          (error.response?.data as { detail?: string; message?: string } | undefined)
-            ?.detail ??
-          (error.response?.data as { detail?: string; message?: string } | undefined)
-            ?.message;
+          (
+            error.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.detail ??
+          (
+            error.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.message;
 
-        setSubmitError(apiMessage || error.message || "Failed to create order.");
+        setSubmitError(
+          apiMessage || error.message || "Failed to create order.",
+        );
         return;
       }
 
@@ -246,7 +264,9 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
             >
               {step === 0 ? (
                 <section className="space-y-5">
-                  <h3 className="text-lg font-semibold">Vehicle Confirmation</h3>
+                  <h3 className="text-lg font-semibold">
+                    Vehicle Confirmation
+                  </h3>
                   <div className="rounded-lg border border-white/10 bg-black/30 p-4">
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
@@ -283,7 +303,10 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
                         </p>
                         {vehicle.lotNumber ? (
                           <p className="text-sm text-zinc-400">
-                            Lot Number: <span className="text-zinc-200">{vehicle.lotNumber}</span>
+                            Lot Number:{" "}
+                            <span className="text-zinc-200">
+                              {vehicle.lotNumber}
+                            </span>
                           </p>
                         ) : null}
                         <Separator className="bg-white/10" />
@@ -295,7 +318,8 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
                             </span>
                           </div>
                           <p className="text-xs text-zinc-500">
-                            Confirm this vehicle summary before continuing with shipping.
+                            Confirm this vehicle summary before continuing with
+                            shipping.
                           </p>
                         </div>
                       </div>
@@ -380,7 +404,9 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
 
               {step === 2 ? (
                 <section className="space-y-5">
-                  <h3 className="text-lg font-semibold">Transparency Receipt</h3>
+                  <h3 className="text-lg font-semibold">
+                    Transparency Receipt
+                  </h3>
                   <div className="rounded-lg border border-white/10 bg-black/30 p-4">
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center justify-between text-zinc-300">
@@ -409,7 +435,8 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
 
                   <p className="flex items-center gap-2 text-xs text-zinc-400">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    Finalize this order to proceed to payment and live journey tracking.
+                    Finalize this order to proceed to payment and live journey
+                    tracking.
                   </p>
                 </section>
               ) : null}
@@ -418,7 +445,9 @@ export function OrderWizard({ vehicle, className }: OrderWizardProps) {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-4 border-t border-white/10 pt-6">
-          {submitError ? <p className="w-full text-sm text-red-400">{submitError}</p> : null}
+          {submitError ? (
+            <p className="w-full text-sm text-red-400">{submitError}</p>
+          ) : null}
           <div className="flex w-full justify-between">
             <Button
               type="button"

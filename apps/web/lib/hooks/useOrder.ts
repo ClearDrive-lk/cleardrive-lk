@@ -56,10 +56,16 @@ export function useOrder(id: string) {
 
         if (axios.isAxiosError(fetchError)) {
           const apiMessage =
-            (fetchError.response?.data as { detail?: string; message?: string } | undefined)
-              ?.detail ??
-            (fetchError.response?.data as { detail?: string; message?: string } | undefined)
-              ?.message;
+            (
+              fetchError.response?.data as
+                | { detail?: string; message?: string }
+                | undefined
+            )?.detail ??
+            (
+              fetchError.response?.data as
+                | { detail?: string; message?: string }
+                | undefined
+            )?.message;
 
           setError(apiMessage || fetchError.message || "Failed to load order.");
         } else {
@@ -85,4 +91,3 @@ export function useOrder(id: string) {
 
   return { data, isLoading, error };
 }
-

@@ -1,15 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  flexRender,
-  ColumnDef,
-  SortingState,
-} from "@tanstack/react-table";
 import { format } from "date-fns";
 
 interface RoleChangeModalProps {
@@ -89,6 +81,13 @@ interface UserListResponse {
   total_pages: number;
 }
 
+type SortField = "email" | "role" | "kyc_status" | "created_at";
+
+interface SortState {
+  id: SortField;
+  desc: boolean;
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
@@ -102,9 +101,10 @@ export default function AdminUsersPage() {
   const [kycFilter, setKycFilter] = useState("");
 
   // Sorting
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "created_at", desc: true },
-  ]);
+  const [sorting, setSorting] = useState<SortState>({
+    id: "created_at",
+    desc: true,
+  });
 
   // Role change modal
   const [roleChangeModal, setRoleChangeModal] = useState<{
@@ -124,10 +124,8 @@ export default function AdminUsersPage() {
       if (roleFilter) params.append("role", roleFilter);
       if (kycFilter) params.append("kyc_status", kycFilter);
 
-      if (sorting.length > 0) {
-        params.append("sort_by", sorting[0].id);
-        params.append("sort_order", sorting[0].desc ? "desc" : "asc");
-      }
+      params.append("sort_by", sorting.id);
+      params.append("sort_order", sorting.desc ? "desc" : "asc");
 
       const response = await apiClient.get<UserListResponse>(
         `/admin/users?${params.toString()}`,
@@ -147,110 +145,33 @@ export default function AdminUsersPage() {
     loadUsers();
   }, [loadUsers]);
 
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium">{row.original.email}</span>
-          <span className="text-sm text-gray-500">{row.original.name}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => {
-        const roleColors: Record<string, string> = {
-          CUSTOMER: "bg-blue-100 text-blue-800",
-          ADMIN: "bg-red-100 text-red-800",
-          EXPORTER: "bg-green-100 text-green-800",
-          CLEARING_AGENT: "bg-yellow-100 text-yellow-800",
-          FINANCE_PARTNER: "bg-purple-100 text-purple-800",
-        };
+  const roleColors: Record<string, string> = {
+    CUSTOMER: "bg-blue-100 text-blue-800",
+    ADMIN: "bg-red-100 text-red-800",
+    EXPORTER: "bg-green-100 text-green-800",
+    CLEARING_AGENT: "bg-yellow-100 text-yellow-800",
+    FINANCE_PARTNER: "bg-purple-100 text-purple-800",
+  };
 
-        const role = row.original.role;
-        return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${roleColors[role] || "bg-gray-100 text-gray-800"}`}
-          >
-            {role}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "kyc_status",
-      header: "KYC",
-      cell: ({ row }) => {
-        const status = row.original.kyc_status;
+  const statusColors: Record<string, string> = {
+    PENDING: "bg-yellow-100 text-yellow-800",
+    APPROVED: "bg-green-100 text-green-800",
+    REJECTED: "bg-red-100 text-red-800",
+  };
 
-        if (!status) {
-          return <span className="text-gray-400 text-sm">Not Submitted</span>;
-        }
+  const toggleSort = (field: SortField) => {
+    setSorting((prev) =>
+      prev.id === field
+        ? { id: field, desc: !prev.desc }
+        : { id: field, desc: false },
+    );
+    setPage(1);
+  };
 
-        const statusColors: Record<string, string> = {
-          PENDING: "bg-yellow-100 text-yellow-800",
-          APPROVED: "bg-green-100 text-green-800",
-          REJECTED: "bg-red-100 text-red-800",
-        };
-
-        return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
-          >
-            {status}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: "Joined",
-      cell: ({ row }) => (
-        <span className="text-sm">
-          {format(new Date(row.original.created_at), "MMM d, yyyy")}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() =>
-              setRoleChangeModal({ open: true, user: row.original })
-            }
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-          >
-            Change Role
-          </button>
-          <button
-            onClick={() =>
-              (window.location.href = `/admin/users/${row.original.id}`)
-            }
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200"
-          >
-            View
-          </button>
-        </div>
-      ),
-    },
-  ];
-
-  const table = useReactTable({
-    data: users,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    manualSorting: true,
-  });
+  const getSortArrow = (field: SortField) => {
+    if (sorting.id !== field) return null;
+    return sorting.desc ? "\u2193" : "\u2191";
+  };
 
   return (
     <div className="p-6">
@@ -321,43 +242,112 @@ export default function AdminUsersPage() {
           <div className="border rounded-lg overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <div className="flex items-center gap-2">
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {header.column.getIsSorted() && (
-                            <span>
-                              {header.column.getIsSorted() === "desc"
-                                ? "↓"
-                                : "↑"}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+                <tr>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => toggleSort("email")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Email
+                      {getSortArrow("email") && (
+                        <span>{getSortArrow("email")}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => toggleSort("role")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Role
+                      {getSortArrow("role") && (
+                        <span>{getSortArrow("role")}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => toggleSort("kyc_status")}
+                  >
+                    <div className="flex items-center gap-2">
+                      KYC
+                      {getSortArrow("kyc_status") && (
+                        <span>{getSortArrow("kyc_status")}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => toggleSort("created_at")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Joined
+                      {getSortArrow("created_at") && (
+                        <span>{getSortArrow("created_at")}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{user.email}</span>
+                        <span className="text-sm text-gray-500">
+                          {user.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${roleColors[user.role] || "bg-gray-100 text-gray-800"}`}
+                      >
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.kyc_status ? (
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[user.kyc_status] || "bg-gray-100 text-gray-800"}`}
+                        >
+                          {user.kyc_status}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">
+                          Not Submitted
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm">
+                        {format(new Date(user.created_at), "MMM d, yyyy")}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            setRoleChangeModal({ open: true, user })
+                          }
+                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                        >
+                          Change Role
+                        </button>
+                        <button
+                          onClick={() =>
+                            (window.location.href = `/admin/users/${user.id}`)
+                          }
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

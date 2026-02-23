@@ -1,5 +1,5 @@
-from uuid import UUID
 import logging
+from uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user

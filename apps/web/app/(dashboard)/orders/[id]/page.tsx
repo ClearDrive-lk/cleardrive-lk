@@ -33,7 +33,10 @@ function OrderTrackingContent() {
         <div className="mx-auto max-w-4xl rounded-xl border border-white/10 bg-[#0D0D0D] p-8 text-center">
           <p className="mb-2 text-lg">Order not found</p>
           {error ? <p className="mb-4 text-sm text-red-400">{error}</p> : null}
-          <Button asChild className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90">
+          <Button
+            asChild
+            className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90"
+          >
             <Link href="/dashboard/orders">Back to Orders</Link>
           </Button>
         </div>
@@ -49,12 +52,17 @@ function OrderTrackingContent() {
       <div className="mx-auto max-w-6xl space-y-8">
         <header className="space-y-3">
           <div className="flex flex-wrap items-center gap-3">
-            <Badge className="bg-[#FE7743]/15 text-[#FE7743]">Order Tracking</Badge>
+            <Badge className="bg-[#FE7743]/15 text-[#FE7743]">
+              Order Tracking
+            </Badge>
             <span className="font-mono text-sm text-zinc-400">#{order.id}</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Vehicle Journey Timeline</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Vehicle Journey Timeline
+          </h1>
           <p className="text-zinc-400">
-            End-to-end transparency for your import process, from auction to delivery.
+            End-to-end transparency for your import process, from auction to
+            delivery.
           </p>
         </header>
 
@@ -101,7 +109,9 @@ function OrderTrackingContent() {
                   <p className="text-zinc-400">
                     Lot Number: {vehicle?.lotNumber || "Pending"}
                   </p>
-                  <p className="text-zinc-400">Color: {vehicle?.color || "Pending"}</p>
+                  <p className="text-zinc-400">
+                    Color: {vehicle?.color || "Pending"}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -167,7 +177,9 @@ function OrderTrackingContent() {
                   );
                 })}
                 {documents.length === 0 ? (
-                  <p className="text-sm text-zinc-400">No documents available yet.</p>
+                  <p className="text-sm text-zinc-400">
+                    No documents available yet.
+                  </p>
                 ) : null}
               </CardContent>
             </Card>

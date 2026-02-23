@@ -1,4 +1,4 @@
-# backend/app/core/storage.py
+﻿# backend/app/core/storage.py
 
 """
 Supabase Storage client for file uploads.
@@ -7,7 +7,15 @@ Supabase Storage client for file uploads.
 from typing import Any
 
 from app.core.config import settings
-from supabase import Client, create_client
+
+try:
+    from supabase import Client, create_client
+
+    SUPABASE_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover
+    Client = Any  # type: ignore[assignment]
+    create_client = None  # type: ignore[assignment]
+    SUPABASE_AVAILABLE = False
 
 
 class SupabaseStorageClient:
@@ -16,8 +24,15 @@ class SupabaseStorageClient:
     def __init__(self):
         self._client: Client | None = None
 
+    def _ensure_supabase_available(self) -> None:
+        if not SUPABASE_AVAILABLE or create_client is None:
+            raise RuntimeError(
+                "Supabase client is not installed. Install 'supabase' to use storage features.",
+            )
+
     @property
     def client(self) -> Client:
+        self._ensure_supabase_available()
         if self._client is None:
             self._client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         return self._client
@@ -47,11 +62,9 @@ class SupabaseStorageClient:
         response = self.client.storage.from_(bucket).upload(
             path=file_path,
             file=file_content,
-            # Allow safe retries when the same file path already exists.
             file_options={"content-type": content_type, "upsert": "true"},
         )
 
-        # supabase-py raises on error, but guard anyway
         if hasattr(response, "error") and response.error:
             raise Exception(f"Supabase upload error: {response.error}")
 
@@ -74,5 +87,5 @@ class SupabaseStorageClient:
         return self.client.storage.from_(bucket).get_public_url(file_path)
 
 
-# Singleton — imported as `from app.core.storage import storage`
+# Singleton imported as `from app.core.storage import storage`
 storage = SupabaseStorageClient()

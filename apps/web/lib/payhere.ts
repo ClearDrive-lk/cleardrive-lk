@@ -85,7 +85,9 @@ export function submitPayHereForm(
   const container = document.createElement("div");
   container.innerHTML = markup;
 
-  const form = container.querySelector<HTMLFormElement>("#payhere-checkout-form");
+  const form = container.querySelector<HTMLFormElement>(
+    "#payhere-checkout-form",
+  );
   if (!form) {
     throw new Error("Failed to generate PayHere form");
   }

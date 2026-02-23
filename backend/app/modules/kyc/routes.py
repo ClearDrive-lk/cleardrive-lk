@@ -7,7 +7,6 @@ Story: CD-50 - KYC Document Upload
 """
 
 import hashlib
-import imghdr
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -31,12 +30,11 @@ def _detect_mime_type(file_content: bytes, declared_content_type: str | None) ->
     if magic is not None:
         return str(magic.from_buffer(file_content, mime=True))
 
-    kind = imghdr.what(None, h=file_content)
-    if kind == "jpeg":
+    if file_content.startswith(b"\xff\xd8\xff"):
         return "image/jpeg"
-    if kind == "png":
+    if file_content.startswith(b"\x89PNG\r\n\x1a\n"):
         return "image/png"
-    if kind == "webp":
+    if file_content.startswith(b"RIFF") and file_content[8:12] == b"WEBP":
         return "image/webp"
     return declared_content_type or "application/octet-stream"
 

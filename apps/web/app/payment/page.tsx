@@ -11,10 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import {
-  buildPayHereOrderDataFromParams,
-  submitPayHereForm,
-} from "@/lib/payhere";
 
 // We move the logic into a inner component
 function PaymentForm() {
