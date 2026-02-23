@@ -1,4 +1,4 @@
-# backend/app/modules/kyc/__init__.py
+"""KYC module."""
 
 from .models import KYCDocument
 
