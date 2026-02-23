@@ -12,7 +12,7 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
-from app.modules.vehicles.models import FuelType, Transmission, Vehicle, VehicleStatus
+from app.modules.vehicles.models import Vehicle, VehicleStatus
 from app.modules.vehicles.schemas import (
     CostBreakdown,
     PaginationInfo,
@@ -22,7 +22,7 @@ from app.modules.vehicles.schemas import (
     VehicleUpdate,
 )
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import MetaData, Table, asc, desc, func, inspect, literal, or_, select
+from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
 
 # Import cost calculator if it exists
@@ -39,170 +39,6 @@ except ImportError:
     VAT_RATE = Decimal("0.15")
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
-
-
-def _normalize_enum_filter(value: Optional[str], enum_cls):
-    """Accept enum name or value (case-insensitive) for filter params."""
-    if not value:
-        return None
-
-    key = value.strip().upper()
-    if key in enum_cls.__members__:
-        return enum_cls[key]
-
-    for member in enum_cls:
-        if member.value.lower() == value.strip().lower():
-            return member
-
-    raise HTTPException(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        detail=f"Invalid value '{value}' for {enum_cls.__name__}",
-    )
-
-
-def _is_legacy_vehicle_schema(db: Session) -> bool:
-    """Detect old vehicles schema that has auction_id but no stock_no."""
-    try:
-        engine = db.get_bind()
-        if engine is None:
-            return False
-        columns = {col["name"] for col in inspect(engine).get_columns("vehicles")}
-        return "auction_id" in columns and "stock_no" not in columns
-    except Exception:
-        return False
-
-
-def _get_vehicles_legacy(
-    db: Session,
-    *,
-    search: Optional[str],
-    make: Optional[str],
-    model: Optional[str],
-    year_min: Optional[int],
-    year_max: Optional[int],
-    price_min: Optional[Decimal],
-    price_max: Optional[Decimal],
-    mileage_max: Optional[int],
-    fuel_type: Optional[str],
-    transmission: Optional[str],
-    status_filter: VehicleStatus,
-    page: int,
-    limit: int,
-    sort_by: str,
-    sort_order: str,
-) -> VehicleListResponse:
-    """Read vehicles from legacy schema but return stock_no-compatible response."""
-    engine = db.get_bind()
-    if engine is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="DB bind missing"
-        )
-
-    vehicles_table = Table("vehicles", MetaData(), autoload_with=engine)
-    filters = []
-
-    if search:
-        filters.append(
-            or_(
-                vehicles_table.c.make.ilike(f"%{search}%"),
-                vehicles_table.c.model.ilike(f"%{search}%"),
-            )
-        )
-    if make:
-        filters.append(vehicles_table.c.make.ilike(f"%{make}%"))
-    if model:
-        filters.append(vehicles_table.c.model.ilike(f"%{model}%"))
-    if year_min is not None:
-        filters.append(vehicles_table.c.year >= year_min)
-    if year_max is not None:
-        filters.append(vehicles_table.c.year <= year_max)
-    if price_min is not None:
-        filters.append(vehicles_table.c.price_jpy >= price_min)
-    if price_max is not None:
-        filters.append(vehicles_table.c.price_jpy <= price_max)
-    if mileage_max is not None:
-        filters.append(vehicles_table.c.mileage_km <= mileage_max)
-
-    fuel_type_enum = _normalize_enum_filter(fuel_type, FuelType)
-    if fuel_type_enum:
-        filters.append(vehicles_table.c.fuel_type == fuel_type_enum.name)
-
-    transmission_enum = _normalize_enum_filter(transmission, Transmission)
-    if transmission_enum:
-        filters.append(vehicles_table.c.transmission == transmission_enum.name)
-
-    if status_filter:
-        filters.append(vehicles_table.c.status == status_filter.name)
-
-    sort_map = {
-        "price_jpy": vehicles_table.c.price_jpy,
-        "year": vehicles_table.c.year,
-        "reg_year": vehicles_table.c.year,
-        "mileage_km": vehicles_table.c.mileage_km,
-        "created_at": vehicles_table.c.created_at,
-    }
-    sort_column = sort_map.get(sort_by, vehicles_table.c.created_at)
-    sort_clause = desc(sort_column) if sort_order == "desc" else asc(sort_column)
-
-    total_stmt = select(func.count()).select_from(vehicles_table)
-    if filters:
-        total_stmt = total_stmt.where(*filters)
-    total = int(db.execute(total_stmt).scalar() or 0)
-
-    offset = (page - 1) * limit
-    data_stmt = (
-        select(
-            vehicles_table.c.id,
-            vehicles_table.c.auction_id.label("stock_no"),
-            literal(None).label("chassis"),
-            vehicles_table.c.make,
-            vehicles_table.c.model,
-            literal(None).label("reg_year"),
-            vehicles_table.c.year,
-            literal(None).label("vehicle_type"),
-            literal(None).label("body_type"),
-            literal(None).label("grade"),
-            vehicles_table.c.price_jpy,
-            vehicles_table.c.mileage_km,
-            vehicles_table.c.engine_cc,
-            literal(None).label("engine_model"),
-            vehicles_table.c.fuel_type,
-            vehicles_table.c.transmission,
-            literal(None).label("steering"),
-            literal(None).label("drive"),
-            literal(None).label("seats"),
-            literal(None).label("doors"),
-            vehicles_table.c.color,
-            literal(None).label("location"),
-            literal(None).label("dimensions"),
-            literal(None).label("length_cm"),
-            literal(None).label("width_cm"),
-            literal(None).label("height_cm"),
-            literal(None).label("m3_size"),
-            literal(None).label("options"),
-            literal(None).label("other_remarks"),
-            vehicles_table.c.image_url,
-            literal(None).label("vehicle_url"),
-            literal(None).label("model_no"),
-            vehicles_table.c.status,
-            vehicles_table.c.created_at,
-            vehicles_table.c.updated_at,
-        )
-        .select_from(vehicles_table)
-        .order_by(sort_clause)
-        .offset(offset)
-        .limit(limit)
-    )
-    if filters:
-        data_stmt = data_stmt.where(*filters)
-
-    rows = db.execute(data_stmt).mappings().all()
-    vehicles = [VehicleResponse.model_validate(dict(row)) for row in rows]
-    total_pages = math.ceil(total / limit) if total > 0 else 0
-    return VehicleListResponse(
-        vehicles=vehicles,
-        pagination=PaginationInfo(page=page, limit=limit, total=total, total_pages=total_pages),
-    )
 
 
 # ============================================================================
@@ -262,26 +98,6 @@ async def get_vehicles(
     Public endpoint - no authentication required.
     """
 
-    if _is_legacy_vehicle_schema(db):
-        return _get_vehicles_legacy(
-            db,
-            search=search,
-            make=make,
-            model=model,
-            year_min=year_min,
-            year_max=year_max,
-            price_min=price_min,
-            price_max=price_max,
-            mileage_max=mileage_max,
-            fuel_type=fuel_type,
-            transmission=transmission,
-            status_filter=status,
-            page=page,
-            limit=limit,
-            sort_by=sort_by,
-            sort_order=sort_order,
-        )
-
     # Build query
     query = db.query(Vehicle)
 
@@ -316,13 +132,11 @@ async def get_vehicles(
     if mileage_max:
         query = query.filter(Vehicle.mileage_km <= mileage_max)
 
-    fuel_type_enum = _normalize_enum_filter(fuel_type, FuelType)
-    if fuel_type_enum:
-        query = query.filter(Vehicle.fuel_type == fuel_type_enum)
+    if fuel_type:
+        query = query.filter(Vehicle.fuel_type == fuel_type)
 
-    transmission_enum = _normalize_enum_filter(transmission, Transmission)
-    if transmission_enum:
-        query = query.filter(Vehicle.transmission == transmission_enum)
+    if transmission:
+        query = query.filter(Vehicle.transmission == transmission)
 
     if status:
         query = query.filter(Vehicle.status == status)
@@ -541,7 +355,7 @@ async def create_vehicle(
     - Created vehicle details
 
     **Errors:**
-    - 400: Vehicle with stock_no already exists
+    - 400: Vehicle with auction_id already exists
 
     Requires ADMIN role.
     """
