@@ -1,6 +1,6 @@
 # backend/app/core/config.py
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    SUPABASE_ANON_KEY: str | None = None
 
     # Email (SMTP)
     SMTP_HOST: str
@@ -104,9 +105,11 @@ class Settings(BaseSettings):
         "*.cleardrive.lk",
     ]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 settings = Settings()

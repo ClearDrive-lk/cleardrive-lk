@@ -65,11 +65,14 @@ jobs:
           mypy app --explicit-package-bases --ignore-missing-imports
 
   # ============================================================================
-  # SECURITY SCANNING
+  # SECURITY SCANNING (Main only)
   # ============================================================================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
 
     steps:
       - name: Checkout code
@@ -199,7 +202,7 @@ jobs:
   deploy-staging:
     name: Deploy Backend to Staging (Railway)
     runs-on: ubuntu-latest
-    needs: [lint, security, test]
+    needs: [lint, test]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     steps:

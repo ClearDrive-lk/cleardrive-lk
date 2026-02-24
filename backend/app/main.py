@@ -30,6 +30,7 @@ except ImportError:
     redis_close = None  # type: ignore
 
 # Import routers
+from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.test.routes import router as test_router
@@ -128,8 +129,9 @@ logger.info(
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
-logger.info("Routers registered: /auth, /vehicles, /test")
+logger.info("Routers registered: /auth, /vehicles, /orders, /admin, /test")
 
 
 @app.get("/")
