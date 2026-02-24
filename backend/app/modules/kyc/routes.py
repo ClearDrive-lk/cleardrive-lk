@@ -22,6 +22,21 @@ from sqlalchemy.orm import Session
 router = APIRouter(prefix="/kyc", tags=["kyc"])
 
 
+def _detect_mime_type(file_content: bytes, declared_content_type: str | None) -> str:
+    """Detect MIME type with fallback when libmagic is unavailable."""
+    if magic is not None:
+        return str(magic.from_buffer(file_content, mime=True))
+
+    # Fallback to simple file signature checks for common image types.
+    if file_content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if file_content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if len(file_content) >= 12 and file_content[:4] == b"RIFF" and file_content[8:12] == b"WEBP":
+        return "image/webp"
+    return declared_content_type or "application/octet-stream"
+
+
 # ===================================================================
 # ENDPOINT: UPLOAD KYC DOCUMENTS (CD-50.1)
 # ===================================================================
