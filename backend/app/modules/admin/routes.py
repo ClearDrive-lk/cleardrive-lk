@@ -5,10 +5,10 @@ Admin user management endpoints.
 import logging
 from datetime import UTC, datetime
 from typing import List, Optional
-from uuid import UUID
 
 from app.core.dependencies import get_db
 from app.core.permissions import Permission, require_permission
+from app.models.audit_log import AuditEventType, AuditLog
 from app.modules.auth.models import Role, User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -185,7 +185,7 @@ async def get_users(
     total = query.count()
     total_pages = (total + limit - 1) // limit if total > 0 else 0
 
-    # Explicitly reject out-of-range pages to avoid confusing empty responses.
+    # Explicitly reject out-of-range pages to avoid confusing empty responses
     if total > 0 and page > total_pages:
         raise HTTPException(
             status_code=400,
@@ -193,14 +193,12 @@ async def get_users(
         )
 
     # Apply sorting
-    sort_columns = {
+    sort_column = {
         "created_at": User.created_at,
         "email": User.email,
         "name": User.name,
         "role": User.role,
-    }
-
-    sort_column = sort_columns.get(sort_by, User.created_at)
+    }.get(sort_by, User.created_at)
 
     if sort_order.lower() == "desc":
         query = query.order_by(sort_column.desc())
@@ -237,7 +235,6 @@ async def get_users(
         for user in users
     ]
 
-    # Log admin action
     logger.info(
         f"Admin {current_user.email} listed users: {total} total, page {page}/{total_pages}",
         extra={
@@ -269,7 +266,7 @@ async def get_users(
 
 @router.patch("/users/{user_id}/role", response_model=RoleChangeResponse)
 async def change_user_role(
-    user_id: UUID,
+    user_id: str,
     request: RoleChangeRequest,
     current_user: User = Depends(require_permission(Permission.MANAGE_ROLES)),
     db: Session = Depends(get_db),
@@ -281,7 +278,7 @@ async def change_user_role(
 
     Security:
     - Admins cannot change their own role (prevents privilege escalation)
-    - All role changes are logged as security events
+    - All role changes are persisted to the audit log
     - Reason is required (minimum 10 characters)
     - Invalid roles are rejected
 
@@ -347,7 +344,21 @@ async def change_user_role(
     user.role = new_role
     user.updated_at = datetime.now(UTC)
 
-    # Persist role change
+    # Create audit log entry
+    audit_log = AuditLog(
+        event_type=AuditEventType.ROLE_CHANGED,
+        user_id=user.id,
+        admin_id=current_user.id,
+        details={
+            "old_role": old_role.value,
+            "new_role": new_role.value,
+            "reason": request.reason,
+            "changed_by_email": current_user.email,
+            "target_user_email": user.email,
+        },
+    )
+
+    db.add(audit_log)
     db.commit()
     db.refresh(user)
 
