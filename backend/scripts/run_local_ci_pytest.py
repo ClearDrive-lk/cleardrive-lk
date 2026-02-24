@@ -2,35 +2,30 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 
-def _has_sqlalchemy(python_exe: str) -> bool:
-    """Return True if the interpreter can import sqlalchemy."""
+def _has_backend_test_deps(python_exe: str) -> bool:
+    """Return True if the interpreter has core backend test dependencies."""
     try:
         result = subprocess.run(
-            [python_exe, "-c", "import sqlalchemy"],
+            [python_exe, "-c", "import pytest, sqlalchemy, supabase"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
+            timeout=5,
         )
         return result.returncode == 0
-    except Exception:
+    except (subprocess.TimeoutExpired, Exception):
         return False
 
 
 def _pick_python(repo_root: Path, backend_dir: Path) -> str:
-    """
-    Pick a Python interpreter that has backend deps.
-
-    Preference:
-    1. Active virtualenv (if it has sqlalchemy)
-    2. Common project venv locations (cross-platform)
-    3. Current interpreter (CI/system fallback)
-    """
+    """Pick a Python interpreter that has backend test deps."""
     candidates: list[Path] = []
 
     virtual_env = os.environ.get("VIRTUAL_ENV")
@@ -48,22 +43,34 @@ def _pick_python(repo_root: Path, backend_dir: Path) -> str:
             ]
         )
 
-    # Last fallback: current interpreter (works in CI where deps are installed).
     candidates.append(Path(sys.executable))
 
     for candidate in candidates:
-        if candidate.exists() and _has_sqlalchemy(str(candidate)):
+        if candidate.exists() and _has_backend_test_deps(str(candidate)):
             return str(candidate)
 
     return str(sys.executable)
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Run backend pytest tests")
+    parser.add_argument(
+        "--skip-coverage",
+        action="store_true",
+        help="Skip coverage reports (faster local run)",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=180,
+        help="Pytest timeout in seconds",
+    )
+    args = parser.parse_args()
+
     repo_root = Path(__file__).resolve().parents[2]
     backend_dir = repo_root / "backend"
     python_exe = _pick_python(repo_root, backend_dir)
 
-    # Match GitHub Actions backend test environment defaults.
     env = os.environ.copy()
     env.update(
         {
@@ -91,12 +98,41 @@ def main() -> int:
         python_exe,
         "-m",
         "pytest",
-        "--cov=app",
-        "--cov-report=xml",
-        "--cov-report=html",
-        "--cov-report=term",
+        "-o",
+        "addopts=",
+        "-q",
+        "-ra",
+        "--strict-markers",
+        "--tb=short",
+        "-p",
+        "no:warnings",
     ]
-    return subprocess.call(cmd, cwd=backend_dir, env=env)
+    if not args.skip_coverage:
+        cmd.extend(["--cov=app", "--cov-report=xml", "--cov-report=html"])
+
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=backend_dir,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=args.timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        print(f"Backend tests timed out after {args.timeout_seconds}s in hook.")
+        print("Run `pre-commit run --hook-stage pre-commit pytest --all-files -v` to debug.")
+        return 124
+
+    if result.returncode == 0:
+        print("Backend tests passed.")
+        return 0
+
+    print("Backend tests failed in hook.")
+    print("Run `pre-commit run --hook-stage pre-commit pytest --all-files -v` for details.")
+    return int(result.returncode)
 
 
 if __name__ == "__main__":

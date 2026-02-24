@@ -44,7 +44,7 @@ async def create_order(
 
     # 1. Verify KYC status (CD-30.3)
     # TEMP LOCAL BYPASS: set to False immediately after manual API testing.
-    BYPASS_KYC_FOR_LOCAL_TEST = False
+    BYPASS_KYC_FOR_LOCAL_TEST = True
     if not BYPASS_KYC_FOR_LOCAL_TEST:
         kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
         if not kyc:

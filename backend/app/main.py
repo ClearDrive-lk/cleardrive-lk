@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
+from app.modules.kyc.routes import router as kyc_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -130,7 +131,8 @@ app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
-app.include_router(test_router, prefix="/api/v1")
+app.include_router(test_router, prefix=settings.API_V1_PREFIX)
+app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 logger.info("Routers registered: /auth, /vehicles, /orders, /admin, /test")
 
 
@@ -185,38 +187,6 @@ async def health_check():
 @app.get("/api/v1/health")
 async def health_check_v1():
     return await health_check()
-
-
-@app.on_event("startup")
-async def startup_event():
-    """
-    DEPRECATED: Use lifespan context manager instead.
-    Kept for backward compatibility.
-    """
-    logger.info("Legacy startup event triggered (use lifespan instead)")
-
-    if REDIS_INIT_AVAILABLE and init_redis is not None:
-        try:
-            await init_redis()
-            logger.info("Redis connection initialized (legacy event)")
-        except Exception as e:
-            logger.warning(f"Redis initialization failed (legacy event): {e}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """
-    DEPRECATED: Use lifespan context manager instead.
-    Kept for backward compatibility.
-    """
-    logger.info("Legacy shutdown event triggered (use lifespan instead)")
-
-    if REDIS_INIT_AVAILABLE and redis_close is not None:
-        try:
-            await redis_close()
-            logger.info("Redis connection closed (legacy event)")
-        except Exception as e:
-            logger.warning(f"Error closing Redis (legacy event): {e}")
 
 
 if __name__ == "__main__":

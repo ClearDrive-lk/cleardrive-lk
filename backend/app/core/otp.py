@@ -6,7 +6,7 @@ OTP generation and verification utilities.
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 
 def generate_otp(length: int = 6) -> str:
@@ -103,11 +103,11 @@ def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
     Example:
         >>> from datetime import datetime, timedelta
         >>> # OTP created 3 minutes ago
-        >>> created = datetime.utcnow() - timedelta(minutes=3)
+        >>> created = datetime.now(UTC) - timedelta(minutes=3)
         >>> is_otp_expired(created, expiry_minutes=5)
         False
         >>> # OTP created 10 minutes ago
-        >>> created = datetime.utcnow() - timedelta(minutes=10)
+        >>> created = datetime.now(UTC) - timedelta(minutes=10)
         >>> is_otp_expired(created, expiry_minutes=5)
         True
     """
@@ -115,7 +115,7 @@ def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
         return True
 
     expiry_time = created_at + timedelta(minutes=expiry_minutes)
-    return datetime.utcnow() > expiry_time
+    return datetime.now(UTC) > expiry_time
 
 
 def format_otp_for_display(otp: str, separator: str = " ") -> str:
