@@ -96,7 +96,7 @@ async def create_order(
     db.refresh(new_order)
 
     # 6. Update vehicle status to RESERVED
-    vehicle.status = VehicleStatus.RESERVED
+    vehicle.status = VehicleStatus.RESERVED  # type: ignore[assignment]
     db.commit()
 
     # 7. Send confirmation email (CD-30.7)
