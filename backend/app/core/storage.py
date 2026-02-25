@@ -7,7 +7,16 @@ Supabase Storage client for file uploads.
 from typing import Any
 
 from app.core.config import settings
-from supabase import Client, create_client
+
+try:
+    from supabase import Client, create_client
+except ModuleNotFoundError:  # pragma: no cover - optional for local/tests
+    Client = Any  # type: ignore[assignment]
+
+    def create_client(*_args: object, **_kwargs: object) -> Any:
+        raise RuntimeError(
+            "supabase package is required. Install backend dependencies to enable storage."
+        )
 
 
 class SupabaseStorageClient:

@@ -1,4 +1,4 @@
-import logging`nfrom uuid import UUID
+import logging`r`nfrom uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
@@ -175,4 +175,5 @@ async def delete_order(
     # Admin permission already checked
     # ... delete order logic
     pass
+
 
