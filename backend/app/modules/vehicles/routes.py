@@ -313,7 +313,7 @@ async def calculate_cost(
             return ((amount / total) * 100).quantize(Decimal("0.1"))
 
         cost_data = {
-            "vehicle_price_jpy": vehicle.price_jpy,
+            "vehicle_price_jpy": Decimal(str(vehicle.price_jpy)),
             "vehicle_price_lkr": vehicle_cost_lkr,
             "exchange_rate": rate,
             "shipping_cost_lkr": shipping_cost_lkr,

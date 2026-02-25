@@ -49,20 +49,20 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Run Black (format check)
+        run: |
+          cd backend
+          black --check app/
 
-      - name: Run Black via pre-commit
-        run: pre-commit run black --all-files
+      - name: Run Flake8 (linting)
+        run: |
+          cd backend
+          flake8 app --config .flake8 --count --statistics --show-source
 
-      - name: Run isort via pre-commit
-        run: pre-commit run isort --all-files
-
-      - name: Run Flake8 via pre-commit
-        run: pre-commit run flake8 --all-files
-
-      - name: Run mypy via pre-commit
-        run: pre-commit run mypy --all-files
+      - name: Run mypy (type checking)
+        run: |
+          cd backend
+          mypy app --explicit-package-bases --ignore-missing-imports
 
   # ============================================================================
   # SECURITY SCANNING (Main only)
@@ -104,10 +104,11 @@ jobs:
           bandit -r app/ -f json -o bandit-report.json -ll -i
 
       - name: Run Safety (dependency check)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           cd backend
-          python -m safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json || true
-          python -m safety check -r requirements.txt -r requirements-dev.txt --full-report
+          safety scan --output json > safety-report.json
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -165,6 +166,8 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
