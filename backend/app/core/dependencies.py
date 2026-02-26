@@ -12,8 +12,9 @@ from sqlalchemy.orm import Session
 from .database import get_db
 from .security import decode_access_token
 
-# HTTP Bearer token scheme.
-# auto_error=False lets us return a consistent 401 for missing/malformed auth.
+# HTTP Bearer token scheme
+# auto_error=False lets us return a consistent 401 instead of FastAPI's default 403
+# when the Authorization header is missing.
 security = HTTPBearer(auto_error=False)
 
 

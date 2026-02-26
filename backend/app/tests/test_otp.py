@@ -44,32 +44,35 @@ class TestOTPVerification:
         assert verify_otp_constant_time("123456", "654321") is False
 
     def test_verify_otp_constant_time(self):
-        """Test constant-time property (basic check)."""
+        """Test constant-time property with noise-resistant timing."""
         import time
+        from statistics import median
 
-        # Run multiple iterations to get average
-        iterations = 100
+        # Single-call timings are too noisy on CI/Windows.
+        # Time batches of comparisons and compare medians.
+        outer_samples = 25
+        inner_iterations = 2000
 
-        # Measure time for matching OTPs
-        total_match = 0
-        for _ in range(iterations):
+        match_samples = []
+        for _ in range(outer_samples):
             start = time.perf_counter()
-            verify_otp_constant_time("123456", "123456")
-            total_match += time.perf_counter() - start
-        avg_match = total_match / iterations
+            for _ in range(inner_iterations):
+                verify_otp_constant_time("123456", "123456")
+            match_samples.append(time.perf_counter() - start)
 
-        # Measure time for non-matching OTPs
-        total_no_match = 0
-        for _ in range(iterations):
+        no_match_samples = []
+        for _ in range(outer_samples):
             start = time.perf_counter()
-            verify_otp_constant_time("123456", "999999")
-            total_no_match += time.perf_counter() - start
-        avg_no_match = total_no_match / iterations
+            for _ in range(inner_iterations):
+                verify_otp_constant_time("123456", "999999")
+            no_match_samples.append(time.perf_counter() - start)
 
-        # Times should be similar (within 2x when averaged)
-        # This is a relaxed check since hmac.compare_digest is already constant-time
-        time_ratio = max(avg_match, avg_no_match) / min(avg_match, avg_no_match)
-        assert time_ratio < 2.0, f"Time ratio {time_ratio} suggests non-constant time"
+        median_match = median(match_samples)
+        median_no_match = median(no_match_samples)
+
+        # Allow some jitter while still catching obvious timing discrepancies.
+        time_ratio = max(median_match, median_no_match) / min(median_match, median_no_match)
+        assert time_ratio < 1.5, f"Time ratio {time_ratio} suggests non-constant time"
 
 
 class TestOTPExpiry:
