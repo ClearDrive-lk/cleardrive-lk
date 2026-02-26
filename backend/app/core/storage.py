@@ -7,7 +7,7 @@ Story: CD-50
 """
 
 import os
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 try:
     from supabase import Client, create_client
@@ -88,7 +88,7 @@ class SupabaseStorage:
         """Download file from Supabase Storage."""
         try:
             response = self._ensure_client().storage.from_(bucket).download(file_path)
-            return response
+            return cast(bytes, response)
         except Exception as e:
             raise Exception(f"Supabase download failed: {str(e)}")
 

@@ -10,11 +10,13 @@ from datetime import date, datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class KYCUploadResponse(BaseModel):
     """Response after KYC document upload."""
+
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     user_id: UUID
@@ -29,9 +31,6 @@ class KYCUploadResponse(BaseModel):
     selfie_url: str
     extracted_data: Optional[Dict[str, Any]]
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class KYCStatusResponse(BaseModel):

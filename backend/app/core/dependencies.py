@@ -13,8 +13,7 @@ from .database import get_db
 from .security import decode_access_token
 
 # HTTP Bearer token scheme
-# auto_error=False lets us return a consistent 401 instead of FastAPI's default 403
-# when the Authorization header is missing.
+# Use auto_error=False so missing credentials returns 401 (not 403)
 security = HTTPBearer(auto_error=False)
 
 
@@ -57,6 +56,9 @@ async def get_current_user(
         raise credentials_exception
 
     try:
+        if credentials is None:
+            raise credentials_exception
+
         # Decode token
         token = credentials.credentials
         payload = decode_access_token(token)
