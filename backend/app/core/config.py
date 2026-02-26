@@ -104,6 +104,9 @@ class Settings(BaseSettings):
         "127.0.0.1",
         "api.cleardrive.lk",
         "*.cleardrive.lk",
+        "cleardrive-lk.up.railway.app",
+        "staging-cleardrive.up.railway.app",
+        "*.up.railway.app",
     ]
 
     model_config = SettingsConfigDict(

@@ -28,3 +28,5 @@ user-agents==2.2.0
 # HTTP requests for GeoIP (optional)
 geoip2==4.7.0
 resend==2.22.0  # Resend email service integration
+pytest-mock==3.12.0
+pytest-cov==7.0.0

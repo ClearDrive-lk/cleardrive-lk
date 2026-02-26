@@ -9,7 +9,7 @@ Tiers:
 - TRUSTED: 200 req/min (KYC verified + 5+ orders)
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import wraps
 from typing import Optional
 
@@ -123,7 +123,7 @@ async def check_rate_limit(
 
     # Redis key
     window = 60  # 1 minute window
-    current_minute = datetime.utcnow().strftime("%Y%m%d%H%M")
+    current_minute = datetime.now(UTC).strftime("%Y%m%d%H%M")
     key = f"rate_limit:{identifier}:{endpoint_type}:{current_minute}"
 
     try:

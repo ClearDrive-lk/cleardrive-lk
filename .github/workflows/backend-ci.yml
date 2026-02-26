@@ -59,6 +59,7 @@ jobs:
           cd backend
           flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 app --config .flake8 --count --statistics --show-source
 
       - name: Run mypy (type checking)
         run: |
@@ -95,14 +96,11 @@ jobs:
           bandit -r app/ -ll -i
 
       - name: Run Safety (dependency check)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           cd backend
-
-          safety check --json --output safety-report.json || true
-          safety check
-
-          python -m safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json || true
-          python -m safety check -r requirements.txt -r requirements-dev.txt --full-report
+          safety scan --output json > safety-report.json
 
 
       - name: Upload security reports
@@ -161,6 +159,8 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |

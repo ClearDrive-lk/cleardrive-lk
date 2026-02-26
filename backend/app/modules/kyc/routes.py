@@ -7,6 +7,7 @@ Story: CD-50 - KYC Document Upload
 """
 
 import hashlib
+from typing import TypedDict, cast
 
 import magic
 from app.core.database import get_db
@@ -20,6 +21,27 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/kyc", tags=["kyc"])
+
+
+class KYCFilePayload(TypedDict):
+    content: bytes
+    mime_type: str
+    size: int
+
+
+def _detect_mime_type(file_content: bytes, declared_content_type: str | None) -> str:
+    """Detect MIME type with fallback when libmagic is unavailable."""
+    if magic is not None:
+        return str(magic.from_buffer(file_content, mime=True))
+
+    # Fallback to simple file signature checks for common image types.
+    if file_content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if file_content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if len(file_content) >= 12 and file_content[:4] == b"RIFF" and file_content[8:12] == b"WEBP":
+        return "image/webp"
+    return declared_content_type or "application/octet-stream"
 
 
 # ===================================================================
@@ -90,15 +112,15 @@ async def upload_kyc_documents(
 
     allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
 
-    file_contents = {}
+    file_contents: dict[str, KYCFilePayload] = {}
 
     for file_name, file in files.items():
         # Read file content
         content = await file.read()
         await file.seek(0)  # Reset pointer
 
-        # Validate MIME type using python-magic
-        mime_type = magic.from_buffer(content, mime=True)
+        # Validate MIME type using python-magic (with fallback)
+        mime_type = _detect_mime_type(content, file.content_type)
 
         if mime_type not in allowed_mime_types:
             raise HTTPException(
@@ -129,8 +151,8 @@ async def upload_kyc_documents(
     # STEP 3: UPLOAD TO SUPABASE STORAGE (CD-50.5)
     # ===============================================================
 
-    uploaded_urls = {}
-    checksums = {}
+    uploaded_urls: dict[str, str] = {}
+    checksums: dict[str, str] = {}
 
     # Extension mapping
     extension_map = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
@@ -155,7 +177,7 @@ async def upload_kyc_documents(
                 content_type=file_data["mime_type"],
             )
 
-            uploaded_urls[file_name] = upload_result["url"]
+            uploaded_urls[file_name] = cast(str, upload_result["url"])
 
             print(f"✅ STEP 3: {file_name} uploaded")
             print(f"   URL: {upload_result['url'][:50]}...")

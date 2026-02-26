@@ -49,7 +49,9 @@ jobs:
         run: |
           pip install safety
 
-      - name: Run Safety check
+      - name: Backend dependency scan (Safety)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           cd backend
           pip install -r requirements.txt
@@ -61,13 +63,13 @@ jobs:
 
 
           pip install -r requirements-dev.txt
-          python -m safety check -r requirements.txt -r requirements-dev.txt --full-report
+          safety scan --full-report
 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Frontend dependency check
         run: |
@@ -89,7 +91,7 @@ jobs:
           fetch-depth: 0
 
       - name: TruffleHog Scan
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.77.0
         with:
           path: ./
           base: main

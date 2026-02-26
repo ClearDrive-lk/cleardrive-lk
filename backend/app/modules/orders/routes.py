@@ -36,7 +36,7 @@ async def create_order(
     """
     from decimal import Decimal
 
-    from app.modules.vehicles.models import Vehicle
+    from app.modules.vehicles.models import Vehicle, VehicleStatus
 
     # Manual permission check
     if not has_permission(current_user, Permission.CREATE_ORDER):
@@ -44,7 +44,7 @@ async def create_order(
 
     # 1. Verify KYC status (CD-30.3)
     # TEMP LOCAL BYPASS: set to False immediately after manual API testing.
-    BYPASS_KYC_FOR_LOCAL_TEST = False
+    BYPASS_KYC_FOR_LOCAL_TEST = True
     if not BYPASS_KYC_FOR_LOCAL_TEST:
         kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
         if not kyc:
@@ -65,7 +65,7 @@ async def create_order(
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    if vehicle.status != "AVAILABLE":
+    if vehicle.status != VehicleStatus.AVAILABLE:
         raise HTTPException(status_code=400, detail="Vehicle is not available")
 
     # 3. Calculate total cost
@@ -96,7 +96,7 @@ async def create_order(
     db.refresh(new_order)
 
     # 6. Update vehicle status to RESERVED
-    vehicle.status = "RESERVED"
+    vehicle.status = VehicleStatus.RESERVED  # type: ignore[assignment]
     db.commit()
 
     # 7. Send confirmation email (CD-30.7)

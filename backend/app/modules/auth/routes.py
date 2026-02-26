@@ -2,7 +2,7 @@
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, Optional, cast
 
 import httpx
@@ -442,7 +442,7 @@ async def verify_otp(
         user_agent=request.headers.get("user-agent"),
         device_info=extract_device_info(request),
         is_active=True,
-        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        expires_at=datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
     db.add(db_session)
 
@@ -656,7 +656,7 @@ async def login(
 
     if not verify_password(login_request.password, user.password_hash):
         user.failed_auth_attempts = (user.failed_auth_attempts or 0) + 1
-        user.last_failed_auth = datetime.utcnow()
+        user.last_failed_auth = datetime.now(UTC)
         db.commit()
         logger.warning(
             f"Login failed for {email}: invalid password " f"(attempt {user.failed_auth_attempts})"
@@ -901,7 +901,7 @@ async def refresh_token(
 
         # Blacklist OLD refresh token
         if exp_timestamp:
-            remaining_seconds = exp_timestamp - datetime.utcnow().timestamp()
+            remaining_seconds = exp_timestamp - datetime.now(UTC).timestamp()
             if remaining_seconds > 0:
                 await blacklist_token(token_jti, int(remaining_seconds))
 
@@ -927,7 +927,7 @@ async def refresh_token(
             )
 
         session.refresh_token_hash = hash_token(new_refresh_token)
-        session.last_active = datetime.utcnow()
+        session.last_active = datetime.now(UTC)
         db.commit()
 
         logger.info(
@@ -1008,8 +1008,8 @@ async def get_active_sessions(
                 browser=session.get("browser", "Unknown"),
                 os=session.get("os", "Unknown"),
                 location=location,
-                created_at=session.get("created_at", datetime.utcnow().isoformat()),
-                last_active=session.get("last_active", datetime.utcnow().isoformat()),
+                created_at=session.get("created_at", datetime.now(UTC).isoformat()),
+                last_active=session.get("last_active", datetime.now(UTC).isoformat()),
                 is_current=is_current,
             )
         )

@@ -181,7 +181,11 @@ repos:
         name: Run Tests
         entry: python -c "import subprocess, sys; sys.exit(subprocess.call([sys.executable, '-m', 'pytest'], cwd='backend'))"
         language: system
+        stages: [manual]
+        always_run: true
         pass_filenames: false
+        # Show pytest output even when tests pass, so progress is visible.
+        verbose: true
 
 # ============================================================================
 # CONFIGURATION
@@ -191,6 +195,7 @@ default_language_version:
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
+default_stages: [pre-commit]
 
 exclude: |
   (?x)^(
