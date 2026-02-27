@@ -26,10 +26,8 @@ export function CostCalculator({ priceJPY, engineCC }: CostCalculatorProps) {
 
   // 2. Taxes
   let dutyRate = 0;
-  if (engineCC < 1000)
-    dutyRate = 1.5; // 150%
-  else if (engineCC < 1500)
-    dutyRate = 2.2; // 220%
+  if (engineCC < 1000) dutyRate = 1.5; // 150%
+  else if (engineCC < 1500) dutyRate = 2.2; // 220%
   else dutyRate = 3.0; // 300%
 
   const taxAmount = calculatedCIF * dutyRate;

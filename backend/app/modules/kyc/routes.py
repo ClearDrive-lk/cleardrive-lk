@@ -9,7 +9,10 @@ Story: CD-50 - KYC Document Upload
 import hashlib
 from typing import TypedDict, cast
 
-import magic
+try:
+    import magic
+except ImportError:
+    magic = None  # type: ignore[assignment]
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.storage import storage

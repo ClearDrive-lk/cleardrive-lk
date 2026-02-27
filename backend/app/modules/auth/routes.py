@@ -329,7 +329,7 @@ async def verify_otp(
     logger.info(f"Extracting session metadata for user {user.email}")
 
     if extract_session_metadata is not None:
-        session_metadata = extract_session_metadata(
+        session_metadata = await extract_session_metadata(
             ip_address=request.client.host if request.client else "unknown",
             user_agent=request.headers.get("user-agent", "unknown"),
             include_location=True,

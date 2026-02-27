@@ -2,8 +2,8 @@ from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import User
 from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
-from app.modules.shipping.models import ShipmentDetails
-from app.modules.shipping.schemas import ExporterAssignment, ShipmentDetailsResponse
+from app.modules.shipping.models import ShipmentDetails, ShipmentStatus
+from app.modules.shipping.schemas import ExporterAssignment, ShippingDetailsResponse
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
 # ===================================================================
 
 
-@router.post("/{order_id}/assign", response_model=ShipmentDetailsResponse)
+@router.post("/{order_id}/assign", response_model=ShippingDetailsResponse)
 async def assign_exporter_to_order(
     order_id: str,
     assignment: ExporterAssignment,
@@ -88,7 +88,7 @@ async def assign_exporter_to_order(
     if existing_shipment:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order already has an exporter assigned: {existing_shipment.exporter.email}",
+            detail=f"Order already has an exporter assigned: {existing_shipment.exporter_id}",
         )
 
     print("\n✅ STEP 2: No Existing Assignment")
@@ -118,7 +118,7 @@ async def assign_exporter_to_order(
     # ===============================================================
     # STEP 4: CREATE SHIPMENT DETAILS (CD-70.3)
     # ===============================================================
-    shipment = ShipmentDetails(order_id=order.id, assigned_exporter_id=exporter.id)
+    shipment = ShipmentDetails(order_id=order.id, exporter_id=exporter.id)
 
     db.add(shipment)
     db.flush()  # Get shipment.id without committing
@@ -208,12 +208,12 @@ async def get_all_shipments(
     for shipment in all_shipments:
         if not shipment.vessel_name:
             awaiting_details.append(shipment)
-        elif not shipment.documents_uploaded:
-            awaiting_details.append(shipment)
-        elif not shipment.approved:
+        elif shipment.status == ShipmentStatus.AWAITING_ADMIN_APPROVAL:
             awaiting_approval.append(shipment)
-        else:
+        elif shipment.status == ShipmentStatus.CONFIRMED_SHIPPED:
             approved.append(shipment)
+        else:
+            awaiting_details.append(shipment)
 
     return {
         "total": len(all_shipments),
@@ -229,7 +229,7 @@ async def get_all_shipments(
 # ===================================================================
 
 
-@router.get("/{shipment_id}", response_model=ShipmentDetailsResponse)
+@router.get("/{shipment_id}", response_model=ShippingDetailsResponse)
 async def get_shipment_details(
     shipment_id: str,
     current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),

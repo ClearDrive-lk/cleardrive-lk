@@ -313,8 +313,8 @@ Your continued use of ClearDrive.lk after changes constitutes acceptance.
 
 **Mailing Address:**
 ClearDrive (Pvt) Ltd
-ClearDrive (Pvt) Ltd, 
-435 Galle road, 
+ClearDrive (Pvt) Ltd,
+435 Galle road,
 Colombo 00300, Sri Lanka
 
 ---
