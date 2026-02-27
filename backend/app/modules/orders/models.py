@@ -10,7 +10,7 @@ from uuid import UUID as PyUUID
 from app.core.database import Base
 from app.core.models import GUID, TimestampMixin, UUIDMixin
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -52,10 +52,15 @@ class Order(Base, UUIDMixin, TimestampMixin):
     """Order model - vehicle import orders."""
 
     __tablename__ = "orders"
+    __table_args__ = (
+        Index("idx_orders_created_at", "created_at"),
+        Index("idx_orders_status", "status"),
+        Index("idx_orders_user_id", "user_id"),
+    )
 
     # References
     user_id: Mapped[PyUUID] = mapped_column(
-        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     vehicle_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("vehicles.id"), nullable=False, index=True
@@ -63,7 +68,7 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False, index=True
+        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False
     )
     payment_status: Mapped[PaymentStatus] = mapped_column(
         SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False

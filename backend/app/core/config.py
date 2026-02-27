@@ -1,5 +1,8 @@
 # backend/app/core/config.py
 
+import json
+
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -107,6 +110,38 @@ class Settings(BaseSettings):
         "staging-cleardrive.up.railway.app",
         "*.up.railway.app",
     ]
+    RAILWAY_PUBLIC_DOMAIN: str | None = None
+
+    @field_validator("BACKEND_ALLOWED_HOSTS", mode="before")
+    @classmethod
+    def parse_allowed_hosts(cls, value: list[str] | str) -> list[str]:
+        """Accept JSON arrays or comma-separated host strings from env vars."""
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return []
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [item.strip() for item in raw.split(",") if item.strip()]
+        return []
+
+    @model_validator(mode="after")
+    def ensure_required_hosts(self) -> "Settings":
+        """Keep core hosts present even when env overrides host list."""
+        required = {"localhost", "127.0.0.1", "*.up.railway.app"}
+        if self.RAILWAY_PUBLIC_DOMAIN:
+            required.add(self.RAILWAY_PUBLIC_DOMAIN.strip())
+
+        current = {host.strip() for host in self.BACKEND_ALLOWED_HOSTS if host.strip()}
+        self.BACKEND_ALLOWED_HOSTS = sorted(current | required)
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

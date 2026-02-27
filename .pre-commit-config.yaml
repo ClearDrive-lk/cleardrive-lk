@@ -156,6 +156,7 @@ repos:
         files: ^backend/
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
         entry: python scripts/run_on_main.py --label "Bandit" -- python -m bandit -r backend/app -ll -i
         language: system
 
@@ -166,12 +167,13 @@ repos:
         files: ^backend/(requirements\.txt|requirements-dev\.txt|pyproject\.toml)$
         always_run: true
         pass_filenames: false
+        stages: [pre-commit]
 
       - id: pytest
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py
         language: system
-        stages: [manual]
+        stages: [pre-commit]
         always_run: true
         pass_filenames: false
         # Show pytest output even when tests pass, so progress is visible.
@@ -185,7 +187,7 @@ default_language_version:
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
-default_stages: [pre-commit]
+default_stages: [pre-commit, pre-push]
 
 exclude: |
   (?x)^(
