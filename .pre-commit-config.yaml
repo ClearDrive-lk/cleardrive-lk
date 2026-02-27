@@ -37,6 +37,7 @@ repos:
       - id: black
         name: Format Python code (Black)
         files: ^backend/
+        always_run: true
         pass_filenames: false
         args:
           - backend/app
@@ -47,6 +48,7 @@ repos:
       - id: isort
         name: Sort Python imports (isort)
         files: ^backend/
+        always_run: true
         pass_filenames: false
         args:
           - --profile
@@ -60,6 +62,7 @@ repos:
         name: Lint Python code (Flake8)
         files: ^backend/
         exclude: ^backend/(scripts|alembic)/
+        always_run: true
         pass_filenames: false
         args:
           - backend/app
@@ -74,6 +77,7 @@ repos:
       - id: mypy
         name: Type check Python (mypy)
         files: ^backend/app/
+        always_run: true
         pass_filenames: false
         args:
           - backend/app
@@ -84,16 +88,6 @@ repos:
           - sqlalchemy
           - types-redis
 
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.3
-    hooks:
-      - id: bandit
-        name: Security check Python (Bandit)
-        files: ^backend/
-        pass_filenames: false
-        args: ["-r", "backend/app", "-ll", "-i"]
-        exclude: ^backend/app/tests/
-
   # ============================================================================
   # JAVASCRIPT/TYPESCRIPT - FRONTEND
   # ============================================================================
@@ -102,6 +96,7 @@ repos:
       - id: frontend-eslint
         name: Lint JavaScript/TypeScript (ESLint)
         files: ^apps/web/
+        always_run: true
         pass_filenames: false
         entry: npx --prefix apps/web eslint --config apps/web/eslint.config.mjs apps/web/app
         language: system
@@ -109,6 +104,7 @@ repos:
       - id: frontend-prettier
         name: Check code format (Prettier)
         files: ^apps/web/
+        always_run: true
         pass_filenames: false
         entry: npx --prefix apps/web prettier apps/web --write
         language: system
@@ -116,8 +112,17 @@ repos:
       - id: frontend-typecheck
         name: Type check frontend
         files: ^apps/web/
+        always_run: true
         pass_filenames: false
         entry: npm --prefix apps/web run type-check
+        language: system
+
+      - id: frontend-audit
+        name: Frontend dependency audit (prod)
+        files: ^apps/web/(package\.json|package-lock\.json)$
+        always_run: true
+        pass_filenames: false
+        entry: python scripts/run_on_main.py --label "Frontend audit" -- npm --prefix apps/web audit --omit=dev --audit-level=moderate
         language: system
 
   # ============================================================================
@@ -146,11 +151,31 @@ repos:
   # ============================================================================
   - repo: local
     hooks:
+      - id: bandit-main
+        name: Security check Python (Bandit, main only)
+        files: ^backend/
+        pass_filenames: false
+        always_run: true
+        entry: python scripts/run_on_main.py --label "Bandit" -- python -m bandit -r backend/app -ll -i
+        language: system
+
+      - id: safety
+        name: Dependency vulnerability scan (Safety, main only)
+        entry: python scripts/run_on_main.py --label "Safety" -- python backend/scripts/run_local_ci_safety.py
+        language: system
+        files: ^backend/(requirements\.txt|requirements-dev\.txt|pyproject\.toml)$
+        always_run: true
+        pass_filenames: false
+
       - id: pytest
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py
         language: system
+        stages: [manual]
+        always_run: true
         pass_filenames: false
+        # Show pytest output even when tests pass, so progress is visible.
+        verbose: true
 
 # ============================================================================
 # CONFIGURATION
@@ -160,6 +185,7 @@ default_language_version:
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
+default_stages: [pre-commit]
 
 exclude: |
   (?x)^(

@@ -7,27 +7,26 @@ Epic: CD-E5
 Stories: CD-40, CD-41, CD-42
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
-from sqlalchemy.orm import Session
-from typing import Optional
-import hashlib
-import uuid as uuid_lib
-import json
 from datetime import datetime
+import hashlib
+import json
+from urllib.parse import urlencode
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.config import settings
 from app.core.redis_client import get_redis
-from app.modules.payments.models import Payment, PaymentIdempotency, PaymentStatus
+from app.modules.auth.models import User
+from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory, PaymentStatus as OrderPaymentStatus
+from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.payments.schemas import (
     PaymentInitiate,
     PaymentInitiateResponse,
-    PaymentWebhook,
-    PaymentResponse
+    PaymentResponse,
 )
-from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
-from app.modules.auth.models import User
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -153,7 +152,7 @@ async def initiate_payment(
     # Check if already paid
     existing_completed = db.query(Payment).filter(
         Payment.order_id == order.id,
-        Payment.status == PaymentStatus.COMPLETED.value
+        Payment.status == PaymentStatus.COMPLETED
     ).first()
     
     if existing_completed:
@@ -176,7 +175,7 @@ async def initiate_payment(
         idempotency_key=payment_data.idempotency_key,
         amount=order.total_cost_lkr,
         currency="LKR",
-        status=PaymentStatus.PENDING.value
+        status=PaymentStatus.PENDING
     )
     
     db.add(payment)
@@ -200,24 +199,29 @@ async def initiate_payment(
     
     # PayHere payment URL (sandbox)
     payhere_base_url = "https://sandbox.payhere.lk/pay/checkout"
-    
-    # Build payment URL with parameters
-    payhere_url = f"{payhere_base_url}?merchant_id={settings.PAYHERE_MERCHANT_ID}"
-    payhere_url += f"&order_id={payhere_order_id}"
-    payhere_url += f"&items=Vehicle Import Order"
-    payhere_url += f"&currency=LKR"
-    payhere_url += f"&amount={float(order.total_cost_lkr):.2f}"
-    payhere_url += f"&first_name={current_user.name or 'Customer'}"
-    payhere_url += f"&last_name="
-    payhere_url += f"&email={current_user.email}"
-    payhere_url += f"&phone={order.phone}"
-    payhere_url += f"&address={order.shipping_address[:50]}"  # Truncate if too long
-    payhere_url += f"&city=Colombo"
-    payhere_url += f"&country=Sri Lanka"
-    payhere_url += f"&hash={hash_value}"
-    payhere_url += f"&notify_url=http://localhost:8000/api/v1/payments/webhook"
-    payhere_url += f"&return_url=http://localhost:3000/orders/{order.id}/payment-success"
-    payhere_url += f"&cancel_url=http://localhost:3000/orders/{order.id}/payment-cancel"
+    notify_url = settings.PAYHERE_NOTIFY_URL
+    return_url = settings.PAYHERE_RETURN_URL.replace("{order_id}", str(order.id))
+    cancel_url = settings.PAYHERE_CANCEL_URL.replace("{order_id}", str(order.id))
+
+    payhere_params = {
+        "merchant_id": settings.PAYHERE_MERCHANT_ID,
+        "order_id": payhere_order_id,
+        "items": "Vehicle Import Order",
+        "currency": "LKR",
+        "amount": f"{float(order.total_cost_lkr):.2f}",
+        "first_name": current_user.name or "Customer",
+        "last_name": "",
+        "email": current_user.email,
+        "phone": order.phone,
+        "address": order.shipping_address[:50],
+        "city": "Colombo",
+        "country": "Sri Lanka",
+        "hash": hash_value,
+        "notify_url": notify_url,
+        "return_url": return_url,
+        "cancel_url": cancel_url,
+    }
+    payhere_url = f"{payhere_base_url}?{urlencode(payhere_params)}"
     
     print(f"🔗 PayHere URL generated")
     print(f"{'='*70}\n")
@@ -289,6 +293,13 @@ async def payhere_webhook(
     print(f"Amount: {payhere_currency} {payhere_amount}")
     print(f"Status: {status_code}")
     print(f"Payment ID: {payment_id}")
+
+    required = [merchant_id, order_id, payhere_amount, payhere_currency, status_code, md5sig]
+    if any(v is None for v in required):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required webhook fields",
+        )
     
     # ===============================================================
     # STEP 1: VERIFY SIGNATURE
@@ -345,7 +356,7 @@ async def payhere_webhook(
     
     # Status code 2 = Success
     if status_code == "2":
-        payment.status = PaymentStatus.COMPLETED.value
+        payment.status = PaymentStatus.COMPLETED
         payment.payhere_payment_id = payment_id
         payment.payment_method = method
         payment.card_holder_name = card_holder_name
@@ -358,7 +369,7 @@ async def payhere_webhook(
         if order:
             old_status = order.status
             order.status = OrderStatus.PAYMENT_CONFIRMED
-            order.payment_status = "COMPLETED"
+            order.payment_status = OrderPaymentStatus.COMPLETED
             
             # Create status history
             history = OrderStatusHistory(
@@ -372,7 +383,7 @@ async def payhere_webhook(
         print(f"✅ Payment successful!")
     
     else:
-        payment.status = PaymentStatus.FAILED.value
+        payment.status = PaymentStatus.FAILED
         print(f"❌ Payment failed (status: {status_code})")
     
     db.commit()

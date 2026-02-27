@@ -1,4 +1,8 @@
 # backend/app/modules/security/models.py
+"""
+Security models for file integrity, event logging, reputation, and rate limiting.
+Stories: CD-50.7 (KYC), CD-53 (File Integrity Monitoring)
+"""
 
 from __future__ import annotations
 
@@ -56,12 +60,20 @@ class UserTier(str, enum.Enum):
 
 
 class FileIntegrity(Base, UUIDMixin, TimestampMixin):
-    """File integrity monitoring - SHA-256 checksums."""
+    """
+    File integrity monitoring - SHA-256 checksums.
+
+    Every uploaded file gets an integrity record.
+    Used to detect tampering or corruption.
+
+    Stories: CD-50.7 (KYC), CD-53 (File Integrity Monitoring)
+    """
 
     __tablename__ = "file_integrity"
 
     # File info
     file_url: Mapped[str] = mapped_column(String(500), unique=True, nullable=False, index=True)
+    file_name: Mapped[str | None] = mapped_column(String(255))  # from CD-50.7
     sha256_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     file_size: Mapped[int] = mapped_column(Integer, nullable=False)
     mime_type: Mapped[str | None] = mapped_column(String(100))
@@ -87,7 +99,6 @@ class SecurityEvent(Base, UUIDMixin, TimestampMixin):
 
     __tablename__ = "security_events"
 
-    # Event info
     event_type: Mapped[SecurityEventType] = mapped_column(
         SQLEnum(SecurityEventType), nullable=False, index=True
     )
@@ -155,7 +166,6 @@ class RateLimitViolation(Base, UUIDMixin):
 
     __tablename__ = "rate_limit_violations"
 
-    # User & source
     user_id: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"), index=True)
     ip_address: Mapped[str] = mapped_column(IPAddress(), nullable=False, index=True)
     endpoint: Mapped[str] = mapped_column(String(255), nullable=False)

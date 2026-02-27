@@ -35,7 +35,7 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
@@ -49,27 +49,30 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Run Black (format check)
+        run: |
+          cd backend
+          black --check app/
 
-      - name: Run Black via pre-commit
-        run: pre-commit run black --all-files
+      - name: Run Flake8 (linting)
+        run: |
+          cd backend
+          flake8 app --config .flake8 --count --statistics --show-source
 
-      - name: Run isort via pre-commit
-        run: pre-commit run isort --all-files
-
-      - name: Run Flake8 via pre-commit
-        run: pre-commit run flake8 --all-files
-
-      - name: Run mypy via pre-commit
-        run: pre-commit run mypy --all-files
+      - name: Run mypy (type checking)
+        run: |
+          cd backend
+          mypy app --explicit-package-bases --ignore-missing-imports
 
   # ============================================================================
-  # SECURITY SCANNING
+  # SECURITY SCANNING (Main only)
   # ============================================================================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.base_ref == 'main')
 
     steps:
       - name: Checkout code
@@ -80,23 +83,32 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install security tools
         run: |
           cd backend
           pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
       - name: Run Bandit (SAST)
         run: |
           cd backend
-          bandit -r app/ -f json -o bandit-report.json || true
-          bandit -r app/ -ll -i
+          bandit -r app/ -f json -o bandit-report.json -ll -i
 
       - name: Run Safety (dependency check)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           cd backend
-          safety check --json > safety-report.json || true
-          safety check
+          safety scan --output json > safety-report.json
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -150,10 +162,12 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -188,7 +202,7 @@ jobs:
   deploy-staging:
     name: Deploy Backend to Staging (Railway)
     runs-on: ubuntu-latest
-    needs: [lint, security, test]
+    needs: [lint, test]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
 
     steps:

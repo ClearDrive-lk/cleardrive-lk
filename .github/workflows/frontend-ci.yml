@@ -89,13 +89,18 @@ jobs:
           git diff --exit-code
 
   # ============================================================================
-  # 3. SECURITY SCAN
+  # 3. SECURITY SCAN (Main only)
   # ============================================================================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
     needs: check-frontend
-    if: needs.check-frontend.outputs.frontend-exists == 'true'
+    if: |
+      needs.check-frontend.outputs.frontend-exists == 'true' &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'pull_request' && github.base_ref == 'main')
+      )
 
     steps:
       - name: Checkout code
@@ -114,8 +119,8 @@ jobs:
       - name: Run npm audit
         run: |
           cd apps/web
-          npm audit --audit-level=moderate --json > npm-audit.json || true
-          npm audit --audit-level=moderate
+          npm audit --omit=dev --audit-level=moderate --json > npm-audit.json || true
+          npm audit --omit=dev --audit-level=moderate
 
       - name: Upload audit report
         uses: actions/upload-artifact@v4
@@ -131,7 +136,7 @@ jobs:
   build:
     name: Build Test
     runs-on: ubuntu-latest
-    needs: [check-frontend, lint, security]
+    needs: check-frontend
     if: needs.check-frontend.outputs.frontend-exists == 'true'
 
     env:
@@ -149,7 +154,7 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Cache Next.js build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: apps/web/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('apps/web/package-lock.json') }}
@@ -186,7 +191,7 @@ jobs:
   deploy-staging:
     name: Deploy Frontend to Staging (Vercel)
     runs-on: ubuntu-latest
-    needs: [check-frontend, build]
+    needs: [check-frontend, lint, build]
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/develop' &&
@@ -223,7 +228,7 @@ jobs:
   deploy-prod:
     name: Deploy Frontend to Production (Vercel)
     runs-on: ubuntu-latest
-    needs: [check-frontend, build]
+    needs: [check-frontend, lint, security, build]
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/main' &&
