@@ -18,7 +18,6 @@ Write-Host ""
 # ============================================================================
 
 Write-Host " Checking prerequisites..." -ForegroundColor Cyan
-
 # Check if Python is installed
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
     Write-Host " Python 3 is not installed. Please install Python 3.11+" -ForegroundColor Red
@@ -87,7 +86,6 @@ Write-Host ""
 # ============================================================================
 
 Write-Host " Installing Git hooks..." -ForegroundColor Cyan
-
 try {
     pre-commit install
     Write-Host " Git hooks installed" -ForegroundColor Green
