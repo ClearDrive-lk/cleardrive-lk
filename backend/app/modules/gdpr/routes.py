@@ -1,7 +1,7 @@
 """
 GDPR compliance endpoints including policy pages.
 Author: Kalidu
-Story: CD-100 - Privacy & Cookie Policies
+Story: CD-460 - Privacy & Cookie Policies
 """
 
 from pathlib import Path
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/gdpr", tags=["gdpr"])
 
 
 # ===================================================================
-# ENDPOINT: PRIVACY POLICY (CD-100.4)
+# ENDPOINT: PRIVACY POLICY (CD-462)
 # ===================================================================
 
 
@@ -242,7 +242,7 @@ async def get_privacy_policy():
 
 
 # ===================================================================
-# ENDPOINT: COOKIE POLICY (CD-100.5)
+# ENDPOINT: COOKIE POLICY (CD-463)
 # ===================================================================
 
 

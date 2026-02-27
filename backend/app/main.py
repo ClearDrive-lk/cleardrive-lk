@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
+from app.modules.gdpr.routes import router as gdpr_router
 from app.modules.kyc.routes import router as kyc_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -149,6 +150,7 @@ app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
+app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 logger.info("Routers registered: /auth, /vehicles, /orders, /admin, /test")
 
 
