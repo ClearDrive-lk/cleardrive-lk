@@ -196,4 +196,3 @@ get_current_clearing_agent = require_role([Role.CLEARING_AGENT, Role.ADMIN])
 
 # Finance partner or admin access
 get_current_finance_partner = require_role([Role.FINANCE_PARTNER, Role.ADMIN])
-

@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
+from app.modules.gdpr.routes import router as gdpr_router
+from app.modules.kyc.routes import router as kyc_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -30,11 +32,10 @@ except ImportError:
     redis_close = None  # type: ignore
 
 from app.modules.admin import routes as admin_routes
-from app.modules.admin.routes import router as admin_router
 
 # Import routers
+from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
-from app.modules.kyc.routes import router as kyc_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
@@ -137,6 +138,10 @@ app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix="/api/v1")
 logger.info("Routers registered: /auth, /kyc, /vehicles, /orders, /admin, /test")
+app.include_router(test_router, prefix=settings.API_V1_PREFIX)
+app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
+app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
+logger.info("Routers registered: /auth, /vehicles, /orders, /admin, /test")
 
 
 @app.get("/")
@@ -190,6 +195,12 @@ async def health_check():
 @app.get("/api/v1/health")
 async def health_check_v1():
     return await health_check()
+
+
+# ============================================================================
+# LEGACY EVENT HANDLERS (Deprecated in favor of lifespan)
+# ============================================================================
+# Note: These are kept for backward compatibility but lifespan is preferred
 
 
 @app.on_event("startup")

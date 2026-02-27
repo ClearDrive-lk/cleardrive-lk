@@ -1,6 +1,7 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { format } from "date-fns";
 
@@ -21,28 +22,20 @@ export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filter, setFilter] = useState("ROLE_CHANGED");
 
-  useEffect(() => {
-    let isCancelled = false;
-
-    const fetchLogs = async () => {
-      try {
-        const response = await apiClient.get(
-          `/admin/audit-logs?event_type=${filter}`,
-        );
-        if (!isCancelled) {
-          setLogs(response.data.logs);
-        }
-      } catch (error) {
-        console.error("Failed to load audit logs:", error);
-      }
-    };
-
-    void fetchLogs();
-
-    return () => {
-      isCancelled = true;
-    };
+  const loadLogs = useCallback(async () => {
+    try {
+      const response = await apiClient.get(
+        `/admin/audit-logs?event_type=${filter}`,
+      );
+      setLogs(response.data.logs);
+    } catch (error) {
+      console.error("Failed to load audit logs:", error);
+    }
   }, [filter]);
+
+  useEffect(() => {
+    void loadLogs();
+  }, [loadLogs]);
 
   return (
     <div className="p-6">

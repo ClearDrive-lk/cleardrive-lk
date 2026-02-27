@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
+import { RoleChangeModal } from "@/components/admin/RoleChangeModal";
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,64 +12,6 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
-
-interface RoleChangeModalProps {
-  user: User;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-function RoleChangeModal({ user, onClose, onSuccess }: RoleChangeModalProps) {
-  const [newRole, setNewRole] = useState(user.role);
-  const [loading, setLoading] = useState(false);
-
-  const handleChangeRole = async () => {
-    setLoading(true);
-    try {
-      await apiClient.put(`/admin/users/${user.id}/role`, { role: newRole });
-      onSuccess();
-    } catch (error) {
-      console.error("Failed to change role:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
-        <h2 className="text-lg font-bold mb-4">Change Role</h2>
-        <p className="text-gray-600 mb-4">User: {user.email}</p>
-        <select
-          value={newRole}
-          onChange={(e) => setNewRole(e.target.value)}
-          className="w-full px-4 py-2 border rounded mb-4"
-        >
-          <option value="CUSTOMER">Customer</option>
-          <option value="ADMIN">Admin</option>
-          <option value="EXPORTER">Exporter</option>
-          <option value="CLEARING_AGENT">Clearing Agent</option>
-          <option value="FINANCE_PARTNER">Finance Partner</option>
-        </select>
-        <div className="flex gap-2 justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border rounded hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleChangeRole}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface User {
   id: string;
@@ -141,10 +84,10 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [kycFilter, page, roleFilter, search, sorting]);
+  }, [page, search, roleFilter, kycFilter, sorting]);
 
   useEffect(() => {
-    loadUsers();
+    void loadUsers();
   }, [loadUsers]);
 
   const columns: ColumnDef<User>[] = [
@@ -173,7 +116,9 @@ export default function AdminUsersPage() {
         const role = row.original.role;
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${roleColors[role] || "bg-gray-100 text-gray-800"}`}
+            className={`px-2 py-1 rounded text-xs font-semibold ${
+              roleColors[role] || "bg-gray-100 text-gray-800"
+            }`}
           >
             {role}
           </span>
@@ -198,7 +143,7 @@ export default function AdminUsersPage() {
 
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
+            className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[status]}`}
           >
             {status}
           </span>
