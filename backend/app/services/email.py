@@ -192,7 +192,6 @@ async def send_otp_email(email: str, otp: str, name: Optional[str] = None) -> bo
     except Exception as e:
         logger.error(f"Failed to render OTP email template for {email}: {str(e)}")
         return False
-
     # Plain text fallback
     text_content = f"""
 Hello {name or 'User'},

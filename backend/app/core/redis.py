@@ -180,7 +180,7 @@ async def check_otp_rate_limit(email: str) -> bool:
     client = await get_redis()
     key = f"otp_rate_limit:{email}"
 
-    count = await client.incr(key)
+    count = cast(int, await client.incr(key))
 
     # Attach an expiry only on the very first increment inside the window
     if count == 1:
@@ -229,7 +229,7 @@ async def is_token_blacklisted(token_jti: str) -> bool:
     """
     client = await get_redis()
     key = f"blacklist:{token_jti}"
-    return await client.exists(key) > 0
+    return cast(int, await client.exists(key)) > 0
 
 
 async def detect_token_reuse(token_jti: str) -> bool:

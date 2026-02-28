@@ -145,7 +145,7 @@ async def check_otp_rate_limit(email: str) -> bool:
     client = await get_redis()
     key = f"otp_rate_limit:{email}"
 
-    count = await client.incr(key)
+    count = cast(int, await client.incr(key))
 
     # Attach an expiry only on the very first increment inside the window
     if count == 1:

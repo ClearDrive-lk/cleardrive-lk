@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     # GeoIP (optional)
     GEOIP_ENABLED: bool = False
     GEOIP_API_KEY: str | None = None
+
     # RBAC settings
     RBAC_ENABLED: bool = True
     RBAC_STRICT_MODE: bool = True
