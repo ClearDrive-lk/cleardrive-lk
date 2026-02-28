@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
+//import CookieBanner from '@/components/cookie/cookieBanner';
 
 // Define the font
 const inter = Inter({
@@ -23,7 +24,7 @@ export default function RootLayout({
     <html lang="en">
       {/* Apply the font variable */}
       <body className={`${inter.variable} font-sans antialiased bg-[#050505]`}>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>{children}</StoreProvider>{" "}
       </body>
     </html>
   );
