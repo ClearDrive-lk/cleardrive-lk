@@ -1,8 +1,8 @@
-﻿# backend/app/modules/auth/routes.py
+# backend/app/modules/auth/routes.py
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, Optional, cast
 
 import httpx
@@ -111,7 +111,7 @@ async def google_auth(
         if "4166288126" in err_msg:
             err_msg += (
                 " (Hint: You are using the default OAuth Playground credentials! "
-                "Click Gear icon âš™ï¸ â†’ 'Use your own OAuth credentials' â†’ "
+                "Click Gear icon ⚙️ → 'Use your own OAuth credentials' → "
                 "Enter your Client ID/Secret.)"
             )
         elif "wrong audience" in err_msg.lower():
@@ -166,23 +166,9 @@ async def google_auth(
         logger.info(f"Existing user logged in: {email}")
 
     otp = generate_otp()
-    try:
-        await store_otp(email, otp)
-    except Exception as e:
-        logger.exception(f"Failed to store Google OTP for {email}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Verification service temporarily unavailable. Please try again.",
-        )
+    await store_otp(email, otp)
 
-    try:
-        email_sent = await send_otp_email(email, otp, name)
-    except Exception as e:
-        logger.exception(f"Unexpected Google OTP email failure for {email}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Email service temporarily unavailable. Please try again.",
-        )
+    email_sent = await send_otp_email(email, otp, name)
 
     if not email_sent:
         logger.error(f"Failed to send OTP email to {email}")
@@ -379,7 +365,7 @@ async def verify_otp(
 
         if suspicious.get("is_suspicious"):
             logger.warning(
-                f"âš ï¸ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
+                f"⚠️ SUSPICIOUS LOGIN DETECTED for user {user.email}: "
                 f"{', '.join(suspicious.get('reasons', []))}",
                 extra={
                     "user_id": str(user.id),
@@ -456,7 +442,7 @@ async def verify_otp(
         user_agent=request.headers.get("user-agent"),
         device_info=extract_device_info(request),
         is_active=True,
-        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        expires_at=datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
     db.add(db_session)
 
@@ -486,7 +472,7 @@ async def verify_otp(
     # STEP 12: Log and Return
     # ========================================================================
     logger.info(
-        f"âœ… Authentication successful for user {user.email}. "
+        f"✅ Authentication successful for user {user.email}. "
         f"Session {session_id or 'N/A'} created. "
         f"Active sessions: {limit_result.get('current_count', 'N/A')}/"
         f"{limit_result.get('limit', 5)}",
@@ -526,7 +512,7 @@ async def resend_otp(
     await send_otp_email(resend_request.email, otp, user.name)
 
     if settings.ENVIRONMENT == "development":
-        logger.info(f"ðŸ” OTP for {resend_request.email}: {otp}")
+        logger.info(f"🔐 OTP for {resend_request.email}: {otp}")
         return {"message": "If the email exists, OTP has been sent", "otp": otp}
 
     return {"message": "If the email exists, OTP has been sent"}
@@ -670,7 +656,7 @@ async def login(
 
     if not verify_password(login_request.password, user.password_hash):
         user.failed_auth_attempts = (user.failed_auth_attempts or 0) + 1
-        user.last_failed_auth = datetime.utcnow()
+        user.last_failed_auth = datetime.now(UTC)
         db.commit()
         logger.warning(
             f"Login failed for {email}: invalid password " f"(attempt {user.failed_auth_attempts})"
@@ -826,7 +812,7 @@ async def refresh_token(
     4. Return NEW tokens
 
     Security:
-    - Token reuse detection (if old token used twice â†’ revoke ALL sessions)
+    - Token reuse detection (if old token used twice → revoke ALL sessions)
     - Token blacklisting to prevent replay attacks
     """
     try:
@@ -915,7 +901,7 @@ async def refresh_token(
 
         # Blacklist OLD refresh token
         if exp_timestamp:
-            remaining_seconds = exp_timestamp - datetime.utcnow().timestamp()
+            remaining_seconds = exp_timestamp - datetime.now(UTC).timestamp()
             if remaining_seconds > 0:
                 await blacklist_token(token_jti, int(remaining_seconds))
 
@@ -941,7 +927,7 @@ async def refresh_token(
             )
 
         session.refresh_token_hash = hash_token(new_refresh_token)
-        session.last_active = datetime.utcnow()
+        session.last_active = datetime.now(UTC)
         db.commit()
 
         logger.info(
@@ -1022,8 +1008,8 @@ async def get_active_sessions(
                 browser=session.get("browser", "Unknown"),
                 os=session.get("os", "Unknown"),
                 location=location,
-                created_at=session.get("created_at", datetime.utcnow().isoformat()),
-                last_active=session.get("last_active", datetime.utcnow().isoformat()),
+                created_at=session.get("created_at", datetime.now(UTC).isoformat()),
+                last_active=session.get("last_active", datetime.now(UTC).isoformat()),
                 is_current=is_current,
             )
         )
@@ -1147,7 +1133,6 @@ async def revoke_all_sessions(
     Revoke ALL sessions for the current user.
 
     âš ï¸ WARNING: Logs the user out from ALL devices including this one.
-
     Actions performed:
     1. Blacklist all associated refresh tokens
     2. Delete all Redis sessions

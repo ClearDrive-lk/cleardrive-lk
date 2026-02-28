@@ -5,7 +5,7 @@ Redis client and OTP storage utilities.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional, cast
 
 import redis.asyncio as redis  # type: ignore[import-untyped]
@@ -39,7 +39,7 @@ async def close_redis():
     global _redis_client
 
     if _redis_client:
-        await _redis_client.close()
+        await _redis_client.aclose()
         _redis_client = None
 
 
@@ -71,7 +71,7 @@ async def store_otp(email: str, otp: str, expiry_minutes: int = 5) -> bool:
     value = json.dumps(
         {
             "otp": otp,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "attempts": 0,
         }
     )
@@ -145,7 +145,7 @@ async def check_otp_rate_limit(email: str) -> bool:
     client = await get_redis()
     key = f"otp_rate_limit:{email}"
 
-    count = await client.incr(key)
+    count = cast(int, await client.incr(key))
 
     # Attach an expiry only on the very first increment inside the window
     if count == 1:

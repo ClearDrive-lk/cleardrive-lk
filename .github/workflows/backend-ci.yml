@@ -35,7 +35,7 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
@@ -49,20 +49,22 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Run Black (format check)
+        run: |
+          cd backend
+          black --check app/
 
-      - name: Run Black via pre-commit
-        run: pre-commit run black --all-files
+      - name: Run Flake8 (linting)
+        run: |
+          cd backend
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 app --config .flake8 --count --statistics --show-source
 
-      - name: Run isort via pre-commit
-        run: pre-commit run isort --all-files
-
-      - name: Run Flake8 via pre-commit
-        run: pre-commit run flake8 --all-files
-
-      - name: Run mypy via pre-commit
-        run: pre-commit run mypy --all-files
+      - name: Run mypy (type checking)
+        run: |
+          cd backend
+          mypy app --explicit-package-bases --ignore-missing-imports
 
   # ============================================================================
   # SECURITY SCANNING (Main only)
@@ -83,31 +85,23 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Install security tools
         run: |
-          cd backend
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install bandit safety
 
       - name: Run Bandit (SAST)
         run: |
           cd backend
-          bandit -r app/ -f json -o bandit-report.json -ll -i
+          bandit -r app/ -f json -o bandit-report.json || true
+          bandit -r app/ -ll -i
 
       - name: Run Safety (dependency check)
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
         run: |
           cd backend
-          python -m safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json || true
-          python -m safety check -r requirements.txt -r requirements-dev.txt --full-report
+          safety scan --output json > safety-report.json
+
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -161,10 +155,12 @@ jobs:
           python-version: '3.11'
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -174,8 +170,28 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cleardrive_test # pragma: allowlist secret
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: test-secret-key-min-32-characters-long # pragma: allowlist secret
+          ENCRYPTION_KEY: test-encryption-key-32-chars!!
+          GOOGLE_CLIENT_ID: test-client-id
+          GOOGLE_CLIENT_SECRET: test-client-secret # pragma: allowlist secret
+          PAYHERE_MERCHANT_ID: test-merchant-id
+          PAYHERE_MERCHANT_SECRET: test-merchant-secret # pragma: allowlist secret
+          ANTHROPIC_API_KEY: test-api-key # pragma: allowlist secret
+          SUPABASE_URL: https://test.supabase.co
+          SUPABASE_KEY: test-key
+          SMTP_HOST: smtp.gmail.com
+          SMTP_USERNAME: test@gmail.com
+          SMTP_PASSWORD: test-password # pragma: allowlist secret
+          ADMIN_EMAILS: admin@cleardrive.lk
+          ENVIRONMENT: test
+          # Ensure coverage uses repo-root config (contains relative_files=true)
+          COVERAGE_RCFILE: ../.coveragerc
         run: |
-          python backend/scripts/run_local_ci_pytest.py
+          cd backend
+          pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4

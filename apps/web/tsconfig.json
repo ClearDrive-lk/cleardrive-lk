@@ -20,7 +20,6 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "baseUrl": ".",
     "ignoreDeprecations": "5.0",
     "target": "ES2017"
   },

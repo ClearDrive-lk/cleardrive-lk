@@ -1,9 +1,9 @@
 # backend/requirements.txt
 fastapi==0.129.0
 uvicorn[standard]==0.27.0
-sqlalchemy==2.0.36
+sqlalchemy==2.0.25
 alembic==1.13.1
-psycopg2-binary>=2.9.10
+psycopg2-binary==2.9.9
 pydantic>=2.6.0
 pydantic-settings==2.1.0
 python-jose[cryptography]>=3.4.0
@@ -12,12 +12,13 @@ argon2-cffi==23.1.0
 python-multipart>=0.0.10
 redis==5.0.1
 python-magic==0.4.27
-cryptography>=44.0.0
-anthropic==0.79.0
+cryptography==42.0.0
+anthropic==0.8.1
 httpx==0.26.0
 python-dotenv==1.0.0
-requests>=2.32.4
+requests>=2.31.0
 google-auth==2.26.2
+markdown==3.5.1
 # Email
 aiosmtplib==3.0.1  # Async SMTP client
 email-validator==2.1.0  # Email validation
@@ -27,4 +28,5 @@ user-agents==2.2.0
 # HTTP requests for GeoIP (optional)
 geoip2==4.7.0
 resend==2.22.0  # Resend email service integration
-supabase==2.18.1
+pytest-mock==3.12.0
+pytest-cov==7.0.0

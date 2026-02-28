@@ -6,7 +6,7 @@ Story: CD-460 - Privacy & Cookie Policies
 
 from pathlib import Path
 
-import markdown  # type: ignore
+import markdown  # type: ignore[import-untyped]
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 

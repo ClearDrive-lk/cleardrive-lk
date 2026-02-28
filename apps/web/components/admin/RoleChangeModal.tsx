@@ -47,10 +47,8 @@ export function RoleChangeModal({
       });
 
       onSuccess();
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to change role";
-      setError(errorMessage);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to change role");
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ Story: CD-120 - Static Vehicle Dataset
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 
 from app.core.database import Base
@@ -22,20 +23,15 @@ class VehicleStatus(str, Enum):
     AVAILABLE = "AVAILABLE"
     RESERVED = "RESERVED"
     SOLD = "SOLD"
-    UNAVAILABLE = "UNAVAILABLE"
 
 
 class FuelType(str, Enum):
     """Vehicle fuel types."""
 
-    # Legacy DB enum name compatibility: PETROL/HYBRID are used in some schemas.
-    PETROL = "Gasoline"
     GASOLINE = "Gasoline"
     DIESEL = "Diesel"
     HYBRID = "Gasoline/hybrid"
-    PETROL_HYBRID = "Gasoline/hybrid"
     ELECTRIC = "Electric"
-    CNG = "CNG"
     PLUGIN_HYBRID = "Plugin Hybrid"
 
 
@@ -45,7 +41,6 @@ class Transmission(str, Enum):
     AUTOMATIC = "Automatic"
     MANUAL = "Manual"
     CVT = "CVT"
-    SEMI_AUTOMATIC = "Semi Automatic"
 
 
 class VehicleType(str, Enum):
@@ -94,7 +89,7 @@ class Vehicle(Base):
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Stock and Auction Information
-    stock_no = Column(String(100), unique=True, nullable=False, index=True)
+    stock_no = Column(String(100), unique=True, nullable=False, index=True)  # Stock No. from CSV
     chassis = Column(String(100), nullable=True)  # Chassis number (masked as ****)
 
     # Basic Vehicle Information
@@ -109,7 +104,7 @@ class Vehicle(Base):
     grade = Column(String(100), nullable=True)  # Grade from CSV
 
     # Pricing
-    price_jpy: Column[float] = Column(DECIMAL(12, 2), nullable=False)
+    price_jpy: Column[Decimal] = Column(DECIMAL(12, 2), nullable=False)
 
     # Specifications
     mileage_km = Column(Integer, nullable=True)
@@ -133,7 +128,7 @@ class Vehicle(Base):
     length_cm = Column(Integer, nullable=True)  # Length in cm
     width_cm = Column(Integer, nullable=True)  # Width in cm
     height_cm = Column(Integer, nullable=True)  # Height in cm
-    m3_size: Column[float] = Column(DECIMAL(10, 2), nullable=True)  # M3 Size
+    m3_size: Column[Decimal] = Column(DECIMAL(10, 2), nullable=True)  # M3 Size
 
     # Features and Options
     options = Column(Text, nullable=True)  # Options from CSV (comma-separated)
@@ -157,6 +152,11 @@ class Vehicle(Base):
 
     # Relationships (will be used by other modules)
     orders = relationship("Order", back_populates="vehicle")
+
+    @property
+    def auction_id(self):
+        """Provide 'auction_id' for compatibility with Pydantic schemas."""
+        return self.stock_no
 
     def __repr__(self):
         return f"<Vehicle {self.make} {self.model} ({self.year}) - Stock#{self.stock_no}>"
