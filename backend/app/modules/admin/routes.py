@@ -193,17 +193,22 @@ async def get_users(
         )
 
     # Apply sorting
-    sort_column = {
-        "created_at": User.created_at,
-        "email": User.email,
-        "name": User.name,
-        "role": User.role,
-    }.get(sort_by, User.created_at)
-
-    if sort_order.lower() == "desc":
-        query = query.order_by(sort_column.desc())
+    if sort_by == "email":
+        query = query.order_by(
+            User.email.desc() if sort_order.lower() == "desc" else User.email.asc()
+        )
+    elif sort_by == "name":
+        query = query.order_by(
+            User.name.desc() if sort_order.lower() == "desc" else User.name.asc()
+        )
+    elif sort_by == "role":
+        query = query.order_by(
+            User.role.desc() if sort_order.lower() == "desc" else User.role.asc()
+        )
     else:
-        query = query.order_by(sort_column.asc())
+        query = query.order_by(
+            User.created_at.desc() if sort_order.lower() == "desc" else User.created_at.asc()
+        )
 
     # Apply pagination
     offset = (page - 1) * limit

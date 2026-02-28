@@ -116,7 +116,9 @@ export default function AdminUsersPage() {
         const role = row.original.role;
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${roleColors[role] || "bg-gray-100 text-gray-800"}`}
+            className={`px-2 py-1 rounded text-xs font-semibold ${
+              roleColors[role] || "bg-gray-100 text-gray-800"
+            }`}
           >
             {role}
           </span>

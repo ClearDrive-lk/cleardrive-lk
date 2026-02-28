@@ -7,6 +7,7 @@ Story: CD-120 - Static Vehicle Dataset
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 
 from app.core.database import Base
@@ -103,7 +104,7 @@ class Vehicle(Base):
     grade = Column(String(100), nullable=True)  # Grade from CSV
 
     # Pricing
-    price_jpy: Column[float] = Column(DECIMAL(12, 2), nullable=False)
+    price_jpy: Column[Decimal] = Column(DECIMAL(12, 2), nullable=False)
 
     # Specifications
     mileage_km = Column(Integer, nullable=True)
@@ -127,7 +128,7 @@ class Vehicle(Base):
     length_cm = Column(Integer, nullable=True)  # Length in cm
     width_cm = Column(Integer, nullable=True)  # Width in cm
     height_cm = Column(Integer, nullable=True)  # Height in cm
-    m3_size: Column[float] = Column(DECIMAL(10, 2), nullable=True)  # M3 Size
+    m3_size: Column[Decimal] = Column(DECIMAL(10, 2), nullable=True)  # M3 Size
 
     # Features and Options
     options = Column(Text, nullable=True)  # Options from CSV (comma-separated)

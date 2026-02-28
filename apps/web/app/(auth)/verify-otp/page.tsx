@@ -21,7 +21,6 @@ import { setCredentials } from "@/lib/store/features/auth/authSlice";
 import { saveTokens } from "@/lib/auth";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
-
 function OTPForm() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -172,7 +171,6 @@ function OTPForm() {
           <div className="absolute top-[20%] left-[20%] w-[600px] h-[600px] bg-[#FE7743]/5 rounded-full blur-[120px]" />
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
         </div>
-
         <div className="relative z-10">
           <h1 className="text-2xl font-bold text-white tracking-tighter flex items-center gap-2">
             <ShieldCheck className="text-[#FE7743]" />

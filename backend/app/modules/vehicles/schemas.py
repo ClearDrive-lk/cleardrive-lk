@@ -216,9 +216,9 @@ class CostBreakdown(BaseModel):
     total_cost_lkr: Decimal = Field(..., description="Total landed cost in LKR")
 
     # Breakdown percentages
-    vehicle_percentage: float = Field(..., description="Vehicle cost as % of total")
-    taxes_percentage: float = Field(..., description="Taxes as % of total")
-    fees_percentage: float = Field(..., description="Fees as % of total")
+    vehicle_percentage: Decimal = Field(..., description="Vehicle cost as % of total")
+    taxes_percentage: Decimal = Field(..., description="Taxes as % of total")
+    fees_percentage: Decimal = Field(..., description="Fees as % of total")
 
 
 class CostCalculatorRequest(BaseModel):
