@@ -179,6 +179,8 @@ repos:
         name: Run Tests
         entry: python backend/scripts/run_local_ci_pytest.py  # Dedicated script (v1) is cleaner than inline -c
         language: system
+        # TEMPORARY: Keep pytest manual-only until pending peer backend integrations are merged.
+        # Re-enable on commit by changing back to `stages: [pre-commit]`.
         stages: [manual]
         always_run: true
         pass_filenames: false
