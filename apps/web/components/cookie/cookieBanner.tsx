@@ -30,6 +30,20 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
   // SHOW BANNER ONLY IF USER HASN'T CONSENTED YET
   // ===============================================================
   useEffect(() => {
+    const syncAnalyticsFromConsent = () => {
+      const consent = getStoredConsent();
+      if (consent?.analytics) {
+        loadAnalytics();
+      }
+    };
+
+    // Returning users with analytics consent should initialize tracking automatically.
+    syncAnalyticsFromConsent();
+    window.addEventListener(
+      "cleardrive:cookie-consent-updated",
+      syncAnalyticsFromConsent,
+    );
+
     // Small delay so banner doesn't flash on page load
     const timer = setTimeout(() => {
       if (!hasConsented()) {
@@ -37,7 +51,13 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener(
+        "cleardrive:cookie-consent-updated",
+        syncAnalyticsFromConsent,
+      );
+    };
   }, []);
 
   // ===============================================================
@@ -72,18 +92,30 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
   // LOAD ANALYTICS IF ACCEPTED (CD-101.4)
   // ===============================================================
   const loadAnalytics = () => {
-    // Load Google Analytics only after consent
-    if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_GA_ID) {
-      const script = document.createElement("script");
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`;
-      script.async = true;
-      document.head.appendChild(script);
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+    if (typeof window === "undefined" || !gaId) return;
 
-      script.onload = () => {
-        window.gtag?.("config", process.env.NEXT_PUBLIC_GA_ID!);
-        console.log("✅ Google Analytics loaded (user consented)");
-      };
+    // Prevent duplicate script injection on repeated renders/navigation.
+    if (document.getElementById("ga-script")) {
+      window.gtag?.("config", gaId);
+      return;
     }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      ((...args: unknown[]) => {
+        window.dataLayer?.push(args);
+      });
+
+    window.gtag("js", new Date());
+    window.gtag("config", gaId);
+
+    const script = document.createElement("script");
+    script.id = "ga-script";
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    script.async = true;
+    document.head.appendChild(script);
   };
 
   // Don't render if user already consented
@@ -113,13 +145,13 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
       >
         <div className="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* ── Cookie Icon + Text ── */}
+            {/* Cookie Icon + Text */}
             <div className="flex items-start gap-3 flex-1">
               <span
                 className="text-3xl flex-shrink-0 mt-0.5"
                 aria-hidden="true"
               >
-                🍪
+                {"\u{1F36A}"}
               </span>
 
               <div>
@@ -149,9 +181,8 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
               </div>
             </div>
 
-            {/* ── Action Buttons ── */}
+            {/* Action Buttons */}
             <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto flex-shrink-0">
-              {/* Reject button */}
               <Button
                 variant="outline"
                 size="sm"
@@ -161,7 +192,6 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
                 Reject Non-Essential
               </Button>
 
-              {/* Customize button */}
               <Link href="/cookie-preferences">
                 <Button
                   variant="outline"
@@ -172,7 +202,6 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
                 </Button>
               </Link>
 
-              {/* Accept All button */}
               <Button
                 size="sm"
                 onClick={handleAcceptAll}

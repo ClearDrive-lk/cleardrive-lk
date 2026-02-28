@@ -1,6 +1,6 @@
 // frontend/types/gtag.d.ts
 
 interface Window {
-  gtag?: (command: string, targetId: string, config?: object) => void;
+  gtag?: (...args: unknown[]) => void;
   dataLayer?: object[];
 }

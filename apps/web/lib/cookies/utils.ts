@@ -40,6 +40,9 @@ export function saveConsent(consent: CookieConsent): void {
     COOKIE_CONSENT_KEY,
     JSON.stringify(consentWithTimestamp),
   );
+
+  // Notify mounted components (e.g., banner) that consent changed.
+  window.dispatchEvent(new Event("cleardrive:cookie-consent-updated"));
 }
 
 /**
