@@ -16,6 +16,7 @@ from sqlalchemy import ForeignKey, Index, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from app.modules.auth.models import User
     from app.modules.orders.models import Order
 
 
@@ -23,6 +24,7 @@ class PaymentStatus(str, enum.Enum):
     """Payment status enum."""
 
     PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     REFUNDED = "REFUNDED"
@@ -48,20 +50,29 @@ class Payment(Base, UUIDMixin, TimestampMixin):
 
     # PayHere details
     payhere_payment_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
+    payhere_order_id: Mapped[str | None] = mapped_column(String(255))
     idempotency_key: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )
 
     # Payment info
-    amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="LKR", nullable=False)
-    status: Mapped[PaymentStatus] = mapped_column(SQLEnum(PaymentStatus), nullable=False)
+    status: Mapped[PaymentStatus] = mapped_column(
+        SQLEnum(PaymentStatus), nullable=False, default=PaymentStatus.PENDING, index=True
+    )
+
+    # PayHere response details
+    payment_method: Mapped[str | None] = mapped_column(String(50))
+    card_holder_name: Mapped[str | None] = mapped_column(String(255))
+    card_no: Mapped[str | None] = mapped_column(String(20))
 
     # Timestamps
     completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    order: Mapped[Order] = relationship("Order", back_populates="payment")
+    order: Mapped[Order] = relationship("Order", back_populates="payments")
+    user: Mapped[User] = relationship("User")
 
     def __repr__(self):
         return f"<Payment {self.id} - {self.status}>"
