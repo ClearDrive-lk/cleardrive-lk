@@ -107,11 +107,9 @@ class Settings(BaseSettings):
         "127.0.0.1",
         "api.cleardrive.lk",
         "*.cleardrive.lk",
-        "cleardrive-lk.up.railway.app",
-        "staging-cleardrive.up.railway.app",
-        "*.up.railway.app",
     ]
-    RAILWAY_PUBLIC_DOMAIN: str | None = None
+    PUBLIC_API_DOMAIN: str | None = None
+    RENDER_PUBLIC_DOMAIN: str | None = None
 
     @field_validator("BACKEND_ALLOWED_HOSTS", mode="before")
     @classmethod
@@ -136,9 +134,11 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def ensure_required_hosts(self) -> "Settings":
         """Keep core hosts present even when env overrides host list."""
-        required = {"localhost", "127.0.0.1", "*.up.railway.app"}
-        if self.RAILWAY_PUBLIC_DOMAIN:
-            required.add(self.RAILWAY_PUBLIC_DOMAIN.strip())
+        required = {"localhost", "127.0.0.1"}
+        if self.PUBLIC_API_DOMAIN:
+            required.add(self.PUBLIC_API_DOMAIN.strip())
+        if self.RENDER_PUBLIC_DOMAIN:
+            required.add(self.RENDER_PUBLIC_DOMAIN.strip())
 
         current = {host.strip() for host in self.BACKEND_ALLOWED_HOSTS if host.strip()}
         self.BACKEND_ALLOWED_HOSTS = sorted(current | required)

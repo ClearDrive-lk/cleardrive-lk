@@ -7,13 +7,14 @@ Story: CD-50
 """
 
 import os
-from typing import Any, Dict, cast
+from typing import Any, Callable, Dict, cast
 
 try:
-    from supabase import Client, create_client
+    from supabase import Client
+    from supabase import create_client as _create_client
 except ModuleNotFoundError:  # pragma: no cover - optional dependency in some CI jobs
     Client = Any  # type: ignore[misc,assignment]
-    create_client = None
+    _create_client = None  # type: ignore[assignment]
 
 
 class SupabaseStorage:
@@ -28,6 +29,7 @@ class SupabaseStorage:
         if self.client is not None:
             return self.client
 
+        create_client: Callable[..., Any] | None = _create_client
         if create_client is None:
             raise RuntimeError("Supabase dependency is not installed")
 

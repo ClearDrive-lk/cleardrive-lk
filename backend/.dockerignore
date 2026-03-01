@@ -1,0 +1,28 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments (machine-specific)
+.venv/
+venv/
+venv*/
+
+# Test/build artifacts
+htmlcov/
+coverage.xml
+pytest.out
+pytest.err
+
+# Local/dev files
+.env
+.env.*
+.idea/
+.vscode/
+*.log
+
+# Git metadata
+.git

@@ -88,9 +88,9 @@ class Order(Base, UUIDMixin, TimestampMixin):
     status_history: Mapped[list[OrderStatusHistory]] = relationship(
         "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
     )
-    #Tharin - 09/02/2026
+    # Tharin - 09/02/2026
     payments: Mapped[list[Payment]] = relationship(
-    "Payment", back_populates="order", cascade="all, delete-orphan"
+        "Payment", back_populates="order", cascade="all, delete-orphan"
     )
 
     shipment_details: Mapped[ShipmentDetails | None] = relationship(

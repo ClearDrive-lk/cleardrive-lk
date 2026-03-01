@@ -36,7 +36,7 @@ Write-Host ""
 # Check for virtual environment
 if (-not ($env:VIRTUAL_ENV)) {
     Write-Host " It looks like you're not in a Python virtual environment." -ForegroundColor Yellow
-    Write-Host " Please activate your venv (e.g., '.\venv312\Scripts\Activate.ps1') and run this script again." -ForegroundColor Yellow
+    Write-Host " Please activate your venv (e.g., '.\.venv\Scripts\Activate.ps1') and run this script again." -ForegroundColor Yellow
     exit 1
 }
 

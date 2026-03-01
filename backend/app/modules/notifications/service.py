@@ -12,20 +12,18 @@ from app.modules.orders.models import Order, OrderStatus
 
 
 async def send_status_change_notification(
-    order: Order,
-    old_status: OrderStatus,
-    new_status: OrderStatus
+    order: Order, old_status: OrderStatus, new_status: OrderStatus
 ):
     """
     Send notification based on status change.
-    
+
     Different statuses trigger different notifications:
     - PAYMENT_CONFIRMED: Thank customer, explain next steps
     - ASSIGNED_TO_EXPORTER: Notify exporter of assignment
     - SHIPPED: Notify customer with tracking info
     - DELIVERED: Request customer feedback/review
     """
-    
+
     # Mapping: status → notification function
     notifications = {
         OrderStatus.PAYMENT_CONFIRMED: notify_payment_confirmed,
@@ -34,9 +32,9 @@ async def send_status_change_notification(
         OrderStatus.DELIVERED: notify_delivered,
         OrderStatus.CANCELLED: notify_cancelled,
     }
-    
+
     notification_fn = notifications.get(new_status)
-    
+
     if notification_fn:
         await notification_fn(order, old_status)
 
@@ -54,7 +52,7 @@ async def notify_payment_confirmed(order: Order, old_status: OrderStatus):
 
 async def notify_exporter_assigned(order: Order, old_status: OrderStatus):
     """Notify exporter of new assignment."""
-    print(f"📧 TODO: Send assignment email to exporter")
+    print("📧 TODO: Send assignment email to exporter")
     # Get exporter from shipment details
     # await send_email(...)
 
