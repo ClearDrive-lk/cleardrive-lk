@@ -105,6 +105,8 @@ class Settings(BaseSettings):
     BACKEND_ALLOWED_HOSTS: list[str] = [
         "localhost",
         "127.0.0.1",
+        "cleardrive-lk.onrender.com",
+        "cleardrive-lk-staging.onrender.com",
         "api.cleardrive.lk",
         "*.cleardrive.lk",
     ]
