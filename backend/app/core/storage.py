@@ -1,4 +1,4 @@
-# backend/app/core/storage.py
+﻿# backend/app/core/storage.py
 
 """
 Supabase Storage client for file uploads.
@@ -14,6 +14,12 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - optional dependency in some CI jobs
     Client = Any  # type: ignore[misc,assignment]
     create_client = None
+
+    SUPABASE_AVAILABLE = True
+except ModuleNotFoundError:  # pragma: no cover
+    Client = Any  # type: ignore[assignment]
+    create_client = None  # type: ignore[assignment]
+    SUPABASE_AVAILABLE = False
 
 
 class SupabaseStorage:
