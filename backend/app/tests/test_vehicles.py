@@ -15,10 +15,6 @@ from app.modules.vehicles.models import (
     VehicleStatus,
 )
 
-# ============================================================================
-# PUBLIC ENDPOINTS TESTS (No authentication required)
-# ============================================================================
-
 
 def test_get_vehicles_empty(client, db):
     """Test getting vehicles when none exist."""
@@ -85,7 +81,6 @@ def test_search_vehicles_by_make(client, db):
     assert response.status_code == 200
     data = response.json()
     assert data["pagination"]["total"] == 2
-
     # Search for Honda
     response = client.get("/api/v1/vehicles", params={"search": "Honda"})
 

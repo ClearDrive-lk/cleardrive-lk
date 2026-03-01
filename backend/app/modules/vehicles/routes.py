@@ -1,9 +1,4 @@
-"""
-Vehicle Pydantic schemas for request/response validation.
-Author: Parindra Chameekara
-Epic: CD-E3 - Vehicle Management System
-Story: CD-140 - Vehicle detail and cost calculation endpoints
-"""
+# backend/app/modules/vehicles/routes.py
 
 import math
 from decimal import Decimal

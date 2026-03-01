@@ -91,7 +91,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains; preload"
             )
-
         # 5. Referrer-Policy
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 

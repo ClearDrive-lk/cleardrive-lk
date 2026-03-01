@@ -32,7 +32,7 @@ repos:
   # PYTHON - BACKEND
   # ============================================================================
   - repo: https://github.com/psf/black
-    rev: 26.1.0
+    rev: 26.1.0  # Latest (v1 uses v26.x versioning)
     hooks:
       - id: black
         name: Format Python code (Black)
@@ -56,7 +56,7 @@ repos:
           - backend/app
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
+    rev: 7.3.0  # Newer than v2's 7.0.0
     hooks:
       - id: flake8
         name: Lint Python code (Flake8)
@@ -87,10 +87,25 @@ repos:
           - pydantic
           - sqlalchemy
           - types-redis
+          - types-Markdown  # Added from v2
+
+  # Bandit as a proper pre-commit repo hook (from v2) — cleaner than local entry
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.3
+    hooks:
+      - id: bandit
+        name: Security check Python (Bandit)
+        files: ^backend/
+        exclude: ^backend/app/tests/
+        pass_filenames: false
+        args: ["-r", "backend/app", "-ll", "-i"]
 
   # ============================================================================
   # JAVASCRIPT/TYPESCRIPT - FRONTEND
   # ============================================================================
+  # Using local hooks (from v1) for ESLint + Prettier to respect the project's
+  # own config files (eslint.config.mjs, prettier config) rather than bundling
+  # dependencies inside pre-commit's isolated env.
   - repo: local
     hooks:
       - id: frontend-eslint
@@ -102,7 +117,7 @@ repos:
         language: system
 
       - id: frontend-prettier
-        name: Check code format (Prettier)
+        name: Format code (Prettier)
         files: ^apps/web/
         always_run: true
         pass_filenames: false
@@ -115,14 +130,6 @@ repos:
         always_run: true
         pass_filenames: false
         entry: npm --prefix apps/web run type-check
-        language: system
-
-      - id: frontend-audit
-        name: Frontend dependency audit (prod)
-        files: ^apps/web/(package\.json|package-lock\.json)$
-        always_run: true
-        pass_filenames: false
-        entry: python scripts/run_on_main.py --label "Frontend audit" -- npm --prefix apps/web audit --omit=dev --audit-level=moderate
         language: system
 
   # ============================================================================
@@ -140,7 +147,7 @@ repos:
   # COMMIT MESSAGE VALIDATION
   # ============================================================================
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.13.7
+    rev: v4.13.7  # Newer than v2's v3.13.0
     hooks:
       - id: commitizen
         name: Check commit message format
@@ -151,12 +158,12 @@ repos:
   # ============================================================================
   - repo: local
     hooks:
-      - id: bandit-main
-        name: Security check Python (Bandit, main only)
-        files: ^backend/
-        pass_filenames: false
+      - id: frontend-audit
+        name: Frontend dependency audit (prod)
+        files: ^apps/web/(package\.json|package-lock\.json)$
         always_run: true
-        entry: python scripts/run_on_main.py --label "Bandit" -- python -m bandit -r backend/app -ll -i
+        pass_filenames: false
+        entry: python scripts/run_on_main.py --label "Frontend audit" -- npm --prefix apps/web audit --omit=dev --audit-level=moderate
         language: system
 
       - id: safety
@@ -166,30 +173,33 @@ repos:
         files: ^backend/(requirements\.txt|requirements-dev\.txt|pyproject\.toml)$
         always_run: true
         pass_filenames: false
+        stages: [pre-commit]
 
       - id: pytest
         name: Run Tests
-        entry: python backend/scripts/run_local_ci_pytest.py
+        entry: python backend/scripts/run_local_ci_pytest.py  # Dedicated script (v1) is cleaner than inline -c
         language: system
+        # TEMPORARY: Keep pytest manual-only until pending peer backend integrations are merged.
+        # Re-enable on commit by changing back to `stages: [pre-commit]`.
         stages: [manual]
         always_run: true
         pass_filenames: false
-        # Show pytest output even when tests pass, so progress is visible.
-        verbose: true
+        verbose: true  # Show pytest output even when tests pass
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 default_language_version:
-  python: python3
+  python: python3.12  # Explicit minor version from v2 is better practice
   node: "20.0.0"
 
 fail_fast: false  # Run all hooks even if one fails
-default_stages: [pre-commit]
+default_stages: [pre-commit, pre-push]
 
 exclude: |
   (?x)^(
-    backend/(venv|venv[^/]*|\.venv)/.*|
+    backend/(venv|venv[^/]*|\.venv)/.*|  # Broad venv pattern from v1 catches more variants
+    backend/venv312/.*|                   # Explicit named venv from v2
     backend/.pytest_cache/.*|
     backend/__pycache__/.*|
     backend/htmlcov/.*|

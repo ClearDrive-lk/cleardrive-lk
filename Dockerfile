@@ -1,5 +1,4 @@
-# Root Dockerfile – build backend when context is repo root (e.g. Railway)
-# Use backend/Dockerfile directly when build context is backend/
+# backend/Dockerfile
 
 FROM python:3.11-slim
 
@@ -13,14 +12,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend application only
-COPY backend/ .
+# Copy application
+COPY . .
 
 # Expose port
 EXPOSE 8000
 
-# Run application (Railway provides PORT env var)
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Run application (Render provides PORT env var)
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

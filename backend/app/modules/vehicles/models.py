@@ -29,6 +29,8 @@ class FuelType(str, Enum):
     """Vehicle fuel types."""
 
     GASOLINE = "Gasoline"
+    # Backward compatibility for existing DB enum rows using PETROL.
+    PETROL = "Gasoline"
     DIESEL = "Diesel"
     HYBRID = "Gasoline/hybrid"
     ELECTRIC = "Electric"
@@ -110,7 +112,7 @@ class Vehicle(Base):
     mileage_km = Column(Integer, nullable=True)
     engine_cc = Column(Integer, nullable=True)
     engine_model = Column(String(100), nullable=True)  # Engine Model from CSV
-    fuel_type: Column[FuelType] = Column(SQLEnum(FuelType), nullable=True)
+    fuel_type: Column[FuelType] = Column(SQLEnum(FuelType, omit_aliases=False), nullable=True)
     transmission: Column[Transmission] = Column(SQLEnum(Transmission), nullable=True)
 
     # Additional Specifications

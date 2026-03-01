@@ -34,13 +34,18 @@ class Payment(Base, UUIDMixin, TimestampMixin):
     """Payment model - PayHere payments."""
 
     __tablename__ = "payments"
+    __table_args__ = (
+        Index("idx_payments_created_at", "created_at"),
+        Index("idx_payments_status", "status"),
+        Index("idx_payments_user_id", "user_id"),
+    )
 
     # References
     order_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
     )
     user_id: Mapped[PyUUID] = mapped_column(
-        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
     # PayHere details
