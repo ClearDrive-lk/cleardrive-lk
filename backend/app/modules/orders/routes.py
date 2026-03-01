@@ -278,7 +278,7 @@ async def update_order_status(
 
         shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
 
-        if not shipment or shipment.assigned_exporter_id != current_user.id:
+        if not shipment or shipment.exporter_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only update orders assigned to you",

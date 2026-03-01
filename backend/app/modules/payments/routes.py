@@ -35,6 +35,11 @@ from sqlalchemy.orm import Session
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
+def _as_form_str(value: object) -> str | None:
+    """Return form field as str when valid; otherwise None."""
+    return value if isinstance(value, str) else None
+
+
 # ===================================================================
 # HELPER: GENERATE PAYHERE MD5 SIGNATURE
 # ===================================================================
@@ -163,6 +168,14 @@ async def initiate_payment(
 
     print(f"✅ Order verified: {order.id}")
 
+    if order.total_cost_lkr is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order total cost is missing",
+        )
+
+    amount_lkr = float(order.total_cost_lkr)
+
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD
     # ===============================================================
@@ -192,7 +205,7 @@ async def initiate_payment(
     hash_value = generate_payhere_hash(
         merchant_id=settings.PAYHERE_MERCHANT_ID,
         order_id=payhere_order_id,
-        amount=f"{float(order.total_cost_lkr):.2f}",
+        amount=f"{amount_lkr:.2f}",
         currency="LKR",
         merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
     )
@@ -208,7 +221,7 @@ async def initiate_payment(
         "order_id": payhere_order_id,
         "items": "Vehicle Import Order",
         "currency": "LKR",
-        "amount": f"{float(order.total_cost_lkr):.2f}",
+        "amount": f"{amount_lkr:.2f}",
         "first_name": current_user.name or "Customer",
         "last_name": "",
         "email": current_user.email,
@@ -276,16 +289,16 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     # Get form data
     form_data = await request.form()
 
-    merchant_id = form_data.get("merchant_id")
-    order_id = form_data.get("order_id")
-    payhere_amount = form_data.get("payhere_amount")
-    payhere_currency = form_data.get("payhere_currency")
-    status_code = form_data.get("status_code")
-    md5sig = form_data.get("md5sig")
-    payment_id = form_data.get("payment_id")
-    method = form_data.get("method")
-    card_holder_name = form_data.get("card_holder_name")
-    card_no = form_data.get("card_no")
+    merchant_id = _as_form_str(form_data.get("merchant_id"))
+    order_id = _as_form_str(form_data.get("order_id"))
+    payhere_amount = _as_form_str(form_data.get("payhere_amount"))
+    payhere_currency = _as_form_str(form_data.get("payhere_currency"))
+    status_code = _as_form_str(form_data.get("status_code"))
+    md5sig = _as_form_str(form_data.get("md5sig"))
+    payment_id = _as_form_str(form_data.get("payment_id"))
+    method = _as_form_str(form_data.get("method"))
+    card_holder_name = _as_form_str(form_data.get("card_holder_name"))
+    card_no = _as_form_str(form_data.get("card_no"))
 
     print(f"Order ID: {order_id}")
     print(f"Amount: {payhere_currency} {payhere_amount}")
@@ -298,6 +311,12 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required webhook fields",
         )
+    assert merchant_id is not None
+    assert order_id is not None
+    assert payhere_amount is not None
+    assert payhere_currency is not None
+    assert status_code is not None
+    assert md5sig is not None
 
     # ===============================================================
     # STEP 1: VERIFY SIGNATURE

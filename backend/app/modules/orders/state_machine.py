@@ -91,7 +91,7 @@ def check_assigned_to_exporter_prerequisites(order, db) -> tuple[bool, str]:
     if not shipment:
         return False, "No shipment details found"
 
-    if not shipment.assigned_exporter_id:
+    if not shipment.exporter_id:
         return False, "No exporter assigned"
 
     return True, ""
@@ -138,7 +138,7 @@ def check_docs_uploaded_prerequisites(order, db) -> tuple[bool, str]:
     required_types = {
         DocumentType.BILL_OF_LADING,
         DocumentType.COMMERCIAL_INVOICE,
-        DocumentType.CERTIFICATE_OF_ORIGIN,
+        DocumentType.EXPORT_CERTIFICATE,
         DocumentType.PACKING_LIST,
     }
 

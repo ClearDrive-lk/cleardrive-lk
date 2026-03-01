@@ -25,6 +25,29 @@ logger = logging.getLogger(__name__)
 _redis_client: Optional[redis.Redis] = None
 
 
+class _RedisClientProxy:
+    """Compatibility proxy for modules expecting a module-level redis_client."""
+
+    async def get(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.get(*args, **kwargs)
+
+    async def setex(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.setex(*args, **kwargs)
+
+    async def ping(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.ping(*args, **kwargs)
+
+    async def keys(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.keys(*args, **kwargs)
+
+
+redis_client = _RedisClientProxy()
+
+
 async def get_redis() -> redis.Redis:
     """
     Get Redis client instance (singleton).
