@@ -31,12 +31,12 @@ async def assign_exporter_to_order(
 
     **Prerequisites:**
     - Order must exist
-    - Order status must be PAYMENT_CONFIRMED
+    - Order status must be LC_APPROVED
     - Exporter user must have EXPORTER role
     - Order must not already have exporter assigned
 
     **Process:**
-    1. Verify order exists and status is PAYMENT_CONFIRMED
+    1. Verify order exists and status is LC_APPROVED
     2. Verify exporter exists and has EXPORTER role
     3. Create shipment_details record (CD-70.3)
     4. Update order status to ASSIGNED_TO_EXPORTER (CD-70.2)
@@ -66,10 +66,10 @@ async def assign_exporter_to_order(
         )
 
     # Check order status
-    if order.status != OrderStatus.PAYMENT_CONFIRMED:
+    if order.status != OrderStatus.LC_APPROVED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order must be in PAYMENT_CONFIRMED status. Current: {order.status}",
+            detail=f"Order must be in LC_APPROVED status. Current: {order.status}",
         )
 
     print("✅ STEP 1: Order Verified")
@@ -141,8 +141,8 @@ async def assign_exporter_to_order(
     # ===============================================================
     history = OrderStatusHistory(
         order_id=order.id,
-        old_status=old_status.value,
-        new_status=OrderStatus.ASSIGNED_TO_EXPORTER.value,
+        from_status=old_status,
+        to_status=OrderStatus.ASSIGNED_TO_EXPORTER,
         changed_by=current_user.id,
         notes=f"Assigned to exporter: {exporter.email}",
     )
