@@ -322,6 +322,8 @@ venv312/
 ENV/
 env/
 .venv
+backend/venv/
+backend/venv312/
 
 # ============================================================================
 # NODE / JAVASCRIPT

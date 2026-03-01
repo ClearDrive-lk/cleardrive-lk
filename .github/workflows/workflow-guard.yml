@@ -1,0 +1,26 @@
+name: Workflow Guard
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - ".github/workflows/**"
+      - ".github/CODEOWNERS"
+
+jobs:
+  require-ci-approval-token:
+    name: Require CI Approval Token
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate explicit approval token
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          TEXT="${PR_TITLE} ${PR_BODY}"
+          if [[ "${TEXT}" != *"[ci-change-approved]"* ]]; then
+            echo "Workflow files changed without approval token."
+            echo "Add [ci-change-approved] to PR title or body."
+            exit 1
+          fi
+          echo "CI/CD change approval token found."

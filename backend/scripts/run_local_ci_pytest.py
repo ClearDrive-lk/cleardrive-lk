@@ -28,12 +28,17 @@ def _pick_python(repo_root: Path, backend_dir: Path) -> str:
     """Pick a Python interpreter that has backend test deps."""
     candidates: list[Path] = []
 
+    preferred_python = os.environ.get("BACKEND_PYTHON")
+    if preferred_python:
+        preferred = Path(preferred_python)
+        candidates.append(preferred)
+
     virtual_env = os.environ.get("VIRTUAL_ENV")
     if virtual_env:
         ve = Path(virtual_env)
         candidates.extend([ve / "Scripts" / "python.exe", ve / "bin" / "python"])
 
-    for name in (".venv", "venv", "venv312"):
+    for name in (".venv", "venv"):
         candidates.extend(
             [
                 repo_root / name / "Scripts" / "python.exe",

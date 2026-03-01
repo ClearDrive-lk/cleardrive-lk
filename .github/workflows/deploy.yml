@@ -1,0 +1,33 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy-staging:
+    name: Deploy to Render Staging
+    if: github.event.inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Staging Deploy
+        run: |
+          curl --fail --show-error --silent -X POST "${{ secrets.RENDER_STAGING_HOOK }}"
+
+  deploy-production:
+    name: Deploy to Render Production
+    if: github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Production Deploy
+        run: |
+          curl --fail --show-error --silent -X POST "${{ secrets.RENDER_PROD_HOOK }}"
