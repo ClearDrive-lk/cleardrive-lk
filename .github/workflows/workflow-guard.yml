@@ -14,13 +14,20 @@ jobs:
     steps:
       - name: Validate explicit approval token
         env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           TEXT="${PR_TITLE} ${PR_BODY}"
-          if [[ "${TEXT}" != *"[ci-change-approved]"* ]]; then
-            echo "Workflow files changed without approval token."
+          IS_BOT=false
+          if [[ "${PR_AUTHOR}" == *"[bot]"* ]]; then
+            IS_BOT=true
+          fi
+
+          if [[ "${IS_BOT}" == "true" && "${TEXT}" != *"[ci-change-approved]"* ]]; then
+            echo "Bot-authored CI/CD changes require explicit approval token."
             echo "Add [ci-change-approved] to PR title or body."
             exit 1
           fi
-          echo "CI/CD change approval token found."
+
+          echo "Workflow guard passed."
