@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class OrderStatus(str, enum.Enum):
-    """Order status enum - 11 states."""
+    """Order status enum including LC review states."""
 
     CREATED = "CREATED"
     PAYMENT_CONFIRMED = "PAYMENT_CONFIRMED"

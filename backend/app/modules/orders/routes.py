@@ -16,6 +16,7 @@ from app.core.permissions import (
 from app.core.security import encrypt_field
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
+from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import (
     Order,
     OrderStatus,
@@ -368,25 +369,20 @@ async def update_order_status(
     print(f"   Order: {order.id}")
     print(f"   New Status: {order.status.value}")
     print("=" * 70 + "\n")
-
     # ===============================================================
     # STEP 7: SEND NOTIFICATIONS (CD-31.7)
     # ===============================================================
-
-    # TODO: Implement notifications based on status
-    # await send_status_change_notification(
-    #     order=order,
-    #     old_status=old_status,
-    #     new_status=new_status_enum
-    # )
-
-    # Status-specific notifications:
-    # - PAYMENT_CONFIRMED: Email customer
-    # - ASSIGNED_TO_EXPORTER: Email exporter
-    # - SHIPPED: Email customer + exporter
-    # - DELIVERED: Email customer (survey)
-
-    print(f"📧 TODO: Send notification to customer ({order.user.email})")
+    try:
+        await send_status_change_notification(
+            order=order,
+            old_status=old_status,
+            new_status=new_status_enum,
+        )
+    except Exception:
+        logger.exception(
+            "Status updated for order_id=%s, but notification dispatch failed",
+            order.id,
+        )
 
     return {
         "message": "Order status updated successfully",

@@ -23,7 +23,23 @@ VALID_TRANSITIONS: Dict[OrderStatus, List[OrderStatus]] = {
     ],
     # From PAYMENT_CONFIRMED
     OrderStatus.PAYMENT_CONFIRMED: [
+        OrderStatus.LC_REQUESTED,
+        OrderStatus.CANCELLED,
+    ],
+    # From LC_REQUESTED
+    OrderStatus.LC_REQUESTED: [
+        OrderStatus.LC_APPROVED,
+        OrderStatus.LC_REJECTED,
+        OrderStatus.CANCELLED,
+    ],
+    # From LC_APPROVED
+    OrderStatus.LC_APPROVED: [
         OrderStatus.ASSIGNED_TO_EXPORTER,
+        OrderStatus.CANCELLED,
+    ],
+    # From LC_REJECTED
+    OrderStatus.LC_REJECTED: [
+        OrderStatus.LC_REQUESTED,
         OrderStatus.CANCELLED,
     ],
     # From ASSIGNED_TO_EXPORTER
@@ -94,6 +110,13 @@ def check_assigned_to_exporter_prerequisites(order, db) -> tuple[bool, str]:
     if not shipment.exporter_id:
         return False, "No exporter assigned"
 
+    return True, ""
+
+
+def check_lc_requested_prerequisites(order) -> tuple[bool, str]:
+    """Prerequisites for LC_REQUESTED state."""
+    if order.payment_status != PaymentStatus.COMPLETED:
+        return False, "Payment must be completed before requesting LC"
     return True, ""
 
 
@@ -171,6 +194,9 @@ def check_shipped_prerequisites(order, db) -> tuple[bool, str]:
 STATE_PREREQUISITES: Dict[OrderStatus, Optional[Callable]] = {
     OrderStatus.CREATED: None,
     OrderStatus.PAYMENT_CONFIRMED: check_payment_confirmed_prerequisites,
+    OrderStatus.LC_REQUESTED: check_lc_requested_prerequisites,
+    OrderStatus.LC_APPROVED: None,
+    OrderStatus.LC_REJECTED: None,
     OrderStatus.ASSIGNED_TO_EXPORTER: check_assigned_to_exporter_prerequisites,
     OrderStatus.AWAITING_SHIPMENT_CONFIRMATION: check_awaiting_shipment_prerequisites,
     OrderStatus.SHIPMENT_DOCS_UPLOADED: check_docs_uploaded_prerequisites,
