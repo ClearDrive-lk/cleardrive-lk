@@ -17,6 +17,14 @@ from sqlalchemy import Index, Integer, String, Text, Uuid
 from sqlalchemy.orm import relationship
 
 
+def _enum_or_string_value(value: object | None) -> object | None:
+    if value is None:
+        return None
+    if isinstance(value, Enum):
+        return value.value
+    return value
+
+
 class VehicleStatus(str, Enum):
     """Vehicle availability status."""
 
@@ -121,8 +129,9 @@ class Vehicle(Base):
     mileage_km = Column(Integer, nullable=True)
     engine_cc = Column(Integer, nullable=True)
     engine_model = Column(String(100), nullable=True)  # Engine Model from CSV
-    fuel_type: Column[FuelType] = Column(SQLEnum(FuelType, omit_aliases=False), nullable=True)
-    transmission: Column[Transmission] = Column(SQLEnum(Transmission), nullable=True)
+    # Use string columns at ORM level to tolerate legacy enum labels already stored in DBs.
+    fuel_type = Column(String(50), nullable=True)
+    transmission = Column(String(50), nullable=True)
 
     # Additional Specifications
     steering: Column[Steering] = Column(SQLEnum(Steering), nullable=True)  # Steering position
@@ -189,8 +198,8 @@ class Vehicle(Base):
             "mileage_km": self.mileage_km,
             "engine_cc": self.engine_cc,
             "engine_model": self.engine_model,
-            "fuel_type": self.fuel_type.value if self.fuel_type else None,
-            "transmission": self.transmission.value if self.transmission else None,
+            "fuel_type": _enum_or_string_value(self.fuel_type),
+            "transmission": _enum_or_string_value(self.transmission),
             "steering": self.steering.value if self.steering else None,
             "drive": self.drive.value if self.drive else None,
             "seats": self.seats,

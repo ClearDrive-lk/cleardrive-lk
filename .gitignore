@@ -400,3 +400,4 @@ Thumbs.db
 # Keep Next.js source lib tracked (overrides Python `lib/` ignore above)
 !apps/web/lib/
 !apps/web/lib/**
+backend/data/vehicle_image_upload_map.json
