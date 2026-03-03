@@ -76,16 +76,18 @@ def _map_fuel(value: str | None) -> str | None:
     if not value:
         return None
     s = value.strip().lower()
+    enum_style = os.getenv("CD23_FUEL_ENUM_STYLE", "title").strip().lower()
+    upper = enum_style == "upper"
     if s in {"petrol", "gasoline"}:
-        return FuelType.GASOLINE.value
+        return "PETROL" if upper else FuelType.GASOLINE.value
     if s in {"hybrid", "petrol/hybrid", "gasoline/hybrid"}:
-        return FuelType.HYBRID.value
+        return "HYBRID" if upper else FuelType.HYBRID.value
     if s in {"plugin hybrid", "plug-in hybrid"}:
-        return FuelType.PLUGIN_HYBRID.value
+        return "PLUGIN_HYBRID" if upper else FuelType.PLUGIN_HYBRID.value
     if s == "diesel":
-        return FuelType.DIESEL.value
+        return "DIESEL" if upper else FuelType.DIESEL.value
     if s == "electric":
-        return FuelType.ELECTRIC.value
+        return "ELECTRIC" if upper else FuelType.ELECTRIC.value
     return None
 
 
@@ -93,12 +95,14 @@ def _map_transmission(value: str | None) -> str | None:
     if not value:
         return None
     s = value.strip().lower()
+    enum_style = os.getenv("CD23_TRANSMISSION_ENUM_STYLE", "title").strip().lower()
+    upper = enum_style == "upper"
     if s == "automatic":
-        return Transmission.AUTOMATIC.value
+        return "AUTOMATIC" if upper else Transmission.AUTOMATIC.value
     if s == "manual":
-        return Transmission.MANUAL.value
+        return "MANUAL" if upper else Transmission.MANUAL.value
     if s == "cvt":
-        return Transmission.CVT.value
+        return "CVT" if upper else Transmission.CVT.value
     return None
 
 
@@ -232,6 +236,7 @@ class ScraperScheduler:
             "location",
             "options",
             "other_remarks",
+            "gallery_images",
             "vehicle_url",
         ]
         for field in enrich_fields:
@@ -296,6 +301,7 @@ class ScraperScheduler:
             options=row.get("options") or ", ".join(row.get("features", [])),
             other_remarks=row.get("other_remarks") or row.get("description"),
             image_url=primary_image,
+            gallery_images=json.dumps(images) if isinstance(images, list) and images else None,
             vehicle_url=row.get("vehicle_url"),
             model_no=row.get("model_no"),
             status=status.value,
@@ -428,6 +434,21 @@ class ScraperScheduler:
                     if public_url:
                         uploaded_urls.append(str(public_url))
                 except Exception as exc:
+                    message = str(exc).lower()
+                    if (
+                        "duplicate" in message
+                        or "already exists" in message
+                        or "statuscode': 409" in message
+                    ):
+                        try:
+                            public_url = _run_async(
+                                storage.get_public_url(_vehicle_bucket_name(), file_path)
+                            )
+                            if public_url:
+                                uploaded_urls.append(str(public_url))
+                                continue
+                        except Exception:
+                            pass
                     logger.warning("Supabase upload failed for %s: %s", file_path, exc)
 
             if uploaded_urls:
@@ -510,6 +531,11 @@ class ScraperScheduler:
                     if downloaded_images:
                         row["images"] = downloaded_images
                         row["image_url"] = downloaded_images[0]
+                        row["gallery_images"] = json.dumps(downloaded_images)
+                    else:
+                        raw_images = row.get("images")
+                        if isinstance(raw_images, list) and raw_images:
+                            row["gallery_images"] = json.dumps(raw_images)
 
                     existing = self._find_existing_vehicle(db, row)
                     if existing:

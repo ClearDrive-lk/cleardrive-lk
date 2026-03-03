@@ -14,7 +14,7 @@ import os
 import re
 from pathlib import Path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import Connection, create_engine, text
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,7 +36,7 @@ def _load_env_file(path: Path) -> None:
             os.environ[key] = value
 
 
-def _canonical_fuel(value: str | None) -> str | None:
+def _canonical_fuel_key(value: str | None) -> str | None:
     if not value:
         return None
     raw = value.strip()
@@ -44,16 +44,18 @@ def _canonical_fuel(value: str | None) -> str | None:
         return None
     s = re.sub(r"[^a-z0-9]+", " ", raw.lower()).strip()
     if s in {"gasoline", "petrol", "gas"}:
-        return "Gasoline"
+        return "petrol"
     if s in {"diesel"}:
-        return "Diesel"
+        return "diesel"
     if s in {"hybrid", "gasoline hybrid", "petrol hybrid", "gasoline/hybrid", "petrol/hybrid"}:
-        return "Gasoline/hybrid"
+        return "hybrid"
     if s in {"plugin hybrid", "plug in hybrid", "plug-in hybrid", "phev"}:
-        return "Plugin Hybrid"
+        return "plugin_hybrid"
     if s in {"electric", "ev", "bev"}:
-        return "Electric"
-    return raw
+        return "electric"
+    if s in {"cng"}:
+        return "cng"
+    return s
 
 
 def _canonical_transmission(value: str | None) -> str | None:
@@ -70,6 +72,59 @@ def _canonical_transmission(value: str | None) -> str | None:
     if s in {"cvt"}:
         return "CVT"
     return raw
+
+
+def _load_enum_labels(conn: Connection, type_name: str) -> list[str]:
+    rows = conn.execute(
+        text(
+            """
+            SELECT e.enumlabel
+            FROM pg_enum e
+            JOIN pg_type t ON e.enumtypid = t.oid
+            WHERE t.typname = :type_name
+            """
+        ),
+        {"type_name": type_name},
+    ).fetchall()
+    return [str(r[0]) for r in rows]
+
+
+def _fuel_label_for_db(value: str | None, allowed_labels: list[str]) -> str | None:
+    if value is None:
+        return None
+    key = _canonical_fuel_key(value)
+    if key is None:
+        return None
+    if not allowed_labels:
+        return value
+
+    by_key: dict[str, list[str]] = {}
+    for label in allowed_labels:
+        label_key = _canonical_fuel_key(label)
+        if label_key:
+            by_key.setdefault(label_key, []).append(label)
+
+    candidates = by_key.get(key, [])
+    if not candidates:
+        return value
+
+    preferred = [
+        "PETROL",
+        "DIESEL",
+        "HYBRID",
+        "ELECTRIC",
+        "CNG",
+        "PLUGIN_HYBRID",
+        "Gasoline",
+        "Diesel",
+        "Gasoline/hybrid",
+        "Electric",
+        "Plugin Hybrid",
+    ]
+    for v in preferred:
+        if v in candidates:
+            return v
+    return candidates[0]
 
 
 def main() -> None:
@@ -98,6 +153,7 @@ def main() -> None:
     transmission_updates = 0
 
     with engine.begin() as conn:
+        fuel_labels = _load_enum_labels(conn, "fueltype")
         rows = conn.execute(text("SELECT id, fuel_type, transmission FROM vehicles")).mappings().all()
         scanned = len(rows)
 
@@ -106,7 +162,7 @@ def main() -> None:
             current_fuel = row["fuel_type"]
             current_transmission = row["transmission"]
 
-            next_fuel = _canonical_fuel(current_fuel)
+            next_fuel = _fuel_label_for_db(current_fuel, fuel_labels)
             next_transmission = _canonical_transmission(current_transmission)
 
             fuel_changed = next_fuel != current_fuel

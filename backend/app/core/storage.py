@@ -98,6 +98,13 @@ class SupabaseStorage:
         except Exception as e:
             raise Exception(f"Supabase download failed: {str(e)}")
 
+    async def get_public_url(self, bucket: str, file_path: str) -> str:
+        """Get public URL for a file path in a bucket."""
+        try:
+            return cast(str, self._ensure_client().storage.from_(bucket).get_public_url(file_path))
+        except Exception as e:
+            raise Exception(f"Supabase public URL failed: {str(e)}")
+
     async def delete_file(self, bucket: str, file_path: str) -> bool:
         """Delete file from Supabase Storage."""
         try:
