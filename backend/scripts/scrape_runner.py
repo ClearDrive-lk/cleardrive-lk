@@ -62,10 +62,14 @@ def main() -> None:
         os.environ["CD23_UPLOAD_IMAGES_SUPABASE"] = "true"
         os.environ["CD23_REQUIRE_SUPABASE_UPLOAD"] = "true"
         os.environ["CD23_STORE_IMAGES_LOCAL"] = "false"
+        os.environ["CD23_FUEL_ENUM_STYLE"] = "upper"
+        os.environ["CD23_TRANSMISSION_ENUM_STYLE"] = "upper"
     else:
         os.environ["CD23_UPLOAD_IMAGES_SUPABASE"] = "false"
         os.environ["CD23_REQUIRE_SUPABASE_UPLOAD"] = "false"
         os.environ["CD23_STORE_IMAGES_LOCAL"] = "true"
+        os.environ["CD23_FUEL_ENUM_STYLE"] = "title"
+        os.environ["CD23_TRANSMISSION_ENUM_STYLE"] = "title"
 
     from app.services.scraper.scheduler import scraper_scheduler
 

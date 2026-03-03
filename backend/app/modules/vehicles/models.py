@@ -5,6 +5,7 @@ Epic: CD-E3 - Vehicle Management System
 Story: CD-120 - Static Vehicle Dataset
 """
 
+import json
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -156,6 +157,7 @@ class Vehicle(Base):
 
     # Media and Links
     image_url = Column(Text, nullable=True)  # Primary image URL
+    gallery_images = Column(Text, nullable=True)  # JSON array of gallery image URLs
     vehicle_url = Column(Text, nullable=True)  # URL to vehicle listing
 
     # Additional Model Information
@@ -214,6 +216,7 @@ class Vehicle(Base):
             "options": self.options,
             "other_remarks": self.other_remarks,
             "image_url": self.image_url,
+            "gallery_images": json.loads(self.gallery_images) if self.gallery_images else [],
             "vehicle_url": self.vehicle_url,
             "model_no": self.model_no,
             "status": self.status.value,
