@@ -22,6 +22,14 @@ export interface Vehicle {
   endTime: string | Date;
   firstRegistrationDate?: string | Date;
   color?: string;
+  vehicleType?: string;
+  steering?: string;
+  drive?: string;
+  seats?: number;
+  doors?: number;
+  location?: string;
+  options?: string;
+  otherRemarks?: string;
 }
 
 export interface VehicleResponse {

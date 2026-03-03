@@ -37,6 +37,16 @@ class SupabaseStorage:
         supabase_key = os.getenv("SUPABASE_KEY")
 
         if not supabase_url or not supabase_key:
+            # Fallback to settings loaded from backend/.env
+            try:
+                from app.core.config import settings
+
+                supabase_url = supabase_url or settings.SUPABASE_URL
+                supabase_key = supabase_key or settings.SUPABASE_KEY
+            except Exception:
+                pass
+
+        if not supabase_url or not supabase_key:
             raise RuntimeError(
                 "Missing Supabase credentials. Set SUPABASE_URL and SUPABASE_KEY in .env"
             )

@@ -235,6 +235,7 @@ htmlcov/
 .env.local
 .env.*.local
 .env.example
+.env.localdb
 
 # IDEs
 .vscode/
@@ -251,6 +252,9 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Scraped vehicle binaries (runtime artifacts)
+backend/data/vehicle_images/
 .next/
 out/
 build/
@@ -365,6 +369,7 @@ apps/web/build_log.txt
 .env.development.local
 .env.test.local
 .env.production.local
+.env.supabase
 
 # ============================================================================
 # OPERATING SYSTEM

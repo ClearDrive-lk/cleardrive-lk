@@ -204,6 +204,7 @@ class CostBreakdown(BaseModel):
     shipping_cost_lkr: Decimal = Field(..., description="Estimated shipping cost")
     customs_duty_lkr: Decimal = Field(..., description="Customs duty (based on engine CC)")
     excise_duty_lkr: Decimal = Field(..., description="Excise duty")
+    pal_lkr: Decimal = Field(Decimal("0"), description="Ports & Airports Levy")
     vat_lkr: Decimal = Field(..., description="Value Added Tax (15%)")
     cess_lkr: Decimal = Field(..., description="Cess (if applicable)")
     port_charges_lkr: Decimal = Field(..., description="Port and handling charges")

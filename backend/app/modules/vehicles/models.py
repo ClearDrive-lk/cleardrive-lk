@@ -13,7 +13,7 @@ from enum import Enum
 from app.core.database import Base
 from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Integer, String, Text, Uuid
+from sqlalchemy import Index, Integer, String, Text, Uuid
 from sqlalchemy.orm import relationship
 
 
@@ -86,6 +86,15 @@ class Vehicle(Base):
     """
 
     __tablename__ = "vehicles"
+    __table_args__ = (
+        Index("idx_make", "make"),
+        Index("idx_model", "model"),
+        Index("idx_year", "year"),
+        Index("idx_price_jpy", "price_jpy"),
+        Index("idx_status", "status"),
+        Index("idx_make_model", "make", "model"),
+        Index("idx_year_price", "year", "price_jpy"),
+    )
 
     # Primary Key
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -95,10 +104,10 @@ class Vehicle(Base):
     chassis = Column(String(100), nullable=True)  # Chassis number (masked as ****)
 
     # Basic Vehicle Information
-    make = Column(String(100), nullable=False, index=True)
-    model = Column(String(100), nullable=False, index=True)
+    make = Column(String(100), nullable=False)
+    model = Column(String(100), nullable=False)
     reg_year = Column(String(20), nullable=True)  # Registration year (e.g., "2023/6")
-    year = Column(Integer, nullable=False, index=True)  # Extracted year for filtering
+    year = Column(Integer, nullable=False)  # Extracted year for filtering
 
     # Vehicle Classification
     vehicle_type: Column[VehicleType] = Column(SQLEnum(VehicleType), nullable=True)  # Type from CSV
@@ -145,7 +154,7 @@ class Vehicle(Base):
 
     # Status
     status: Column[VehicleStatus] = Column(
-        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False, index=True
+        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False
     )
 
     # Timestamps
