@@ -50,6 +50,9 @@ function apiOrigin(): string {
 }
 
 function isAllowedRemoteHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (host.endsWith(".supabase.co")) return true;
+
   const allowed = new Set([
     "www.ramadbk.com",
     "images.unsplash.com",
@@ -57,7 +60,7 @@ function isAllowedRemoteHost(hostname: string): boolean {
     "localhost",
     "127.0.0.1",
   ]);
-  return allowed.has(hostname.toLowerCase());
+  return allowed.has(host);
 }
 
 export function normalizeImageUrl(imageUrl: string | null): string | undefined {

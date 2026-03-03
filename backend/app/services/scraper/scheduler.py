@@ -4,6 +4,7 @@ CD-23 scraper scheduler with duplicate prevention.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -16,6 +17,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from app.core.database import SessionLocal
+from app.core.storage import storage
 from app.modules.orders.models import Order
 from app.modules.vehicles.models import (
     Drive,
@@ -42,6 +44,17 @@ def _to_int(value: Any) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def _run_async(coro: Any) -> Any:
+    try:
+        return asyncio.run(coro)
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(coro)
+        finally:
+            loop.close()
 
 
 try:
@@ -339,6 +352,18 @@ class ScraperScheduler:
         return compact[:80] or "vehicle"
 
     def _download_and_store_images(self, row: dict[str, Any]) -> list[str]:
+        upload_supabase = os.getenv("CD23_UPLOAD_IMAGES_SUPABASE", "false").strip().lower() not in {
+            "0",
+            "false",
+            "no",
+        }
+        require_supabase_upload = os.getenv(
+            "CD23_REQUIRE_SUPABASE_UPLOAD", "false"
+        ).strip().lower() not in {
+            "0",
+            "false",
+            "no",
+        }
         store_local = os.getenv("CD23_STORE_IMAGES_LOCAL", "true").strip().lower() not in {
             "0",
             "false",
@@ -361,6 +386,52 @@ class ScraperScheduler:
 
         if not unique_sources:
             return []
+
+        if upload_supabase:
+            stock_no = str(row.get("stock_no") or "")
+            default_slug = (
+                f"{row.get('make', '')}-{row.get('model', '')}-{row.get('year', '')}".strip("-")
+            )
+            slug = self._safe_slug(stock_no or default_slug or "vehicle")
+            uploaded_urls: list[str] = []
+            for idx, src in enumerate(unique_sources[:10], start=1):
+                try:
+                    response = self._http.get(src, timeout=12)
+                    response.raise_for_status()
+                except RequestException as exc:
+                    logger.warning("Image download failed for %s: %s", src, exc)
+                    continue
+
+                content_type = response.headers.get("Content-Type", "").lower()
+                if content_type and not content_type.startswith("image/"):
+                    logger.warning("Skipping non-image URL %s (content-type=%s)", src, content_type)
+                    continue
+
+                suffix = Path(urlparse(src).path).suffix.lower()
+                if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
+                    suffix = ".jpg"
+                file_path = f"{slug}/image_{idx}{suffix}"
+                try:
+                    result = _run_async(
+                        storage.upload_file(
+                            bucket="vehicles",
+                            file_path=file_path,
+                            file_content=response.content,
+                            content_type=content_type or "application/octet-stream",
+                        )
+                    )
+                    public_url = result.get("url")
+                    if public_url:
+                        uploaded_urls.append(str(public_url))
+                except Exception as exc:
+                    logger.warning("Supabase upload failed for %s: %s", file_path, exc)
+
+            if uploaded_urls:
+                return uploaded_urls
+            if require_supabase_upload:
+                raise RuntimeError("Supabase upload required but no images were uploaded")
+            # Fallback to remote URLs if upload mode is on but upload failed.
+            return unique_sources[:3]
 
         if not store_local:
             return unique_sources[:3]
@@ -392,9 +463,11 @@ class ScraperScheduler:
             if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
                 suffix = ".jpg"
 
-            file_path = images_root / f"image_{idx}{suffix}"
-            file_path.write_bytes(response.content)
-            local_paths.append(str(file_path.relative_to(Path(__file__).resolve().parents[3])))
+            local_file_path = images_root / f"image_{idx}{suffix}"
+            local_file_path.write_bytes(response.content)
+            local_paths.append(
+                str(local_file_path.relative_to(Path(__file__).resolve().parents[3]))
+            )
 
         return local_paths
 
