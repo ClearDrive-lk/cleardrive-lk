@@ -1,15 +1,12 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  turbopack: {
-    resolveAlias: {
-      "@/*": "./*",
-    },
-  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "example.com" },
       { protocol: "https", hostname: "localhost" },
+      { protocol: "http", hostname: "localhost" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "www.ramadbk.com" },
     ],
   },
   async rewrites() {

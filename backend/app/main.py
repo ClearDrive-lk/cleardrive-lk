@@ -2,6 +2,7 @@
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
@@ -12,6 +13,7 @@ from app.modules.kyc.routes import router as kyc_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 
 # Import security middleware
 try:
@@ -36,10 +38,12 @@ except ImportError:
 # Import routers
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
+from app.modules.calculator.routes import router as calculator_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
+from app.services.scraper.scheduler import scraper_scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +73,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Redis not available: {e}")
 
+    try:
+        scraper_scheduler.start()
+    except Exception as e:
+        logger.warning(f"CD-23 scheduler failed to start: {e}")
+
     yield
 
     logger.info("Shutting down ClearDrive.lk API...")
@@ -85,6 +94,11 @@ async def lifespan(app: FastAPI):
         logger.info("Redis connection closed (using redis_client)")
     except Exception as e:
         logger.warning(f"Error while closing Redis (redis_client): {e}")
+
+    try:
+        scraper_scheduler.stop()
+    except Exception as e:
+        logger.warning(f"CD-23 scheduler failed to stop cleanly: {e}")
 
 
 app = FastAPI(
@@ -126,6 +140,7 @@ logger.info(
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
+app.include_router(calculator_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
@@ -133,7 +148,13 @@ app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
-logger.info("Routers registered: /auth, /vehicles, /orders, /admin, /test, /kyc, /gdpr")
+logger.info("Routers registered: /auth, /vehicles, /calculate, /orders, /admin, /test, /kyc, /gdpr")
+
+# Serve local runtime data files (e.g., scraped vehicle images).
+data_dir = Path(__file__).resolve().parents[1] / "data"
+if data_dir.exists():
+    app.mount("/data", StaticFiles(directory=str(data_dir)), name="data")
+    logger.info("Static data mounted at /data from %s", data_dir)
 
 
 @app.get("/")
@@ -148,6 +169,7 @@ async def root():
         "endpoints": {
             "auth": f"{settings.API_V1_PREFIX}/auth",
             "vehicles": f"{settings.API_V1_PREFIX}/vehicles",
+            "calculator": f"{settings.API_V1_PREFIX}/calculate",
             "payments": f"{settings.API_V1_PREFIX}/payments",
             "health": "/health",
         },
