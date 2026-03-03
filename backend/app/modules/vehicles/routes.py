@@ -146,7 +146,8 @@ def _map_vehicle_type_to_tax(vehicle: Vehicle) -> str:
 
 def _map_fuel_type_to_tax(vehicle: Vehicle) -> str:
     """Map vehicle fuel enum to tax fuel types."""
-    value = vehicle.fuel_type.value.upper() if vehicle.fuel_type else ""
+    raw = vehicle.fuel_type
+    value = str(getattr(raw, "value", raw) or "").upper()
     if "HYBRID" in value:
         return TaxFuelType.HYBRID.value
     if "DIESEL" in value:
