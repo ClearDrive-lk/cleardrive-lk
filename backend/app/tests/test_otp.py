@@ -3,7 +3,7 @@
 Test OTP generation, storage, and verification.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
@@ -77,12 +77,12 @@ class TestOTPExpiry:
 
     def test_otp_not_expired(self):
         """Test OTP within expiry time."""
-        created_at = datetime.utcnow()
+        created_at = datetime.now(UTC)
         assert is_otp_expired(created_at, expiry_minutes=5) is False
 
     def test_otp_expired(self):
         """Test OTP past expiry time."""
-        created_at = datetime.utcnow() - timedelta(minutes=10)
+        created_at = datetime.now(UTC) - timedelta(minutes=10)
         assert is_otp_expired(created_at, expiry_minutes=5) is True
 
 

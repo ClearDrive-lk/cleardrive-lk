@@ -5,7 +5,6 @@ import { Provider } from "react-redux";
 import { makeStore, AppStore } from "./store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-
 export default function StoreProvider({
   children,
 }: {

@@ -1,6 +1,9 @@
 # backend/app/core/config.py
 
-from pydantic_settings import BaseSettings
+import json
+
+from pydantic import field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -47,6 +50,8 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str
     SUPABASE_KEY: str
+    SUPABASE_ANON_KEY: str | None = None
+    SUPABASE_STORAGE_VEHICLE_BUCKET: str = "Photos"
 
     # Email (SMTP)
     SMTP_HOST: str
@@ -80,6 +85,7 @@ class Settings(BaseSettings):
     # GeoIP (optional)
     GEOIP_ENABLED: bool = False
     GEOIP_API_KEY: str | None = None
+
     # RBAC settings
     RBAC_ENABLED: bool = True
     RBAC_STRICT_MODE: bool = True
@@ -100,13 +106,52 @@ class Settings(BaseSettings):
     BACKEND_ALLOWED_HOSTS: list[str] = [
         "localhost",
         "127.0.0.1",
+        "cleardrive-lk.onrender.com",
+        "cleardrive-lk-staging.onrender.com",
         "api.cleardrive.lk",
         "*.cleardrive.lk",
     ]
+    PUBLIC_API_DOMAIN: str | None = None
+    RENDER_PUBLIC_DOMAIN: str | None = None
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    @field_validator("BACKEND_ALLOWED_HOSTS", mode="before")
+    @classmethod
+    def parse_allowed_hosts(cls, value: list[str] | str) -> list[str]:
+        """Accept JSON arrays or comma-separated host strings from env vars."""
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return []
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [item.strip() for item in raw.split(",") if item.strip()]
+        return []
+
+    @model_validator(mode="after")
+    def ensure_required_hosts(self) -> "Settings":
+        """Keep core hosts present even when env overrides host list."""
+        required = {"localhost", "127.0.0.1"}
+        if self.PUBLIC_API_DOMAIN:
+            required.add(self.PUBLIC_API_DOMAIN.strip())
+        if self.RENDER_PUBLIC_DOMAIN:
+            required.add(self.RENDER_PUBLIC_DOMAIN.strip())
+
+        current = {host.strip() for host in self.BACKEND_ALLOWED_HOSTS if host.strip()}
+        self.BACKEND_ALLOWED_HOSTS = sorted(current | required)
+        return self
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 settings = Settings()

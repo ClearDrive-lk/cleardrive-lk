@@ -5,7 +5,7 @@ Authentication/JWT tests.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
@@ -20,8 +20,8 @@ from jose import jwt
 
 def _exp_delta_seconds(token: str) -> float:
     claims = jwt.get_unverified_claims(token)
-    exp = datetime.utcfromtimestamp(claims["exp"])
-    return (exp - datetime.utcnow()).total_seconds()
+    exp = datetime.fromtimestamp(claims["exp"], tz=UTC)
+    return (exp - datetime.now(UTC)).total_seconds()
 
 
 def _assert_expiry_close(
@@ -80,7 +80,8 @@ async def test_verify_otp_creates_session_and_tokens(async_client, db, mocker):
 
         # Session expiry should be close to configured refresh token expiry
         expected = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        delta = session.expires_at - datetime.utcnow()
+        now_utc = datetime.now(UTC).replace(tzinfo=None)
+        delta = session.expires_at - now_utc
         assert abs(delta - expected) < timedelta(minutes=5)
     finally:
         await delete_otp(email)

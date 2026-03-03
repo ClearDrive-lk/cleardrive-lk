@@ -13,12 +13,13 @@ from .database import get_db
 from .security import decode_access_token
 
 # HTTP Bearer token scheme
-security = HTTPBearer()
+# Use auto_error=False so missing credentials returns 401 (not 403)
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
     """
@@ -52,6 +53,9 @@ async def get_current_user(
     )
 
     try:
+        if credentials is None:
+            raise credentials_exception
+
         # Decode token
         token = credentials.credentials
         payload = decode_access_token(token)

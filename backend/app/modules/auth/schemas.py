@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from .models import Role
 
@@ -37,12 +37,11 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     """User response schema."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     role: Role
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 # ============================================================================
@@ -160,6 +159,8 @@ class TokenPayload(BaseModel):
 class SessionResponse(BaseModel):
     """User session response."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     ip_address: Optional[str]
     user_agent: Optional[str]
@@ -168,9 +169,6 @@ class SessionResponse(BaseModel):
     is_active: bool
     last_active: datetime
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class SessionListResponse(BaseModel):

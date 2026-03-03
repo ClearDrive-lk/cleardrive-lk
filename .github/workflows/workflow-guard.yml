@@ -1,0 +1,33 @@
+name: Workflow Guard
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - ".github/workflows/**"
+      - ".github/CODEOWNERS"
+
+jobs:
+  require-ci-approval-token:
+    name: Require CI Approval Token
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate explicit approval token
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          TEXT="${PR_TITLE} ${PR_BODY}"
+          IS_BOT=false
+          if [[ "${PR_AUTHOR}" == *"[bot]"* ]]; then
+            IS_BOT=true
+          fi
+
+          if [[ "${IS_BOT}" == "true" && "${TEXT}" != *"[ci-change-approved]"* ]]; then
+            echo "Bot-authored CI/CD changes require explicit approval token."
+            echo "Add [ci-change-approved] to PR title or body."
+            exit 1
+          fi
+
+          echo "Workflow guard passed."

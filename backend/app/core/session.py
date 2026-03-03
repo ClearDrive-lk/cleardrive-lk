@@ -9,7 +9,7 @@ This module provides utilities for:
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
 import requests  # type: ignore
@@ -225,8 +225,8 @@ async def extract_session_metadata(
     metadata: Dict[str, Any] = {
         "ip_address": ip_address,
         "user_agent": user_agent,
-        "created_at": datetime.utcnow().isoformat(),
-        "last_active": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
+        "last_active": datetime.now(UTC).isoformat(),
     }
 
     # Add device information

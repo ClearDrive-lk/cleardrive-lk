@@ -5,7 +5,6 @@ payload = {
     "email": "user@example.com",
     "password": "password",  # pragma: allowlist secret
 }  # nosec
-
 for i in range(6):
     r = requests.post(URL, json=payload, timeout=10)
     print(f"Login {i + 1}: {r.status_code}")
