@@ -1,5 +1,6 @@
 # backend/app/modules/vehicles/routes.py
 
+import json
 import math
 import re
 import threading
@@ -25,7 +26,7 @@ from app.modules.vehicles.schemas import (
 )
 from app.services.tax_calculator import NoTaxRuleError, calculate_tax
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import asc, desc, or_
+from sqlalchemy import asc, desc, or_, text
 from sqlalchemy.orm import Session
 
 try:
@@ -42,6 +43,109 @@ from .cost_calculator import (
 )
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
+
+
+def _canonical_fuel_key(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
+    if normalized in {"gasoline", "petrol", "gas"}:
+        return "petrol"
+    if normalized in {"diesel"}:
+        return "diesel"
+    if normalized in {
+        "hybrid",
+        "gasoline hybrid",
+        "petrol hybrid",
+        "gasoline/hybrid",
+        "petrol/hybrid",
+    }:
+        return "hybrid"
+    if normalized in {"plugin hybrid", "plug in hybrid", "plug-in hybrid", "phev"}:
+        return "plugin_hybrid"
+    if normalized in {"electric", "ev", "bev"}:
+        return "electric"
+    if normalized in {"cng"}:
+        return "cng"
+    return normalized
+
+
+def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
+    rows = db.execute(text("""
+            SELECT e.enumlabel
+            FROM pg_enum e
+            JOIN pg_type t ON e.enumtypid = t.oid
+            WHERE t.typname = 'fueltype'
+            """)).fetchall()
+    labels = [str(r[0]) for r in rows]
+    if not labels:
+        return requested
+
+    by_key: dict[str, list[str]] = {}
+    for label in labels:
+        key = _canonical_fuel_key(label)
+        by_key.setdefault(key, []).append(label)
+
+    req_key = _canonical_fuel_key(requested)
+    candidates = by_key.get(req_key, [])
+    if not candidates:
+        return None
+
+    # Deterministic preference for common variants.
+    preferred = [
+        "PETROL",
+        "DIESEL",
+        "HYBRID",
+        "ELECTRIC",
+        "CNG",
+        "PLUGIN_HYBRID",
+        "Gasoline",
+        "Diesel",
+        "Gasoline/hybrid",
+        "Electric",
+        "Plugin Hybrid",
+    ]
+    for value in preferred:
+        if value in candidates:
+            return value
+    return candidates[0]
+
+
+def _canonical_transmission_key(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
+    if normalized in {"automatic", "auto", "at"}:
+        return "automatic"
+    if normalized in {"manual", "mt"}:
+        return "manual"
+    if normalized in {"cvt"}:
+        return "cvt"
+    return normalized
+
+
+def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
+    rows = db.execute(text("""
+            SELECT e.enumlabel
+            FROM pg_enum e
+            JOIN pg_type t ON e.enumtypid = t.oid
+            WHERE t.typname = 'transmission'
+            """)).fetchall()
+    labels = [str(r[0]) for r in rows]
+    if not labels:
+        return requested
+
+    by_key: dict[str, list[str]] = {}
+    for label in labels:
+        key = _canonical_transmission_key(label)
+        by_key.setdefault(key, []).append(label)
+
+    req_key = _canonical_transmission_key(requested)
+    candidates = by_key.get(req_key, [])
+    if not candidates:
+        return None
+
+    preferred = ["AUTOMATIC", "MANUAL", "CVT", "Automatic", "Manual", "Cvt"]
+    for value in preferred:
+        if value in candidates:
+            return value
+    return candidates[0]
 
 
 def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
@@ -280,10 +384,18 @@ async def get_vehicles(
         query = query.filter(Vehicle.mileage_km <= mileage_max)
 
     if fuel_type:
-        query = query.filter(Vehicle.fuel_type == fuel_type)
+        resolved_fuel = _resolve_fuel_enum_label(db, fuel_type)
+        if resolved_fuel is None:
+            query = query.filter(text("1=0"))
+        else:
+            query = query.filter(Vehicle.fuel_type == resolved_fuel)
 
     if transmission:
-        query = query.filter(Vehicle.transmission == transmission)
+        resolved_transmission = _resolve_transmission_enum_label(db, transmission)
+        if resolved_transmission is None:
+            query = query.filter(text("1=0"))
+        else:
+            query = query.filter(Vehicle.transmission == resolved_transmission)
 
     if status:
         query = query.filter(Vehicle.status == status)
@@ -567,6 +679,13 @@ async def get_vehicle_images(vehicle_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
     candidates: list[str] = []
+    if vehicle.gallery_images:
+        try:
+            stored = json.loads(vehicle.gallery_images)
+            if isinstance(stored, list):
+                candidates.extend([str(item) for item in stored if item])
+        except Exception:
+            pass
     if vehicle.image_url:
         candidates.append(vehicle.image_url)
     if vehicle.vehicle_url:
