@@ -32,7 +32,11 @@ def _load_env_file(path: Path) -> None:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
-        value = value.strip().strip("'").strip('"')
+        value = value.strip()
+        # Strip inline comments for unquoted values: FOO=true  # comment
+        if value and not (value.startswith("'") or value.startswith('"')):
+            value = value.split("#", 1)[0].strip()
+        value = value.strip("'").strip('"')
         if key and key not in os.environ:
             os.environ[key] = value
 

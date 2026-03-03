@@ -37,6 +37,10 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 
+def _vehicle_bucket_name() -> str:
+    return os.getenv("SUPABASE_STORAGE_VEHICLE_BUCKET", "Photos").strip() or "Photos"
+
+
 def _to_int(value: Any) -> int | None:
     if value is None:
         return None
@@ -414,7 +418,7 @@ class ScraperScheduler:
                 try:
                     result = _run_async(
                         storage.upload_file(
-                            bucket="vehicles",
+                            bucket=_vehicle_bucket_name(),
                             file_path=file_path,
                             file_content=response.content,
                             content_type=content_type or "application/octet-stream",

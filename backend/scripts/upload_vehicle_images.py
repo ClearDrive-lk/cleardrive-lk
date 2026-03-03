@@ -6,12 +6,17 @@ Story: CD-20.5
 import asyncio
 import json
 import mimetypes
+import os
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.core.storage import storage
+
+
+def _vehicle_bucket_name() -> str:
+    return os.getenv("SUPABASE_STORAGE_VEHICLE_BUCKET", "Photos").strip() or "Photos"
 
 
 async def upload_vehicle_images() -> None:
@@ -37,7 +42,7 @@ async def upload_vehicle_images() -> None:
             try:
                 content = image_file.read_bytes()
                 result = await storage.upload_file(
-                    bucket="vehicles",
+                    bucket=_vehicle_bucket_name(),
                     file_path=file_path,
                     file_content=content,
                     content_type=content_type,

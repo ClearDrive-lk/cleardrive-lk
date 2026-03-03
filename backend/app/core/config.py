@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
     SUPABASE_ANON_KEY: str | None = None
+    SUPABASE_STORAGE_VEHICLE_BUCKET: str = "Photos"
 
     # Email (SMTP)
     SMTP_HOST: str
