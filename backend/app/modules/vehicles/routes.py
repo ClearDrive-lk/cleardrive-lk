@@ -724,7 +724,11 @@ async def get_vehicle_images(vehicle_id: UUID, db: Session = Depends(get_db)):
         normalized = normalize(item)
         lower = normalized.lower()
         if normalized.startswith(("http://", "https://")):
-            if "/vimgs/images/" not in lower and "/car_images/" not in lower:
+            if (
+                "/vimgs/images/" not in lower
+                and "/car_images/" not in lower
+                and "/storage/v1/object/public/" not in lower
+            ):
                 continue
         elif not normalized.startswith(("data/", "/data/")):
             continue
