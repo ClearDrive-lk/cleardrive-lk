@@ -140,6 +140,17 @@ def _map_drive(value: str | None) -> str | None:
     return None
 
 
+def _map_steering(value: str | None) -> str | None:
+    if not value:
+        return None
+    s = value.strip().lower()
+    if s in {"right hand", "right", "rhd"}:
+        return "RIGHT_HAND"
+    if s in {"left hand", "left", "lhd"}:
+        return "LEFT_HAND"
+    return None
+
+
 class ScraperScheduler:
     def __init__(self) -> None:
         self.scheduler = (
@@ -526,6 +537,25 @@ class ScraperScheduler:
                         if row_year is None or row_year < year_cutoff:
                             stats["skipped"] += 1
                             continue
+
+                    # Normalize scraper values before both update/insert paths.
+                    mapped_fuel = _map_fuel(row.get("fuel_type"))
+                    if mapped_fuel is not None:
+                        row["fuel_type"] = mapped_fuel
+                    mapped_transmission = _map_transmission(row.get("transmission"))
+                    if mapped_transmission is not None:
+                        row["transmission"] = mapped_transmission
+                    mapped_vehicle_type = _map_vehicle_type(
+                        row.get("vehicle_type") or row.get("body_type")
+                    )
+                    if mapped_vehicle_type is not None:
+                        row["vehicle_type"] = mapped_vehicle_type
+                    mapped_drive = _map_drive(row.get("drive") or row.get("drive_type"))
+                    if mapped_drive is not None:
+                        row["drive"] = mapped_drive
+                    mapped_steering = _map_steering(row.get("steering"))
+                    if mapped_steering is not None:
+                        row["steering"] = mapped_steering
 
                     downloaded_images = self._download_and_store_images(row)
                     if downloaded_images:
