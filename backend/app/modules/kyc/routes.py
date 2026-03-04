@@ -2,17 +2,21 @@
 
 """
 KYC document upload endpoint.
-Author: Pavara
 Story: CD-50 - KYC Document Upload
 """
 
+from __future__ import annotations
+
 import hashlib
+import logging
+from datetime import UTC, datetime
 from typing import TypedDict, cast
 
 try:
     import magic
 except ImportError:
     magic = None  # type: ignore[assignment]
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.storage import storage
@@ -20,16 +24,22 @@ from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.kyc.schemas import KYCStatusResponse, KYCUploadResponse
 from app.modules.security.models import FileIntegrity, VerificationStatus
+from app.services.vps_proxy import extract_nic_with_retry
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/kyc", tags=["kyc"])
+logger = logging.getLogger(__name__)
 
 
 class KYCFilePayload(TypedDict):
     content: bytes
     mime_type: str
     size: int
+
+
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # CD-50.4 (10MB)
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 def _detect_mime_type(file_content: bytes, declared_content_type: str | None) -> str:
@@ -47,11 +57,6 @@ def _detect_mime_type(file_content: bytes, declared_content_type: str | None) ->
     return declared_content_type or "application/octet-stream"
 
 
-# ===================================================================
-# ENDPOINT: UPLOAD KYC DOCUMENTS (CD-50.1)
-# ===================================================================
-
-
 @router.post("/upload", response_model=KYCUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_kyc_documents(
     nic_front: UploadFile = File(..., description="NIC front image"),
@@ -63,148 +68,81 @@ async def upload_kyc_documents(
     """
     Upload KYC documents for verification.
 
-    **Story**: CD-50 - KYC Document Upload
-
-    **Required Files:**
-    1. nic_front: Front side of National Identity Card
-    2. nic_back: Back side of National Identity Card
-    3. selfie: Photo of user holding NIC
-
-    **Validations:**
-    - File type: JPEG, PNG, or WebP only (CD-50.3)
-    - File size: Maximum 10MB per file (CD-50.4)
-    - One submission per user
-
-    **Process:**
-    1. Check if user already submitted KYC
-    2. Validate file types (CD-50.3)
-    3. Validate file sizes (CD-50.4)
-    4. Upload to Supabase Storage (CD-50.5)
-    5. Calculate SHA-256 checksums (CD-50.6)
-    6. Store file integrity records (CD-50.7)
-    7. Create KYC document record
-
-    **Returns:**
-    - KYC document with PENDING status
-    - Document URLs
+    Implements CD-50.1 -> CD-50.11:
+    - Multipart upload handling
+    - MIME/type and size validation
+    - Supabase upload + SHA-256 checksum
+    - File integrity records
+    - VPS extraction proxy call with timeout/retry
+    - Manual-review queueing when VPS fails
     """
+    logger.info("KYC upload started for user_id=%s", current_user.id)
 
-    print(f"\n{'=' * 70}")
-    print("KYC UPLOAD STARTED")
-    print(f"   User: {current_user.email}")
-    print(f"{'=' * 70}\n")
-
-    # ===============================================================
-    # STEP 1: CHECK IF USER ALREADY SUBMITTED KYC
-    # ===============================================================
     existing_kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
-
     if existing_kyc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"KYC already submitted. Status: {existing_kyc.status}",
         )
 
-    print("STEP 1: No existing KYC found")
-
-    # ===============================================================
-    # STEP 2: VALIDATE FILE TYPES (CD-50.3)
-    # ===============================================================
-
     files = {"nic_front": nic_front, "nic_back": nic_back, "selfie": selfie}
-
-    allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
-
     file_contents: dict[str, KYCFilePayload] = {}
 
     for file_name, file in files.items():
-        # Read file content
         content = await file.read()
-        await file.seek(0)  # Reset pointer
+        await file.seek(0)
 
-        # Validate MIME type using python-magic (with fallback)
         mime_type = _detect_mime_type(content, file.content_type)
-
-        if mime_type not in allowed_mime_types:
+        if mime_type not in ALLOWED_MIME_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"{file_name}: Invalid file type. Allowed: JPEG, PNG, WebP. Got: {mime_type}",
             )
 
-        # Validate file size (10MB = 10 * 1024 * 1024) (CD-50.4)
-        file_size_mb = len(content) / (1024 * 1024)
-
-        if file_size_mb > 10:
+        file_size = len(content)
+        if file_size > MAX_FILE_SIZE_BYTES:
+            file_size_mb = file_size / (1024 * 1024)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"{file_name}: File too large. Max 10MB. Got: {file_size_mb:.2f}MB",
             )
 
-        file_contents[file_name] = {
-            "content": content,
-            "mime_type": mime_type,
-            "size": len(content),
-        }
-
-        print(f"✅ STEP 2: {file_name} validated")
-        print(f"   Type: {mime_type}")
-        print(f"   Size: {file_size_mb:.2f} MB")
-
-    # ===============================================================
-    # STEP 3: UPLOAD TO SUPABASE STORAGE (CD-50.5)
-    # ===============================================================
+        file_contents[file_name] = {"content": content, "mime_type": mime_type, "size": file_size}
+        logger.info(
+            "Validated %s for user_id=%s (mime=%s, size_bytes=%s)",
+            file_name,
+            current_user.id,
+            mime_type,
+            file_size,
+        )
 
     uploaded_urls: dict[str, str] = {}
     checksums: dict[str, str] = {}
-
-    # Extension mapping
     extension_map = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 
     for file_name, file_data in file_contents.items():
-        # Calculate SHA-256 checksum (CD-50.6)
         checksum = hashlib.sha256(file_data["content"]).hexdigest()
         checksums[file_name] = checksum
-
-        # Determine extension
         extension = extension_map.get(file_data["mime_type"], "jpg")
-
-        # Upload to Supabase
-        # Path: kyc-documents/{user_id}/{file_name}.{extension}
         file_path = f"{current_user.id}/{file_name}.{extension}"
 
         try:
             upload_result = await storage.upload_file(
-                bucket="kyc-documents",
+                bucket=settings.SUPABASE_STORAGE_KYC_BUCKET,
                 file_path=file_path,
                 file_content=file_data["content"],
                 content_type=file_data["mime_type"],
             )
-
             uploaded_urls[file_name] = cast(str, upload_result["url"])
-
-            print(f"✅ STEP 3: {file_name} uploaded")
-            print(f"   URL: {upload_result['url'][:50]}...")
-            print(f"   Checksum: {checksum[:16]}...")
-
-        except Exception as e:
-            print(f"❌ Upload failed for {file_name}: {e}")
+        except Exception as exc:
+            logger.exception("Supabase upload failed for %s: %s", file_name, exc)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to upload {file_name}: {str(e)}",
+                detail=f"Failed to upload {file_name}: {str(exc)}",
             )
-
-    # ===============================================================
-    # STEP 4: STORE FILE INTEGRITY RECORDS (CD-50.7)
-    # ===============================================================
-
-    print("\nSTEP 4: Storing file integrity records")
-
-    integrity_records = []
 
     for file_name, file_data in file_contents.items():
         extension = extension_map.get(file_data["mime_type"], "jpg")
-
-        # Create integrity record
         integrity_record = FileIntegrity(
             file_url=uploaded_urls[file_name],
             file_name=f"{file_name}.{extension}",
@@ -214,67 +152,67 @@ async def upload_kyc_documents(
             uploaded_by=current_user.id,
             verification_status=VerificationStatus.VERIFIED,
         )
-
         db.add(integrity_record)
-        integrity_records.append(integrity_record)
 
-        print(f"   ✓ {file_name}: {checksums[file_name][:16]}...")
-
-    # Flush to get IDs
+    # Needed before creating dependent records in same transaction.
     db.flush()
 
-    print(f"✅ STEP 4: {len(integrity_records)} integrity records created")
+    # CD-50.8/9: VPS extraction with timeout + retry.
+    front_extracted = await extract_nic_with_retry(
+        file_contents["nic_front"]["content"],
+        side="front",
+        content_type=file_contents["nic_front"]["mime_type"],
+        max_retries=1,
+    )
+    back_extracted = await extract_nic_with_retry(
+        file_contents["nic_back"]["content"],
+        side="back",
+        content_type=file_contents["nic_back"]["mime_type"],
+        max_retries=1,
+    )
 
-    # ===============================================================
-    # STEP 5: CREATE KYC DOCUMENT RECORD
-    # ===============================================================
+    # CD-50.10 queue behavior: mark record for manual admin review when VPS fails.
+    manual_review_required = front_extracted is None or back_extracted is None
+
+    # CD-50.11: only extracted JSON is stored in DB (images remain in Supabase).
+    extracted_payload: dict[str, object] = {
+        "front": front_extracted,
+        "back": back_extracted,
+        "extraction_method": "vps_proxy",
+        "extracted_at": datetime.now(UTC).isoformat(),
+    }
+    if manual_review_required:
+        extracted_payload["manual_review_required"] = True
+        extracted_payload["reason"] = "VPS unreachable or extraction failed after retry"
 
     kyc_document = KYCDocument(
         user_id=current_user.id,
         nic_front_url=uploaded_urls["nic_front"],
         nic_back_url=uploaded_urls["nic_back"],
         selfie_url=uploaded_urls["selfie"],
-        status=KYCStatus.PENDING,
+        extracted_data=extracted_payload,
+        status=(KYCStatus.PENDING_MANUAL_REVIEW if manual_review_required else KYCStatus.PENDING),
     )
 
     db.add(kyc_document)
     db.commit()
     db.refresh(kyc_document)
 
-    print("\nSTEP 5: KYC document record created")
-    print(f"   ID: {kyc_document.id}")
-    print(f"   Status: {kyc_document.status.value}")
-
-    print(f"\n{'=' * 70}")
-    print("KYC UPLOAD COMPLETED")
-    print(f"   Document ID: {kyc_document.id}")
-    print("   Status: PENDING")
-    print("   Files: 3 uploaded, 3 integrity records created")
-    print(f"{'=' * 70}\n")
-
+    logger.info(
+        "KYC upload completed for user_id=%s kyc_id=%s status=%s",
+        current_user.id,
+        kyc_document.id,
+        kyc_document.status.value,
+    )
     return kyc_document
-
-
-# ===================================================================
-# ENDPOINT: GET KYC STATUS
-# ===================================================================
 
 
 @router.get("/status", response_model=KYCStatusResponse)
 async def get_kyc_status(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """
-    Check KYC verification status.
-
-    **Returns:**
-    - has_kyc: Boolean
-    - status: PENDING, APPROVED, or REJECTED
-    - Timestamps
-    """
-
+    """Check KYC verification status."""
     kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
-
     if not kyc:
         return {
             "has_kyc": False,
@@ -297,20 +235,12 @@ async def get_kyc_status(
     }
 
 
-# ===================================================================
-# ENDPOINT: GET KYC DOCUMENTS
-# ===================================================================
-
-
 @router.get("/my-documents", response_model=KYCUploadResponse)
 async def get_my_kyc_documents(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """Get user's KYC document submission."""
-
     kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
-
     if not kyc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No KYC submission found")
-
     return kyc
