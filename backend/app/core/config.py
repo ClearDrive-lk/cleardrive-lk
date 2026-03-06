@@ -60,6 +60,13 @@ class Settings(BaseSettings):
     KYC_VPS_TIMEOUT_SECONDS: float = 60.0
     KYC_VPS_MAX_RETRIES: int = 1
 
+    # Gazette Extraction Pipeline (CD-24)
+    GOOGLE_CLOUD_PROJECT: str | None = None
+    DOCUMENT_AI_PROCESSOR_ID: str | None = None
+    GEMINI_API_KEY: str | None = None
+    MAX_GAZETTE_SIZE_MB: int = 50
+    GAZETTE_UPLOAD_PATH: str = "data/gazettes"
+
     # Email (SMTP)
     SMTP_HOST: str
     SMTP_PORT: int | None = None
