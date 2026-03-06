@@ -71,6 +71,12 @@ async def extract_nic_from_vps(
         raise VPSConnectionError(f"VPS timeout after {settings.KYC_VPS_TIMEOUT_SECONDS}s") from exc
     except httpx.ConnectError as exc:
         raise VPSConnectionError("VPS unreachable") from exc
+    except httpx.HTTPError as exc:
+        raise VPSExtractionError(f"VPS HTTP error: {exc}") from exc
+    except ValueError as exc:
+        raise VPSExtractionError("Invalid JSON response from VPS") from exc
+    except Exception as exc:
+        raise VPSExtractionError(f"VPS extraction failed: {exc}") from exc
 
 
 async def extract_nic_with_retry(
@@ -107,3 +113,16 @@ async def extract_nic_with_retry(
             await asyncio.sleep(backoff_seconds)
 
     return None
+
+
+async def check_vps_health() -> bool:
+    """Check if VPS is reachable and responding."""
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(
+                f"{_vps_base_url()}/health",
+                headers={"X-Internal-Secret": _vps_secret()},
+            )
+        return response.status_code == 200
+    except Exception:
+        return False
