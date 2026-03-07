@@ -10,6 +10,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from typing import cast
 
 from app.core.database import Base
 from sqlalchemy import DECIMAL, Column, DateTime
@@ -22,7 +23,7 @@ def _enum_or_string_value(value: object | None) -> object | None:
     if value is None:
         return None
     if isinstance(value, Enum):
-        return value.value
+        return cast(object, value.value)
     return value
 
 
@@ -101,17 +102,36 @@ class Vehicle(Base):
 
     # Columns that actually exist in this DB schema
     stock_no = Column(String(100), unique=True, nullable=False, index=True)
+    chassis = Column(String(100), nullable=True)
     make = Column(String(100), nullable=False)
     model = Column(String(100), nullable=False)
+    reg_year = Column(String(20), nullable=True)
     year = Column(Integer, nullable=False)
-    auction_grade = Column(String(10), nullable=True)
+    vehicle_type: Column[VehicleType | None] = Column(SQLEnum(VehicleType), nullable=True)
+    body_type = Column(String(100), nullable=True)
+    grade = Column(String(100), nullable=True)
     price_jpy: Column[Decimal] = Column(DECIMAL(12, 2), nullable=False)
     mileage_km = Column(Integer, nullable=True)
     engine_cc = Column(Integer, nullable=True)
+    engine_model = Column(String(100), nullable=True)
     fuel_type = Column(String(50), nullable=True)
     transmission = Column(String(50), nullable=True)
+    steering: Column[Steering | None] = Column(SQLEnum(Steering), nullable=True)
+    drive: Column[Drive | None] = Column(SQLEnum(Drive), nullable=True)
+    seats = Column(Integer, nullable=True)
+    doors = Column(Integer, nullable=True)
     color = Column(String(100), nullable=True)
+    location = Column(String(200), nullable=True)
+    dimensions = Column(Text, nullable=True)
+    length_cm = Column(Integer, nullable=True)
+    width_cm = Column(Integer, nullable=True)
+    height_cm = Column(Integer, nullable=True)
+    m3_size: Column[Decimal] = Column(DECIMAL(10, 2), nullable=True)
+    options = Column(Text, nullable=True)
+    other_remarks = Column(Text, nullable=True)
     image_url = Column(Text, nullable=True)
+    vehicle_url = Column(Text, nullable=True)
+    model_no = Column(String(100), nullable=True)
     gallery_images = Column(Text, nullable=True)
     status: Column[VehicleStatus] = Column(
         SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False
@@ -125,86 +145,6 @@ class Vehicle(Base):
     @property
     def auction_id(self):
         return self.stock_no
-
-    @property
-    def chassis(self):
-        return None
-
-    @property
-    def reg_year(self):
-        return None
-
-    @property
-    def vehicle_type(self):
-        return None
-
-    @property
-    def body_type(self):
-        return None
-
-    @property
-    def grade(self):
-        return self.auction_grade
-
-    @property
-    def engine_model(self):
-        return None
-
-    @property
-    def steering(self):
-        return None
-
-    @property
-    def drive(self):
-        return None
-
-    @property
-    def seats(self):
-        return None
-
-    @property
-    def doors(self):
-        return None
-
-    @property
-    def location(self):
-        return None
-
-    @property
-    def dimensions(self):
-        return None
-
-    @property
-    def length_cm(self):
-        return None
-
-    @property
-    def width_cm(self):
-        return None
-
-    @property
-    def height_cm(self):
-        return None
-
-    @property
-    def m3_size(self):
-        return None
-
-    @property
-    def options(self):
-        return None
-
-    @property
-    def other_remarks(self):
-        return None
-
-    @property
-    def vehicle_url(self):
-        return None
-
-    @property
-    def model_no(self):
-        return None
 
     def __repr__(self):
         return f"<Vehicle {self.make} {self.model} ({self.year}) - Stock#{self.stock_no}>"
