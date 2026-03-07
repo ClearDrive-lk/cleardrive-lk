@@ -1,4 +1,8 @@
-# backend/app/modules/shipping/schemas.py
+"""Shipping Pydantic schemas.
+
+Author: Kalidu
+Story: CD-70
+"""
 
 from datetime import date, datetime
 from enum import Enum
@@ -12,6 +16,8 @@ from pydantic import BaseModel
 class DocumentType(str, Enum):
     """Shipping document types."""
 
+    # Keep both spellings for backward compatibility across modules/old code paths.
+    BILL_OF_LADING = "BILL_OF_LANDING"
     BILL_OF_LANDING = "BILL_OF_LANDING"
     PACKING_LIST = "PACKING_LIST"
     EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
@@ -55,11 +61,15 @@ class ShippingDetailsResponse(BaseModel):
     documents_uploaded: bool = False
     approved: bool = False
     status: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class ShipmentDetailsResponse(ShippingDetailsResponse):
+    """Backward-compatible alias for CD-70 naming."""
 
 
 # ============== DOCUMENT SCHEMAS ==============
