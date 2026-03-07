@@ -233,7 +233,7 @@ async def get_dashboard_stats(
     # ── KYC Metrics ──────────────────────────────────────────────────────────
     kyc_pending = (
         db.query(func.count(KYCDocument.id))
-        .filter(KYCDocument.status == KYCStatus.PENDING)
+        .filter(KYCDocument.status.in_([KYCStatus.PENDING, KYCStatus.PENDING_MANUAL_REVIEW]))
         .scalar()
     )
     kyc_approved = (

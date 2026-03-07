@@ -401,3 +401,6 @@ Thumbs.db
 !apps/web/lib/
 !apps/web/lib/**
 backend/data/vehicle_image_upload_map.json
+backend/data/vehicle_image/
+.env.localdb
+.env.supabase
