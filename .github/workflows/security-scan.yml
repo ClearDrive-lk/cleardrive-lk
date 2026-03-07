@@ -55,15 +55,13 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-
-
-          safety scan --full-report
-
-          safety check --full-report
-
-
           pip install -r requirements-dev.txt
-          safety scan --full-report
+          if [ -n "${SAFETY_API_KEY}" ]; then
+            safety scan --key "${SAFETY_API_KEY}" --full-report
+          else
+            echo "SAFETY_API_KEY not set; using non-interactive fallback: safety check."
+            safety check -r requirements.txt -r requirements-dev.txt --full-report
+          fi
 
 
       - name: Setup Node.js
