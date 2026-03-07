@@ -1,5 +1,8 @@
 # backend/app/core/config.py
 
+import json
+
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -48,6 +51,21 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
     SUPABASE_ANON_KEY: str | None = None
+    SUPABASE_STORAGE_VEHICLE_BUCKET: str = "Photos"
+    SUPABASE_STORAGE_KYC_BUCKET: str = "kyc-documents"
+
+    # KYC VPS Proxy (CD-50.8/9/10)
+    VPS_URL: str | None = None
+    VPS_SECRET: str | None = None
+    KYC_VPS_TIMEOUT_SECONDS: float = 60.0
+    KYC_VPS_MAX_RETRIES: int = 1
+
+    # Gazette Extraction Pipeline (CD-24)
+    GOOGLE_CLOUD_PROJECT: str | None = None
+    DOCUMENT_AI_PROCESSOR_ID: str | None = None
+    GEMINI_API_KEY: str | None = None
+    MAX_GAZETTE_SIZE_MB: int = 50
+    GAZETTE_UPLOAD_PATH: str = "data/gazettes"
 
     # Email (SMTP)
     SMTP_HOST: str
@@ -102,12 +120,46 @@ class Settings(BaseSettings):
     BACKEND_ALLOWED_HOSTS: list[str] = [
         "localhost",
         "127.0.0.1",
+        "cleardrive-lk.onrender.com",
+        "cleardrive-lk-staging.onrender.com",
         "api.cleardrive.lk",
         "*.cleardrive.lk",
-        "cleardrive-lk.up.railway.app",
-        "staging-cleardrive.up.railway.app",
-        "*.up.railway.app",
     ]
+    PUBLIC_API_DOMAIN: str | None = None
+    RENDER_PUBLIC_DOMAIN: str | None = None
+
+    @field_validator("BACKEND_ALLOWED_HOSTS", mode="before")
+    @classmethod
+    def parse_allowed_hosts(cls, value: list[str] | str) -> list[str]:
+        """Accept JSON arrays or comma-separated host strings from env vars."""
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return []
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, list):
+                        return [str(item).strip() for item in parsed if str(item).strip()]
+                except json.JSONDecodeError:
+                    pass
+            return [item.strip() for item in raw.split(",") if item.strip()]
+        return []
+
+    @model_validator(mode="after")
+    def ensure_required_hosts(self) -> "Settings":
+        """Keep core hosts present even when env overrides host list."""
+        required = {"localhost", "127.0.0.1"}
+        if self.PUBLIC_API_DOMAIN:
+            required.add(self.PUBLIC_API_DOMAIN.strip())
+        if self.RENDER_PUBLIC_DOMAIN:
+            required.add(self.RENDER_PUBLIC_DOMAIN.strip())
+
+        current = {host.strip() for host in self.BACKEND_ALLOWED_HOSTS if host.strip()}
+        self.BACKEND_ALLOWED_HOSTS = sorted(current | required)
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -235,6 +235,7 @@ htmlcov/
 .env.local
 .env.*.local
 .env.example
+.env.localdb
 
 # IDEs
 .vscode/
@@ -251,6 +252,9 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Scraped vehicle binaries (runtime artifacts)
+backend/data/vehicle_images/
 .next/
 out/
 build/
@@ -322,6 +326,8 @@ venv312/
 ENV/
 env/
 .venv
+backend/venv/
+backend/venv312/
 
 # ============================================================================
 # NODE / JAVASCRIPT
@@ -363,6 +369,7 @@ apps/web/build_log.txt
 .env.development.local
 .env.test.local
 .env.production.local
+.env.supabase
 
 # ============================================================================
 # OPERATING SYSTEM
@@ -393,3 +400,4 @@ Thumbs.db
 # Keep Next.js source lib tracked (overrides Python `lib/` ignore above)
 !apps/web/lib/
 !apps/web/lib/**
+backend/data/vehicle_image_upload_map.json

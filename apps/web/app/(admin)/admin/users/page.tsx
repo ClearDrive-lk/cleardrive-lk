@@ -83,112 +83,19 @@ export default function AdminUsersPage() {
     void loadUsers();
   }, [loadUsers]);
 
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: "email",
-      header: "Email",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium">{row.original.email}</span>
-          <span className="text-sm text-gray-500">{row.original.name}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => {
-        const roleColors: Record<string, string> = {
-          CUSTOMER: "bg-blue-100 text-blue-800",
-          ADMIN: "bg-red-100 text-red-800",
-          EXPORTER: "bg-green-100 text-green-800",
-          CLEARING_AGENT: "bg-yellow-100 text-yellow-800",
-          FINANCE_PARTNER: "bg-purple-100 text-purple-800",
-        };
+  const toggleSort = (field: SortField) => {
+    setSorting((prev) =>
+      prev.id === field
+        ? { id: field, desc: !prev.desc }
+        : { id: field, desc: false },
+    );
+    setPage(1);
+  };
 
-        const role = row.original.role;
-        return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${
-              roleColors[role] || "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {role}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "kyc_status",
-      header: "KYC",
-      cell: ({ row }) => {
-        const status = row.original.kyc_status;
-
-        if (!status) {
-          return <span className="text-gray-400 text-sm">Not Submitted</span>;
-        }
-
-        const statusColors: Record<string, string> = {
-          PENDING: "bg-yellow-100 text-yellow-800",
-          APPROVED: "bg-green-100 text-green-800",
-          REJECTED: "bg-red-100 text-red-800",
-        };
-
-        return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[status]}`}
-          >
-            {status}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: "Joined",
-      cell: ({ row }) => (
-        <span className="text-sm">
-          {format(new Date(row.original.created_at), "MMM d, yyyy")}
-        </span>
-      ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() =>
-              setRoleChangeModal({ open: true, user: row.original })
-            }
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-          >
-            Change Role
-          </button>
-          <button
-            onClick={() =>
-              (window.location.href = `/admin/users/${row.original.id}`)
-            }
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200"
-          >
-            View
-          </button>
-        </div>
-      ),
-    },
-  ];
-
-  const table = useReactTable({
-    data: users,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    manualSorting: true,
-  });
+  const getSortIndicator = (field: SortField) => {
+    if (sorting.id !== field) return "↕";
+    return sorting.desc ? "↓" : "↑";
+  };
 
   return (
     <div className="p-6">

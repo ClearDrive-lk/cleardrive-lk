@@ -10,7 +10,7 @@ from uuid import UUID as PyUUID
 from app.core.database import Base
 from app.core.models import GUID, TimestampMixin, UUIDMixin
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class OrderStatus(str, enum.Enum):
-    """Order status enum - 11 states."""
+    """Order status enum including LC review states."""
 
     CREATED = "CREATED"
     PAYMENT_CONFIRMED = "PAYMENT_CONFIRMED"
@@ -52,10 +52,15 @@ class Order(Base, UUIDMixin, TimestampMixin):
     """Order model - vehicle import orders."""
 
     __tablename__ = "orders"
+    __table_args__ = (
+        Index("idx_orders_created_at", "created_at"),
+        Index("idx_orders_status", "status"),
+        Index("idx_orders_user_id", "user_id"),
+    )
 
     # References
     user_id: Mapped[PyUUID] = mapped_column(
-        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     vehicle_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("vehicles.id"), nullable=False, index=True
@@ -63,7 +68,7 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False, index=True
+        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False
     )
     payment_status: Mapped[PaymentStatus] = mapped_column(
         SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False
@@ -83,9 +88,11 @@ class Order(Base, UUIDMixin, TimestampMixin):
     status_history: Mapped[list[OrderStatusHistory]] = relationship(
         "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
     )
-    payment: Mapped[Payment | None] = relationship(
-        "Payment", back_populates="order", uselist=False, cascade="all, delete-orphan"
+    # Tharin - 09/02/2026
+    payments: Mapped[list[Payment]] = relationship(
+        "Payment", back_populates="order", cascade="all, delete-orphan"
     )
+
     shipment_details: Mapped[ShipmentDetails | None] = relationship(
         "ShipmentDetails",
         back_populates="order",

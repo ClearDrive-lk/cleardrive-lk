@@ -1,0 +1,236 @@
+{
+  "uploaded": [
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\70551\\image_1.jpeg",
+      "bucket_path": "70551/image_1.jpeg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/70551/image_1.jpeg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\70956\\image_1.jpeg",
+      "bucket_path": "70956/image_1.jpeg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/70956/image_1.jpeg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\71061\\image_1.jpeg",
+      "bucket_path": "71061/image_1.jpeg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/71061/image_1.jpeg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\74401\\image_1.jpeg",
+      "bucket_path": "74401/image_1.jpeg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/74401/image_1.jpeg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-aqua-2015-cd20-005\\image_1.jpg",
+      "bucket_path": "toyota-aqua-2015-cd20-005/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-aqua-2015-cd20-005/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-aqua-2015-cd20-005\\image_2.jpg",
+      "bucket_path": "toyota-aqua-2015-cd20-005/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-aqua-2015-cd20-005/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-aqua-2015-cd20-005\\image_3.jpg",
+      "bucket_path": "toyota-aqua-2015-cd20-005/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-aqua-2015-cd20-005/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-camry-2016-cd20-009\\image_1.jpg",
+      "bucket_path": "toyota-camry-2016-cd20-009/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-camry-2016-cd20-009/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-camry-2016-cd20-009\\image_2.jpg",
+      "bucket_path": "toyota-camry-2016-cd20-009/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-camry-2016-cd20-009/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-camry-2016-cd20-009\\image_3.jpg",
+      "bucket_path": "toyota-camry-2016-cd20-009/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-camry-2016-cd20-009/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-camry-2020-cd20-002\\image_1.jpg",
+      "bucket_path": "toyota-camry-2020-cd20-002/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-camry-2020-cd20-002/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-camry-2020-cd20-002\\image_2.jpg",
+      "bucket_path": "toyota-camry-2020-cd20-002/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-camry-2020-cd20-002/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-camry-2020-cd20-002\\image_3.jpg",
+      "bucket_path": "toyota-camry-2020-cd20-002/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-camry-2020-cd20-002/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2015-cd20-010\\image_1.jpg",
+      "bucket_path": "toyota-corolla-2015-cd20-010/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2015-cd20-010/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2015-cd20-010\\image_2.jpg",
+      "bucket_path": "toyota-corolla-2015-cd20-010/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2015-cd20-010/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2015-cd20-010\\image_3.jpg",
+      "bucket_path": "toyota-corolla-2015-cd20-010/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2015-cd20-010/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2017-cd20-008\\image_1.jpg",
+      "bucket_path": "toyota-corolla-2017-cd20-008/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2017-cd20-008/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2017-cd20-008\\image_2.jpg",
+      "bucket_path": "toyota-corolla-2017-cd20-008/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2017-cd20-008/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2017-cd20-008\\image_3.jpg",
+      "bucket_path": "toyota-corolla-2017-cd20-008/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2017-cd20-008/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2019-cd20-003\\image_1.jpg",
+      "bucket_path": "toyota-corolla-2019-cd20-003/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2019-cd20-003/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2019-cd20-003\\image_2.jpg",
+      "bucket_path": "toyota-corolla-2019-cd20-003/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2019-cd20-003/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-corolla-2019-cd20-003\\image_3.jpg",
+      "bucket_path": "toyota-corolla-2019-cd20-003/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-corolla-2019-cd20-003/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2015-cd20-007\\image_1.jpg",
+      "bucket_path": "toyota-land-cruiser-2015-cd20-007/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2015-cd20-007/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2015-cd20-007\\image_2.jpg",
+      "bucket_path": "toyota-land-cruiser-2015-cd20-007/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2015-cd20-007/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2015-cd20-007\\image_3.jpg",
+      "bucket_path": "toyota-land-cruiser-2015-cd20-007/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2015-cd20-007/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2017-cd20-001\\image_1.jpg",
+      "bucket_path": "toyota-land-cruiser-2017-cd20-001/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2017-cd20-001/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2017-cd20-001\\image_2.jpg",
+      "bucket_path": "toyota-land-cruiser-2017-cd20-001/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2017-cd20-001/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2017-cd20-001\\image_3.jpg",
+      "bucket_path": "toyota-land-cruiser-2017-cd20-001/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2017-cd20-001/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2017-cd20-011\\image_1.jpg",
+      "bucket_path": "toyota-land-cruiser-2017-cd20-011/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2017-cd20-011/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2017-cd20-011\\image_2.jpg",
+      "bucket_path": "toyota-land-cruiser-2017-cd20-011/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2017-cd20-011/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2017-cd20-011\\image_3.jpg",
+      "bucket_path": "toyota-land-cruiser-2017-cd20-011/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2017-cd20-011/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2020-cd20-004\\image_1.jpg",
+      "bucket_path": "toyota-land-cruiser-2020-cd20-004/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2020-cd20-004/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2020-cd20-004\\image_2.jpg",
+      "bucket_path": "toyota-land-cruiser-2020-cd20-004/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2020-cd20-004/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-land-cruiser-2020-cd20-004\\image_3.jpg",
+      "bucket_path": "toyota-land-cruiser-2020-cd20-004/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-land-cruiser-2020-cd20-004/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-vitz-2018-cd20-012\\image_1.jpg",
+      "bucket_path": "toyota-vitz-2018-cd20-012/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-vitz-2018-cd20-012/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-vitz-2018-cd20-012\\image_2.jpg",
+      "bucket_path": "toyota-vitz-2018-cd20-012/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-vitz-2018-cd20-012/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-vitz-2018-cd20-012\\image_3.jpg",
+      "bucket_path": "toyota-vitz-2018-cd20-012/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-vitz-2018-cd20-012/image_3.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-vitz-2023-cd20-006\\image_1.jpg",
+      "bucket_path": "toyota-vitz-2023-cd20-006/image_1.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-vitz-2023-cd20-006/image_1.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-vitz-2023-cd20-006\\image_2.jpg",
+      "bucket_path": "toyota-vitz-2023-cd20-006/image_2.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-vitz-2023-cd20-006/image_2.jpg?"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\toyota-vitz-2023-cd20-006\\image_3.jpg",
+      "bucket_path": "toyota-vitz-2023-cd20-006/image_3.jpg",
+      "url": "https://jaxyggpgavkbknihlojh.supabase.co/storage/v1/object/public/Photos/toyota-vitz-2023-cd20-006/image_3.jpg?"
+    }
+  ],
+  "failed": [
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\70447\\image_1.jpeg",
+      "bucket_path": "70447/image_1.jpeg",
+      "error": "Supabase upload failed: {'statusCode': 409, 'error': Duplicate, 'message': The resource already exists}"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\73970\\image_1.jpeg",
+      "bucket_path": "73970/image_1.jpeg",
+      "error": "Supabase upload failed: {'statusCode': 409, 'error': Duplicate, 'message': The resource already exists}"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\73971\\image_1.jpeg",
+      "bucket_path": "73971/image_1.jpeg",
+      "error": "Supabase upload failed: {'statusCode': 409, 'error': Duplicate, 'message': The resource already exists}"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\73972\\image_1.jpeg",
+      "bucket_path": "73972/image_1.jpeg",
+      "error": "Supabase upload failed: {'statusCode': 409, 'error': Duplicate, 'message': The resource already exists}"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\74537\\image_1.jpeg",
+      "bucket_path": "74537/image_1.jpeg",
+      "error": "Supabase upload failed: {'statusCode': 409, 'error': Duplicate, 'message': The resource already exists}"
+    },
+    {
+      "local": "E:\\projects\\cleardrive-lk\\backend\\data\\vehicle_images\\74538\\image_1.jpeg",
+      "bucket_path": "74538/image_1.jpeg",
+      "error": "Supabase upload failed: {'statusCode': 409, 'error': Duplicate, 'message': The resource already exists}"
+    }
+  ]
+}

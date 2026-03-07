@@ -33,6 +33,16 @@ class KYCUploadResponse(BaseModel):
     created_at: datetime
 
 
+class KYCUploadResultResponse(BaseModel):
+    """Guide-aligned response for KYC upload endpoint."""
+
+    message: str
+    kyc_id: str
+    status: str
+    extraction_success: bool
+    needs_manual_review: bool
+
+
 class KYCStatusResponse(BaseModel):
     """Response for KYC status check."""
 

@@ -5,6 +5,7 @@ Epic: CD-E3 - Vehicle Management System
 Story: CD-120 - Static Vehicle Dataset
 """
 
+import json
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -13,8 +14,16 @@ from enum import Enum
 from app.core.database import Base
 from sqlalchemy import DECIMAL, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import Integer, String, Text, Uuid
+from sqlalchemy import Index, Integer, String, Text, Uuid
 from sqlalchemy.orm import relationship
+
+
+def _enum_or_string_value(value: object | None) -> object | None:
+    if value is None:
+        return None
+    if isinstance(value, Enum):
+        return value.value
+    return value
 
 
 class VehicleStatus(str, Enum):
@@ -29,6 +38,8 @@ class FuelType(str, Enum):
     """Vehicle fuel types."""
 
     GASOLINE = "Gasoline"
+    # Backward compatibility for existing DB enum rows using PETROL.
+    PETROL = "Gasoline"
     DIESEL = "Diesel"
     HYBRID = "Gasoline/hybrid"
     ELECTRIC = "Electric"
@@ -84,6 +95,15 @@ class Vehicle(Base):
     """
 
     __tablename__ = "vehicles"
+    __table_args__ = (
+        Index("idx_make", "make"),
+        Index("idx_model", "model"),
+        Index("idx_year", "year"),
+        Index("idx_price_jpy", "price_jpy"),
+        Index("idx_status", "status"),
+        Index("idx_make_model", "make", "model"),
+        Index("idx_year_price", "year", "price_jpy"),
+    )
 
     # Primary Key
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -93,10 +113,10 @@ class Vehicle(Base):
     chassis = Column(String(100), nullable=True)  # Chassis number (masked as ****)
 
     # Basic Vehicle Information
-    make = Column(String(100), nullable=False, index=True)
-    model = Column(String(100), nullable=False, index=True)
+    make = Column(String(100), nullable=False)
+    model = Column(String(100), nullable=False)
     reg_year = Column(String(20), nullable=True)  # Registration year (e.g., "2023/6")
-    year = Column(Integer, nullable=False, index=True)  # Extracted year for filtering
+    year = Column(Integer, nullable=False)  # Extracted year for filtering
 
     # Vehicle Classification
     vehicle_type: Column[VehicleType] = Column(SQLEnum(VehicleType), nullable=True)  # Type from CSV
@@ -110,8 +130,9 @@ class Vehicle(Base):
     mileage_km = Column(Integer, nullable=True)
     engine_cc = Column(Integer, nullable=True)
     engine_model = Column(String(100), nullable=True)  # Engine Model from CSV
-    fuel_type: Column[FuelType] = Column(SQLEnum(FuelType), nullable=True)
-    transmission: Column[Transmission] = Column(SQLEnum(Transmission), nullable=True)
+    # Use string columns at ORM level to tolerate legacy enum labels already stored in DBs.
+    fuel_type = Column(String(50), nullable=True)
+    transmission = Column(String(50), nullable=True)
 
     # Additional Specifications
     steering: Column[Steering] = Column(SQLEnum(Steering), nullable=True)  # Steering position
@@ -136,6 +157,7 @@ class Vehicle(Base):
 
     # Media and Links
     image_url = Column(Text, nullable=True)  # Primary image URL
+    gallery_images = Column(Text, nullable=True)  # JSON array of gallery image URLs
     vehicle_url = Column(Text, nullable=True)  # URL to vehicle listing
 
     # Additional Model Information
@@ -143,7 +165,7 @@ class Vehicle(Base):
 
     # Status
     status: Column[VehicleStatus] = Column(
-        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False, index=True
+        SQLEnum(VehicleStatus), default=VehicleStatus.AVAILABLE, nullable=False
     )
 
     # Timestamps
@@ -178,8 +200,8 @@ class Vehicle(Base):
             "mileage_km": self.mileage_km,
             "engine_cc": self.engine_cc,
             "engine_model": self.engine_model,
-            "fuel_type": self.fuel_type.value if self.fuel_type else None,
-            "transmission": self.transmission.value if self.transmission else None,
+            "fuel_type": _enum_or_string_value(self.fuel_type),
+            "transmission": _enum_or_string_value(self.transmission),
             "steering": self.steering.value if self.steering else None,
             "drive": self.drive.value if self.drive else None,
             "seats": self.seats,
@@ -194,6 +216,7 @@ class Vehicle(Base):
             "options": self.options,
             "other_remarks": self.other_remarks,
             "image_url": self.image_url,
+            "gallery_images": json.loads(self.gallery_images) if self.gallery_images else [],
             "vehicle_url": self.vehicle_url,
             "model_no": self.model_no,
             "status": self.status.value,

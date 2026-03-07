@@ -11,7 +11,7 @@ from app.core.database import Base
 from app.core.models import GUID, IPAddress, TimestampMixin, UUIDMixin
 from sqlalchemy import Boolean, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Integer, String, func
+from sqlalchemy import ForeignKey, Index, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -33,6 +33,11 @@ class User(Base, UUIDMixin, TimestampMixin):
     """User model - all authenticated users."""
 
     __tablename__ = "users"
+    __table_args__ = (
+        Index("idx_users_created_at", "created_at"),
+        Index("idx_users_updated_at", "updated_at"),
+        Index("idx_users_role", "role"),
+    )
 
     # Basic info
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
@@ -44,9 +49,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     password_hash: Mapped[str | None] = mapped_column(String(255))  # For admin backup password
 
     # Role & Status
-    role: Mapped[Role] = mapped_column(
-        SQLEnum(Role), default=Role.CUSTOMER, nullable=False, index=True
-    )
+    role: Mapped[Role] = mapped_column(SQLEnum(Role), default=Role.CUSTOMER, nullable=False)
 
     # Security tracking
     failed_auth_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

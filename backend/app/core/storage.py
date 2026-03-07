@@ -7,13 +7,14 @@ Story: CD-50
 """
 
 import os
-from typing import Any, Dict, cast
+from typing import Any, Callable, Dict, cast
 
 try:
-    from supabase import Client, create_client
+    from supabase import Client
+    from supabase import create_client as _create_client
 except ModuleNotFoundError:  # pragma: no cover - optional dependency in some CI jobs
     Client = Any  # type: ignore[misc,assignment]
-    create_client = None
+    _create_client = None  # type: ignore[assignment]
 
     SUPABASE_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover
@@ -34,11 +35,22 @@ class SupabaseStorage:
         if self.client is not None:
             return self.client
 
+        create_client: Callable[..., Any] | None = _create_client
         if create_client is None:
             raise RuntimeError("Supabase dependency is not installed")
 
         supabase_url = os.getenv("SUPABASE_URL")
         supabase_key = os.getenv("SUPABASE_KEY")
+
+        if not supabase_url or not supabase_key:
+            # Fallback to settings loaded from backend/.env
+            try:
+                from app.core.config import settings
+
+                supabase_url = supabase_url or settings.SUPABASE_URL
+                supabase_key = supabase_key or settings.SUPABASE_KEY
+            except Exception:
+                pass
 
         if not supabase_url or not supabase_key:
             raise RuntimeError(
@@ -91,6 +103,13 @@ class SupabaseStorage:
             return cast(bytes, response)
         except Exception as e:
             raise Exception(f"Supabase download failed: {str(e)}")
+
+    async def get_public_url(self, bucket: str, file_path: str) -> str:
+        """Get public URL for a file path in a bucket."""
+        try:
+            return cast(str, self._ensure_client().storage.from_(bucket).get_public_url(file_path))
+        except Exception as e:
+            raise Exception(f"Supabase public URL failed: {str(e)}")
 
     async def delete_file(self, bucket: str, file_path: str) -> bool:
         """Delete file from Supabase Storage."""
