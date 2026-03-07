@@ -7,37 +7,33 @@ Epic: CD-E5
 Stories: CD-40, CD-41, CD-42
 """
 
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from sqlalchemy.orm import Session
 import hashlib
 import json
 from datetime import datetime
 from urllib.parse import urlencode
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.config import settings
 from app.core.redis_client import get_redis
-from app.modules.auth.models import User
-from app.modules.orders.models import (
-    Order,
-    OrderStatus,
-    OrderStatusHistory,
-)
-from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
+from app.core.security import decrypt_field
 from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.payments.schemas import (
     PaymentInitiate,
     PaymentInitiateResponse,
     PaymentResponse,
 )
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy.orm import Session
+from app.modules.orders.models import (
+    Order,
+    OrderStatus,
+    OrderStatusHistory,
+    PaymentStatus as OrderPaymentStatus,
+)
+from app.modules.auth.models import User
 
 router = APIRouter(prefix="/payments", tags=["payments"])
-
-
-def _as_form_str(value: object) -> str | None:
-    """Return form field as str when valid; otherwise None."""
-    return value if isinstance(value, str) else None
 
 
 # ===================================================================
@@ -54,13 +50,87 @@ def generate_payhere_hash(
     Format: MD5(merchant_id + order_id + amount + currency + MD5(merchant_secret))
     """
 
-    merchant_secret_hash = (
-        hashlib.md5(merchant_secret.encode(), usedforsecurity=False).hexdigest().upper()
-    )
+    merchant_secret_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
 
     hash_string = f"{merchant_id}{order_id}{amount}{currency}{merchant_secret_hash}"
 
-    return hashlib.md5(hash_string.encode(), usedforsecurity=False).hexdigest().upper()
+    return hashlib.md5(hash_string.encode()).hexdigest().upper()
+
+
+def generate_payhere_webhook_signature(
+    merchant_id: str,
+    order_id: str,
+    payhere_amount: str,
+    payhere_currency: str,
+    status_code: str,
+    merchant_secret: str,
+) -> str:
+    """Generate webhook md5sig using PayHere notification signature format."""
+    merchant_secret_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
+    hash_string = f"{merchant_id}{order_id}{payhere_amount}{payhere_currency}{status_code}{merchant_secret_hash}"
+    return hashlib.md5(hash_string.encode()).hexdigest().upper()
+
+
+def build_payhere_checkout_response(payment: Payment, order: Order, current_user: User) -> dict:
+    """Build POST checkout payload and debug URL."""
+    if not payment.payhere_order_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Missing PayHere order ID on payment record",
+        )
+    amount = f"{float(payment.amount):.2f}"
+    hash_value = generate_payhere_hash(
+        merchant_id=settings.PAYHERE_MERCHANT_ID,
+        order_id=payment.payhere_order_id,
+        amount=amount,
+        currency=payment.currency,
+        merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
+    )
+
+    decrypted_address = decrypt_field(order.shipping_address) or order.shipping_address
+    customer_address = (decrypted_address or "No.1, Galle Road").strip()[:100]
+
+    payment_url = (
+        "https://sandbox.payhere.lk/pay/checkout"
+        if settings.PAYHERE_SANDBOX
+        else "https://www.payhere.lk/pay/checkout"
+    )
+    payhere_params = {
+        "merchant_id": settings.PAYHERE_MERCHANT_ID,
+        "return_url": settings.PAYHERE_RETURN_URL.format(order_id=order.id),
+        "cancel_url": settings.PAYHERE_CANCEL_URL.format(order_id=order.id),
+        "notify_url": settings.PAYHERE_NOTIFY_URL,
+        "first_name": current_user.name or "Customer",
+        "last_name": "",
+        "email": current_user.email,
+        "phone": order.phone,
+        "address": customer_address,
+        "city": "Colombo",
+        "country": "Sri Lanka",
+        "order_id": payment.payhere_order_id,
+        "items": "Vehicle Import Order",
+        "currency": payment.currency,
+        "amount": amount,
+        "hash": hash_value,
+    }
+
+    return {
+        "payment_id": str(payment.id),
+        "payment_url": payment_url,
+        "payhere_params": payhere_params,
+        "payhere_url": f"{payment_url}?{urlencode(payhere_params)}",
+        "amount": float(payment.amount),
+        "currency": payment.currency,
+        "order_id": str(order.id),
+    }
+
+
+def _form_value_str(form_data: dict, key: str) -> str | None:
+    """Safely normalize form values to strings."""
+    value = form_data.get(key)
+    if value is None or isinstance(value, UploadFile):
+        return None
+    return str(value)
 
 
 # ===================================================================
@@ -95,9 +165,9 @@ async def initiate_payment(
     - Redirect user to this URL
     """
 
-    print("\n" + "=" * 70)
-    print("💳 PAYMENT INITIATION")
-    print("=" * 70)
+    print(f"\n{'='*70}")
+    print("ðŸ’³ PAYMENT INITIATION")
+    print(f"{'='*70}")
 
     # ===============================================================
     # LAYER 1: CHECK IDEMPOTENCY (Redis)
@@ -107,7 +177,7 @@ async def initiate_payment(
 
     cached_response = await redis.get(cache_key)
     if cached_response:
-        print(f"✅ Idempotency hit (Redis): {payment_data.idempotency_key}")
+        print(f"âœ… Idempotency hit (Redis): {payment_data.idempotency_key}")
         return json.loads(cached_response)
 
     # ===============================================================
@@ -118,15 +188,15 @@ async def initiate_payment(
     )
 
     if existing_payment:
-        print(f"✅ Idempotency hit (Database): {payment_data.idempotency_key}")
+        print(f"âœ… Idempotency hit (Database): {payment_data.idempotency_key}")
 
-        response = {
-            "payment_id": str(existing_payment.id),
-            "payhere_url": f"https://sandbox.payhere.lk/pay/{existing_payment.payhere_order_id}",
-            "amount": float(existing_payment.amount),
-            "currency": existing_payment.currency,
-            "order_id": str(existing_payment.order_id),
-        }
+        order = db.query(Order).filter(Order.id == existing_payment.order_id).first()
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Order {existing_payment.order_id} not found",
+            )
+        response = build_payhere_checkout_response(existing_payment, order, current_user)
 
         # Cache for future requests
         await redis.setex(cache_key, 3600, json.dumps(response, default=str))
@@ -159,22 +229,14 @@ async def initiate_payment(
     # Check if already paid
     existing_completed = (
         db.query(Payment)
-        .filter(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED)
+        .filter(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED.value)
         .first()
     )
 
     if existing_completed:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
 
-    print(f"✅ Order verified: {order.id}")
-
-    if order.total_cost_lkr is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Order total cost is missing",
-        )
-
-    amount_lkr = float(order.total_cost_lkr)
+    print(f"âœ… Order verified: {order.id}")
 
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD
@@ -188,68 +250,27 @@ async def initiate_payment(
         idempotency_key=payment_data.idempotency_key,
         amount=order.total_cost_lkr,
         currency="LKR",
-        status=PaymentStatus.PENDING,
+        status=PaymentStatus.PENDING.value,
     )
 
     db.add(payment)
     db.commit()
     db.refresh(payment)
 
-    print(f"💾 Payment created: {payment.id}")
+    print(f"ðŸ’¾ Payment created: {payment.id}")
 
     # ===============================================================
     # STEP 3: GENERATE PAYHERE URL
     # ===============================================================
 
-    # Generate hash
-    hash_value = generate_payhere_hash(
-        merchant_id=settings.PAYHERE_MERCHANT_ID,
-        order_id=payhere_order_id,
-        amount=f"{amount_lkr:.2f}",
-        currency="LKR",
-        merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
-    )
+    response = build_payhere_checkout_response(payment, order, current_user)
 
-    # PayHere payment URL (sandbox)
-    payhere_base_url = "https://sandbox.payhere.lk/pay/checkout"
-    notify_url = settings.PAYHERE_NOTIFY_URL
-    return_url = settings.PAYHERE_RETURN_URL.replace("{order_id}", str(order.id))
-    cancel_url = settings.PAYHERE_CANCEL_URL.replace("{order_id}", str(order.id))
-
-    payhere_params = {
-        "merchant_id": settings.PAYHERE_MERCHANT_ID,
-        "order_id": payhere_order_id,
-        "items": "Vehicle Import Order",
-        "currency": "LKR",
-        "amount": f"{amount_lkr:.2f}",
-        "first_name": current_user.name or "Customer",
-        "last_name": "",
-        "email": current_user.email,
-        "phone": order.phone,
-        "address": order.shipping_address[:50],
-        "city": "Colombo",
-        "country": "Sri Lanka",
-        "hash": hash_value,
-        "notify_url": notify_url,
-        "return_url": return_url,
-        "cancel_url": cancel_url,
-    }
-    payhere_url = f"{payhere_base_url}?{urlencode(payhere_params)}"
-
-    print("🔗 PayHere URL generated")
-    print("=" * 70 + "\n")
+    print("ðŸ”— PayHere URL generated")
+    print(f"{'='*70}\n")
 
     # ===============================================================
     # STEP 4: CACHE RESPONSE
     # ===============================================================
-    response = {
-        "payment_id": str(payment.id),
-        "payhere_url": payhere_url,
-        "amount": float(payment.amount),
-        "currency": payment.currency,
-        "order_id": str(order.id),
-    }
-
     # Cache for 1 hour
     await redis.setex(cache_key, 3600, json.dumps(response, default=str))
 
@@ -282,62 +303,61 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     6. Return 200 OK
     """
 
-    print("\n" + "=" * 70)
-    print("📬 PAYHERE WEBHOOK RECEIVED")
-    print("=" * 70)
+    print(f"\n{'='*70}")
+    print("ðŸ“¬ PAYHERE WEBHOOK RECEIVED")
+    print(f"{'='*70}")
 
     # Get form data
     form_data = await request.form()
 
-    merchant_id = _as_form_str(form_data.get("merchant_id"))
-    order_id = _as_form_str(form_data.get("order_id"))
-    payhere_amount = _as_form_str(form_data.get("payhere_amount"))
-    payhere_currency = _as_form_str(form_data.get("payhere_currency"))
-    status_code = _as_form_str(form_data.get("status_code"))
-    md5sig = _as_form_str(form_data.get("md5sig"))
-    payment_id = _as_form_str(form_data.get("payment_id"))
-    method = _as_form_str(form_data.get("method"))
-    card_holder_name = _as_form_str(form_data.get("card_holder_name"))
-    card_no = _as_form_str(form_data.get("card_no"))
+    merchant_id = _form_value_str(form_data, "merchant_id")
+    order_id = _form_value_str(form_data, "order_id")
+    payhere_amount = _form_value_str(form_data, "payhere_amount")
+    payhere_currency = _form_value_str(form_data, "payhere_currency")
+    status_code = _form_value_str(form_data, "status_code")
+    md5sig = _form_value_str(form_data, "md5sig")
+    payment_id = _form_value_str(form_data, "payment_id")
+    method = _form_value_str(form_data, "method")
+    card_holder_name = _form_value_str(form_data, "card_holder_name")
+    card_no = _form_value_str(form_data, "card_no")
+
+    if (
+        not merchant_id
+        or not order_id
+        or not payhere_amount
+        or not payhere_currency
+        or not status_code
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required webhook parameters",
+        )
 
     print(f"Order ID: {order_id}")
     print(f"Amount: {payhere_currency} {payhere_amount}")
     print(f"Status: {status_code}")
     print(f"Payment ID: {payment_id}")
 
-    required = [merchant_id, order_id, payhere_amount, payhere_currency, status_code, md5sig]
-    if any(v is None for v in required):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing required webhook fields",
-        )
-    assert merchant_id is not None
-    assert order_id is not None
-    assert payhere_amount is not None
-    assert payhere_currency is not None
-    assert status_code is not None
-    assert md5sig is not None
-
     # ===============================================================
     # STEP 1: VERIFY SIGNATURE
     # ===============================================================
-    expected_hash = generate_payhere_hash(
+    expected_hash = generate_payhere_webhook_signature(
         merchant_id=merchant_id,
         order_id=order_id,
-        amount=payhere_amount,
-        currency=payhere_currency,
+        payhere_amount=payhere_amount,
+        payhere_currency=payhere_currency,
+        status_code=status_code,
         merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
     )
 
-    if md5sig.upper() != expected_hash:
-        print("❌ Invalid signature!")
+    if not md5sig or md5sig.upper() != expected_hash:
+        print("âŒ Invalid signature!")
         print(f"   Expected: {expected_hash}")
         print(f"   Received: {md5sig}")
 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
 
-    print("✅ Signature verified")
-
+    print("âœ… Signature verified")
     # ===============================================================
     # STEP 2: CHECK IDEMPOTENCY (PayHere payment_id)
     # ===============================================================
@@ -345,7 +365,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
         existing = db.query(Payment).filter(Payment.payhere_payment_id == payment_id).first()
 
         if existing:
-            print(f"✅ Webhook already processed (payment_id: {payment_id})")
+            print(f"âœ… Webhook already processed (payment_id: {payment_id})")
             return {"status": "success", "message": "Already processed"}
 
     # ===============================================================
@@ -354,7 +374,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     payment = db.query(Payment).filter(Payment.payhere_order_id == order_id).first()
 
     if not payment:
-        print(f"❌ Payment not found for order: {order_id}")
+        print(f"âŒ Payment not found for order: {order_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
 
     # ===============================================================
@@ -387,15 +407,14 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
             )
             db.add(history)
 
-        print("✅ Payment successful!")
-
+        print("âœ… Payment successful!")
     else:
         payment.status = PaymentStatus.FAILED
-        print(f"❌ Payment failed (status: {status_code})")
+        print(f"âŒ Payment failed (status: {status_code})")
 
     db.commit()
 
-    print("=" * 70 + "\n")
+    print(f"{'='*70}\n")
 
     # TODO: Send email notification
 
