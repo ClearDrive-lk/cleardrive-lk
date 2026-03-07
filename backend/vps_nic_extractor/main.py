@@ -14,7 +14,7 @@ import logging
 import os
 import re
 from io import BytesIO
-from typing import Any
+from typing import Any, cast
 
 import httpx
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
@@ -59,7 +59,8 @@ async def root():
 @app.middleware("http")
 async def request_log_middleware(request: Request, call_next):
     # Intentionally log metadata only.
-    logger.info("request %s %s from=%s", request.method, request.url.path, request.client.host)
+    client_host = request.client.host if request.client is not None else "-"
+    logger.info("request %s %s from=%s", request.method, request.url.path, client_host)
     response = await call_next(request)
     logger.info("response %s %s", request.url.path, response.status_code)
     return response
@@ -72,12 +73,12 @@ def _verify_secret(secret: str | None) -> None:
         raise HTTPException(status_code=403, detail="Invalid secret")
 
 
-def _extract_json(text: str) -> dict:
+def _extract_json(text: str) -> dict[str, Any]:
     # Extract first JSON object in model output.
     match = re.search(r"\{.*\}", text, flags=re.DOTALL)
     if not match:
         raise ValueError("No JSON object found in model response")
-    return json.loads(match.group(0))
+    return cast(dict[str, Any], json.loads(match.group(0)))
 
 
 def _prompt_for(side: str) -> str:
@@ -94,7 +95,7 @@ def _prompt_for(side: str) -> str:
     )
 
 
-async def _extract_with_ollama(image_bytes: bytes, side: str) -> dict:
+async def _extract_with_ollama(image_bytes: bytes, side: str) -> dict[str, Any]:
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
     payload = {
         "model": OLLAMA_MODEL,
@@ -113,6 +114,7 @@ async def _extract_with_ollama(image_bytes: bytes, side: str) -> dict:
     parsed = _extract_json(raw_text)
 
     try:
+        validated: FrontSchema | BackSchema
         if side == "front":
             validated = FrontSchema.model_validate(parsed)
         else:

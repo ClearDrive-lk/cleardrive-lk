@@ -11,6 +11,7 @@ import hashlib
 import json
 import secrets
 from datetime import datetime
+from typing import Any, Mapping
 from urllib.parse import urlencode
 
 from app.core.config import settings
@@ -139,7 +140,7 @@ def build_payhere_checkout_response(payment: Payment, order: Order, current_user
     }
 
 
-def _form_value_str(form_data: dict, key: str) -> str | None:
+def _form_value_str(form_data: Mapping[str, Any], key: str) -> str | None:
     """Safely normalize form values to strings."""
     value = form_data.get(key)
     if value is None or isinstance(value, UploadFile):

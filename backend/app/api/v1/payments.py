@@ -4,6 +4,7 @@ import hashlib
 import os
 import secrets
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Any
 
 from app.core.database import get_db
@@ -315,16 +316,15 @@ async def generate_payment_url(request: PaymentUrlRequest, db: Session = Depends
     # If order doesn't exist, use test data
     if not order:
         # Create mock order data for testing
-        class MockOrder:
-            id = payment.order_id
-            customer_first_name = "Test"
-            customer_last_name = "Customer"
-            customer_email = "test@cleardrive.lk"
-            customer_phone = "0771234567"
-            customer_address = "123 Test Street"
-            customer_city = "Colombo"
-
-        order_obj: Any = MockOrder()
+        order_obj: Any = SimpleNamespace(
+            id=payment.order_id,
+            customer_first_name="Test",
+            customer_last_name="Customer",
+            customer_email="test@cleardrive.lk",
+            customer_phone="0771234567",
+            customer_address="123 Test Street",
+            customer_city="Colombo",
+        )
     else:
         order_obj = order
 

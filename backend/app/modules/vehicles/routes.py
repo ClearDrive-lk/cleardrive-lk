@@ -690,15 +690,15 @@ async def get_vehicle_images(vehicle_id: UUID, db: Session = Depends(get_db)):
     candidates: list[str] = []
     if vehicle.gallery_images:
         try:
-            stored = json.loads(vehicle.gallery_images)
+            stored = json.loads(str(vehicle.gallery_images))
             if isinstance(stored, list):
                 candidates.extend([str(item) for item in stored if item])
         except Exception:
             pass
     if vehicle.image_url:
-        candidates.append(vehicle.image_url)
+        candidates.append(str(vehicle.image_url))
     if vehicle.vehicle_url:
-        candidates.extend(_scrape_vehicle_gallery_images(vehicle.vehicle_url))
+        candidates.extend(_scrape_vehicle_gallery_images(str(vehicle.vehicle_url)))
 
     def normalize(item: str) -> str:
         full = item.strip()
