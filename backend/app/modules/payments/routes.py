@@ -7,7 +7,7 @@ Epic: CD-E5
 Stories: CD-40, CD-41, CD-42
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 import hashlib
 import json
@@ -73,6 +73,11 @@ def generate_payhere_webhook_signature(
 
 def build_payhere_checkout_response(payment: Payment, order: Order, current_user: User) -> dict:
     """Build POST checkout payload and debug URL."""
+    if not payment.payhere_order_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Missing PayHere order ID on payment record",
+        )
     amount = f"{float(payment.amount):.2f}"
     hash_value = generate_payhere_hash(
         merchant_id=settings.PAYHERE_MERCHANT_ID,
@@ -118,6 +123,14 @@ def build_payhere_checkout_response(payment: Payment, order: Order, current_user
         "currency": payment.currency,
         "order_id": str(order.id),
     }
+
+
+def _form_value_str(form_data: dict, key: str) -> str | None:
+    """Safely normalize form values to strings."""
+    value = form_data.get(key)
+    if value is None or isinstance(value, UploadFile):
+        return None
+    return str(value)
 
 
 # ===================================================================
@@ -297,16 +310,28 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     # Get form data
     form_data = await request.form()
 
-    merchant_id = form_data.get("merchant_id")
-    order_id = form_data.get("order_id")
-    payhere_amount = form_data.get("payhere_amount")
-    payhere_currency = form_data.get("payhere_currency")
-    status_code = form_data.get("status_code")
-    md5sig = form_data.get("md5sig")
-    payment_id = form_data.get("payment_id")
-    method = form_data.get("method")
-    card_holder_name = form_data.get("card_holder_name")
-    card_no = form_data.get("card_no")
+    merchant_id = _form_value_str(form_data, "merchant_id")
+    order_id = _form_value_str(form_data, "order_id")
+    payhere_amount = _form_value_str(form_data, "payhere_amount")
+    payhere_currency = _form_value_str(form_data, "payhere_currency")
+    status_code = _form_value_str(form_data, "status_code")
+    md5sig = _form_value_str(form_data, "md5sig")
+    payment_id = _form_value_str(form_data, "payment_id")
+    method = _form_value_str(form_data, "method")
+    card_holder_name = _form_value_str(form_data, "card_holder_name")
+    card_no = _form_value_str(form_data, "card_no")
+
+    if (
+        not merchant_id
+        or not order_id
+        or not payhere_amount
+        or not payhere_currency
+        or not status_code
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required webhook parameters",
+        )
 
     print(f"Order ID: {order_id}")
     print(f"Amount: {payhere_currency} {payhere_amount}")
@@ -358,7 +383,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
 
     # Status code 2 = Success
     if status_code == "2":
-        payment.status = PaymentStatus.COMPLETED.value
+        payment.status = PaymentStatus.COMPLETED
         payment.payhere_payment_id = payment_id
         payment.payment_method = method
         payment.card_holder_name = card_holder_name
@@ -384,7 +409,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
 
         print("âœ… Payment successful!")
     else:
-        payment.status = PaymentStatus.FAILED.value
+        payment.status = PaymentStatus.FAILED
         print(f"âŒ Payment failed (status: {status_code})")
 
     db.commit()

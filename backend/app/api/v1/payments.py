@@ -10,6 +10,7 @@ import hashlib
 import secrets
 import os
 from decimal import Decimal
+from typing import Any
 from app.modules.auth.models import User, Role
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 
@@ -318,7 +319,9 @@ async def generate_payment_url(request: PaymentUrlRequest, db: Session = Depends
             customer_address = "123 Test Street"
             customer_city = "Colombo"
 
-        order = MockOrder()
+        order_obj: Any = MockOrder()
+    else:
+        order_obj = order
 
     # Get PayHere credentials from environment
     merchant_id = os.getenv("PAYHERE_MERCHANT_ID")
@@ -335,7 +338,7 @@ async def generate_payment_url(request: PaymentUrlRequest, db: Session = Depends
     # Generate PayHere hash
     hash_value = generate_payhere_hash(
         merchant_id=merchant_id,
-        order_id=str(order.id),
+        order_id=str(order_obj.id),
         amount=payment.amount,
         currency=payment.currency,
         merchant_secret=merchant_secret,
@@ -347,17 +350,17 @@ async def generate_payment_url(request: PaymentUrlRequest, db: Session = Depends
         "return_url": f"{frontend_url}/payment/success",
         "cancel_url": f"{frontend_url}/payment/cancel",
         "notify_url": f"{backend_url}/api/v1/payments/webhook",
-        "order_id": str(order.id),
-        "items": f"Vehicle Order - {order.id}",
+        "order_id": str(order_obj.id),
+        "items": f"Vehicle Order - {order_obj.id}",
         "currency": payment.currency,
         "amount": f"{float(payment.amount):.2f}",
         # Customer details from order
-        "first_name": getattr(order, "customer_first_name", "Test"),
-        "last_name": getattr(order, "customer_last_name", "Customer"),
-        "email": getattr(order, "customer_email", "test@cleardrive.lk"),
-        "phone": getattr(order, "customer_phone", "0771234567"),
-        "address": getattr(order, "customer_address", "123 Test Street"),
-        "city": getattr(order, "customer_city", "Colombo"),
+        "first_name": getattr(order_obj, "customer_first_name", "Test"),
+        "last_name": getattr(order_obj, "customer_last_name", "Customer"),
+        "email": getattr(order_obj, "customer_email", "test@cleardrive.lk"),
+        "phone": getattr(order_obj, "customer_phone", "0771234567"),
+        "address": getattr(order_obj, "customer_address", "123 Test Street"),
+        "city": getattr(order_obj, "customer_city", "Colombo"),
         "country": "Sri Lanka",
         "hash": hash_value,
     }
