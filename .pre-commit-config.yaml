@@ -181,7 +181,7 @@ repos:
         language: system
         # TEMPORARY: Keep pytest manual-only until pending peer backend integrations are merged.
         # Re-enable on commit by changing back to `stages: [pre-commit]`.
-        stages: [manual]
+        stages: [pre-commit]
         always_run: true
         pass_filenames: false
         verbose: true  # Show pytest output even when tests pass

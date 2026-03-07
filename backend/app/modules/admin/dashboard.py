@@ -18,13 +18,14 @@ from datetime import datetime, timedelta
 from typing import Dict, List
 
 import psutil
+from app.core.config import settings
 from app.core.dependencies import get_current_active_user, get_db
 from app.core.permissions import Permission, require_permission
 from app.core.redis import redis_client
-from app.models.kyc import KYCDocument, KYCStatus
-from app.models.order import Order, OrderStatus
-from app.models.payment import Payment, PaymentStatus
-from app.models.user import User
+from app.modules.auth.models import User
+from app.modules.kyc.models import KYCDocument, KYCStatus
+from app.modules.orders.models import Order, OrderStatus
+from app.modules.payments.models import Payment, PaymentStatus
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import and_, func, text
@@ -32,6 +33,10 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/admin/dashboard", tags=["Admin Dashboard"])
 logger = logging.getLogger(__name__)
+
+STATS_CACHE_TTL_SECONDS = settings.DASHBOARD_CACHE_TTL_SECONDS
+ANALYTICS_CACHE_TTL_SECONDS = max(settings.DASHBOARD_CACHE_TTL_SECONDS * 2, 60)
+SYSTEM_CACHE_TTL_SECONDS = 60
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -60,6 +65,13 @@ async def get_cached_or_compute(cache_key: str, ttl_seconds: int, compute_func, 
 
     await redis_client.setex(cache_key, ttl_seconds, json.dumps(data, default=str))
     return data
+
+
+def _date_to_str(value: object) -> str:
+    """Normalize DB date/datetime values to a string."""
+    if hasattr(value, "isoformat"):
+        return value.isoformat()  # type: ignore[no-any-return]
+    return str(value)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -110,7 +122,6 @@ class DashboardStats(BaseModel):
 
 
 @router.get("/stats", response_model=DashboardStats)
-@require_permission(Permission.MANAGE_USERS)
 async def get_dashboard_stats(
     _: User = Depends(require_permission(Permission.MANAGE_USERS)),
     current_user: User = Depends(get_current_active_user),
@@ -133,7 +144,7 @@ async def get_dashboard_stats(
     """
     # ── Try cache first (5-minute TTL) ──────────────────────────────────────
     CACHE_KEY = "dashboard:stats"
-    CACHE_TTL = 300  # 5 minutes
+    CACHE_TTL = STATS_CACHE_TTL_SECONDS
 
     cached = await redis_client.get(CACHE_KEY)
     if cached:
@@ -165,16 +176,24 @@ async def get_dashboard_stats(
     total_orders = db.query(func.count(Order.id)).scalar()
 
     pending_orders = (
-        db.query(func.count(Order.id)).filter(Order.status == OrderStatus.PENDING).scalar()
+        db.query(func.count(Order.id))
+        .filter(Order.status.in_([OrderStatus.CREATED, OrderStatus.LC_REJECTED]))
+        .scalar()
     )
     in_progress_orders = (
         db.query(func.count(Order.id))
         .filter(
             Order.status.in_(
                 [
-                    OrderStatus.PAYMENT_PENDING,
-                    OrderStatus.VEHICLE_ORDERED,
+                    OrderStatus.PAYMENT_CONFIRMED,
+                    OrderStatus.LC_REQUESTED,
+                    OrderStatus.LC_APPROVED,
+                    OrderStatus.ASSIGNED_TO_EXPORTER,
+                    OrderStatus.SHIPMENT_DOCS_UPLOADED,
+                    OrderStatus.AWAITING_SHIPMENT_CONFIRMATION,
+                    OrderStatus.SHIPPED,
                     OrderStatus.IN_TRANSIT,
+                    OrderStatus.ARRIVED_AT_PORT,
                     OrderStatus.CUSTOMS_CLEARANCE,
                 ]
             )
@@ -295,9 +314,10 @@ class UserAnalytics(BaseModel):
 
 
 @router.get("/users", response_model=UserAnalytics)
-@require_permission(Permission.MANAGE_USERS)
 async def get_user_analytics(
-    days: int = Query(30, ge=1, le=365, description="Number of days to analyse"),
+    days: int = Query(
+        settings.DASHBOARD_DEFAULT_DAYS, ge=1, le=365, description="Number of days to analyse"
+    ),
     _: User = Depends(require_permission(Permission.MANAGE_USERS)),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -322,7 +342,7 @@ async def get_user_analytics(
         UserAnalytics object.
     """
     CACHE_KEY = f"dashboard:users:{days}"
-    CACHE_TTL = 600  # 10 minutes
+    CACHE_TTL = ANALYTICS_CACHE_TTL_SECONDS
 
     cached = await redis_client.get(CACHE_KEY)
     if cached:
@@ -346,7 +366,7 @@ async def get_user_analytics(
         .all()
     )
     daily_registrations = [
-        DailyCount(date=row.date.isoformat(), count=row.count) for row in daily_reg_rows
+        DailyCount(date=_date_to_str(row.date), count=row.count) for row in daily_reg_rows
     ]
 
     # ── Role Distribution ────────────────────────────────────────────────────
@@ -381,7 +401,7 @@ async def get_user_analytics(
         .all()
     )
     active_users_trend = [
-        DailyCount(date=row.date.isoformat(), count=row.count) for row in active_trend_rows
+        DailyCount(date=_date_to_str(row.date), count=row.count) for row in active_trend_rows
     ]
 
     # ── Top Registration Days ────────────────────────────────────────────────
@@ -397,7 +417,7 @@ async def get_user_analytics(
         .all()
     )
     top_registration_days = [
-        DailyCount(date=row.date.isoformat(), count=row.count) for row in top_days_rows
+        DailyCount(date=_date_to_str(row.date), count=row.count) for row in top_days_rows
     ]
 
     analytics = UserAnalytics(
@@ -435,9 +455,10 @@ class OrderAnalytics(BaseModel):
 
 
 @router.get("/orders", response_model=OrderAnalytics)
-@require_permission(Permission.MANAGE_USERS)
 async def get_order_analytics(
-    days: int = Query(30, ge=1, le=365, description="Number of days to analyse"),
+    days: int = Query(
+        settings.DASHBOARD_DEFAULT_DAYS, ge=1, le=365, description="Number of days to analyse"
+    ),
     _: User = Depends(require_permission(Permission.MANAGE_USERS)),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -462,7 +483,7 @@ async def get_order_analytics(
         OrderAnalytics object.
     """
     CACHE_KEY = f"dashboard:orders:{days}"
-    CACHE_TTL = 600  # 10 minutes
+    CACHE_TTL = ANALYTICS_CACHE_TTL_SECONDS
 
     cached = await redis_client.get(CACHE_KEY)
     if cached:
@@ -494,7 +515,7 @@ async def get_order_analytics(
         .order_by(func.date(Order.created_at))
         .all()
     )
-    daily_orders = [DailyCount(date=row.date.isoformat(), count=row.count) for row in daily_rows]
+    daily_orders = [DailyCount(date=_date_to_str(row.date), count=row.count) for row in daily_rows]
 
     # ── Average Processing Time ──────────────────────────────────────────────
     completed = (
@@ -591,9 +612,10 @@ class RevenueAnalytics(BaseModel):
 
 
 @router.get("/revenue", response_model=RevenueAnalytics)
-@require_permission(Permission.MANAGE_USERS)
 async def get_revenue_analytics(
-    days: int = Query(30, ge=1, le=365, description="Number of days to analyse"),
+    days: int = Query(
+        settings.DASHBOARD_DEFAULT_DAYS, ge=1, le=365, description="Number of days to analyse"
+    ),
     _: User = Depends(require_permission(Permission.MANAGE_USERS)),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -618,7 +640,7 @@ async def get_revenue_analytics(
         RevenueAnalytics object.
     """
     CACHE_KEY = f"dashboard:revenue:{days}"
-    CACHE_TTL = 600  # 10 minutes
+    CACHE_TTL = ANALYTICS_CACHE_TTL_SECONDS
 
     cached = await redis_client.get(CACHE_KEY)
     if cached:
@@ -647,24 +669,30 @@ async def get_revenue_analytics(
         .all()
     )
     daily_revenue = [
-        RevenueDataPoint(date=row.date.isoformat(), amount=float(row.amount))
+        RevenueDataPoint(date=_date_to_str(row.date), amount=float(row.amount))
         for row in daily_rev_rows
     ]
 
     # ── Monthly Revenue (last 12 months) ─────────────────────────────────────
+    dialect_name = db.bind.dialect.name if db.bind is not None else ""
+    if dialect_name == "postgresql":
+        month_expr = func.to_char(Payment.created_at, "YYYY-MM")
+    else:
+        month_expr = func.strftime("%Y-%m", Payment.created_at)
+
     monthly_rev_rows = (
         db.query(
-            func.date_trunc("month", Payment.created_at).label("month"),
+            month_expr.label("month"),
             func.sum(Payment.amount).label("amount"),
         )
         .filter(Payment.status == PaymentStatus.COMPLETED)
-        .group_by(func.date_trunc("month", Payment.created_at))
-        .order_by(func.date_trunc("month", Payment.created_at))
+        .group_by(month_expr)
+        .order_by(month_expr)
         .limit(12)
         .all()
     )
     monthly_revenue = [
-        MonthlyRevenue(month=row.month.strftime("%Y-%m"), amount=float(row.amount))
+        MonthlyRevenue(month=str(row.month)[:7], amount=float(row.amount))
         for row in monthly_rev_rows
     ]
 
@@ -680,7 +708,9 @@ async def get_revenue_analytics(
         .group_by(Payment.payment_method)
         .all()
     )
-    payment_method_breakdown = {row.payment_method: float(row.amount) for row in method_rows}
+    payment_method_breakdown = {
+        (row.payment_method or "UNKNOWN"): float(row.amount) for row in method_rows
+    }
 
     # ── Top Revenue Sources ───────────────────────────────────────────────────
     # TODO: Replace placeholder percentages with a real Vehicle-type join
@@ -776,7 +806,6 @@ class SystemHealth(BaseModel):
 
 
 @router.get("/system", response_model=SystemHealth)
-@require_permission(Permission.MANAGE_USERS)
 async def get_system_health(
     _: User = Depends(require_permission(Permission.MANAGE_USERS)),
     current_user: User = Depends(get_current_active_user),
@@ -800,7 +829,7 @@ async def get_system_health(
         SystemHealth object.
     """
     CACHE_KEY = "dashboard:system"
-    CACHE_TTL = 60  # 1 minute
+    CACHE_TTL = SYSTEM_CACHE_TTL_SECONDS
 
     cached = await redis_client.get(CACHE_KEY)
     if cached:
