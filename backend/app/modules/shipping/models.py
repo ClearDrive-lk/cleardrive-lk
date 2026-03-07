@@ -31,6 +31,8 @@ class ShipmentStatus(str, enum.Enum):
 class DocumentType(str, enum.Enum):
     """Shipping document types."""
 
+    # Keep both spellings for backward compatibility across modules/old code paths.
+    BILL_OF_LADING = "BILL_OF_LANDING"
     BILL_OF_LANDING = "BILL_OF_LANDING"
     PACKING_LIST = "PACKING_LIST"
     EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
