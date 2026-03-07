@@ -15,6 +15,7 @@ from sqlalchemy import ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from app.modules.auth.models import User
     from app.modules.orders.models import Order
 
 
@@ -30,7 +31,7 @@ class ShipmentStatus(str, enum.Enum):
 class DocumentType(str, enum.Enum):
     """Shipping document types."""
 
-    BILL_OF_LADING = "BILL_OF_LADING"
+    BILL_OF_LANDING = "BILL_OF_LANDING"
     PACKING_LIST = "PACKING_LIST"
     EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
     COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
@@ -53,6 +54,7 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
     exporter_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("users.id"), nullable=False, index=True
     )
+    vessel_registration: Mapped[str | None] = mapped_column(String(100))
 
     # Shipping information
     vessel_name: Mapped[str | None] = mapped_column(String(255))
@@ -62,11 +64,14 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
 
     # Dates
     departure_date: Mapped[dt.date | None] = mapped_column(Date)
+    estimated_departure_date: Mapped[dt.date | None] = mapped_column(Date)
+    actual_departure_date: Mapped[dt.date | None] = mapped_column(Date)
     estimated_arrival_date: Mapped[dt.date | None] = mapped_column(Date)
     actual_arrival_date: Mapped[dt.date | None] = mapped_column(Date)
 
     # Tracking
     container_number: Mapped[str | None] = mapped_column(String(100))
+    bill_of_landing_number: Mapped[str | None] = mapped_column(String(100))
     seal_number: Mapped[str | None] = mapped_column(String(100))
     tracking_number: Mapped[str | None] = mapped_column(String(255))
 
@@ -82,12 +87,24 @@ class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
     submitted_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     admin_approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     admin_approved_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
+    documents_uploaded: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    approved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # Relationships
     order: Mapped[Order] = relationship("Order", back_populates="shipment_details")
+    exporter: Mapped[User] = relationship("User", foreign_keys=[exporter_id])
     documents: Mapped[list[ShippingDocument]] = relationship(
         "ShippingDocument", back_populates="shipment", cascade="all, delete-orphan"
     )
+
+    @property
+    def assigned_exporter_id(self) -> PyUUID:
+        """Backward-compatible alias for exporter_id."""
+        return self.exporter_id
+
+    @assigned_exporter_id.setter
+    def assigned_exporter_id(self, value: PyUUID) -> None:
+        self.exporter_id = value
 
     def __repr__(self):
         return f"<ShipmentDetails {self.order_id} - {self.vessel_name}>"
