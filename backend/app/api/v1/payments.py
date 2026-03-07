@@ -1,18 +1,20 @@
 # backend/app/api/v1/payments.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app.core.database import get_db
-from app.modules.payments.models import Payment, PaymentStatus
-from app.modules.orders.models import Order
-from pydantic import BaseModel, Field
 import hashlib
-import secrets
 import os
+import secrets
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Any
-from app.modules.auth.models import User, Role
+
+from app.core.database import get_db
+from app.modules.auth.models import Role, User
+from app.modules.orders.models import Order
+from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.vehicles.models import Vehicle, VehicleStatus
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -74,7 +76,9 @@ def generate_payhere_hash(
         MD5 hash string in uppercase
     """
     # Step 1: Hash the merchant secret
-    merchant_secret_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
+    merchant_secret_hash = (
+        hashlib.md5(merchant_secret.encode(), usedforsecurity=False).hexdigest().upper()
+    )
 
     # Step 2: Build the hash string
     # Format amount to 2 decimal places
@@ -82,7 +86,7 @@ def generate_payhere_hash(
     hash_string = f"{merchant_id}{order_id}{amount_str}{currency}{merchant_secret_hash}"
 
     # Step 3: Hash the final string
-    return hashlib.md5(hash_string.encode()).hexdigest().upper()
+    return hashlib.md5(hash_string.encode(), usedforsecurity=False).hexdigest().upper()
 
 
 def generate_idempotency_key() -> str:
@@ -129,7 +133,9 @@ async def initiate_payment(request: PaymentInitiateRequest, db: Session = Depend
     # TEST MODE - Check if order_id starts with "test-"
     if request.order_id.startswith("test-"):
         from uuid import uuid4
-        from app.modules.orders.models import OrderStatus, PaymentStatus as OrderPaymentStatus
+
+        from app.modules.orders.models import OrderStatus
+        from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 
         # Create fake IDs
         fake_user_id = uuid4()
@@ -310,16 +316,15 @@ async def generate_payment_url(request: PaymentUrlRequest, db: Session = Depends
     # If order doesn't exist, use test data
     if not order:
         # Create mock order data for testing
-        class MockOrder:
-            id = payment.order_id
-            customer_first_name = "Test"
-            customer_last_name = "Customer"
-            customer_email = "test@cleardrive.lk"
-            customer_phone = "0771234567"
-            customer_address = "123 Test Street"
-            customer_city = "Colombo"
-
-        order_obj: Any = MockOrder()
+        order_obj: Any = SimpleNamespace(
+            id=payment.order_id,
+            customer_first_name="Test",
+            customer_last_name="Customer",
+            customer_email="test@cleardrive.lk",
+            customer_phone="0771234567",
+            customer_address="123 Test Street",
+            customer_city="Colombo",
+        )
     else:
         order_obj = order
 

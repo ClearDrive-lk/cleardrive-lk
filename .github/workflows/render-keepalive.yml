@@ -1,0 +1,34 @@
+name: Render Keepalive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-render:
+    name: Ping Render Service (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: production
+            url_secret: RENDER_PROD_KEEPALIVE_URL #pragma: allowlist secret
+          - name: staging
+            url_secret: RENDER_STAGING_KEEPALIVE_URL #pragma: allowlist secret
+
+    steps:
+      - name: Ping keepalive endpoint
+        env:
+          KEEPALIVE_URL: ${{ secrets[matrix.url_secret] }}
+        run: |
+          if [ -z "$KEEPALIVE_URL" ]; then
+            echo "Missing secret: ${{ matrix.url_secret }}"
+            exit 1
+          fi
+
+          echo "Pinging $KEEPALIVE_URL"
+          curl --fail --show-error --silent --max-time 30 "$KEEPALIVE_URL" > /dev/null
+          echo "Ping successful."

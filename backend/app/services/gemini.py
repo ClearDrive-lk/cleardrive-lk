@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 
 from app.core.config import settings
 
@@ -54,7 +54,7 @@ class GeminiService:
                     response_mime_type="application/json",
                 ),
             )
-            data = json.loads(response.text)
+            data = cast(dict[str, Any], json.loads(response.text))
             self._validate_structure(data)
             return data
         except json.JSONDecodeError as exc:

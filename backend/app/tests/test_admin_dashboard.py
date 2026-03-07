@@ -2,12 +2,13 @@
 Test admin dashboard analytics.
 """
 
-import pytest
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from app.modules.auth.models import Role, User
-from app.modules.orders.models import Order, OrderStatus, PaymentStatus as OrderPaymentStatus
+from app.modules.orders.models import Order, OrderStatus
+from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 
@@ -27,21 +28,20 @@ def sample_data(db):
     vehicles = []
     for i in range(5):
         vehicle = Vehicle(
-            auction_id=f"AUC-{i}-{uuid4()}",
             stock_no=f"STK-{i}-{uuid4().hex[:8]}",
             make="Toyota",
             model="Prius",
             year=2020 + (i % 3),
-            mileage=50000 + i * 1000,
+            mileage_km=50000 + i * 1000,
             engine_cc=1500,
             fuel_type="PETROL",
-            transmission="AUTO",
-            drive_type="2WD",
-            condition_grade="A",
+            transmission="Automatic",
+            drive="2WD",
+            grade="A",
             price_jpy=Decimal("1000000.00"),
             status=VehicleStatus.AVAILABLE,
             location="JP",
-            source_url="https://example.com/vehicle",
+            vehicle_url="https://example.com/vehicle",
         )
         db.add(vehicle)
         vehicles.append(vehicle)

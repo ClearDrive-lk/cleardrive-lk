@@ -13,7 +13,7 @@ import threading
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlparse
 
 from app.core.database import SessionLocal
@@ -272,7 +272,7 @@ class ScraperScheduler:
                 setattr(existing, field, int(new_data[field]))
             else:
                 setattr(existing, field, new_data[field])
-        existing.updated_at = datetime.utcnow()
+        setattr(existing, "updated_at", datetime.utcnow())
 
     def _vehicle_from_scraped(self, row: dict[str, Any]) -> Vehicle:
         images = row.get("images") or []
@@ -335,7 +335,7 @@ class ScraperScheduler:
                 vehicles = []
 
             logger.info("Loaded fallback dataset from %s (%s rows)", data_path, len(vehicles))
-            return vehicles
+            return cast(list[dict[str, Any]], vehicles)
 
         logger.warning("No fallback dataset found in %s", data_root)
         return []

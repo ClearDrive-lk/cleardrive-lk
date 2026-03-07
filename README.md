@@ -349,6 +349,41 @@ See `.env.example` files in:
 - `backend/.env.example` - Backend configuration
 - `apps/web/.env.local.example` - Frontend configuration (TODO)
 
+## CD-51 Laptop Mode (ngrok)
+
+Use this when NIC extraction runs on a development laptop instead of a VPS.
+
+1. Start Ollama and ensure a vision model is available:
+```bash
+ollama list
+# expected model for laptop flow:
+# llama3.2-vision:11b
+```
+
+2. Run the extractor service:
+```bash
+cd backend/vps_nic_extractor
+python -m uvicorn main:app --host 0.0.0.0 --port 8001
+```
+
+3. Expose port `8001` with ngrok:
+```bash
+ngrok http 8001
+```
+
+4. Set Render backend environment variables using the ngrok URL:
+```bash
+VPS_URL=https://<your-ngrok-subdomain>.ngrok-free.app
+VPS_SECRET=<same-value-as-INTERNAL_SECRET>
+KYC_VPS_TIMEOUT_SECONDS=60
+KYC_VPS_MAX_RETRIES=1
+```
+
+5. Health check:
+```bash
+curl -H "X-Internal-Secret: <same-secret>" https://<your-ngrok-subdomain>.ngrok-free.app/health
+```
+
 ## 🤝 Contributing
 
 1. Create a branch: `git checkout -b feature/your-feature`
