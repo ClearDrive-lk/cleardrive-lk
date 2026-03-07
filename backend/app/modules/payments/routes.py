@@ -184,12 +184,12 @@ async def initiate_payment(
     print("ðŸ’³ PAYMENT INITIATION")
     print(f"{'=' * 70}")
 
-    idempotency_key = idempotency_key_header or payment_data.idempotency_key
-    if not idempotency_key:
+    if not idempotency_key_header:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Idempotency key is required (Idempotency-Key header or request body)",
+            detail="Idempotency-Key header is required",
         )
+    idempotency_key = idempotency_key_header
     if len(idempotency_key) < 16:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -264,16 +264,25 @@ async def initiate_payment(
             detail=f"Order status is {order.status}, payment not allowed",
         )
 
-    # Check if already paid
-    existing_completed = (
+    # Layered duplicate prevention by order:
+    # if a payment already exists for this order, reuse it instead of creating a new row.
+    existing_order_payment = (
         db.query(Payment)
-        .filter(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED.value)
+        .filter(Payment.order_id == order.id)
+        .order_by(Payment.created_at.desc())
         .first()
     )
-
-    if existing_completed:
-        await redis.delete(lock_key)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
+    if existing_order_payment:
+        if existing_order_payment.status == PaymentStatus.COMPLETED:
+            await redis.delete(lock_key)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid"
+            )
+        if existing_order_payment.status in {PaymentStatus.PENDING, PaymentStatus.PROCESSING}:
+            response = build_payhere_checkout_response(existing_order_payment, order, current_user)
+            await redis.setex(cache_key, 3600, json.dumps(response, default=str))
+            await redis.delete(lock_key)
+            return response
 
     print(f"âœ… Order verified: {order.id}")
 
@@ -477,6 +486,19 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     # TODO: Send email notification
 
     return {"status": "success"}
+
+
+@router.get("/test-cards")
+async def get_test_cards():
+    """PayHere sandbox cards for QA/testing only."""
+    return {
+        "sandbox_cards": {
+            "visa_success": {"card_number": "4916217792925942", "cvv": "123"},
+            "mastercard_success": {"card_number": "5307167694146682", "cvv": "123"},
+            "visa_failed": {"card_number": "4007702601644397", "cvv": "123"},
+        },
+        "note": "Use only in PayHere sandbox mode.",
+    }
 
 
 # ===================================================================
