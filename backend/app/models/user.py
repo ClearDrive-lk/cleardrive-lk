@@ -1,11 +1,13 @@
 """
 User model.
 """
+
 import uuid
 from datetime import datetime
 
 from app.core.database import Base
-from sqlalchemy import Column, DateTime, Integer, String
+from app.core.permissions import Role
+from sqlalchemy import Column, DateTime, Enum, Index, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 
 
@@ -13,12 +15,17 @@ class User(Base):
     """User model."""
 
     __tablename__ = "users"
+    __table_args__ = (
+        Index("idx_users_created_at", "created_at"),
+        Index("idx_users_updated_at", "updated_at"),
+        Index("idx_users_role", "role"),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255))
     google_id = Column(String(255), unique=True, index=True)
-    role = Column(String(50), nullable=False, default="CUSTOMER")
+    role = Column(Enum(Role), nullable=False, default=Role.CUSTOMER)  # type: ignore
     password_hash = Column(String(255))  # For admin backup password
     phone = Column(String(20))
 

@@ -4,7 +4,6 @@
 Test authentication flow in development mode.
 """
 
-
 import requests  # type: ignore
 
 BASE_URL = "http://localhost:8000/api/v1"
@@ -38,7 +37,9 @@ def test_auth_flow():
     print("Step 3: Verifying OTP...")
 
     response = requests.post(
-        f"{BASE_URL}/auth/verify-otp", json={"email": test_email, "otp": otp}, timeout=10
+        f"{BASE_URL}/auth/verify-otp",
+        json={"email": test_email, "otp": otp},
+        timeout=10,
     )
 
     if response.status_code == 200:
@@ -70,7 +71,9 @@ def test_auth_flow():
         print("Step 5: Testing token refresh...")
 
         response = requests.post(
-            f"{BASE_URL}/auth/refresh", json={"refresh_token": refresh_token}, timeout=10
+            f"{BASE_URL}/auth/refresh",
+            json={"refresh_token": refresh_token},
+            timeout=10,
         )
 
         if response.status_code == 200:

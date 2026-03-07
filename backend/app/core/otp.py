@@ -2,10 +2,11 @@
 """
 OTP generation and verification utilities.
 """
+
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 
 def generate_otp(length: int = 6) -> str:
@@ -78,14 +79,17 @@ def verify_otp_constant_time(stored_otp: str, provided_otp: str) -> bool:
         >>> verify_otp_constant_time("123456", "654321")
         False
     """
-    if not stored_otp or not provided_otp:
-        return False
+    # Normalize inputs to fixed digest lengths before comparison.
+    # This makes timing less sensitive to input length/content variance.
+    stored_otp_str = "" if stored_otp is None else str(stored_otp)
+    provided_otp_str = "" if provided_otp is None else str(provided_otp)
 
-    # Ensure both are strings
-    stored_otp = str(stored_otp)
-    provided_otp = str(provided_otp)
+    stored_digest = hashlib.sha256(stored_otp_str.encode()).digest()
+    provided_digest = hashlib.sha256(provided_otp_str.encode()).digest()
+    digest_match = hmac.compare_digest(stored_digest, provided_digest)
 
-    return hmac.compare_digest(stored_otp, provided_otp)
+    # Preserve original behavior: empty/missing OTPs are always invalid.
+    return bool(stored_otp_str) and bool(provided_otp_str) and digest_match
 
 
 def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
@@ -102,11 +106,11 @@ def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
     Example:
         >>> from datetime import datetime, timedelta
         >>> # OTP created 3 minutes ago
-        >>> created = datetime.utcnow() - timedelta(minutes=3)
+        >>> created = datetime.now(UTC) - timedelta(minutes=3)
         >>> is_otp_expired(created, expiry_minutes=5)
         False
         >>> # OTP created 10 minutes ago
-        >>> created = datetime.utcnow() - timedelta(minutes=10)
+        >>> created = datetime.now(UTC) - timedelta(minutes=10)
         >>> is_otp_expired(created, expiry_minutes=5)
         True
     """
@@ -114,7 +118,7 @@ def is_otp_expired(created_at: datetime, expiry_minutes: int = 5) -> bool:
         return True
 
     expiry_time = created_at + timedelta(minutes=expiry_minutes)
-    return datetime.utcnow() > expiry_time
+    return datetime.now(UTC) > expiry_time
 
 
 def format_otp_for_display(otp: str, separator: str = " ") -> str:

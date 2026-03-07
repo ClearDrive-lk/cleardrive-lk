@@ -235,6 +235,7 @@ htmlcov/
 .env.local
 .env.*.local
 .env.example
+.env.localdb
 
 # IDEs
 .vscode/
@@ -251,6 +252,9 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Scraped vehicle binaries (runtime artifacts)
+backend/data/vehicle_images/
 .next/
 out/
 build/
@@ -322,6 +326,8 @@ venv312/
 ENV/
 env/
 .venv
+backend/venv/
+backend/venv312/
 
 # ============================================================================
 # NODE / JAVASCRIPT
@@ -333,7 +339,8 @@ out/
 .eslintcache
 *.tsbuildinfo
 next-env.d.ts
-
+pytest.out
+pytest.err
 # ============================================================================
 # IDE / EDITORS
 # ============================================================================
@@ -352,7 +359,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-
+pip_install_log.txt
+apps/web/build_log.txt
 # ============================================================================
 # ENV FILES
 # ============================================================================
@@ -361,6 +369,7 @@ lerna-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.supabase
 
 # ============================================================================
 # OPERATING SYSTEM
@@ -388,3 +397,7 @@ Thumbs.db
 *.pem
 *.key
 *.cert
+# Keep Next.js source lib tracked (overrides Python `lib/` ignore above)
+!apps/web/lib/
+!apps/web/lib/**
+backend/data/vehicle_image_upload_map.json

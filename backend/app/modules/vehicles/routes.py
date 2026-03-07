@@ -1,27 +1,266 @@
 # backend/app/modules/vehicles/routes.py
 
+import json
 import math
+import re
+import threading
+from datetime import datetime
 from decimal import Decimal
 from typing import Optional
+from urllib.parse import urljoin
 from uuid import UUID
 
+import requests  # type: ignore[import-untyped]
+from app.core.cache import cache
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import asc, desc, or_
-from sqlalchemy.orm import Session
-
-from .cost_calculator import DEFAULT_JPY_TO_LKR, calculate_total_cost
-from .models import Vehicle, VehicleStatus
-from .schemas import (
+from app.models.gazette import TaxFuelType, TaxVehicleType
+from app.modules.vehicles.models import Vehicle, VehicleStatus
+from app.modules.vehicles.schemas import (
     CostBreakdown,
+    PaginationInfo,
     VehicleCreate,
     VehicleListResponse,
     VehicleResponse,
     VehicleUpdate,
 )
+from app.services.tax_calculator import NoTaxRuleError, calculate_tax
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import asc, desc, or_, text
+from sqlalchemy.orm import Session
+
+try:
+    from bs4 import BeautifulSoup
+except Exception:  # pragma: no cover - optional dependency
+    BeautifulSoup = None  # type: ignore[assignment]
+
+from .cost_calculator import (
+    DEFAULT_JPY_TO_LKR,
+    calculate_clearance_fee,
+    calculate_documentation_fee,
+    calculate_port_charges,
+    calculate_shipping_cost,
+)
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
+
+
+def _canonical_fuel_key(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
+    if normalized in {"gasoline", "petrol", "gas"}:
+        return "petrol"
+    if normalized in {"diesel"}:
+        return "diesel"
+    if normalized in {
+        "hybrid",
+        "gasoline hybrid",
+        "petrol hybrid",
+        "gasoline/hybrid",
+        "petrol/hybrid",
+    }:
+        return "hybrid"
+    if normalized in {"plugin hybrid", "plug in hybrid", "plug-in hybrid", "phev"}:
+        return "plugin_hybrid"
+    if normalized in {"electric", "ev", "bev"}:
+        return "electric"
+    if normalized in {"cng"}:
+        return "cng"
+    return normalized
+
+
+def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
+    rows = db.execute(text("""
+            SELECT e.enumlabel
+            FROM pg_enum e
+            JOIN pg_type t ON e.enumtypid = t.oid
+            WHERE t.typname = 'fueltype'
+            """)).fetchall()
+    labels = [str(r[0]) for r in rows]
+    if not labels:
+        return requested
+
+    by_key: dict[str, list[str]] = {}
+    for label in labels:
+        key = _canonical_fuel_key(label)
+        by_key.setdefault(key, []).append(label)
+
+    req_key = _canonical_fuel_key(requested)
+    candidates = by_key.get(req_key, [])
+    if not candidates:
+        return None
+
+    # Deterministic preference for common variants.
+    preferred = [
+        "PETROL",
+        "DIESEL",
+        "HYBRID",
+        "ELECTRIC",
+        "CNG",
+        "PLUGIN_HYBRID",
+        "Gasoline",
+        "Diesel",
+        "Gasoline/hybrid",
+        "Electric",
+        "Plugin Hybrid",
+    ]
+    for value in preferred:
+        if value in candidates:
+            return value
+    return candidates[0]
+
+
+def _canonical_transmission_key(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
+    if normalized in {"automatic", "auto", "at"}:
+        return "automatic"
+    if normalized in {"manual", "mt"}:
+        return "manual"
+    if normalized in {"cvt"}:
+        return "cvt"
+    return normalized
+
+
+def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
+    rows = db.execute(text("""
+            SELECT e.enumlabel
+            FROM pg_enum e
+            JOIN pg_type t ON e.enumtypid = t.oid
+            WHERE t.typname = 'transmission'
+            """)).fetchall()
+    labels = [str(r[0]) for r in rows]
+    if not labels:
+        return requested
+
+    by_key: dict[str, list[str]] = {}
+    for label in labels:
+        key = _canonical_transmission_key(label)
+        by_key.setdefault(key, []).append(label)
+
+    req_key = _canonical_transmission_key(requested)
+    candidates = by_key.get(req_key, [])
+    if not candidates:
+        return None
+
+    preferred = ["AUTOMATIC", "MANUAL", "CVT", "Automatic", "Manual", "Cvt"]
+    for value in preferred:
+        if value in candidates:
+            return value
+    return candidates[0]
+
+
+def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
+    if not vehicle_url:
+        return []
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        ),
+        "Referer": "https://www.ramadbk.com/search_by_usual.php",
+    }
+    try:
+        response = requests.get(vehicle_url, timeout=20, headers=headers)
+        response.raise_for_status()
+    except Exception:
+        return []
+
+    html = response.text
+    images: list[str] = []
+    seen: set[str] = set()
+
+    def to_hq(url: str) -> str:
+        full = urljoin(vehicle_url, url.strip())
+        lower = full.lower()
+        if "/vimgs/thumb/" in lower:
+            full = full.replace("/VIMGS/thumb/", "/VIMGS/images/").replace(
+                "/vimgs/thumb/", "/VIMGS/images/"
+            )
+            filename = full.rsplit("/", 1)[-1]
+            if filename.startswith("T"):
+                full = full.rsplit("/", 1)[0] + "/" + filename[1:]
+        elif "/vimgs/medium/" in lower:
+            full = full.replace("/VIMGS/medium/", "/VIMGS/images/").replace(
+                "/vimgs/medium/", "/VIMGS/images/"
+            )
+        return full
+
+    def dedupe_key(full: str) -> str:
+        filename = full.rsplit("/", 1)[-1]
+        # thumb variants are often prefixed with T (e.g., TAxxxx -> Axxxx)
+        if filename.startswith("T"):
+            filename = filename[1:]
+        return filename.lower()
+
+    def add(url: str | None) -> None:
+        if not url:
+            return
+        full = to_hq(url)
+        if not full.startswith(("http://", "https://")):
+            return
+        lower = full.lower()
+        # Keep only vehicle gallery paths; drop site chrome/icons.
+        if "/vimgs/images/" not in lower and "/car_images/" not in lower:
+            return
+        key = dedupe_key(full)
+        if key in seen:
+            return
+        seen.add(key)
+        images.append(full)
+
+    # Direct image URLs in RAMADBK markup/script.
+    for match in re.findall(r"https?://[^\"'\s>]+/VIMGS/[^\"'\s<]+", html, flags=re.IGNORECASE):
+        add(match)
+
+    if BeautifulSoup is None:
+        return images[:12]
+
+    soup = BeautifulSoup(html, "lxml")
+
+    for node in soup.select("a[href], img[src], img[data-src]"):
+        add(node.get("href"))
+        add(node.get("src"))
+        add(node.get("data-src"))
+        onmouseover = node.get("onmouseover") or ""
+        # RAMADBK thumbnail hover often sets large image URL in JS.
+        for match in re.findall(
+            r"https?://[^\"'\s>]+/VIMGS/[^\"'\s<]+", onmouseover, flags=re.IGNORECASE
+        ):
+            add(match)
+
+    return images[:40]
+
+
+def _map_vehicle_type_to_tax(vehicle: Vehicle) -> str:
+    """Map vehicle model type to tax rule enum values."""
+    value = vehicle.vehicle_type.value.upper() if vehicle.vehicle_type else ""
+    mapping = {
+        "SEDAN": TaxVehicleType.SEDAN.value,
+        "SUV": TaxVehicleType.SUV.value,
+        "PICKUP": TaxVehicleType.TRUCK.value,
+        "VAN/MINIVAN": TaxVehicleType.VAN.value,
+        "WAGON": TaxVehicleType.VAN.value,
+        "HATCHBACK": TaxVehicleType.OTHER.value,
+        "COUPE": TaxVehicleType.OTHER.value,
+        "CONVERTIBLE": TaxVehicleType.OTHER.value,
+        "BIKES": TaxVehicleType.MOTORCYCLE.value,
+        "MACHINERY": TaxVehicleType.OTHER.value,
+    }
+    return mapping.get(value, TaxVehicleType.OTHER.value)
+
+
+def _map_fuel_type_to_tax(vehicle: Vehicle) -> str:
+    """Map vehicle fuel enum to tax fuel types."""
+    raw = vehicle.fuel_type
+    value = str(getattr(raw, "value", raw) or "").upper()
+    if "HYBRID" in value:
+        return TaxFuelType.HYBRID.value
+    if "DIESEL" in value:
+        return TaxFuelType.DIESEL.value
+    if "ELECTRIC" in value:
+        return TaxFuelType.ELECTRIC.value
+    if "GASOLINE" in value or "PETROL" in value:
+        return TaxFuelType.PETROL.value
+    return TaxFuelType.OTHER.value
 
 
 # ============================================================================
@@ -31,28 +270,80 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
 @router.get("", response_model=VehicleListResponse)
 async def get_vehicles(
-    search: Optional[str] = None,
-    make: Optional[str] = None,
-    model: Optional[str] = None,
-    year_min: Optional[int] = Query(None, ge=1990),
-    year_max: Optional[int] = Query(None, le=2026),
-    price_min: Optional[Decimal] = Query(None, ge=0),
-    price_max: Optional[Decimal] = None,
-    mileage_max: Optional[int] = Query(None, ge=0),
-    fuel_type: Optional[str] = None,
-    transmission: Optional[str] = None,
-    status: VehicleStatus = VehicleStatus.AVAILABLE,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("created_at", regex="^(price_jpy|year|mileage_km|created_at)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    # Search & Filter Parameters
+    search: Optional[str] = Query(None, description="Search in make/model"),
+    make: Optional[str] = Query(None, description="Filter by manufacturer"),
+    model: Optional[str] = Query(None, description="Filter by model"),
+    year_min: Optional[int] = Query(None, ge=1990, description="Minimum year"),
+    year_max: Optional[int] = Query(None, le=2026, description="Maximum year"),
+    price_min: Optional[Decimal] = Query(None, ge=0, description="Minimum price (JPY)"),
+    price_max: Optional[Decimal] = Query(None, ge=0, description="Maximum price (JPY)"),
+    mileage_max: Optional[int] = Query(None, ge=0, description="Maximum mileage (km)"),
+    fuel_type: Optional[str] = Query(None, description="Filter by fuel type"),
+    transmission: Optional[str] = Query(None, description="Filter by transmission"),
+    status: VehicleStatus = Query(VehicleStatus.AVAILABLE, description="Filter by status"),
+    # Pagination
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    # Sorting
+    sort_by: str = Query(
+        "created_at",
+        pattern="^(price_jpy|year|reg_year|mileage_km|created_at)$",
+        description="Field to sort by",
+    ),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
+    # Database session
     db: Session = Depends(get_db),
 ):
     """
-    Get paginated list of vehicles with filters.
+    Get paginated list of vehicles with filters and sorting.
+
+    **Query Parameters:**
+    - `search`: Search text for make/model
+    - `make`: Filter by manufacturer (e.g., "Toyota")
+    - `model`: Filter by model (e.g., "Prius")
+    - `year_min`, `year_max`: Year range filter
+    - `price_min`, `price_max`: Price range in JPY
+    - `mileage_max`: Maximum mileage filter
+    - `fuel_type`: Filter by fuel type
+    - `transmission`: Filter by transmission type
+    - `status`: Filter by status (default: AVAILABLE)
+    - `page`: Page number (default: 1)
+    - `limit`: Results per page (default: 20, max: 100)
+    - `sort_by`: Field to sort by (price_jpy, year, reg_year, mileage_km, created_at)
+    - `sort_order`: Sort order (asc or desc)
+
+    **Returns:**
+    - List of vehicles matching filters
+    - Pagination information
 
     Public endpoint - no authentication required.
     """
+    if year_min is None:
+        # Default catalog window to last 3 years.
+        year_min = datetime.utcnow().year - 2
+
+    cache_key = cache.generate_key(
+        "vehicles",
+        search=search,
+        make=make,
+        model=model,
+        year_min=year_min,
+        year_max=year_max,
+        price_min=price_min,
+        price_max=price_max,
+        mileage_max=mileage_max,
+        fuel_type=fuel_type,
+        transmission=transmission,
+        status=status.value if status else None,
+        page=page,
+        limit=limit,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
+    cached_response = await cache.get(cache_key)
+    if cached_response:
+        return VehicleListResponse.model_validate(cached_response)
 
     # Build query
     query = db.query(Vehicle)
@@ -64,6 +355,10 @@ async def get_vehicles(
             or_(
                 Vehicle.make.ilike(search_term),
                 Vehicle.model.ilike(search_term),
+                Vehicle.grade.ilike(search_term),
+                Vehicle.color.ilike(search_term),
+                Vehicle.options.ilike(search_term),
+                Vehicle.other_remarks.ilike(search_term),
             )
         )
 
@@ -89,10 +384,18 @@ async def get_vehicles(
         query = query.filter(Vehicle.mileage_km <= mileage_max)
 
     if fuel_type:
-        query = query.filter(Vehicle.fuel_type == fuel_type)
+        resolved_fuel = _resolve_fuel_enum_label(db, fuel_type)
+        if resolved_fuel is None:
+            query = query.filter(text("1=0"))
+        else:
+            query = query.filter(Vehicle.fuel_type == resolved_fuel)
 
     if transmission:
-        query = query.filter(Vehicle.transmission == transmission)
+        resolved_transmission = _resolve_transmission_enum_label(db, transmission)
+        if resolved_transmission is None:
+            query = query.filter(text("1=0"))
+        else:
+            query = query.filter(Vehicle.transmission == resolved_transmission)
 
     if status:
         query = query.filter(Vehicle.status == status)
@@ -114,13 +417,59 @@ async def get_vehicles(
     # Calculate total pages
     total_pages = math.ceil(total / limit) if total > 0 else 0
 
-    return VehicleListResponse(
+    response = VehicleListResponse(
         vehicles=[VehicleResponse.model_validate(v) for v in vehicles],
-        total=total,
-        page=page,
-        limit=limit,
-        total_pages=total_pages,
+        pagination=PaginationInfo(page=page, limit=limit, total=total, total_pages=total_pages),
     )
+    await cache.set(cache_key, response.model_dump(mode="json"), ttl=300)
+    return response
+
+
+@router.get("/makes/list")
+async def list_makes(db: Session = Depends(get_db)):
+    """
+    Get list of all unique vehicle makes (manufacturers).
+
+    **Returns:**
+    - List of unique manufacturers
+
+    **Usage:**
+    - For dropdown filters in frontend
+
+    Public endpoint - no authentication required.
+    """
+
+    makes = db.query(Vehicle.make).distinct().order_by(Vehicle.make).all()
+    return {"makes": [make[0] for make in makes]}
+
+
+@router.get("/models/list")
+async def list_models(
+    make: Optional[str] = Query(None, description="Filter models by manufacturer"),
+    db: Session = Depends(get_db),
+):
+    """
+    Get list of models, optionally filtered by make.
+
+    **Query Parameters:**
+    - `make`: Filter models by manufacturer
+
+    **Returns:**
+    - List of unique models
+
+    **Usage:**
+    - For dropdown filters in frontend
+
+    Public endpoint - no authentication required.
+    """
+
+    query = db.query(Vehicle.model).distinct()
+
+    if make:
+        query = query.filter(Vehicle.make.ilike(f"%{make}%"))
+
+    models = query.order_by(Vehicle.model).all()
+    return {"models": [model[0] for model in models]}
 
 
 @router.get("/{vehicle_id}", response_model=VehicleResponse)
@@ -129,7 +478,16 @@ async def get_vehicle(
     db: Session = Depends(get_db),
 ):
     """
-    Get vehicle by ID.
+    Get detailed information about a specific vehicle.
+
+    **Path Parameters:**
+    - `vehicle_id`: UUID of the vehicle
+
+    **Returns:**
+    - Complete vehicle details
+
+    **Errors:**
+    - 404: Vehicle not found
 
     Public endpoint - no authentication required.
     """
@@ -137,7 +495,9 @@ async def get_vehicle(
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Vehicle with ID {vehicle_id} not found"
+        )
 
     return VehicleResponse.model_validate(vehicle)
 
@@ -151,27 +511,124 @@ async def calculate_cost(
     """
     Calculate total import cost for a vehicle.
 
+    **Cost Breakdown:**
+    1. Vehicle price (JPY → LKR conversion)
+    2. Shipping cost
+    3. CIF value (Cost + Insurance + Freight)
+    4. Customs duty (25% of CIF)
+    5. VAT (15% of CIF + Customs)
+    6. Total cost in LKR
+
+    **Path Parameters:**
+    - `vehicle_id`: UUID of the vehicle
+
+    **Query Parameters:**
+    - `exchange_rate`: Optional custom JPY to LKR exchange rate
+
+    **Returns:**
+    - Detailed cost breakdown with percentages
+
+    **Errors:**
+    - 404: Vehicle not found
+
     Public endpoint - no authentication required.
     """
 
     vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
 
     if not vehicle:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Vehicle with ID {vehicle_id} not found"
+        )
 
-    # Use custom exchange rate or default
     rate = exchange_rate or DEFAULT_JPY_TO_LKR
+    vehicle_price_jpy = Decimal(str(vehicle.price_jpy))
+    vehicle_price_lkr = vehicle_price_jpy * rate
+    shipping_cost_lkr = calculate_shipping_cost(vehicle)
+    cif_value = vehicle_price_lkr + shipping_cost_lkr
 
-    # Calculate cost
-    cost_data = calculate_total_cost(vehicle, rate)
+    tax_vehicle_type = _map_vehicle_type_to_tax(vehicle)
+    tax_fuel_type = _map_fuel_type_to_tax(vehicle)
+    engine_cc = int(vehicle.engine_cc or 0)
 
-    # Pass Decimals directly; Pydantic handles coercion for float fields
+    try:
+        tax_result = calculate_tax(
+            db=db,
+            vehicle_type=tax_vehicle_type,
+            fuel_type=tax_fuel_type,
+            engine_cc=engine_cc,
+            cif_value=float(cif_value),
+        )
+    except NoTaxRuleError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    port_charges_lkr = calculate_port_charges()
+    clearance_fee_lkr = calculate_clearance_fee()
+    documentation_fee_lkr = calculate_documentation_fee()
+
+    customs_duty = Decimal(str(tax_result["customs_duty"]))
+    excise_duty = Decimal(str(tax_result["excise_duty"]))
+    cess = Decimal(str(tax_result["cess"]))
+    vat = Decimal(str(tax_result["vat"]))
+    pal = Decimal(str(tax_result["pal"]))
+
+    total_cost = (
+        Decimal(str(tax_result["total_landed_cost"]))
+        + port_charges_lkr
+        + clearance_fee_lkr
+        + documentation_fee_lkr
+    )
+
+    def calc_percentage(amount: Decimal, total: Decimal) -> Decimal:
+        if total == 0:
+            return Decimal("0.0")
+        return ((amount / total) * 100).quantize(Decimal("0.1"))
+
+    taxes_total = customs_duty + excise_duty + cess + vat + pal
+    fees_total = shipping_cost_lkr + port_charges_lkr + clearance_fee_lkr + documentation_fee_lkr
+
+    cost_data = {
+        "vehicle_price_jpy": vehicle_price_jpy,
+        "vehicle_price_lkr": vehicle_price_lkr,
+        "exchange_rate": rate,
+        "shipping_cost_lkr": shipping_cost_lkr,
+        "customs_duty_lkr": customs_duty,
+        "excise_duty_lkr": excise_duty,
+        "vat_lkr": vat,
+        "cess_lkr": cess,
+        "pal_lkr": pal,
+        "port_charges_lkr": port_charges_lkr,
+        "clearance_fee_lkr": clearance_fee_lkr,
+        "documentation_fee_lkr": documentation_fee_lkr,
+        "total_cost_lkr": total_cost,
+        "vehicle_percentage": calc_percentage(vehicle_price_lkr, total_cost),
+        "taxes_percentage": calc_percentage(taxes_total, total_cost),
+        "fees_percentage": calc_percentage(fees_total, total_cost),
+    }
+
+    # Pass Decimals directly; Pydantic handles coercion
     return CostBreakdown(**cost_data)  # type: ignore[arg-type]
 
 
 # ============================================================================
 # ADMIN ENDPOINTS (Requires ADMIN role)
 # ============================================================================
+
+
+@router.post("/scrape-now", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_scrape_now(
+    current_user=Depends(get_current_admin),
+):
+    """
+    Trigger CD-23 scraping immediately (admin only).
+    """
+    from app.services.scraper.scheduler import scraper_scheduler
+
+    thread = threading.Thread(target=scraper_scheduler.run_now, daemon=True)
+    thread.start()
+    return {"message": "Vehicle scraping started", "status": "processing"}
 
 
 @router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
@@ -183,16 +640,25 @@ async def create_vehicle(
     """
     Create a new vehicle.
 
+    **Request Body:**
+    - Vehicle data (see VehicleCreate schema)
+
+    **Returns:**
+    - Created vehicle details
+
+    **Errors:**
+    - 400: Vehicle with auction_id already exists
+
     Requires ADMIN role.
     """
 
-    # Check if auction_id already exists
-    existing = db.query(Vehicle).filter(Vehicle.auction_id == vehicle_data.auction_id).first()
+    # Check if stock_no already exists
+    existing = db.query(Vehicle).filter(Vehicle.stock_no == vehicle_data.stock_no).first()
 
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Vehicle with auction_id '{vehicle_data.auction_id}' already exists",
+            detail=f"Vehicle with stock_no '{vehicle_data.stock_no}' already exists",
         )
 
     # Create vehicle
@@ -201,8 +667,78 @@ async def create_vehicle(
     db.add(vehicle)
     db.commit()
     db.refresh(vehicle)
+    await cache.clear_pattern("vehicles:*")
 
     return VehicleResponse.model_validate(vehicle)
+
+
+@router.get("/{vehicle_id}/images")
+async def get_vehicle_images(vehicle_id: UUID, db: Session = Depends(get_db)):
+    vehicle = db.query(Vehicle).filter(Vehicle.id == vehicle_id).first()
+    if not vehicle:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+
+    candidates: list[str] = []
+    if vehicle.gallery_images:
+        try:
+            stored = json.loads(vehicle.gallery_images)
+            if isinstance(stored, list):
+                candidates.extend([str(item) for item in stored if item])
+        except Exception:
+            pass
+    if vehicle.image_url:
+        candidates.append(vehicle.image_url)
+    if vehicle.vehicle_url:
+        candidates.extend(_scrape_vehicle_gallery_images(vehicle.vehicle_url))
+
+    def normalize(item: str) -> str:
+        full = item.strip()
+        if full.startswith(("http://", "https://")):
+            lower = full.lower()
+            if "/vimgs/medium/" in lower:
+                full = full.replace("/VIMGS/medium/", "/VIMGS/images/").replace(
+                    "/vimgs/medium/", "/VIMGS/images/"
+                )
+            if "/vimgs/thumb/" in lower:
+                full = full.replace("/VIMGS/thumb/", "/VIMGS/images/").replace(
+                    "/vimgs/thumb/", "/VIMGS/images/"
+                )
+                name = full.rsplit("/", 1)[-1]
+                if name.startswith("T"):
+                    full = full.rsplit("/", 1)[0] + "/" + name[1:]
+        return full
+
+    def key_for(item: str) -> str:
+        if item.startswith(("http://", "https://")):
+            name = item.rsplit("/", 1)[-1]
+            if name.startswith("T"):
+                name = name[1:]
+            return name.lower()
+        return item.lower()
+
+    images: list[str] = []
+    seen: set[str] = set()
+    for item in candidates:
+        if not item:
+            continue
+        normalized = normalize(item)
+        lower = normalized.lower()
+        if normalized.startswith(("http://", "https://")):
+            if (
+                "/vimgs/images/" not in lower
+                and "/car_images/" not in lower
+                and "/storage/v1/object/public/" not in lower
+            ):
+                continue
+        elif not normalized.startswith(("data/", "/data/")):
+            continue
+        k = key_for(normalized)
+        if k in seen:
+            continue
+        seen.add(k)
+        images.append(normalized)
+
+    return {"vehicle_id": str(vehicle.id), "images": images[:40]}
 
 
 @router.patch("/{vehicle_id}", response_model=VehicleResponse)
@@ -214,6 +750,18 @@ async def update_vehicle(
 ):
     """
     Update a vehicle.
+
+    **Path Parameters:**
+    - `vehicle_id`: UUID of the vehicle
+
+    **Request Body:**
+    - Fields to update (see VehicleUpdate schema)
+
+    **Returns:**
+    - Updated vehicle details
+
+    **Errors:**
+    - 404: Vehicle not found
 
     Requires ADMIN role.
     """
@@ -231,6 +779,7 @@ async def update_vehicle(
 
     db.commit()
     db.refresh(vehicle)
+    await cache.clear_pattern("vehicles:*")
 
     return VehicleResponse.model_validate(vehicle)
 
@@ -243,6 +792,16 @@ async def delete_vehicle(
 ):
     """
     Delete a vehicle.
+
+    **Path Parameters:**
+    - `vehicle_id`: UUID of the vehicle
+
+    **Returns:**
+    - No content (204)
+
+    **Errors:**
+    - 404: Vehicle not found
+    - 400: Cannot delete vehicle with existing orders
 
     Requires ADMIN role.
     """
@@ -262,5 +821,6 @@ async def delete_vehicle(
 
     db.delete(vehicle)
     db.commit()
+    await cache.clear_pattern("vehicles:*")
 
     return None

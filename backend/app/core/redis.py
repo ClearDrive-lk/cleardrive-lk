@@ -3,21 +3,49 @@
 """
 Redis client and utilities for OTP, token, and session management.
 """
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta
+import logging
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional, cast
 
 import redis.asyncio as redis  # type: ignore[import-untyped]
 
 from .config import settings
 
+logger = logging.getLogger(__name__)
+
+
 # ============================================================================
 # CLIENT SINGLETON
 # ============================================================================
 
 _redis_client: Optional[redis.Redis] = None
+
+
+class _RedisClientProxy:
+    """Compatibility proxy for modules expecting a module-level redis_client."""
+
+    async def get(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.get(*args, **kwargs)
+
+    async def setex(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.setex(*args, **kwargs)
+
+    async def ping(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.ping(*args, **kwargs)
+
+    async def keys(self, *args, **kwargs):
+        client = await get_redis()
+        return await client.keys(*args, **kwargs)
+
+
+redis_client = _RedisClientProxy()
 
 
 async def get_redis() -> redis.Redis:
@@ -40,7 +68,7 @@ async def close_redis():
     global _redis_client
 
     if _redis_client:
-        await _redis_client.close()
+        await _redis_client.aclose()
         _redis_client = None
 
 
@@ -80,7 +108,7 @@ async def store_otp(email: str, otp: str, expiry_minutes: int = 5) -> bool:
     value = json.dumps(
         {
             "otp": otp,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "attempts": 0,
         }
     )
@@ -175,7 +203,7 @@ async def check_otp_rate_limit(email: str) -> bool:
     client = await get_redis()
     key = f"otp_rate_limit:{email}"
 
-    count = await client.incr(key)
+    count = cast(int, await client.incr(key))
 
     # Attach an expiry only on the very first increment inside the window
     if count == 1:
@@ -206,7 +234,7 @@ async def blacklist_token(token_jti: str, ttl_seconds: int) -> bool:
     client = await get_redis()
     key = f"blacklist:{token_jti}"
 
-    value = json.dumps({"blacklisted_at": datetime.utcnow().isoformat(), "reason": "logout"})
+    value = json.dumps({"blacklisted_at": datetime.now(UTC).isoformat(), "reason": "logout"})
 
     await client.setex(key, ttl_seconds, value)
     return True
@@ -224,7 +252,7 @@ async def is_token_blacklisted(token_jti: str) -> bool:
     """
     client = await get_redis()
     key = f"blacklist:{token_jti}"
-    return await client.exists(key) > 0
+    return cast(int, await client.exists(key)) > 0
 
 
 async def detect_token_reuse(token_jti: str) -> bool:
@@ -278,7 +306,7 @@ async def store_refresh_token(
         {
             "user_id": user_id,
             "device_info": device_info,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -361,8 +389,8 @@ async def create_session(
             "token_jti": token_jti,
             "ip_address": ip_address,
             "user_agent": user_agent,
-            "created_at": datetime.utcnow().isoformat(),
-            "last_active": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
+            "last_active": datetime.now(UTC).isoformat(),
         }
     )
 
@@ -394,6 +422,26 @@ async def get_user_sessions(user_id: str) -> List[Dict]:
             sessions.append(session_data)
 
     return sessions
+
+
+async def get_session_count(user_id: str) -> int:
+    """
+    Get number of active sessions for a user.
+
+    Args:
+        user_id: User UUID as string
+
+    Returns:
+        Number of active sessions
+
+    Example:
+        count = await get_session_count("123e4567-e89b-12d3-a456-426614174000")
+        # Returns: 3
+    """
+    client = await get_redis()
+    pattern = f"session:{user_id}:*"
+    keys = await client.keys(pattern)
+    return len(keys)
 
 
 async def delete_session(user_id: str, session_id: str) -> bool:
@@ -435,32 +483,81 @@ async def delete_all_user_sessions(user_id: str) -> int:
     return len(keys)
 
 
-async def enforce_session_limit(
-    user_id: str, max_sessions: int = settings.MAX_SESSIONS_PER_USER
-) -> bool:
+async def enforce_session_limit(user_id: str, max_sessions: Optional[int] = None) -> Dict[str, Any]:
     """
     Enforce maximum concurrent sessions per user.
 
-    If user has more than max_sessions, delete oldest ones.
+    If user has more than max_sessions, delete oldest sessions
+    until count equals max_sessions.
 
     Args:
-        user_id: User ID
-        max_sessions: Maximum allowed sessions (default: 5)
+        user_id: User UUID as string
+        max_sessions: Maximum allowed sessions (default from settings.MAX_SESSIONS_PER_USER)
 
     Returns:
-        True if enforced
+        {
+            "sessions_deleted": 2,
+            "current_count": 5,
+            "limit": 5
+        }
+
+    Example:
+        # User has 7 sessions, max is 5
+        result = await enforce_session_limit(user_id)
+        # Result: {"sessions_deleted": 2, "current_count": 5, "limit": 5}
     """
+    # Use default from settings if not provided
+    if max_sessions is None:
+        max_sessions = getattr(settings, "MAX_SESSIONS_PER_USER", 5)
+
+    # Get all user sessions
     sessions = await get_user_sessions(user_id)
 
+    result = {
+        "sessions_deleted": 0,
+        "current_count": len(sessions),
+        "limit": max_sessions,
+    }
+
+    # If within limit, no action needed
     if len(sessions) <= max_sessions:
-        return True
+        return result
 
     # Sort by created_at (oldest first)
     sessions.sort(key=lambda s: s.get("created_at", ""))
 
-    # Delete oldest sessions
+    # Calculate how many to delete
     num_to_delete = len(sessions) - max_sessions
-    for session in sessions[:num_to_delete]:
-        await delete_session(user_id, session["session_id"])
 
-    return True
+    logger.info(
+        f"Enforcing session limit for user {user_id}: " f"deleting {num_to_delete} oldest sessions"
+    )
+
+    # Delete oldest sessions
+    for session in sessions[:num_to_delete]:
+        session_id = session.get("session_id")
+        token_jti = session.get("token_jti")
+
+        if session_id:
+            # Delete session
+            await delete_session(user_id, session_id)
+
+            # Blacklist associated refresh token
+            if token_jti:
+                # Blacklist for remaining TTL (max 30 days)
+                await blacklist_token(token_jti, 30 * 24 * 60 * 60)
+
+            result["sessions_deleted"] += 1
+
+    result["current_count"] = len(sessions) - result["sessions_deleted"]
+
+    logger.info(
+        f"Session limit enforced for user {user_id}",
+        extra={
+            "user_id": user_id,
+            "sessions_deleted": result["sessions_deleted"],
+            "current_count": result["current_count"],
+        },
+    )
+
+    return result

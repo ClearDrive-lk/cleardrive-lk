@@ -10,7 +10,7 @@ from uuid import UUID as PyUUID
 from app.core.database import Base
 from app.core.models import GUID, TimestampMixin, UUIDMixin
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class OrderStatus(str, enum.Enum):
-    """Order status enum - 11 states."""
+    """Order status enum including LC review states."""
 
     CREATED = "CREATED"
     PAYMENT_CONFIRMED = "PAYMENT_CONFIRMED"
@@ -52,10 +52,15 @@ class Order(Base, UUIDMixin, TimestampMixin):
     """Order model - vehicle import orders."""
 
     __tablename__ = "orders"
+    __table_args__ = (
+        Index("idx_orders_created_at", "created_at"),
+        Index("idx_orders_status", "status"),
+        Index("idx_orders_user_id", "user_id"),
+    )
 
     # References
     user_id: Mapped[PyUUID] = mapped_column(
-        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     vehicle_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("vehicles.id"), nullable=False, index=True
@@ -63,7 +68,7 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     # Status
     status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False, index=True
+        SQLEnum(OrderStatus), default=OrderStatus.CREATED, nullable=False
     )
     payment_status: Mapped[PaymentStatus] = mapped_column(
         SQLEnum(PaymentStatus), default=PaymentStatus.PENDING, nullable=False
@@ -77,14 +82,15 @@ class Order(Base, UUIDMixin, TimestampMixin):
     total_cost_lkr: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
 
     # Relationships
-    user: Mapped[User] = relationship("User", back_populates="orders")
+    user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="orders")
+
     vehicle: Mapped[Vehicle] = relationship("Vehicle", back_populates="orders")
     status_history: Mapped[list[OrderStatusHistory]] = relationship(
         "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
     )
-    #Tharin - 09/02/2026
+    # Tharin - 09/02/2026
     payments: Mapped[list[Payment]] = relationship(
-    "Payment", back_populates="order", cascade="all, delete-orphan"
+        "Payment", back_populates="order", cascade="all, delete-orphan"
     )
 
     shipment_details: Mapped[ShipmentDetails | None] = relationship(
@@ -96,6 +102,13 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self):
         return f"<Order {self.id} - {self.status}>"
+
+    # Inspection fields (Tharin - 10/02/2026)
+    # inspection_status: Mapped[str | None] = mapped_column(String(50))
+    # inspector_notes: Mapped[str | None] = mapped_column(Text)
+    # inspection_images: Mapped[str | None] = mapped_column(Text)  # Store as JSON string
+    # inspection_date: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    # inspector_id: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
 
 
 class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
