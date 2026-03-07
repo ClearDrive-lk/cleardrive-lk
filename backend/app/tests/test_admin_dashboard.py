@@ -2,12 +2,13 @@
 Test admin dashboard analytics.
 """
 
-import pytest
 from decimal import Decimal
 from uuid import uuid4
 
+import pytest
 from app.modules.auth.models import Role, User
-from app.modules.orders.models import Order, OrderStatus, PaymentStatus as OrderPaymentStatus
+from app.modules.orders.models import Order, OrderStatus
+from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 
