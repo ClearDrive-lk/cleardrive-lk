@@ -96,6 +96,10 @@ class Settings(BaseSettings):
     SESSION_TTL_DAYS: int = 30
     SESSION_CLEANUP_INTERVAL_HOURS: int = 24
 
+    # Admin Dashboard Analytics (CD-61)
+    DASHBOARD_CACHE_TTL_SECONDS: int = 300
+    DASHBOARD_DEFAULT_DAYS: int = 30
+
     # GeoIP (optional)
     GEOIP_ENABLED: bool = False
     GEOIP_API_KEY: str | None = None

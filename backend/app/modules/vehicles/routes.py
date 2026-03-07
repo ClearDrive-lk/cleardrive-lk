@@ -69,6 +69,8 @@ def _canonical_fuel_key(value: str) -> str:
 
 
 def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
+    if not db.bind or db.bind.dialect.name != "postgresql":
+        return requested
     rows = db.execute(text("""
             SELECT e.enumlabel
             FROM pg_enum e
@@ -121,6 +123,8 @@ def _canonical_transmission_key(value: str) -> str:
 
 
 def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
+    if not db.bind or db.bind.dialect.name != "postgresql":
+        return requested
     rows = db.execute(text("""
             SELECT e.enumlabel
             FROM pg_enum e
@@ -276,6 +280,10 @@ async def get_vehicles(
     model: Optional[str] = Query(None, description="Filter by model"),
     year_min: Optional[int] = Query(None, ge=1990, description="Minimum year"),
     year_max: Optional[int] = Query(None, le=2026, description="Maximum year"),
+    recent_only: bool = Query(
+        False,
+        description="If true and year_min is not provided, defaults to last 3 years",
+    ),
     price_min: Optional[Decimal] = Query(None, ge=0, description="Minimum price (JPY)"),
     price_max: Optional[Decimal] = Query(None, ge=0, description="Maximum price (JPY)"),
     mileage_max: Optional[int] = Query(None, ge=0, description="Maximum mileage (km)"),
@@ -303,6 +311,7 @@ async def get_vehicles(
     - `make`: Filter by manufacturer (e.g., "Toyota")
     - `model`: Filter by model (e.g., "Prius")
     - `year_min`, `year_max`: Year range filter
+    - `recent_only`: Restrict to last 3 years when `year_min` is omitted
     - `price_min`, `price_max`: Price range in JPY
     - `mileage_max`: Maximum mileage filter
     - `fuel_type`: Filter by fuel type
@@ -319,10 +328,6 @@ async def get_vehicles(
 
     Public endpoint - no authentication required.
     """
-    if year_min is None:
-        # Default catalog window to last 3 years.
-        year_min = datetime.utcnow().year - 2
-
     cache_key = cache.generate_key(
         "vehicles",
         search=search,
@@ -330,6 +335,7 @@ async def get_vehicles(
         model=model,
         year_min=year_min,
         year_max=year_max,
+        recent_only=recent_only,
         price_min=price_min,
         price_max=price_max,
         mileage_max=mileage_max,
@@ -367,6 +373,9 @@ async def get_vehicles(
 
     if model:
         query = query.filter(Vehicle.model.ilike(f"%{model}%"))
+
+    if recent_only and year_min is None:
+        year_min = datetime.utcnow().year - 2
 
     if year_min:
         query = query.filter(Vehicle.year >= year_min)
