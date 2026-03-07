@@ -11,6 +11,7 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID
 from decimal import Decimal
+from typing import Dict
 
 
 class PaymentInitiate(BaseModel):
@@ -24,6 +25,8 @@ class PaymentInitiateResponse(BaseModel):
     """Response after payment initiation."""
     
     payment_id: UUID
+    payment_url: str
+    payhere_params: Dict[str, str]
     payhere_url: str
     amount: Decimal
     currency: str

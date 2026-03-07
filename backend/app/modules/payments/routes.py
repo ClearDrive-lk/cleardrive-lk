@@ -14,11 +14,13 @@ import hashlib
 import uuid as uuid_lib
 import json
 from datetime import datetime
+from urllib.parse import urlencode
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.config import settings
 from app.core.redis_client import get_redis
+from app.core.security import decrypt_field
 from app.modules.payments.models import Payment, PaymentIdempotency, PaymentStatus
 from app.modules.payments.schemas import (
     PaymentInitiate,
@@ -26,7 +28,7 @@ from app.modules.payments.schemas import (
     PaymentWebhook,
     PaymentResponse
 )
-from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
+from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory, PaymentStatus as OrderPaymentStatus
 from app.modules.auth.models import User
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -54,6 +56,71 @@ def generate_payhere_hash(
     hash_string = f"{merchant_id}{order_id}{amount}{currency}{merchant_secret_hash}"
     
     return hashlib.md5(hash_string.encode()).hexdigest().upper()
+
+
+def generate_payhere_webhook_signature(
+    merchant_id: str,
+    order_id: str,
+    payhere_amount: str,
+    payhere_currency: str,
+    status_code: str,
+    merchant_secret: str
+) -> str:
+    """Generate webhook md5sig using PayHere notification signature format."""
+    merchant_secret_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
+    hash_string = (
+        f"{merchant_id}{order_id}{payhere_amount}{payhere_currency}{status_code}{merchant_secret_hash}"
+    )
+    return hashlib.md5(hash_string.encode()).hexdigest().upper()
+
+
+def build_payhere_checkout_response(payment: Payment, order: Order, current_user: User) -> dict:
+    """Build POST checkout payload and debug URL."""
+    amount = f"{float(payment.amount):.2f}"
+    hash_value = generate_payhere_hash(
+        merchant_id=settings.PAYHERE_MERCHANT_ID,
+        order_id=payment.payhere_order_id,
+        amount=amount,
+        currency=payment.currency,
+        merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
+    )
+
+    decrypted_address = decrypt_field(order.shipping_address) or order.shipping_address
+    customer_address = (decrypted_address or "No.1, Galle Road").strip()[:100]
+
+    payment_url = (
+        "https://sandbox.payhere.lk/pay/checkout"
+        if settings.PAYHERE_SANDBOX
+        else "https://www.payhere.lk/pay/checkout"
+    )
+    payhere_params = {
+        "merchant_id": settings.PAYHERE_MERCHANT_ID,
+        "return_url": settings.PAYHERE_RETURN_URL.format(order_id=order.id),
+        "cancel_url": settings.PAYHERE_CANCEL_URL.format(order_id=order.id),
+        "notify_url": settings.PAYHERE_NOTIFY_URL,
+        "first_name": current_user.name or "Customer",
+        "last_name": "",
+        "email": current_user.email,
+        "phone": order.phone,
+        "address": customer_address,
+        "city": "Colombo",
+        "country": "Sri Lanka",
+        "order_id": payment.payhere_order_id,
+        "items": "Vehicle Import Order",
+        "currency": payment.currency,
+        "amount": amount,
+        "hash": hash_value,
+    }
+
+    return {
+        "payment_id": str(payment.id),
+        "payment_url": payment_url,
+        "payhere_params": payhere_params,
+        "payhere_url": f"{payment_url}?{urlencode(payhere_params)}",
+        "amount": float(payment.amount),
+        "currency": payment.currency,
+        "order_id": str(order.id),
+    }
 
 
 # ===================================================================
@@ -112,13 +179,13 @@ async def initiate_payment(
     if existing_payment:
         print(f"✅ Idempotency hit (Database): {payment_data.idempotency_key}")
         
-        response = {
-            "payment_id": str(existing_payment.id),
-            "payhere_url": f"https://sandbox.payhere.lk/pay/{existing_payment.payhere_order_id}",
-            "amount": float(existing_payment.amount),
-            "currency": existing_payment.currency,
-            "order_id": str(existing_payment.order_id)
-        }
+        order = db.query(Order).filter(Order.id == existing_payment.order_id).first()
+        if not order:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Order {existing_payment.order_id} not found"
+            )
+        response = build_payhere_checkout_response(existing_payment, order, current_user)
         
         # Cache for future requests
         await redis.setex(cache_key, 3600, json.dumps(response, default=str))
@@ -189,35 +256,7 @@ async def initiate_payment(
     # STEP 3: GENERATE PAYHERE URL
     # ===============================================================
     
-    # Generate hash
-    hash_value = generate_payhere_hash(
-        merchant_id=settings.PAYHERE_MERCHANT_ID,
-        order_id=payhere_order_id,
-        amount=f"{float(order.total_cost_lkr):.2f}",
-        currency="LKR",
-        merchant_secret=settings.PAYHERE_MERCHANT_SECRET
-    )
-    
-    # PayHere payment URL (sandbox)
-    payhere_base_url = "https://sandbox.payhere.lk/pay/checkout"
-    
-    # Build payment URL with parameters
-    payhere_url = f"{payhere_base_url}?merchant_id={settings.PAYHERE_MERCHANT_ID}"
-    payhere_url += f"&order_id={payhere_order_id}"
-    payhere_url += f"&items=Vehicle Import Order"
-    payhere_url += f"&currency=LKR"
-    payhere_url += f"&amount={float(order.total_cost_lkr):.2f}"
-    payhere_url += f"&first_name={current_user.name or 'Customer'}"
-    payhere_url += f"&last_name="
-    payhere_url += f"&email={current_user.email}"
-    payhere_url += f"&phone={order.phone}"
-    payhere_url += f"&address={order.shipping_address[:50]}"  # Truncate if too long
-    payhere_url += f"&city=Colombo"
-    payhere_url += f"&country=Sri Lanka"
-    payhere_url += f"&hash={hash_value}"
-    payhere_url += f"&notify_url=http://localhost:8000/api/v1/payments/webhook"
-    payhere_url += f"&return_url=http://localhost:3000/orders/{order.id}/payment-success"
-    payhere_url += f"&cancel_url=http://localhost:3000/orders/{order.id}/payment-cancel"
+    response = build_payhere_checkout_response(payment, order, current_user)
     
     print(f"🔗 PayHere URL generated")
     print(f"{'='*70}\n")
@@ -225,14 +264,6 @@ async def initiate_payment(
     # ===============================================================
     # STEP 4: CACHE RESPONSE
     # ===============================================================
-    response = {
-        "payment_id": str(payment.id),
-        "payhere_url": payhere_url,
-        "amount": float(payment.amount),
-        "currency": payment.currency,
-        "order_id": str(order.id)
-    }
-    
     # Cache for 1 hour
     await redis.setex(cache_key, 3600, json.dumps(response, default=str))
     
@@ -293,15 +324,16 @@ async def payhere_webhook(
     # ===============================================================
     # STEP 1: VERIFY SIGNATURE
     # ===============================================================
-    expected_hash = generate_payhere_hash(
+    expected_hash = generate_payhere_webhook_signature(
         merchant_id=merchant_id,
         order_id=order_id,
-        amount=payhere_amount,
-        currency=payhere_currency,
+        payhere_amount=payhere_amount,
+        payhere_currency=payhere_currency,
+        status_code=status_code,
         merchant_secret=settings.PAYHERE_MERCHANT_SECRET
     )
     
-    if md5sig.upper() != expected_hash:
+    if not md5sig or md5sig.upper() != expected_hash:
         print(f"❌ Invalid signature!")
         print(f"   Expected: {expected_hash}")
         print(f"   Received: {md5sig}")
@@ -358,13 +390,13 @@ async def payhere_webhook(
         if order:
             old_status = order.status
             order.status = OrderStatus.PAYMENT_CONFIRMED
-            order.payment_status = "COMPLETED"
+            order.payment_status = OrderPaymentStatus.COMPLETED
             
             # Create status history
             history = OrderStatusHistory(
                 order_id=order.id,
-                old_status=old_status.value,
-                new_status=OrderStatus.PAYMENT_CONFIRMED.value,
+                from_status=old_status,
+                to_status=OrderStatus.PAYMENT_CONFIRMED,
                 notes=f"Payment completed: {payment_id}"
             )
             db.add(history)

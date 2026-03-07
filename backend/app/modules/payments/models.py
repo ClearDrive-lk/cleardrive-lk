@@ -85,7 +85,7 @@ class Payment(Base, UUIDMixin, TimestampMixin):
     completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
-    order: Mapped[Order] = relationship("Order", back_populates="payment")
+    order: Mapped[Order] = relationship("Order", back_populates="payments")
     user: Mapped[User] = relationship("User")
 
     def __repr__(self):
