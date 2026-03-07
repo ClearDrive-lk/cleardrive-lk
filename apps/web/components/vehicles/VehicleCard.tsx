@@ -51,7 +51,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         {/* Overlays */}
         <div className="absolute top-2 left-2 flex gap-2">
           <Badge className="bg-black/60 backdrop-blur text-white border-white/20 font-mono">
-            {vehicle.lotNumber}
+            {`Stock #${vehicle.lotNumber || "-"}`}
           </Badge>
           <Badge className="bg-[#FE7743] text-black font-bold border-0">
             Grade {vehicle.grade}

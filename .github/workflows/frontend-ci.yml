@@ -226,7 +226,7 @@ jobs:
   deploy-prod:
     name: Deploy Frontend to Production (Vercel)
     runs-on: ubuntu-latest
-    needs: [check-frontend, build]
+    needs: [check-frontend, lint, security, build]
     if: |
       needs.check-frontend.outputs.frontend-exists == 'true' &&
       github.ref == 'refs/heads/main' &&

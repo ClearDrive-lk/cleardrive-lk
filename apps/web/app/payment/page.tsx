@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { getAccessToken } from "@/lib/auth";
 
 // We move the logic into a inner component
 function PaymentForm() {
@@ -20,6 +21,16 @@ function PaymentForm() {
   const [error, setError] = useState<string | null>(null);
 
   const orderId = searchParams.get("orderId");
+
+  const getPaymentIdempotencyKey = (currentOrderId: string): string => {
+    const storageKey = `payment:idempotency:${currentOrderId}`;
+    const existing = sessionStorage.getItem(storageKey);
+    if (existing) return existing;
+
+    const generated = crypto.randomUUID();
+    sessionStorage.setItem(storageKey, generated);
+    return generated;
+  };
 
   const handlePayment = async () => {
     if (!orderId) {
@@ -31,12 +42,25 @@ function PaymentForm() {
     setError(null);
 
     try {
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error("Please log in to continue payment");
+      }
+      const idempotencyKey = getPaymentIdempotencyKey(orderId);
+
       const initiateResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/initiate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ order_id: orderId }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "Idempotency-Key": idempotencyKey,
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            idempotency_key: idempotencyKey,
+          }),
         },
       );
 
@@ -45,33 +69,17 @@ function PaymentForm() {
         throw new Error(errorData.detail || "Failed to initiate payment");
       }
 
-      const { payment_id } = await initiateResponse.json();
-
-      const urlResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/generate-url`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ payment_id }),
-        },
-      );
-
-      if (!urlResponse.ok) {
-        const errorData = await urlResponse.json();
-        throw new Error(errorData.detail || "Failed to generate payment URL");
-      }
-
-      const { payment_url, params } = await urlResponse.json();
+      const { payment_url, payhere_params } = await initiateResponse.json();
 
       // Redirect to PayHere
       const form = document.createElement("form");
       form.method = "POST";
       form.action = payment_url;
-      Object.keys(params).forEach((key) => {
+      Object.keys(payhere_params).forEach((key) => {
         const input = document.createElement("input");
         input.type = "hidden";
         input.name = key;
-        input.value = params[key];
+        input.value = payhere_params[key];
         form.appendChild(input);
       });
       document.body.appendChild(form);

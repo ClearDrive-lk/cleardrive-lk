@@ -4,9 +4,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { getAccessToken } from "@/lib/auth";
 
 interface PaymentButtonProps {
   orderId: string;
@@ -25,12 +25,21 @@ export default function PaymentButton({
   variant = "default",
   size = "default",
 }: PaymentButtonProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Prevent double-clicks (idempotency layer 1)
   const [paymentInitiated, setPaymentInitiated] = useState(false);
+
+  const getPaymentIdempotencyKey = (currentOrderId: string): string => {
+    const storageKey = `payment:idempotency:${currentOrderId}`;
+    const existing = sessionStorage.getItem(storageKey);
+    if (existing) return existing;
+
+    const generated = crypto.randomUUID();
+    sessionStorage.setItem(storageKey, generated);
+    return generated;
+  };
 
   const initiatePayment = async () => {
     // Check if already initiated
@@ -44,6 +53,12 @@ export default function PaymentButton({
     setPaymentInitiated(true);
 
     try {
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error("Please log in to continue payment");
+      }
+      const idempotencyKey = getPaymentIdempotencyKey(orderId);
+
       // Step 1: Initiate payment
       const initiateResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/initiate`,
@@ -51,10 +66,13 @@ export default function PaymentButton({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Add auth token if you have it
-            // 'Authorization': `Bearer ${getToken()}`
+            Authorization: `Bearer ${token}`,
+            "Idempotency-Key": idempotencyKey,
           },
-          body: JSON.stringify({ order_id: orderId }),
+          body: JSON.stringify({
+            order_id: orderId,
+            idempotency_key: idempotencyKey,
+          }),
         },
       );
 
@@ -63,29 +81,10 @@ export default function PaymentButton({
         throw new Error(errorData.detail || "Payment initiation failed");
       }
 
-      const { payment_id } = await initiateResponse.json();
+      const { payment_url, payhere_params } = await initiateResponse.json();
 
-      // Step 2: Get PayHere URL
-      const urlResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/generate-url`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ payment_id }),
-        },
-      );
-
-      if (!urlResponse.ok) {
-        const errorData = await urlResponse.json();
-        throw new Error(errorData.detail || "Failed to generate payment URL");
-      }
-
-      const { payment_url, params } = await urlResponse.json();
-
-      // Step 3: Redirect to PayHere
-      redirectToPayHere(payment_url, params);
+      // Step 2: Redirect to PayHere
+      redirectToPayHere(payment_url, payhere_params);
     } catch (err) {
       console.error("Payment error:", err);
       setError(err instanceof Error ? err.message : "Payment failed");

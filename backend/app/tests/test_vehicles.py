@@ -6,6 +6,17 @@ Author: Parindra Chameekara
 Epic: CD-E3 - Vehicle Management System
 """
 
+import os
+from datetime import date
+
+from app.models.gazette import (
+    ApplyOn,
+    Gazette,
+    GazetteStatus,
+    TaxFuelType,
+    TaxRule,
+    TaxVehicleType,
+)
 from app.modules.vehicles.models import (
     Drive,
     FuelType,
@@ -13,7 +24,40 @@ from app.modules.vehicles.models import (
     Transmission,
     Vehicle,
     VehicleStatus,
+    VehicleType,
 )
+from app.services.scraper.scheduler import ScraperScheduler
+
+
+def _seed_default_tax_rule(db):
+    """Seed one active tax rule used by /vehicles/{id}/cost tests."""
+    gazette = Gazette(
+        gazette_no="TEST/VEHICLES/COST",
+        effective_date=date(2024, 1, 1),
+        raw_extracted={},
+        status=GazetteStatus.APPROVED.value,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    rule = TaxRule(
+        gazette_id=gazette.id,
+        vehicle_type=TaxVehicleType.SEDAN.value,
+        fuel_type=TaxFuelType.HYBRID.value,
+        engine_min=0,
+        engine_max=5000,
+        customs_percent=25.0,
+        excise_percent=35.0,
+        vat_percent=15.0,
+        pal_percent=7.5,
+        cess_percent=5.0,
+        apply_on=ApplyOn.CIF_PLUS_CUSTOMS.value,
+        effective_date=date(2024, 1, 1),
+        is_active=True,
+    )
+    db.add(rule)
+    db.commit()
 
 
 def test_get_vehicles_empty(client, db):
@@ -134,6 +178,37 @@ def test_filter_vehicles_by_year_range(client, db):
     data = response.json()
     assert data["pagination"]["total"] == 1
     assert data["vehicles"][0]["year"] == 2020
+
+
+def test_recent_only_defaults_to_last_3_years_when_enabled(client, db):
+    """Test recent_only filter applies 3-year window when year_min is omitted."""
+    current_year = date.today().year
+    vehicles = [
+        Vehicle(
+            stock_no="R1",
+            make="Toyota",
+            model="Prius",
+            year=current_year - 1,
+            price_jpy=1800000,
+        ),
+        Vehicle(
+            stock_no="R2",
+            make="Toyota",
+            model="Corolla",
+            year=current_year - 6,
+            price_jpy=1400000,
+        ),
+    ]
+    for v in vehicles:
+        db.add(v)
+    db.commit()
+
+    response = client.get("/api/v1/vehicles", params={"recent_only": "true"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pagination"]["total"] == 1
+    assert data["vehicles"][0]["stock_no"] == "R1"
 
 
 def test_filter_vehicles_by_price_range(client, db):
@@ -394,6 +469,7 @@ def test_get_vehicle_not_found(client, db):
 
 def test_calculate_cost(client, db):
     """Test calculating cost for a vehicle."""
+    _seed_default_tax_rule(db)
 
     # Create test vehicle
     vehicle = Vehicle(
@@ -404,6 +480,7 @@ def test_calculate_cost(client, db):
         price_jpy=2000000,
         mileage_km=35000,
         engine_cc=1800,
+        vehicle_type=VehicleType.SEDAN,
         fuel_type=FuelType.HYBRID,
         transmission=Transmission.AUTOMATIC,
         status=VehicleStatus.AVAILABLE,
@@ -437,6 +514,7 @@ def test_calculate_cost(client, db):
 
 def test_calculate_cost_custom_exchange_rate(client, db):
     """Test calculating cost with custom exchange rate."""
+    _seed_default_tax_rule(db)
 
     # Create test vehicle
     vehicle = Vehicle(
@@ -445,6 +523,9 @@ def test_calculate_cost_custom_exchange_rate(client, db):
         model="Prius",
         year=2020,
         price_jpy=1000000,
+        engine_cc=1500,
+        vehicle_type=VehicleType.SEDAN,
+        fuel_type=FuelType.HYBRID,
         status=VehicleStatus.AVAILABLE,
     )
     db.add(vehicle)
@@ -480,6 +561,103 @@ def test_create_vehicle_unauthenticated(client, db):
 
     # Should be forbidden (403) or unauthorized (401)
     assert response.status_code in [401, 403]
+
+
+def test_scrape_now_admin_endpoint(client, admin_headers, mocker):
+    """Admin endpoint should trigger scraper execution in a background thread."""
+
+    run_now = mocker.patch("app.services.scraper.scheduler.scraper_scheduler.run_now")
+
+    class ImmediateThread:
+        def __init__(self, target, daemon=None):
+            self.target = target
+            self.daemon = daemon
+
+        def start(self):
+            self.target()
+
+    mocker.patch("app.modules.vehicles.routes.threading.Thread", ImmediateThread)
+
+    response = client.post("/api/v1/vehicles/scrape-now", headers=admin_headers)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+    run_now.assert_called_once()
+
+
+def test_scheduler_change_detection_thresholds():
+    """Scheduler should update only when CD-23 thresholds are crossed."""
+    scheduler = ScraperScheduler()
+    existing = Vehicle(
+        stock_no="TH-001",
+        chassis="TH-CH-001",
+        make="Toyota",
+        model="Corolla",
+        year=2024,
+        price_jpy=2000000,
+        mileage_km=20000,
+        status=VehicleStatus.AVAILABLE,
+        image_url="https://example.com/v1.jpg",
+    )
+
+    no_change, fields = scheduler._should_update_vehicle(
+        existing,
+        {
+            "price_jpy": 2080000,  # +4%
+            "mileage_km": 20800,  # +800
+            "status": "AVAILABLE",
+            "image_url": "https://example.com/v1.jpg",
+        },
+    )
+    assert no_change is False
+    assert fields == []
+
+    should_update, changed = scheduler._should_update_vehicle(
+        existing,
+        {
+            "price_jpy": 2120000,  # +6%
+            "mileage_km": 21200,  # +1200
+            "status": "SOLD",
+            "image_url": "https://example.com/v2.jpg",
+        },
+    )
+    assert should_update is True
+    assert "price_jpy" in changed
+    assert "mileage_km" in changed
+    assert "status" in changed
+    assert "image_url" in changed
+
+
+def test_scheduler_scrape_mode_mock(mocker):
+    scheduler = ScraperScheduler()
+    mock_scrape = mocker.patch.object(
+        scheduler._scraper, "scrape", return_value=[{"stock_no": "M-1"}]
+    )
+    live_scrape = mocker.patch.object(
+        scheduler._live_scraper, "scrape", return_value=[{"stock_no": "L-1"}]
+    )
+    mocker.patch.dict(os.environ, {"CD23_SCRAPER_MODE": "mock"})
+
+    rows = scheduler._scrape_vehicle_rows(count=1)
+
+    assert rows[0]["stock_no"] == "M-1"
+    mock_scrape.assert_called_once_with(count=1)
+    live_scrape.assert_not_called()
+
+
+def test_scheduler_scrape_mode_hybrid_falls_back_to_mock(mocker):
+    scheduler = ScraperScheduler()
+    live_scrape = mocker.patch.object(scheduler._live_scraper, "scrape", return_value=[])
+    mock_scrape = mocker.patch.object(
+        scheduler._scraper, "scrape", return_value=[{"stock_no": "M-2"}]
+    )
+    mocker.patch.dict(os.environ, {"CD23_SCRAPER_MODE": "hybrid"})
+
+    rows = scheduler._scrape_vehicle_rows(count=1)
+
+    assert rows[0]["stock_no"] == "M-2"
+    live_scrape.assert_called_once_with(count=1)
+    mock_scrape.assert_called_once_with(count=1)
 
 
 def test_create_vehicle_authenticated(client, db, admin_headers):
