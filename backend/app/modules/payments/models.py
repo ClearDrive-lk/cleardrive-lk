@@ -39,7 +39,7 @@ class PaymentStatus(str, enum.Enum):
 class Payment(Base, UUIDMixin, TimestampMixin):
     """
     Payment record with idempotency.
-    
+
     Idempotency layers:
     1. Unique idempotency_key (client-generated)
     2. Unique payhere_payment_id
@@ -57,9 +57,7 @@ class Payment(Base, UUIDMixin, TimestampMixin):
     )
 
     # PayHere Integration
-    payhere_payment_id: Mapped[str | None] = mapped_column(
-        String(255), unique=True, index=True
-    )
+    payhere_payment_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     payhere_order_id: Mapped[str | None] = mapped_column(String(255))
 
     # Idempotency
@@ -104,7 +102,7 @@ Index(
 class PaymentIdempotency(Base, UUIDMixin, TimestampMixin):
     """
     Track idempotency for payment requests.
-    
+
     Purpose: Prevent duplicate payment processing even if
     user clicks "Pay" button multiple times.
     """
@@ -115,11 +113,11 @@ class PaymentIdempotency(Base, UUIDMixin, TimestampMixin):
         String(255), unique=True, nullable=False, index=True
     )
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)  # SHA-256 of request body
-    
+
     # Response Storage
     response_data: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(50), nullable=False)
-    
+
     # Timestamps
     completed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
