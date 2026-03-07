@@ -58,6 +58,7 @@ export function useVehicles(params: VehiclesQueryParams) {
         price_max: params.maxPrice,
         year_min: params.minYear,
         year_max: params.maxYear,
+        recent_only: params.minYear === undefined ? true : undefined,
         mileage_max: params.maxMileage,
         transmission:
           params.transmission === "AT"

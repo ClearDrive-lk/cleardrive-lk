@@ -26,6 +26,7 @@ class KYCStatus(str, enum.Enum):
     """KYC verification status."""
 
     PENDING = "PENDING"
+    PENDING_MANUAL_REVIEW = "PENDING_MANUAL_REVIEW"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
 

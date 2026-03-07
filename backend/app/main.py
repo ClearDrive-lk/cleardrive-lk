@@ -6,8 +6,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
-
-# from app.modules.admin.dashboard import router as admin_dashboard_router  # TODO: re-enable when ready
+from app.modules.admin.dashboard import router as admin_dashboard_router
 from app.modules.gdpr.routes import router as gdpr_router
 from app.modules.kyc.routes import router as kyc_router
 from fastapi import FastAPI
@@ -39,6 +38,7 @@ except ImportError:
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.calculator.routes import router as calculator_router
+from app.modules.gazette.routes import router as gazette_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
 from app.modules.test.routes import router as test_router
@@ -144,11 +144,14 @@ app.include_router(calculator_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
-# app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)  # TODO: re-enable when ready
+app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
-logger.info("Routers registered: /auth, /vehicles, /calculate, /orders, /admin, /test, /kyc, /gdpr")
+app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
+logger.info(
+    "Routers registered: /auth, /vehicles, /calculate, /orders, /admin, /admin/dashboard, /test, /kyc, /gdpr, /gazette"
+)
 
 # Serve local runtime data files (e.g., scraped vehicle images).
 data_dir = Path(__file__).resolve().parents[1] / "data"

@@ -8,7 +8,7 @@ Epic: CD-E5
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Dict, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -18,13 +18,15 @@ class PaymentInitiate(BaseModel):
     """Schema for initiating payment."""
 
     order_id: UUID
-    idempotency_key: str = Field(..., min_length=16, max_length=255)
+    idempotency_key: Optional[str] = Field(default=None, min_length=16, max_length=255)
 
 
 class PaymentInitiateResponse(BaseModel):
     """Response after payment initiation."""
 
     payment_id: UUID
+    payment_url: str
+    payhere_params: Dict[str, str]
     payhere_url: str
     amount: Decimal
     currency: str

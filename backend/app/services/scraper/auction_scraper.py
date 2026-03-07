@@ -8,29 +8,31 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urljoin
 
 import requests  # type: ignore[import-untyped]
 
 try:
-    from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup as BS4BeautifulSoup
 
     BS4_AVAILABLE = True
 except Exception:  # pragma: no cover - defensive import
-    BeautifulSoup = None  # type: ignore[assignment]
+    BS4BeautifulSoup = None  # type: ignore[assignment]
     BS4_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
+WEBDRIVER: Any = None
+CHROME_OPTIONS: Any = None
 try:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
+    from selenium import webdriver as selenium_webdriver
+    from selenium.webdriver.chrome.options import Options as chrome_options_class
 
+    WEBDRIVER = selenium_webdriver
+    CHROME_OPTIONS = chrome_options_class
     SELENIUM_AVAILABLE = True
 except Exception:  # pragma: no cover - defensive import
-    webdriver = None  # type: ignore[assignment]
-    Options = None  # type: ignore[assignment]
     SELENIUM_AVAILABLE = False
 
 
@@ -164,7 +166,7 @@ class AuctionSiteScraper:
             if not html:
                 return []
 
-        soup = BeautifulSoup(html, "lxml")
+        soup = BS4BeautifulSoup(html, "lxml")
         cards = self._extract_cards(soup)
         rows: list[dict[str, Any]] = []
 
@@ -177,19 +179,19 @@ class AuctionSiteScraper:
         return rows
 
     def _fetch_with_selenium(self, page_url: str) -> str:
-        if not SELENIUM_AVAILABLE or webdriver is None or Options is None:
+        if not SELENIUM_AVAILABLE or WEBDRIVER is None or CHROME_OPTIONS is None:
             return ""
 
         driver = None
         try:
-            options = Options()
+            options = CHROME_OPTIONS()
             options.add_argument("--headless=new")
             options.add_argument("--disable-gpu")
             options.add_argument("--no-sandbox")
             options.add_argument(f"user-agent={self._HEADERS['User-Agent']}")
-            driver = webdriver.Chrome(options=options)
+            driver = WEBDRIVER.Chrome(options=options)
             driver.get(page_url)
-            return driver.page_source
+            return str(driver.page_source)
         except Exception as exc:
             logger.warning("Selenium scrape failed for %s: %s", page_url, exc)
             return ""
@@ -200,7 +202,7 @@ class AuctionSiteScraper:
                 except Exception:
                     pass
 
-    def _extract_cards(self, soup: BeautifulSoup) -> list[Any]:
+    def _extract_cards(self, soup: Any) -> list[Any]:
         selectors = (
             "section[id^='VEHID']",
             ".stock_list_first",
@@ -215,7 +217,7 @@ class AuctionSiteScraper:
         for selector in selectors:
             cards = soup.select(selector)
             if cards:
-                return cards
+                return cast(list[Any], cards)
         return []
 
     def _parse_card(self, card: Any, target: AuctionTarget, page_url: str) -> dict[str, Any] | None:
@@ -286,7 +288,7 @@ class AuctionSiteScraper:
             logger.warning("Failed to scrape RAMADBK detail page %s: %s", detail_url, exc)
             return {}
 
-        soup = BeautifulSoup(response.text, "lxml")
+        soup = BS4BeautifulSoup(response.text, "lxml")
         data: dict[str, Any] = {}
 
         # Parse key/value rows in "Vehicle Details".
@@ -461,7 +463,7 @@ class AuctionSiteScraper:
         href = item.get("href") if item else None
         if not href:
             return None
-        return urljoin(base_url, href)
+        return urljoin(base_url, str(href))
 
     @staticmethod
     def _images(node: Any, base_url: str) -> list[str]:

@@ -180,6 +180,37 @@ def test_filter_vehicles_by_year_range(client, db):
     assert data["vehicles"][0]["year"] == 2020
 
 
+def test_recent_only_defaults_to_last_3_years_when_enabled(client, db):
+    """Test recent_only filter applies 3-year window when year_min is omitted."""
+    current_year = date.today().year
+    vehicles = [
+        Vehicle(
+            stock_no="R1",
+            make="Toyota",
+            model="Prius",
+            year=current_year - 1,
+            price_jpy=1800000,
+        ),
+        Vehicle(
+            stock_no="R2",
+            make="Toyota",
+            model="Corolla",
+            year=current_year - 6,
+            price_jpy=1400000,
+        ),
+    ]
+    for v in vehicles:
+        db.add(v)
+    db.commit()
+
+    response = client.get("/api/v1/vehicles", params={"recent_only": "true"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pagination"]["total"] == 1
+    assert data["vehicles"][0]["stock_no"] == "R1"
+
+
 def test_filter_vehicles_by_price_range(client, db):
     """Test filtering vehicles by price range."""
 

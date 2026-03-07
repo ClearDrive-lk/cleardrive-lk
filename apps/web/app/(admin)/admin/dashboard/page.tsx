@@ -101,6 +101,7 @@ interface RevenueAnalytics {
 
 const CHART_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 const REFRESH_INTERVAL_MS = 30_000; // 30 seconds
+const CUSTOM_RANGE = "custom";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
@@ -174,17 +175,40 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(30);
+  const [selectedRange, setSelectedRange] = useState<string>("30");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
+
+  const getEffectiveDays = () => {
+    if (selectedRange !== CUSTOM_RANGE) {
+      return Number(selectedRange);
+    }
+    if (!customStartDate || !customEndDate) {
+      return days;
+    }
+
+    const start = new Date(customStartDate);
+    const end = new Date(customEndDate);
+    const diffMs = end.getTime() - start.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+    return Math.min(365, Math.max(1, diffDays));
+  };
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const loadDashboardData = async () => {
     try {
       setError(null);
+      const effectiveDays = getEffectiveDays();
       const [statsRes, userRes, orderRes, revenueRes] = await Promise.all([
         apiClient.get<DashboardStats>("/admin/dashboard/stats"),
-        apiClient.get<UserAnalytics>(`/admin/dashboard/users?days=${days}`),
-        apiClient.get<OrderAnalytics>(`/admin/dashboard/orders?days=${days}`),
+        apiClient.get<UserAnalytics>(
+          `/admin/dashboard/users?days=${effectiveDays}`,
+        ),
+        apiClient.get<OrderAnalytics>(
+          `/admin/dashboard/orders?days=${effectiveDays}`,
+        ),
         apiClient.get<RevenueAnalytics>(
-          `/admin/dashboard/revenue?days=${days}`,
+          `/admin/dashboard/revenue?days=${effectiveDays}`,
         ),
       ]);
 
@@ -215,7 +239,43 @@ export default function AdminDashboard() {
     const interval = setInterval(loadDashboardData, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days]);
+  }, [days, selectedRange, customStartDate, customEndDate]);
+
+  const exportCsv = () => {
+    if (!stats) return;
+
+    const rows: string[] = [];
+    rows.push("section,key,value");
+    rows.push(`stats,total_users,${stats.total_users}`);
+    rows.push(`stats,active_users,${stats.active_users}`);
+    rows.push(`stats,total_orders,${stats.total_orders}`);
+    rows.push(`stats,total_revenue,${stats.total_revenue}`);
+    rows.push(`stats,avg_order_value,${stats.avg_order_value}`);
+
+    (userAnalytics?.daily_registrations ?? []).forEach((point) => {
+      rows.push(`user_daily_registrations,${point.date},${point.count}`);
+    });
+    (orderAnalytics?.daily_orders ?? []).forEach((point) => {
+      rows.push(`order_daily_volume,${point.date},${point.count}`);
+    });
+    (revenueAnalytics?.daily_revenue ?? []).forEach((point) => {
+      rows.push(`revenue_daily,${point.date},${point.amount}`);
+    });
+
+    const blob = new Blob([rows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `admin-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPdf = () => {
+    window.print();
+  };
 
   // ── Memoised chart data (avoids expensive re-computation on every render) ──
   const roleChartData = useMemo(
@@ -315,19 +375,58 @@ export default function AdminDashboard() {
           {/* Auto-refresh indicator */}
           <span className="text-xs text-gray-400">Auto-refresh: 30s</span>
 
+          <button
+            onClick={exportCsv}
+            className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={exportPdf}
+            className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+          >
+            Export PDF
+          </button>
+
           {/* Date range selector */}
           <select
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
+            value={selectedRange}
+            onChange={(e) => {
+              const next = e.target.value;
+              setSelectedRange(next);
+              if (next !== CUSTOM_RANGE) {
+                setDays(Number(next));
+              }
+            }}
             className="px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
             <option value={90}>Last 90 days</option>
             <option value={365}>Last year</option>
+            <option value={CUSTOM_RANGE}>Custom range</option>
           </select>
         </div>
       </div>
+      {selectedRange === CUSTOM_RANGE && (
+        <div className="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row gap-3 items-center">
+          <input
+            type="date"
+            value={customStartDate}
+            onChange={(e) => setCustomStartDate(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          />
+          <input
+            type="date"
+            value={customEndDate}
+            onChange={(e) => setCustomEndDate(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          />
+          <span className="text-xs text-gray-500">
+            Applies to analytics charts and tables.
+          </span>
+        </div>
+      )}
 
       {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -582,7 +681,7 @@ export default function AdminDashboard() {
         <MetricCard
           title="Revenue Growth"
           value={`${(revenueAnalytics?.revenue_growth_rate ?? 0) >= 0 ? "+" : ""}${revenueAnalytics?.revenue_growth_rate.toFixed(1) ?? "—"}%`}
-          subtitle={`vs previous ${days} days`}
+          subtitle={`vs previous ${getEffectiveDays()} days`}
           valueColor={
             (revenueAnalytics?.revenue_growth_rate ?? 0) >= 0
               ? "text-green-600"

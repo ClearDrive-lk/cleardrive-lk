@@ -52,6 +52,20 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_ANON_KEY: str | None = None
     SUPABASE_STORAGE_VEHICLE_BUCKET: str = "Photos"
+    SUPABASE_STORAGE_KYC_BUCKET: str = "kyc-documents"
+
+    # KYC VPS Proxy (CD-50.8/9/10)
+    VPS_URL: str | None = None
+    VPS_SECRET: str | None = None
+    KYC_VPS_TIMEOUT_SECONDS: float = 60.0
+    KYC_VPS_MAX_RETRIES: int = 1
+
+    # Gazette Extraction Pipeline (CD-24)
+    GOOGLE_CLOUD_PROJECT: str | None = None
+    DOCUMENT_AI_PROCESSOR_ID: str | None = None
+    GEMINI_API_KEY: str | None = None
+    MAX_GAZETTE_SIZE_MB: int = 50
+    GAZETTE_UPLOAD_PATH: str = "data/gazettes"
 
     # Email (SMTP)
     SMTP_HOST: str
@@ -81,6 +95,10 @@ class Settings(BaseSettings):
     MAX_SESSIONS_PER_USER: int = 5
     SESSION_TTL_DAYS: int = 30
     SESSION_CLEANUP_INTERVAL_HOURS: int = 24
+
+    # Admin Dashboard Analytics (CD-61)
+    DASHBOARD_CACHE_TTL_SECONDS: int = 300
+    DASHBOARD_DEFAULT_DAYS: int = 30
 
     # GeoIP (optional)
     GEOIP_ENABLED: bool = False
