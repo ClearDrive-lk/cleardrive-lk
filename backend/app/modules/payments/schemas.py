@@ -18,7 +18,7 @@ class PaymentInitiate(BaseModel):
     """Schema for initiating payment."""
 
     order_id: UUID
-    idempotency_key: str = Field(..., min_length=16, max_length=255)
+    idempotency_key: Optional[str] = Field(default=None, min_length=16, max_length=255)
 
 
 class PaymentInitiateResponse(BaseModel):

@@ -7,10 +7,12 @@ Epic: CD-E5
 Stories: CD-40, CD-41, CD-42
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, UploadFile, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 import hashlib
 import json
+import secrets
 from datetime import datetime
 from urllib.parse import urlencode
 
@@ -141,6 +143,7 @@ def _form_value_str(form_data: dict, key: str) -> str | None:
 @router.post("/initiate", response_model=PaymentInitiateResponse)
 async def initiate_payment(
     payment_data: PaymentInitiate,
+    idempotency_key_header: str | None = Header(default=None, alias="Idempotency-Key"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -169,29 +172,50 @@ async def initiate_payment(
     print("ðŸ’³ PAYMENT INITIATION")
     print(f"{'='*70}")
 
+    idempotency_key = idempotency_key_header or payment_data.idempotency_key
+    if not idempotency_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Idempotency key is required (Idempotency-Key header or request body)",
+        )
+    if len(idempotency_key) < 16:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Idempotency key must be at least 16 characters",
+        )
+
     # ===============================================================
     # LAYER 1: CHECK IDEMPOTENCY (Redis)
     # ===============================================================
     redis = await get_redis()
-    cache_key = f"payment:idempotency:{payment_data.idempotency_key}"
+    cache_key = f"payment:idempotency:{idempotency_key}"
+    lock_key = f"{cache_key}:lock"
 
     cached_response = await redis.get(cache_key)
     if cached_response:
-        print(f"âœ… Idempotency hit (Redis): {payment_data.idempotency_key}")
+        print(f"Idempotency hit (Redis): {idempotency_key}")
         return json.loads(cached_response)
+
+    lock_acquired = await redis.set(lock_key, "1", ex=30, nx=True)
+    if not lock_acquired:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Payment request is already in progress for this idempotency key",
+        )
 
     # ===============================================================
     # LAYER 2: CHECK IDEMPOTENCY (Database)
     # ===============================================================
     existing_payment = (
-        db.query(Payment).filter(Payment.idempotency_key == payment_data.idempotency_key).first()
+        db.query(Payment).filter(Payment.idempotency_key == idempotency_key).first()
     )
 
     if existing_payment:
-        print(f"âœ… Idempotency hit (Database): {payment_data.idempotency_key}")
+        print(f"Idempotency hit (Database): {idempotency_key}")
 
         order = db.query(Order).filter(Order.id == existing_payment.order_id).first()
         if not order:
+            await redis.delete(lock_key)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Order {existing_payment.order_id} not found",
@@ -201,6 +225,7 @@ async def initiate_payment(
         # Cache for future requests
         await redis.setex(cache_key, 3600, json.dumps(response, default=str))
 
+        await redis.delete(lock_key)
         return response
 
     # ===============================================================
@@ -209,18 +234,21 @@ async def initiate_payment(
     order = db.query(Order).filter(Order.id == payment_data.order_id).first()
 
     if not order:
+        await redis.delete(lock_key)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {payment_data.order_id} not found"
         )
 
     # Check ownership
     if order.user_id != current_user.id:
+        await redis.delete(lock_key)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You can only pay for your own orders"
         )
 
     # Check order status
     if order.status != OrderStatus.CREATED:
+        await redis.delete(lock_key)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Order status is {order.status}, payment not allowed",
@@ -234,6 +262,7 @@ async def initiate_payment(
     )
 
     if existing_completed:
+        await redis.delete(lock_key)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
 
     print(f"âœ… Order verified: {order.id}")
@@ -241,21 +270,39 @@ async def initiate_payment(
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD
     # ===============================================================
-    payhere_order_id = f"CD-{str(order.id)[:8]}-{int(datetime.utcnow().timestamp())}"
+    payhere_order_id = (
+        f"CD-{str(order.id)[:8]}-{int(datetime.utcnow().timestamp())}-{secrets.token_hex(3)}"
+    )
 
     payment = Payment(
         order_id=order.id,
         user_id=current_user.id,
         payhere_order_id=payhere_order_id,
-        idempotency_key=payment_data.idempotency_key,
+        idempotency_key=idempotency_key,
         amount=order.total_cost_lkr,
         currency="LKR",
         status=PaymentStatus.PENDING.value,
     )
 
     db.add(payment)
-    db.commit()
-    db.refresh(payment)
+    try:
+        db.commit()
+        db.refresh(payment)
+    except IntegrityError:
+        db.rollback()
+        existing_payment = (
+            db.query(Payment).filter(Payment.idempotency_key == idempotency_key).first()
+        )
+        if not existing_payment:
+            await redis.delete(lock_key)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Duplicate payment request detected",
+            )
+        response = build_payhere_checkout_response(existing_payment, order, current_user)
+        await redis.setex(cache_key, 3600, json.dumps(response, default=str))
+        await redis.delete(lock_key)
+        return response
 
     print(f"ðŸ’¾ Payment created: {payment.id}")
 
@@ -274,6 +321,7 @@ async def initiate_payment(
     # Cache for 1 hour
     await redis.setex(cache_key, 3600, json.dumps(response, default=str))
 
+    await redis.delete(lock_key)
     return response
 
 
