@@ -73,6 +73,23 @@ async def test_extract_nic_from_vps_timeout_raises(mocker, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_extract_nic_from_vps_invalid_json_raises(mocker, monkeypatch):
+    monkeypatch.setattr(vps_proxy.settings, "VPS_URL", "http://127.0.0.1:8001")
+    monkeypatch.setattr(vps_proxy.settings, "VPS_SECRET", "secret")
+
+    client = AsyncMock()
+    response = _FakeResponse(200)
+    response.json = lambda: (_ for _ in ()).throw(ValueError("invalid json"))  # type: ignore[method-assign]
+    client.post.return_value = response
+    cm = AsyncMock()
+    cm.__aenter__.return_value = client
+    mocker.patch("app.services.vps_proxy.httpx.AsyncClient", return_value=cm)
+
+    with pytest.raises(VPSExtractionError, match="Invalid JSON response from VPS"):
+        await vps_proxy.extract_nic_from_vps(b"image-bytes", side="front")
+
+
+@pytest.mark.asyncio
 async def test_extract_nic_with_retry_retries_then_succeeds(mocker):
     extract_mock = mocker.patch(
         "app.services.vps_proxy.extract_nic_from_vps",
@@ -83,10 +100,12 @@ async def test_extract_nic_with_retry_retries_then_succeeds(mocker):
             ]
         ),
     )
+    sleep_mock = mocker.patch("app.services.vps_proxy.asyncio.sleep", new=AsyncMock())
 
     result = await vps_proxy.extract_nic_with_retry(b"image-bytes", side="front", max_retries=1)
     assert result == {"nic_number": "200012345678"}
     assert extract_mock.await_count == 2
+    sleep_mock.assert_awaited_once_with(1)
 
 
 @pytest.mark.asyncio
@@ -95,7 +114,9 @@ async def test_extract_nic_with_retry_returns_none_after_failures(mocker):
         "app.services.vps_proxy.extract_nic_from_vps",
         new=AsyncMock(side_effect=VPSConnectionError("down")),
     )
+    sleep_mock = mocker.patch("app.services.vps_proxy.asyncio.sleep", new=AsyncMock())
 
     result = await vps_proxy.extract_nic_with_retry(b"image-bytes", side="back", max_retries=1)
     assert result is None
     assert extract_mock.await_count == 2
+    sleep_mock.assert_awaited_once_with(1)

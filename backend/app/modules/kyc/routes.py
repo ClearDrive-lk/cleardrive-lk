@@ -22,8 +22,13 @@ from app.core.dependencies import get_current_user
 from app.core.storage import storage
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
-from app.modules.kyc.schemas import KYCStatusResponse, KYCUploadResponse
+from app.modules.kyc.schemas import (
+    KYCStatusResponse,
+    KYCUploadResponse,
+    KYCUploadResultResponse,
+)
 from app.modules.security.models import FileIntegrity, VerificationStatus
+from app.services.email import send_email
 from app.services.vps_proxy import extract_nic_with_retry
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -57,7 +62,36 @@ def _detect_mime_type(file_content: bytes, declared_content_type: str | None) ->
     return declared_content_type or "application/octet-stream"
 
 
-@router.post("/upload", response_model=KYCUploadResponse, status_code=status.HTTP_201_CREATED)
+def _admin_emails() -> list[str]:
+    return [email.strip() for email in settings.ADMIN_EMAILS.split(",") if email.strip()]
+
+
+async def _notify_admin_manual_review_needed(*, user_id: str, user_email: str, kyc_id: str) -> None:
+    subject = f"[KYC] Manual review required for user {user_id}"
+    text_content = (
+        "KYC extraction failed and was queued for manual review.\n"
+        f"User ID: {user_id}\n"
+        f"User Email: {user_email}\n"
+        f"KYC ID: {kyc_id}\n"
+        "Reason: VPS unreachable or extraction failed after retry."
+    )
+    html_content = (
+        "<p>KYC extraction failed and was queued for manual review.</p>"
+        f"<p><strong>User ID:</strong> {user_id}<br>"
+        f"<strong>User Email:</strong> {user_email}<br>"
+        f"<strong>KYC ID:</strong> {kyc_id}<br>"
+        "<strong>Reason:</strong> VPS unreachable or extraction failed after retry.</p>"
+    )
+
+    for admin_email in _admin_emails():
+        sent = await send_email(admin_email, subject, html_content, text_content)
+        if not sent:
+            logger.warning(
+                "Failed to send KYC manual-review email to %s for kyc_id=%s", admin_email, kyc_id
+            )
+
+
+@router.post("/upload", response_model=KYCUploadResultResponse, status_code=status.HTTP_200_OK)
 async def upload_kyc_documents(
     nic_front: UploadFile = File(..., description="NIC front image"),
     nic_back: UploadFile = File(..., description="NIC back image"),
@@ -175,15 +209,14 @@ async def upload_kyc_documents(
     manual_review_required = front_extracted is None or back_extracted is None
 
     # CD-50.11: only extracted JSON is stored in DB (images remain in Supabase).
-    extracted_payload: dict[str, object] = {
-        "front": front_extracted,
-        "back": back_extracted,
-        "extraction_method": "vps_proxy",
-        "extracted_at": datetime.now(UTC).isoformat(),
-    }
-    if manual_review_required:
-        extracted_payload["manual_review_required"] = True
-        extracted_payload["reason"] = "VPS unreachable or extraction failed after retry"
+    extracted_payload: dict[str, object] | None = None
+    if not manual_review_required:
+        extracted_payload = {
+            "front": front_extracted,
+            "back": back_extracted,
+            "extraction_method": "vps_ollama",
+            "extracted_at": datetime.now(UTC).isoformat(),
+        }
 
     kyc_document = KYCDocument(
         user_id=current_user.id,
@@ -198,13 +231,34 @@ async def upload_kyc_documents(
     db.commit()
     db.refresh(kyc_document)
 
+    if manual_review_required:
+        try:
+            await _notify_admin_manual_review_needed(
+                user_id=str(current_user.id),
+                user_email=current_user.email,
+                kyc_id=str(kyc_document.id),
+            )
+        except Exception:
+            logger.exception(
+                "Manual-review notification failed for user_id=%s kyc_id=%s",
+                current_user.id,
+                kyc_document.id,
+            )
+
     logger.info(
         "KYC upload completed for user_id=%s kyc_id=%s status=%s",
         current_user.id,
         kyc_document.id,
         kyc_document.status.value,
     )
-    return kyc_document
+    extraction_success = not manual_review_required
+    return {
+        "message": "KYC documents uploaded successfully",
+        "kyc_id": str(kyc_document.id),
+        "status": kyc_document.status.value,
+        "extraction_success": extraction_success,
+        "needs_manual_review": manual_review_required,
+    }
 
 
 @router.get("/status", response_model=KYCStatusResponse)
