@@ -3,9 +3,13 @@ Test admin dashboard analytics.
 """
 
 import pytest
-from app.models.order import Order, OrderStatus
-from app.models.payment import Payment, PaymentStatus
-from app.models.user import Role, User
+from decimal import Decimal
+from uuid import uuid4
+
+from app.modules.auth.models import Role, User
+from app.modules.orders.models import Order, OrderStatus, PaymentStatus as OrderPaymentStatus
+from app.modules.payments.models import Payment, PaymentStatus
+from app.modules.vehicles.models import Vehicle, VehicleStatus
 
 
 @pytest.fixture
@@ -20,11 +24,38 @@ def sample_data(db):
 
     # Create orders
     users = db.query(User).all()
+    vehicles = []
+    for i in range(5):
+        vehicle = Vehicle(
+            auction_id=f"AUC-{i}-{uuid4()}",
+            stock_no=f"STK-{i}-{uuid4().hex[:8]}",
+            make="Toyota",
+            model="Prius",
+            year=2020 + (i % 3),
+            mileage=50000 + i * 1000,
+            engine_cc=1500,
+            fuel_type="PETROL",
+            transmission="AUTO",
+            drive_type="2WD",
+            condition_grade="A",
+            price_jpy=Decimal("1000000.00"),
+            status=VehicleStatus.AVAILABLE,
+            location="JP",
+            source_url="https://example.com/vehicle",
+        )
+        db.add(vehicle)
+        vehicles.append(vehicle)
+    db.commit()
+
     for i, user in enumerate(users[:5]):
         order = Order(
             user_id=user.id,
-            status=OrderStatus.DELIVERED if i % 2 == 0 else OrderStatus.PENDING,
-            total_amount=10000 + (i * 1000),
+            vehicle_id=vehicles[i].id,
+            status=OrderStatus.DELIVERED if i % 2 == 0 else OrderStatus.CREATED,
+            payment_status=OrderPaymentStatus.PENDING,
+            shipping_address="No 12, Main Street, Colombo 05",
+            phone="0771234567",
+            total_cost_lkr=Decimal(10000 + (i * 1000)),
         )
         db.add(order)
 
@@ -36,7 +67,9 @@ def sample_data(db):
         payment = Payment(
             order_id=order.id,
             user_id=order.user_id,
-            amount=order.total_amount,
+            idempotency_key=f"idem-{order.id}",
+            amount=order.total_cost_lkr or Decimal("0.00"),
+            currency="LKR",
             status=PaymentStatus.COMPLETED,
             payment_method="CARD",
         )
