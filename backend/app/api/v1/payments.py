@@ -3,16 +3,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.modules.payments.models import Payment, PaymentStatus, PaymentIdempotency
+from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.orders.models import Order
 from pydantic import BaseModel, Field
-from datetime import datetime
 import hashlib
 import secrets
 import os
 from decimal import Decimal
-from typing import Optional
-import json
 from app.modules.auth.models import User, Role
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 
@@ -218,7 +215,7 @@ async def initiate_payment(request: PaymentInitiateRequest, db: Session = Depend
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid order ID format. Must be a valid UUID.",
+                detail="Invalid order ID format. Must be a valid UUID.",
             )
 
         # Get the order

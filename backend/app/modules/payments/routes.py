@@ -7,11 +7,9 @@ Epic: CD-E5
 Stories: CD-40, CD-41, CD-42
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import Optional
 import hashlib
-import uuid as uuid_lib
 import json
 from datetime import datetime
 from urllib.parse import urlencode
@@ -21,11 +19,10 @@ from app.core.dependencies import get_current_user
 from app.core.config import settings
 from app.core.redis_client import get_redis
 from app.core.security import decrypt_field
-from app.modules.payments.models import Payment, PaymentIdempotency, PaymentStatus
+from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.payments.schemas import (
     PaymentInitiate,
     PaymentInitiateResponse,
-    PaymentWebhook,
     PaymentResponse,
 )
 from app.modules.orders.models import (
@@ -156,7 +153,7 @@ async def initiate_payment(
     """
 
     print(f"\n{'='*70}")
-    print(f"💳 PAYMENT INITIATION")
+    print("ðŸ’³ PAYMENT INITIATION")
     print(f"{'='*70}")
 
     # ===============================================================
@@ -167,7 +164,7 @@ async def initiate_payment(
 
     cached_response = await redis.get(cache_key)
     if cached_response:
-        print(f"✅ Idempotency hit (Redis): {payment_data.idempotency_key}")
+        print(f"âœ… Idempotency hit (Redis): {payment_data.idempotency_key}")
         return json.loads(cached_response)
 
     # ===============================================================
@@ -178,7 +175,7 @@ async def initiate_payment(
     )
 
     if existing_payment:
-        print(f"✅ Idempotency hit (Database): {payment_data.idempotency_key}")
+        print(f"âœ… Idempotency hit (Database): {payment_data.idempotency_key}")
 
         order = db.query(Order).filter(Order.id == existing_payment.order_id).first()
         if not order:
@@ -226,7 +223,7 @@ async def initiate_payment(
     if existing_completed:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
 
-    print(f"✅ Order verified: {order.id}")
+    print(f"âœ… Order verified: {order.id}")
 
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD
@@ -247,7 +244,7 @@ async def initiate_payment(
     db.commit()
     db.refresh(payment)
 
-    print(f"💾 Payment created: {payment.id}")
+    print(f"ðŸ’¾ Payment created: {payment.id}")
 
     # ===============================================================
     # STEP 3: GENERATE PAYHERE URL
@@ -255,7 +252,7 @@ async def initiate_payment(
 
     response = build_payhere_checkout_response(payment, order, current_user)
 
-    print(f"🔗 PayHere URL generated")
+    print("ðŸ”— PayHere URL generated")
     print(f"{'='*70}\n")
 
     # ===============================================================
@@ -294,7 +291,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     """
 
     print(f"\n{'='*70}")
-    print(f"📬 PAYHERE WEBHOOK RECEIVED")
+    print("ðŸ“¬ PAYHERE WEBHOOK RECEIVED")
     print(f"{'='*70}")
 
     # Get form data
@@ -329,14 +326,13 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     )
 
     if not md5sig or md5sig.upper() != expected_hash:
-        print(f"❌ Invalid signature!")
+        print("âŒ Invalid signature!")
         print(f"   Expected: {expected_hash}")
         print(f"   Received: {md5sig}")
 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
 
-    print(f"✅ Signature verified")
-
+    print("âœ… Signature verified")
     # ===============================================================
     # STEP 2: CHECK IDEMPOTENCY (PayHere payment_id)
     # ===============================================================
@@ -344,7 +340,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
         existing = db.query(Payment).filter(Payment.payhere_payment_id == payment_id).first()
 
         if existing:
-            print(f"✅ Webhook already processed (payment_id: {payment_id})")
+            print(f"âœ… Webhook already processed (payment_id: {payment_id})")
             return {"status": "success", "message": "Already processed"}
 
     # ===============================================================
@@ -353,7 +349,7 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
     payment = db.query(Payment).filter(Payment.payhere_order_id == order_id).first()
 
     if not payment:
-        print(f"❌ Payment not found for order: {order_id}")
+        print(f"âŒ Payment not found for order: {order_id}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
 
     # ===============================================================
@@ -386,11 +382,10 @@ async def payhere_webhook(request: Request, db: Session = Depends(get_db)):
             )
             db.add(history)
 
-        print(f"✅ Payment successful!")
-
+        print("âœ… Payment successful!")
     else:
         payment.status = PaymentStatus.FAILED.value
-        print(f"❌ Payment failed (status: {status_code})")
+        print(f"âŒ Payment failed (status: {status_code})")
 
     db.commit()
 
