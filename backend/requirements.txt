@@ -19,7 +19,17 @@ anthropic==0.79.0
 httpx==0.26.0
 python-dotenv==1.0.0
 requests>=2.32.4
+supabase>=2.7.4
+beautifulsoup4==4.12.2
+selenium==4.16.0
+lxml>=5.3.0
+Pillow>=11.0.0
+apscheduler==3.10.4
+fake-useragent==1.4.0
 google-auth==2.26.2
+google-cloud-documentai==2.24.0
+google-generativeai==0.3.2
+pypdf2==3.0.1
 # Email
 aiosmtplib==3.0.1  # Async SMTP client
 email-validator==2.1.0  # Email validation

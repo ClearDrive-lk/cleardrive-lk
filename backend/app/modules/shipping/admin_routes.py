@@ -24,6 +24,42 @@ async def assign_exporter_to_order(
     db: Session = Depends(get_db),
 ):
     """Assign exporter to a paid order."""
+    """
+    Assign exporter to a paid order.
+
+    **Story**: CD-70 - Exporter Assignment
+
+    **Permissions**: MANAGE_ORDERS (Admin only)
+
+    **Prerequisites:**
+    - Order must exist
+    - Order status must be LC_APPROVED
+    - Exporter user must have EXPORTER role
+    - Order must not already have exporter assigned
+
+    **Process:**
+    1. Verify order exists and status is LC_APPROVED
+    2. Verify exporter exists and has EXPORTER role
+    3. Create shipment_details record (CD-70.3)
+    4. Update order status to ASSIGNED_TO_EXPORTER (CD-70.2)
+    5. Create order status history entry
+    6. Send email to exporter (CD-70.4) - TODO
+
+    **Returns:**
+    - Created shipment details
+    - Order status updated
+    - Exporter assigned
+    """
+
+    print(f"\n{'=' * 70}")
+    print("📦 EXPORTER ASSIGNMENT STARTED")
+    print(f"   Admin: {current_user.email}")
+    print(f"   Order ID: {order_id}")
+    print(f"{'=' * 70}\n")
+
+    # ===============================================================
+    # STEP 1: VERIFY ORDER EXISTS AND STATUS
+    # ===============================================================
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(
@@ -31,10 +67,11 @@ async def assign_exporter_to_order(
             detail=f"Order {order_id} not found",
         )
 
-    if order.status != OrderStatus.PAYMENT_CONFIRMED:
+    # Check order status
+    if order.status != OrderStatus.LC_APPROVED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order must be in PAYMENT_CONFIRMED status. Current: {order.status}",
+            detail=f"Order must be in LC_APPROVED status. Current: {order.status}",
         )
 
     existing_shipment = (

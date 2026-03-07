@@ -24,6 +24,7 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { apiClient } from "@/lib/api-client";
 import { Vehicle } from "@/types/vehicle";
 import { useQuery } from "@tanstack/react-query";
+import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
 
 // Fetch single vehicle helper
 const useVehicle = (id: string) => {
@@ -31,7 +32,23 @@ const useVehicle = (id: string) => {
     queryKey: ["vehicle", id],
     queryFn: async () => {
       const response = await apiClient.get(`/vehicles/${id}`);
-      return response.data;
+      return mapBackendVehicle(response.data);
+    },
+    enabled: !!id,
+  });
+};
+
+const useVehicleImages = (id: string) => {
+  return useQuery<string[]>({
+    queryKey: ["vehicle-images", id],
+    queryFn: async () => {
+      const response = await apiClient.get(`/vehicles/${id}/images`);
+      const raw = Array.isArray(response.data?.images)
+        ? response.data.images
+        : [];
+      return raw
+        .map((img: string) => normalizeImageUrl(img) || null)
+        .filter((img: string | null): img is string => Boolean(img));
     },
     enabled: !!id,
   });
@@ -42,6 +59,7 @@ function VehicleDetail() {
   const router = useRouter();
   // Removed unused logout, isLogoutLoading
   const { data: vehicle, isLoading, isError } = useVehicle(id);
+  const { data: galleryImages } = useVehicleImages(id);
   const [selectedImageOverride, setSelectedImageOverride] = useState<
     string | null
   >(null);
@@ -92,11 +110,11 @@ function VehicleDetail() {
   }
 
   // Determine images (Mocking multiple images if api only returns one)
-  const images = vehicle.imageUrl
-    ? [vehicle.imageUrl, vehicle.imageUrl, vehicle.imageUrl]
-    : [];
-  // In a real scenario, vehicle.images would be an array.
-  // Using the single image 3 times for demo of gallery functionality if array not available.
+  const images = galleryImages?.length
+    ? galleryImages
+    : vehicle.imageUrl
+      ? [vehicle.imageUrl]
+      : [];
 
   const estDuty = vehicle.estimatedLandedCostLKR * 0.3;
 
@@ -227,7 +245,7 @@ function VehicleDetail() {
                 </span>
                 <span className="w-1 h-1 bg-gray-700 rounded-full" />
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" /> USS Tokyo
+                  <MapPin className="w-4 h-4" /> {vehicle.location || "Japan"}
                 </span>
               </div>
             </div>
@@ -277,6 +295,14 @@ function VehicleDetail() {
                   <TableBody>
                     <TableRow className="border-white/5 hover:bg-white/5">
                       <TableCell className="font-medium text-gray-400">
+                        Stock No
+                      </TableCell>
+                      <TableCell className="text-white text-right">
+                        {vehicle.lotNumber}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-gray-400">
                         Make
                       </TableCell>
                       <TableCell className="text-white text-right">
@@ -305,10 +331,16 @@ function VehicleDetail() {
                       </TableCell>
                       <TableCell className="text-white text-right">
                         {vehicle.firstRegistrationDate
-                          ? new Date(
-                              vehicle.firstRegistrationDate,
-                            ).toLocaleDateString()
+                          ? String(vehicle.firstRegistrationDate)
                           : "N/A"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-gray-400">
+                        Type
+                      </TableCell>
+                      <TableCell className="text-white text-right">
+                        {vehicle.vehicleType || "N/A"}
                       </TableCell>
                     </TableRow>
                     <TableRow className="border-white/5 hover:bg-white/5">
@@ -345,14 +377,66 @@ function VehicleDetail() {
                     </TableRow>
                     <TableRow className="border-white/5 hover:bg-white/5">
                       <TableCell className="font-medium text-gray-400">
+                        Steering
+                      </TableCell>
+                      <TableCell className="text-white text-right">
+                        {vehicle.steering || "N/A"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-gray-400">
+                        Drive
+                      </TableCell>
+                      <TableCell className="text-white text-right">
+                        {vehicle.drive || "N/A"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-gray-400">
+                        Seats / Doors
+                      </TableCell>
+                      <TableCell className="text-white text-right">
+                        {vehicle.seats || "N/A"} / {vehicle.doors || "N/A"}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-gray-400">
                         Color
                       </TableCell>
                       <TableCell className="text-white text-right">
                         {vehicle.color || "N/A"}
                       </TableCell>
                     </TableRow>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableCell className="font-medium text-gray-400">
+                        Location
+                      </TableCell>
+                      <TableCell className="text-white text-right">
+                        {vehicle.location || "N/A"}
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-white">Other Details</h3>
+              <div className="rounded-lg border border-white/10 p-4 bg-white/5">
+                <p className="text-sm font-semibold text-gray-300 mb-2">
+                  Options
+                </p>
+                <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                  {vehicle.options || "N/A"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-white/10 p-4 bg-white/5">
+                <p className="text-sm font-semibold text-gray-300 mb-2">
+                  Other Remarks
+                </p>
+                <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                  {vehicle.otherRemarks || "N/A"}
+                </p>
               </div>
             </div>
           </div>

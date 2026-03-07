@@ -1,0 +1,53 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy-staging:
+    name: Deploy to Render Staging
+    if: github.event.inputs.environment == 'staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Staging Deploy
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_STAGING_HOOK }}
+        run: |
+          if [ -z "$RENDER_HOOK" ]; then
+            echo "RENDER_STAGING_HOOK is not set. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          if ! echo "$RENDER_HOOK" | grep -Eq '^https://'; then
+            echo "RENDER_STAGING_HOOK must be a valid https URL."
+            exit 1
+          fi
+          curl --fail --show-error --silent -X POST "$RENDER_HOOK"
+
+  deploy-production:
+    name: Deploy to Render Production
+    if: github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Production Deploy
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_PROD_HOOK }}
+        run: |
+          if [ -z "$RENDER_HOOK" ]; then
+            echo "RENDER_PROD_HOOK is not set. Add it in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          if ! echo "$RENDER_HOOK" | grep -Eq '^https://'; then
+            echo "RENDER_PROD_HOOK must be a valid https URL."
+            exit 1
+          fi
+          curl --fail --show-error --silent -X POST "$RENDER_HOOK"
