@@ -51,3 +51,45 @@ class OrderResponse(OrderBase):
     inspection_date: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class OrderStatusHistoryResponse(BaseModel):
+    """
+    Order status history item.
+
+    Story: CD-32.2
+    """
+
+    id: UUID
+    order_id: UUID
+    from_status: Optional[str]
+    to_status: str
+    notes: Optional[str]
+
+    # Who changed it
+    changed_by_id: UUID
+    changed_by_name: str
+    changed_by_email: str
+
+    # When
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class OrderTimelineResponse(BaseModel):
+    """
+    Complete order timeline.
+
+    Story: CD-32.2
+    """
+
+    order_id: UUID
+    current_status: str
+    created_at: datetime
+    total_events: int
+    timeline: list[OrderStatusHistoryResponse]
+
+    class Config:
+        from_attributes = True
