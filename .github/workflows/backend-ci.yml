@@ -109,7 +109,7 @@ jobs:
             safety --key "${SAFETY_API_KEY}" scan --output json > safety-report.json
           else
             echo "SAFETY_API_KEY not set; using non-interactive fallback: safety check."
-            safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json
+            safety check -r requirements.txt -r requirements-dev.txt --output json > safety-report.json
           fi
 
 
