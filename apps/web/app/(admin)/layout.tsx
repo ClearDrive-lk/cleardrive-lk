@@ -34,6 +34,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </li>
             <li>
               <a
+                href="/admin/shipping"
+                className="block p-2 hover:bg-gray-800 rounded"
+              >
+                Shipping
+              </a>
+            </li>
+            <li>
+              <a
                 href="/admin/kyc"
                 className="block p-2 hover:bg-gray-800 rounded"
               >

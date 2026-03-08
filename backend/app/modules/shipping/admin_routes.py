@@ -4,9 +4,12 @@ Author: Kalidu
 Story: CD-70 - Exporter Assignment
 """
 
+import logging
+
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
+from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
 from app.modules.shipping.models import ShipmentDetails
 from app.modules.shipping.schemas import ExporterAssignment, ShippingDetailsResponse
@@ -14,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/{order_id}/assign", response_model=ShippingDetailsResponse)
@@ -24,32 +28,6 @@ async def assign_exporter_to_order(
     db: Session = Depends(get_db),
 ):
     """Assign exporter to a paid order."""
-    """
-    Assign exporter to a paid order.
-
-    **Story**: CD-70 - Exporter Assignment
-
-    **Permissions**: MANAGE_ORDERS (Admin only)
-
-    **Prerequisites:**
-    - Order must exist
-    - Order status must be LC_APPROVED
-    - Exporter user must have EXPORTER role
-    - Order must not already have exporter assigned
-
-    **Process:**
-    1. Verify order exists and status is LC_APPROVED
-    2. Verify exporter exists and has EXPORTER role
-    3. Create shipment_details record (CD-70.3)
-    4. Update order status to ASSIGNED_TO_EXPORTER (CD-70.2)
-    5. Create order status history entry
-    6. Send email to exporter (CD-70.4) - TODO
-
-    **Returns:**
-    - Created shipment details
-    - Order status updated
-    - Exporter assigned
-    """
 
     print(f"\n{'=' * 70}")
     print("📦 EXPORTER ASSIGNMENT STARTED")
@@ -118,7 +96,21 @@ async def assign_exporter_to_order(
     db.add(history)
 
     db.commit()
+    db.refresh(order)
     db.refresh(shipment)
+
+    try:
+        await send_status_change_notification(
+            order=order,
+            old_status=old_status,
+            new_status=OrderStatus.ASSIGNED_TO_EXPORTER,
+        )
+    except Exception:
+        logger.exception(
+            "Exporter assignment notification dispatch failed for order_id=%s",
+            order.id,
+        )
+
     return shipment
 
 
