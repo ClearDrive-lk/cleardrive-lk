@@ -4,14 +4,25 @@ Author: Kalidu
 Story: CD-70 - Exporter Assignment
 """
 
+from __future__ import annotations
+
+import logging
+
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
+from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
 from app.modules.shipping.models import ShipmentDetails
-from app.modules.shipping.schemas import ExporterAssignment, ShippingDetailsResponse
+from app.modules.shipping.schemas import (
+    AssignableOrderItem,
+    ExporterAssignment,
+    ShippingDetailsResponse,
+)
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
 
@@ -24,32 +35,6 @@ async def assign_exporter_to_order(
     db: Session = Depends(get_db),
 ):
     """Assign exporter to a paid order."""
-    """
-    Assign exporter to a paid order.
-
-    **Story**: CD-70 - Exporter Assignment
-
-    **Permissions**: MANAGE_ORDERS (Admin only)
-
-    **Prerequisites:**
-    - Order must exist
-    - Order status must be LC_APPROVED
-    - Exporter user must have EXPORTER role
-    - Order must not already have exporter assigned
-
-    **Process:**
-    1. Verify order exists and status is LC_APPROVED
-    2. Verify exporter exists and has EXPORTER role
-    3. Create shipment_details record (CD-70.3)
-    4. Update order status to ASSIGNED_TO_EXPORTER (CD-70.2)
-    5. Create order status history entry
-    6. Send email to exporter (CD-70.4) - TODO
-
-    **Returns:**
-    - Created shipment details
-    - Order status updated
-    - Exporter assigned
-    """
 
     print(f"\n{'=' * 70}")
     print("📦 EXPORTER ASSIGNMENT STARTED")
@@ -68,10 +53,10 @@ async def assign_exporter_to_order(
         )
 
     # Check order status
-    if order.status != OrderStatus.LC_APPROVED:
+    if order.status != OrderStatus.PAYMENT_CONFIRMED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order must be in LC_APPROVED status. Current: {order.status}",
+            detail=f"Order must be in PAYMENT_CONFIRMED status. Current: {order.status}",
         )
 
     existing_shipment = (
@@ -119,7 +104,62 @@ async def assign_exporter_to_order(
 
     db.commit()
     db.refresh(shipment)
+
+    try:
+        await send_status_change_notification(
+            order=order,
+            old_status=old_status,
+            new_status=OrderStatus.ASSIGNED_TO_EXPORTER,
+        )
+    except Exception:
+        logger.exception(
+            "Exporter assignment completed for order_id=%s, but notification dispatch failed",
+            order.id,
+        )
+
     return shipment
+
+
+@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
+async def list_assignable_orders(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """List paid orders that can be assigned to an exporter."""
+    orders = (
+        db.query(Order)
+        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    assignable_orders: list[AssignableOrderItem] = []
+    for order in orders:
+        if order.shipment_details is not None:
+            continue
+
+        vehicle = getattr(order, "vehicle", None)
+        user = getattr(order, "user", None)
+        vehicle_label = "Vehicle details unavailable"
+        if vehicle is not None:
+            vehicle_label = f"{vehicle.make} {vehicle.model} {vehicle.year}".strip()
+
+        assignable_orders.append(
+            AssignableOrderItem(
+                id=order.id,
+                customer_name=(getattr(user, "name", None) or "Unknown customer"),
+                customer_email=(getattr(user, "email", None) or "Unknown email"),
+                vehicle_label=vehicle_label,
+                status=order.status.value,
+                payment_status=order.payment_status.value,
+                total_cost_lkr=(
+                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
+                ),
+                created_at=order.created_at,
+            )
+        )
+
+    return assignable_orders
 
 
 @router.get("/all")

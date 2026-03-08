@@ -7,41 +7,39 @@ Epic: CD-E5
 Stories: CD-40, CD-41, CD-42
 """
 
-from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, UploadFile, status
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 import hashlib
 import json
 import secrets
 from datetime import datetime
+from typing import Any, Mapping
 from urllib.parse import urlencode
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.config import settings
 from app.core.redis_client import get_redis
-from app.services.payments.idempotency import payment_idempotency
-from app.services.payments.payhere_signature import payhere_verifier
-from app.services.payment_notifications import (
-    send_payment_confirmation_email,
-    send_payment_failure_email,
-)
 from app.core.security import decrypt_field
+from app.modules.auth.models import User
+from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
+from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.payments.schemas import (
     PaymentInitiate,
     PaymentInitiateResponse,
     PaymentResponse,
 )
-from app.modules.orders.models import (
-    Order,
-    OrderStatus,
-    OrderStatusHistory,
-    PaymentStatus as OrderPaymentStatus,
+from app.services.payment_notifications import (
+    send_payment_confirmation_email,
+    send_payment_failure_email,
 )
-from app.modules.auth.models import User
+from app.services.payments.idempotency import payment_idempotency
+from app.services.payments.payhere_signature import payhere_verifier
+from fastapi import APIRouter, Depends, Form, Header, HTTPException, UploadFile, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/payments", tags=["payments"])
+LOG_DIVIDER = "=" * 70
 
 
 # ===================================================================
@@ -58,11 +56,27 @@ def generate_payhere_hash(
     Format: MD5(merchant_id + order_id + amount + currency + MD5(merchant_secret))
     """
 
-    merchant_secret_hash = hashlib.md5(merchant_secret.encode()).hexdigest().upper()
+    merchant_secret_hash = (
+        hashlib.md5(merchant_secret.encode(), usedforsecurity=False).hexdigest().upper()
+    )
 
     hash_string = f"{merchant_id}{order_id}{amount}{currency}{merchant_secret_hash}"
 
-    return hashlib.md5(hash_string.encode()).hexdigest().upper()
+    return hashlib.md5(hash_string.encode(), usedforsecurity=False).hexdigest().upper()
+
+
+def generate_payhere_webhook_signature(
+    merchant_id: str,
+    order_id: str,
+    payhere_amount: str,
+    payhere_currency: str,
+    status_code: str,
+    merchant_secret: str,
+) -> str:
+    """Generate the webhook signature PayHere sends in `md5sig`."""
+    secret_hash = hashlib.md5(merchant_secret.encode(), usedforsecurity=False).hexdigest().upper()
+    payload = f"{merchant_id}{order_id}{payhere_amount}{payhere_currency}{status_code}{secret_hash}"
+    return hashlib.md5(payload.encode(), usedforsecurity=False).hexdigest().upper()
 
 
 def build_payhere_checkout_response(payment: Payment, order: Order, current_user: User) -> dict:
@@ -119,7 +133,7 @@ def build_payhere_checkout_response(payment: Payment, order: Order, current_user
     }
 
 
-def _form_value_str(form_data: dict, key: str) -> str | None:
+def _form_value_str(form_data: Mapping[str, Any], key: str) -> str | None:
     """Safely normalize form values to strings."""
     value = form_data.get(key)
     if value is None or isinstance(value, UploadFile):
@@ -160,15 +174,15 @@ async def initiate_payment(
     - Redirect user to this URL
     """
 
-    print(f"\n{'='*70}")
+    print(f"\n{LOG_DIVIDER}")
     print("PAYMENT INITIATION")
-    print(f"{'='*70}")
+    print(LOG_DIVIDER)
 
-    idempotency_key = idempotency_key_header or payment_data.idempotency_key
+    idempotency_key = idempotency_key_header
     if not idempotency_key:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Idempotency key is required (Idempotency-Key header or request body)",
+            detail="Idempotency-Key header is required",
         )
     if len(idempotency_key) < 16:
         raise HTTPException(
@@ -198,9 +212,7 @@ async def initiate_payment(
     # ===============================================================
     # LAYER 2: CHECK IDEMPOTENCY (Database)
     # ===============================================================
-    existing_payment = (
-        db.query(Payment).filter(Payment.idempotency_key == idempotency_key).first()
-    )
+    existing_payment = db.query(Payment).filter(Payment.idempotency_key == idempotency_key).first()
 
     if existing_payment:
         print(f"Idempotency hit (Database): {idempotency_key}")
@@ -305,7 +317,7 @@ async def initiate_payment(
     response = build_payhere_checkout_response(payment, order, current_user)
 
     print("PayHere URL generated")
-    print(f"{'='*70}\n")
+    print(f"{LOG_DIVIDER}\n")
 
     # ===============================================================
     # STEP 4: CACHE RESPONSE
@@ -345,12 +357,12 @@ async def payhere_webhook(
     2. Verify MD5 signature
     3. Check idempotency (Redis + DB)
     4. Update payment + order state
-    5. Trigger email stubs
+    5. Send payment confirmation or failure email
     """
 
-    print(f"\n{'='*70}")
+    print(f"\n{LOG_DIVIDER}")
     print("PAYHERE WEBHOOK RECEIVED")
-    print(f"{'='*70}")
+    print(LOG_DIVIDER)
 
     webhook_data = {
         "merchant_id": merchant_id,
@@ -366,15 +378,21 @@ async def payhere_webhook(
         "card_no": card_no,
     }
 
-    merchant_id = webhook_data["merchant_id"]
-    order_id = webhook_data["order_id"]
-    payhere_amount = webhook_data["payhere_amount"]
-    payhere_currency = webhook_data["payhere_currency"]
-    status_code = webhook_data["status_code"]
+    webhook_merchant_id = webhook_data["merchant_id"]
+    webhook_order_id = webhook_data["order_id"]
+    webhook_amount = webhook_data["payhere_amount"]
+    webhook_currency = webhook_data["payhere_currency"]
+    webhook_status_code = webhook_data["status_code"]
     provided_signature = webhook_data["md5sig"]
     payhere_payment_id = webhook_data["payment_id"]
 
-    if not merchant_id or not order_id or not payhere_amount or not payhere_currency or not status_code:
+    if (
+        webhook_merchant_id is None
+        or webhook_order_id is None
+        or webhook_amount is None
+        or webhook_currency is None
+        or webhook_status_code is None
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required webhook parameters",
@@ -395,15 +413,17 @@ async def payhere_webhook(
             detail="Invalid signature",
         )
 
-    if payhere_payment_id and await payment_idempotency.is_webhook_processed(payhere_payment_id):
-        return {"status": "ok", "message": "Webhook already processed"}
-
     if payhere_payment_id:
-        existing = db.query(Payment).filter(Payment.payhere_payment_id == payhere_payment_id).first()
+        existing = (
+            db.query(Payment).filter(Payment.payhere_payment_id == payhere_payment_id).first()
+        )
         if existing:
-            return {"status": "ok", "message": "Payment already processed"}
+            return {"status": "ok", "message": "Already processed"}
 
-    payment = db.query(Payment).filter(Payment.payhere_order_id == order_id).first()
+    if payhere_payment_id and await payment_idempotency.is_webhook_processed(payhere_payment_id):
+        return {"status": "ok", "message": "Already processed"}
+
+    payment = db.query(Payment).filter(Payment.payhere_order_id == webhook_order_id).first()
     if not payment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found")
 
@@ -414,7 +434,7 @@ async def payhere_webhook(
 
     order = db.query(Order).filter(Order.id == payment.order_id).first()
 
-    if status_code == "2":
+    if webhook_status_code == "2":
         payment.status = PaymentStatus.COMPLETED
         payment.payhere_payment_id = payhere_payment_id
         payment.payment_method = webhook_data["method"]

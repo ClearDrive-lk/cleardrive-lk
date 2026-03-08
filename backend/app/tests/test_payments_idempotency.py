@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from unittest.mock import AsyncMock
 
 from app.core.config import settings
 from app.modules.orders.models import Order, OrderStatus
@@ -178,6 +179,166 @@ def test_webhook_dedup_returns_already_processed(client, db, test_user):
 
     assert response.status_code == 200
     assert response.json()["message"] == "Already processed"
+
+
+def test_webhook_rejects_invalid_signature(client, db, test_user):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-105")
+    payment = Payment(
+        order_id=order.id,
+        user_id=test_user.id,
+        payhere_order_id="CD-ORDER-BAD-SIG",
+        idempotency_key="550e8400-e29b-41d4-a716-446655440100",
+        amount=Decimal("500000.00"),
+        currency="LKR",
+        status=PaymentStatus.PENDING,
+    )
+    db.add(payment)
+    db.commit()
+
+    response = client.post(
+        "/api/v1/payments/webhook",
+        data={
+            "merchant_id": settings.PAYHERE_MERCHANT_ID,
+            "order_id": "CD-ORDER-BAD-SIG",
+            "payment_id": "PH-BAD-SIG-001",
+            "payhere_amount": "500000.00",
+            "payhere_currency": "LKR",
+            "status_code": "2",
+            "md5sig": "INVALID_SIGNATURE",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid signature"
+
+
+def test_webhook_success_updates_payment_order_and_sends_email(client, db, test_user, monkeypatch):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-106")
+    payment = Payment(
+        order_id=order.id,
+        user_id=test_user.id,
+        payhere_order_id="CD-ORDER-SUCCESS",
+        idempotency_key="550e8400-e29b-41d4-a716-446655440101",
+        amount=Decimal("500000.00"),
+        currency="LKR",
+        status=PaymentStatus.PENDING,
+    )
+    db.add(payment)
+    db.commit()
+
+    mock_success_email = AsyncMock()
+    mock_failure_email = AsyncMock()
+    monkeypatch.setattr(
+        "app.modules.payments.routes.send_payment_confirmation_email",
+        mock_success_email,
+    )
+    monkeypatch.setattr(
+        "app.modules.payments.routes.send_payment_failure_email",
+        mock_failure_email,
+    )
+
+    md5sig = generate_payhere_webhook_signature(
+        merchant_id=settings.PAYHERE_MERCHANT_ID,
+        order_id="CD-ORDER-SUCCESS",
+        payhere_amount="500000.00",
+        payhere_currency="LKR",
+        status_code="2",
+        merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
+    )
+
+    response = client.post(
+        "/api/v1/payments/webhook",
+        data={
+            "merchant_id": settings.PAYHERE_MERCHANT_ID,
+            "order_id": "CD-ORDER-SUCCESS",
+            "payment_id": "PH-SUCCESS-001",
+            "payhere_amount": "500000.00",
+            "payhere_currency": "LKR",
+            "status_code": "2",
+            "status_message": "Authorized",
+            "method": "VISA",
+            "card_holder_name": "Test User",
+            "card_no": "************1234",
+            "md5sig": md5sig,
+        },
+    )
+
+    db.refresh(payment)
+    db.refresh(order)
+
+    assert response.status_code == 200
+    assert response.json()["payment_status"] == "COMPLETED"
+    assert payment.status == PaymentStatus.COMPLETED
+    assert payment.payhere_payment_id == "PH-SUCCESS-001"
+    assert payment.payment_method == "VISA"
+    assert payment.card_holder_name == "Test User"
+    assert payment.card_no == "1234"
+    assert order.status == OrderStatus.PAYMENT_CONFIRMED
+    assert order.payment_status == OrderPaymentStatus.COMPLETED
+    mock_success_email.assert_awaited_once()
+    mock_failure_email.assert_not_awaited()
+
+
+def test_webhook_failure_marks_payment_failed_and_sends_failure_email(
+    client, db, test_user, monkeypatch
+):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-107")
+    payment = Payment(
+        order_id=order.id,
+        user_id=test_user.id,
+        payhere_order_id="CD-ORDER-FAILED",
+        idempotency_key="550e8400-e29b-41d4-a716-446655440102",
+        amount=Decimal("500000.00"),
+        currency="LKR",
+        status=PaymentStatus.PENDING,
+    )
+    db.add(payment)
+    db.commit()
+
+    mock_success_email = AsyncMock()
+    mock_failure_email = AsyncMock()
+    monkeypatch.setattr(
+        "app.modules.payments.routes.send_payment_confirmation_email",
+        mock_success_email,
+    )
+    monkeypatch.setattr(
+        "app.modules.payments.routes.send_payment_failure_email",
+        mock_failure_email,
+    )
+
+    md5sig = generate_payhere_webhook_signature(
+        merchant_id=settings.PAYHERE_MERCHANT_ID,
+        order_id="CD-ORDER-FAILED",
+        payhere_amount="500000.00",
+        payhere_currency="LKR",
+        status_code="-2",
+        merchant_secret=settings.PAYHERE_MERCHANT_SECRET,
+    )
+
+    response = client.post(
+        "/api/v1/payments/webhook",
+        data={
+            "merchant_id": settings.PAYHERE_MERCHANT_ID,
+            "order_id": "CD-ORDER-FAILED",
+            "payment_id": "PH-FAILED-001",
+            "payhere_amount": "500000.00",
+            "payhere_currency": "LKR",
+            "status_code": "-2",
+            "status_message": "Insufficient funds",
+            "md5sig": md5sig,
+        },
+    )
+
+    db.refresh(payment)
+    db.refresh(order)
+
+    assert response.status_code == 200
+    assert response.json()["payment_status"] == "FAILED"
+    assert payment.status == PaymentStatus.FAILED
+    assert order.status == OrderStatus.CREATED
+    assert order.payment_status == OrderPaymentStatus.FAILED
+    mock_success_email.assert_not_awaited()
+    mock_failure_email.assert_awaited_once()
 
 
 def test_payment_model_has_uniqueness_constraints():

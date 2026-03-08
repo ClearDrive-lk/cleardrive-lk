@@ -30,5 +30,18 @@ jobs:
           fi
 
           echo "Pinging $KEEPALIVE_URL"
-          curl --fail --show-error --silent --max-time 30 "$KEEPALIVE_URL" > /dev/null
-          echo "Ping successful."
+          if curl \
+            --fail \
+            --show-error \
+            --silent \
+            --location \
+            --connect-timeout 10 \
+            --max-time 90 \
+            --retry 2 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            "$KEEPALIVE_URL" > /dev/null; then
+            echo "Ping successful."
+          else
+            echo "::warning::Keepalive ping failed for ${{ matrix.name }} after retries. Render may still be cold-starting."
+          fi

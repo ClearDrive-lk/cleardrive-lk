@@ -14,11 +14,15 @@ def _order(status: OrderStatus, payment_status: PaymentStatus):
 
 def test_lc_states_are_exposed_after_payment_confirmed():
     allowed = get_allowed_next_states(OrderStatus.PAYMENT_CONFIRMED)
-    assert allowed == [OrderStatus.LC_REQUESTED, OrderStatus.CANCELLED]
+    assert allowed == [
+        OrderStatus.ASSIGNED_TO_EXPORTER,
+        OrderStatus.LC_REQUESTED,
+        OrderStatus.CANCELLED,
+    ]
 
 
-def test_payment_confirmed_to_assigned_to_exporter_is_not_allowed_directly():
-    assert not is_valid_transition(OrderStatus.PAYMENT_CONFIRMED, OrderStatus.ASSIGNED_TO_EXPORTER)
+def test_payment_confirmed_to_assigned_to_exporter_is_allowed_directly():
+    assert is_valid_transition(OrderStatus.PAYMENT_CONFIRMED, OrderStatus.ASSIGNED_TO_EXPORTER)
 
 
 def test_lc_requested_transition_requires_completed_payment():

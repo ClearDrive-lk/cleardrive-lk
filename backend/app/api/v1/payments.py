@@ -376,34 +376,6 @@ async def generate_payment_url(request: PaymentUrlRequest, db: Session = Depends
     return PaymentUrlResponse(payment_url=payhere_url, params=payhere_params)
 
 
-@router.post("/webhook")
-async def payhere_webhook(
-    merchant_id: str,
-    order_id: str,
-    payment_id: str,
-    payhere_amount: str,
-    payhere_currency: str,
-    status_code: str,
-    md5sig: str,
-    db: Session = Depends(get_db),
-):
-    """
-    CD-205: PayHere webhook handler.
-
-    This endpoint receives notifications from PayHere when payment is completed.
-    It verifies the signature and updates the payment status.
-
-    Args:
-        All parameters sent by PayHere
-        db: Database session
-
-    Returns:
-        Success message
-    """
-    # TODO: Implement webhook verification and payment update
-    return {"status": "received"}
-
-
 @router.get("/test-cards")
 async def get_test_cards():
     """

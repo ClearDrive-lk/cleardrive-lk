@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.core.redis_client import get_redis
+from app.core import redis_client
 
 
 class PaymentIdempotencyService:
@@ -13,11 +13,11 @@ class PaymentIdempotencyService:
         return f"webhook_processed:{payment_id}"
 
     async def is_webhook_processed(self, payment_id: str) -> bool:
-        redis = await get_redis()
+        redis = await redis_client.get_redis()
         return bool(await redis.exists(self._webhook_key(payment_id)))
 
     async def mark_webhook_processed(self, payment_id: str, ttl_seconds: int = 3600) -> None:
-        redis = await get_redis()
+        redis = await redis_client.get_redis()
         await redis.setex(self._webhook_key(payment_id), ttl_seconds, "processed")
 
 

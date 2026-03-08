@@ -41,6 +41,7 @@ from app.modules.calculator.routes import router as calculator_router
 from app.modules.gazette.routes import router as gazette_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
+from app.modules.shipping.admin_routes import router as shipping_admin_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.scraper.scheduler import scraper_scheduler
@@ -144,6 +145,7 @@ app.include_router(calculator_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
