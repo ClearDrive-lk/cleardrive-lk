@@ -35,8 +35,12 @@ class PayHereSignatureVerifier:
     def verify_signature(
         self, webhook_data: dict[str, str | None], provided_signature: str
     ) -> bool:
+        merchant_id = str(webhook_data.get("merchant_id") or "")
+        if self.merchant_id and merchant_id != self.merchant_id:
+            return False
+
         expected_signature = self.calculate_signature(
-            merchant_id=str(webhook_data.get("merchant_id") or ""),
+            merchant_id=merchant_id,
             order_id=str(webhook_data.get("order_id") or ""),
             amount=str(webhook_data.get("payhere_amount") or ""),
             currency=str(webhook_data.get("payhere_currency") or ""),

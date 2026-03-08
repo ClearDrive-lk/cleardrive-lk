@@ -23,6 +23,7 @@ VALID_TRANSITIONS: Dict[OrderStatus, List[OrderStatus]] = {
     ],
     # From PAYMENT_CONFIRMED
     OrderStatus.PAYMENT_CONFIRMED: [
+        OrderStatus.ASSIGNED_TO_EXPORTER,
         OrderStatus.LC_REQUESTED,
         OrderStatus.CANCELLED,
     ],
@@ -34,7 +35,6 @@ VALID_TRANSITIONS: Dict[OrderStatus, List[OrderStatus]] = {
     ],
     # From LC_APPROVED
     OrderStatus.LC_APPROVED: [
-        OrderStatus.ASSIGNED_TO_EXPORTER,
         OrderStatus.CANCELLED,
     ],
     # From LC_REJECTED

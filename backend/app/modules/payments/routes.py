@@ -357,7 +357,7 @@ async def payhere_webhook(
     2. Verify MD5 signature
     3. Check idempotency (Redis + DB)
     4. Update payment + order state
-    5. Trigger email stubs
+    5. Send payment confirmation or failure email
     """
 
     print(f"\n{LOG_DIVIDER}")
