@@ -7,7 +7,7 @@ Story: CD-32.3 - Track status changes
 """
 
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 
 from app.modules.orders.models import Order, OrderStatusHistory, OrderStatus
@@ -69,7 +69,7 @@ class OrderStatusHistoryService:
         return history
 
     @staticmethod
-    def get_order_timeline(db: Session, order_id: UUID) -> list[OrderStatusHistory]:
+    def get_order_timeline(db: Session, order_id: Union[UUID, str]) -> list[OrderStatusHistory]:
         """
         Get complete order timeline.
 
