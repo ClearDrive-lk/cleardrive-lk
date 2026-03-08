@@ -23,7 +23,12 @@ from app.modules.orders.models import (
     OrderStatusHistory,
     PaymentStatus,
 )
-from app.modules.orders.schemas import OrderCreate, OrderResponse, OrderTimelineResponse, OrderStatusHistoryResponse
+from app.modules.orders.schemas import (
+    OrderCreate,
+    OrderResponse,
+    OrderTimelineResponse,
+    OrderStatusHistoryResponse,
+)
 from app.services.orders.status_history import status_history_service
 from app.modules.orders.state_machine import (
     get_allowed_next_states,
@@ -129,7 +134,7 @@ async def create_order(
         changed_by=current_user,
         notes="Order created by customer",
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
     db.commit()
 
@@ -374,7 +379,7 @@ async def update_order_status(
         changed_by=current_user,
         notes=notes or f"Status updated by {current_user.role.lower()}",
         ip_address=request.client.host if request.client else None,
-        user_agent=request.headers.get("user-agent")
+        user_agent=request.headers.get("user-agent"),
     )
 
     print("\n✅ STEP 6: Status History Created")
@@ -417,27 +422,26 @@ async def update_order_status(
 # ENDPOINT: GET TIMELINE
 # ===================================================================
 
+
 @router.get("/{order_id}/timeline", response_model=OrderTimelineResponse)
 async def get_order_timeline(
-    order_id: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    order_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     """
     Get order status timeline.
-    
+
     **Story**: CD-32.2 - Order timeline endpoint
-    
+
     **Access**:
     - Customer: Own orders only
     - Admin: All orders
-    
+
     **Returns**:
     - Complete chronological timeline
     - Who changed each status
     - When each change occurred
     - Optional notes for each change
-    
+
     **Use Case**:
     Customer can track their order journey:
     - Order Created
@@ -448,35 +452,29 @@ async def get_order_timeline(
     - Customs Clearance
     - Delivered
     """
-    
+
     print(f"\n{'='*70}")
     print(f"📋 FETCHING ORDER TIMELINE")
     print(f"   Order: {order_id}")
     print(f"   User: {current_user.email}")
     print(f"{'='*70}\n")
-    
+
     # Get order
     order = db.query(Order).filter(Order.id == order_id).first()
-    
+
     if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Order not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
     # Check access (customer can only see own orders)
     if current_user.role != "ADMIN" and order.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
     # Get timeline
     history_records = status_history_service.get_order_timeline(db, order_id)
-    
+
     # Build response
     timeline = []
-    
+
     for record in history_records:
         timeline_item = OrderStatusHistoryResponse(
             id=record.id,
@@ -487,20 +485,21 @@ async def get_order_timeline(
             changed_by_id=record.changed_by,
             changed_by_name=record.user.name or record.user.email,
             changed_by_email=record.user.email,
-            created_at=record.created_at
+            created_at=record.created_at,
         )
         timeline.append(timeline_item)
-    
+
     print(f"✅ Timeline fetched: {len(timeline)} events")
     print(f"{'='*70}\n")
-    
+
     return OrderTimelineResponse(
         order_id=order.id,
         current_status=order.status.value,
         created_at=order.created_at,
         total_events=len(timeline),
-        timeline=timeline
+        timeline=timeline,
     )
+
 
 # ===================================================================
 # ENDPOINT: GET ALLOWED NEXT STATES

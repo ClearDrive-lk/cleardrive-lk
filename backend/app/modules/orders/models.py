@@ -13,7 +13,6 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-
 if TYPE_CHECKING:
     from app.modules.auth.models import User
     from app.modules.payments.models import Payment
@@ -87,7 +86,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     vehicle: Mapped[Vehicle] = relationship("Vehicle", back_populates="orders")
     status_history: Mapped[list[OrderStatusHistory]] = relationship(
-        "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan", order_by="OrderStatusHistory.created_at"
+        "OrderStatusHistory",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="OrderStatusHistory.created_at",
     )
     # Tharin - 09/02/2026
     payments: Mapped[list[Payment]] = relationship(

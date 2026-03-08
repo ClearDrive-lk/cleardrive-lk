@@ -18,10 +18,10 @@ from app.modules.auth.models import User
 class OrderStatusHistoryService:
     """
     Service for managing order status history.
-    
+
     Story: CD-32.1, CD-32.3
     """
-    
+
     @staticmethod
     def create_history_entry(
         db: Session,
@@ -31,11 +31,11 @@ class OrderStatusHistoryService:
         changed_by: User,
         notes: Optional[str] = None,
         ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        user_agent: Optional[str] = None,
     ) -> OrderStatusHistory:
         """
         Create status history entry.
-        
+
         Args:
             db: Database session
             order: Order object
@@ -45,11 +45,11 @@ class OrderStatusHistoryService:
             notes: Optional notes/reason
             ip_address: User's IP address
             user_agent: User's browser/agent
-        
+
         Returns:
             Created OrderStatusHistory record
         """
-        
+
         history = OrderStatusHistory(
             order_id=order.id,
             from_status=from_status.value if from_status else None,
@@ -57,40 +57,38 @@ class OrderStatusHistoryService:
             changed_by=changed_by.id,
             notes=notes,
             ip_address=ip_address,
-            user_agent=user_agent
+            user_agent=user_agent,
         )
-        
+
         db.add(history)
-        
+
         print(f"📝 Status History Created:")
         print(f"   Order: {order.id}")
         print(f"   Change: {from_status.value if from_status else 'None'} -> {to_status.value}")
         print(f"   By: {changed_by.email}")
-        
+
         return history
-    
+
     @staticmethod
-    def get_order_timeline(
-        db: Session,
-        order_id: UUID
-    ) -> list[OrderStatusHistory]:
+    def get_order_timeline(db: Session, order_id: UUID) -> list[OrderStatusHistory]:
         """
         Get complete order timeline.
-        
+
         Args:
             db: Database session
             order_id: Order UUID
-        
+
         Returns:
             List of status history records (chronological)
         """
-        
-        history = db.query(OrderStatusHistory).filter(
-            OrderStatusHistory.order_id == order_id
-        ).order_by(
-            OrderStatusHistory.created_at.asc()
-        ).all()
-        
+
+        history = (
+            db.query(OrderStatusHistory)
+            .filter(OrderStatusHistory.order_id == order_id)
+            .order_by(OrderStatusHistory.created_at.asc())
+            .all()
+        )
+
         return history
 
 
