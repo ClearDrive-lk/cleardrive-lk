@@ -12,6 +12,11 @@ from app.core.models import GUID, TimestampMixin, UUIDMixin
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Index, Enum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
