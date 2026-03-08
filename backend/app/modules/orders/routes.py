@@ -20,7 +20,6 @@ from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import (
     Order,
     OrderStatus,
-    OrderStatusHistory,
     PaymentStatus,
 )
 from app.modules.orders.schemas import (
@@ -454,7 +453,7 @@ async def get_order_timeline(
     """
 
     print(f"\n{'='*70}")
-    print(f"📋 FETCHING ORDER TIMELINE")
+    print("📋 FETCHING ORDER TIMELINE")
     print(f"   Order: {order_id}")
     print(f"   User: {current_user.email}")
     print(f"{'='*70}\n")

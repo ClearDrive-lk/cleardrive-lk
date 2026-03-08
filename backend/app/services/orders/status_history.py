@@ -7,7 +7,6 @@ Story: CD-32.3 - Track status changes
 """
 
 from sqlalchemy.orm import Session
-from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -62,7 +61,7 @@ class OrderStatusHistoryService:
 
         db.add(history)
 
-        print(f"📝 Status History Created:")
+        print("📝 Status History Created:")
         print(f"   Order: {order.id}")
         print(f"   Change: {from_status.value if from_status else 'None'} -> {to_status.value}")
         print(f"   By: {changed_by.email}")
