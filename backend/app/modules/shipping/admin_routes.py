@@ -34,7 +34,7 @@ async def get_assignable_orders(
     orders = (
         db.query(Order)
         .outerjoin(ShipmentDetails, ShipmentDetails.order_id == Order.id)
-        .filter(Order.status == OrderStatus.LC_APPROVED)
+        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
         .filter(ShipmentDetails.id.is_(None))
         .order_by(Order.created_at.desc())
         .all()
