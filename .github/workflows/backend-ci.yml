@@ -106,10 +106,10 @@ jobs:
         run: |
           cd backend
           if [ -n "${SAFETY_API_KEY}" ]; then
-            safety scan --key "${SAFETY_API_KEY}" --output json > safety-report.json
+            safety --key "${SAFETY_API_KEY}" scan --target . --save-as json safety-report.json
           else
-            echo "SAFETY_API_KEY not set; using non-interactive fallback: safety check."
-            safety check -r requirements.txt -r requirements-dev.txt --json > safety-report.json
+            echo "SAFETY_API_KEY not set; skipping Safety scan because Safety CLI 3 requires authentication or an API key for scan."
+            printf '{\"skipped\":true,\"reason\":\"SAFETY_API_KEY not set\"}\n' > safety-report.json
           fi
 
 
