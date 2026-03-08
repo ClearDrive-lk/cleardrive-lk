@@ -59,7 +59,7 @@ jobs:
           if [ -n "${SAFETY_API_KEY}" ]; then
             safety --key "${SAFETY_API_KEY}" scan --detailed-output
           else
-            echo "SAFETY_API_KEY not set; using non-interactive fallback: safety check."
+            echo "SAFETY_API_KEY not set; using Safety CLI 3 fallback: safety check."
             safety check -r requirements.txt -r requirements-dev.txt --full-report
           fi
 
