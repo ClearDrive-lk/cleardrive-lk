@@ -58,7 +58,7 @@ def _canonical_fuel_key(value: str | None) -> str | None:
     return s
 
 
-def _canonical_transmission(value: str | None) -> str | None:
+def _canonical_transmission_key(value: str | None) -> str | None:
     if not value:
         return None
     raw = value.strip()
@@ -66,12 +66,12 @@ def _canonical_transmission(value: str | None) -> str | None:
         return None
     s = re.sub(r"[^a-z0-9]+", " ", raw.lower()).strip()
     if s in {"automatic", "auto", "at"}:
-        return "Automatic"
+        return "automatic"
     if s in {"manual", "mt"}:
-        return "Manual"
+        return "manual"
     if s in {"cvt"}:
-        return "CVT"
-    return raw
+        return "cvt"
+    return s
 
 
 def _load_enum_labels(conn: Connection, type_name: str) -> list[str]:
@@ -127,6 +127,32 @@ def _fuel_label_for_db(value: str | None, allowed_labels: list[str]) -> str | No
     return candidates[0]
 
 
+def _transmission_label_for_db(value: str | None, allowed_labels: list[str]) -> str | None:
+    if value is None:
+        return None
+    key = _canonical_transmission_key(value)
+    if key is None:
+        return None
+    if not allowed_labels:
+        return value
+
+    by_key: dict[str, list[str]] = {}
+    for label in allowed_labels:
+        label_key = _canonical_transmission_key(label)
+        if label_key:
+            by_key.setdefault(label_key, []).append(label)
+
+    candidates = by_key.get(key, [])
+    if not candidates:
+        return value
+
+    preferred = ["AUTOMATIC", "MANUAL", "CVT", "Automatic", "Manual", "Cvt"]
+    for v in preferred:
+        if v in candidates:
+            return v
+    return candidates[0]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize vehicles.fuel_type/transmission values")
     parser.add_argument("--mode", choices=["local", "supabase"], required=True)
@@ -154,6 +180,7 @@ def main() -> None:
 
     with engine.begin() as conn:
         fuel_labels = _load_enum_labels(conn, "fueltype")
+        transmission_labels = _load_enum_labels(conn, "transmission")
         rows = conn.execute(text("SELECT id, fuel_type, transmission FROM vehicles")).mappings().all()
         scanned = len(rows)
 
@@ -163,7 +190,7 @@ def main() -> None:
             current_transmission = row["transmission"]
 
             next_fuel = _fuel_label_for_db(current_fuel, fuel_labels)
-            next_transmission = _canonical_transmission(current_transmission)
+            next_transmission = _transmission_label_for_db(current_transmission, transmission_labels)
 
             fuel_changed = next_fuel != current_fuel
             transmission_changed = next_transmission != current_transmission
