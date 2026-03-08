@@ -132,45 +132,8 @@ async def assign_exporter_to_order(
             "Exporter assignment notification dispatch failed for order_id=%s",
             order.id,
         )
+    return shipment
 
-@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
-async def list_assignable_orders(
-    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
-    db: Session = Depends(get_db),
-):
-    """List paid orders that can be assigned to an exporter."""
-    orders = (
-        db.query(Order)
-        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
-        .order_by(Order.created_at.desc())
-        .all()
-    )
-
-    assignable_orders: list[AssignableOrderItem] = []
-    for order in orders:
-        if order.shipment_details is not None:
-            continue
-
-        vehicle = getattr(order, "vehicle", None)
-        user = getattr(order, "user", None)
-        vehicle_label = "Vehicle details unavailable"
-        if vehicle is not None:
-            vehicle_label = f"{vehicle.make} {vehicle.model} {vehicle.year}".strip()
-
-        assignable_orders.append(
-            AssignableOrderItem(
-                id=order.id,
-                customer_name=(getattr(user, "name", None) or "Unknown customer"),
-                customer_email=(getattr(user, "email", None) or "Unknown email"),
-                vehicle_label=vehicle_label,
-                status=order.status.value,
-                payment_status=order.payment_status.value,
-                total_cost_lkr=(
-                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
-                ),
-                created_at=order.created_at,
-            )
-        )
 
 @router.get("/all")
 async def get_all_shipments(
