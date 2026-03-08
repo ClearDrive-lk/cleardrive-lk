@@ -84,14 +84,14 @@ export default function Footer() {
           Cookie Preferences
         </Link>
         <Link
-          href="/api/v1/gdpr/privacy-policy"
+          href="http://localhost:8000/api/v1/gdpr/privacy-policy"
           target="_blank"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
           Privacy Policy
         </Link>
         <Link
-          href="/api/v1/gdpr/cookie-policy"
+          href="http://localhost:8000/api/v1/gdpr/cookie-policy"
           target="_blank"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
