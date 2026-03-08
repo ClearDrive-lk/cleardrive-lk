@@ -12,12 +12,34 @@ from app.modules.auth.models import Role, User
 from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
 from app.modules.shipping.models import ShipmentDetails
-from app.modules.shipping.schemas import ExporterAssignment, ShippingDetailsResponse
+from app.modules.shipping.schemas import (
+    AssignableOrderItem,
+    ExporterAssignment,
+    ShippingDetailsResponse,
+)
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
 logger = logging.getLogger(__name__)
+
+
+@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
+async def get_assignable_orders(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """List orders eligible for exporter assignment."""
+    _ = current_user
+    orders = (
+        db.query(Order)
+        .outerjoin(ShipmentDetails, ShipmentDetails.order_id == Order.id)
+        .filter(Order.status == OrderStatus.LC_APPROVED)
+        .filter(ShipmentDetails.id.is_(None))
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+    return orders
 
 
 @router.post("/{order_id}/assign", response_model=ShippingDetailsResponse)

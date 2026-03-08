@@ -72,6 +72,20 @@ class ShipmentDetailsResponse(ShippingDetailsResponse):
     """Backward-compatible alias for CD-70 naming."""
 
 
+class AssignableOrderItem(BaseModel):
+    """Admin list item for orders eligible for exporter assignment."""
+
+    id: UUID
+    user_id: UUID
+    vehicle_id: UUID
+    status: str
+    payment_status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # ============== DOCUMENT SCHEMAS ==============
 class DocumentUploadResponse(BaseModel):
     """Response schema for document upload (CD-72)."""
