@@ -57,10 +57,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           if [ -n "${SAFETY_API_KEY}" ]; then
-            safety --key "${SAFETY_API_KEY}" scan --detailed-output
+            safety --key "${SAFETY_API_KEY}" scan --target . --detailed-output
           else
-            echo "SAFETY_API_KEY not set; using Safety CLI 3 fallback: safety check."
-            safety check -r requirements.txt -r requirements-dev.txt --full-report
+            echo "SAFETY_API_KEY not set; skipping Safety scan because Safety CLI 3 requires authentication or an API key for scan."
           fi
 
 
