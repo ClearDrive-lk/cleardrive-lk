@@ -78,8 +78,12 @@ class AssignableOrderItem(BaseModel):
     id: UUID
     user_id: UUID
     vehicle_id: UUID
+    customer_name: str
+    customer_email: str
+    vehicle_label: str
     status: str
     payment_status: str
+    total_cost_lkr: float | None = None
     created_at: datetime
 
     class Config:
