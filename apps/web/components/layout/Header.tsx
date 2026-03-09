@@ -82,6 +82,14 @@ export default function Header() {
                 Vehicles
               </Link>
               <Link
+                href="/dashboard/kyc"
+                className={`transition-colors ${
+                  isActive("/dashboard/kyc") ? "text-white" : "hover:text-white"
+                }`}
+              >
+                KYC
+              </Link>
+              <Link
                 href="/dashboard/profile"
                 className={`transition-colors ${
                   isActive("/dashboard/profile")
