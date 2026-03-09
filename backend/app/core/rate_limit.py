@@ -33,20 +33,25 @@ TIER_LIMITS = {
         "orders": 3,
         "payments": 2,
         "kyc": 2,
+        "chat": 10,
     },
     UserTier.STANDARD: {
         "api_general": 100,
         "orders": 10,
         "payments": 5,
         "kyc": 3,
+        "chat": 10,
     },
     UserTier.TRUSTED: {
         "api_general": 200,
         "orders": 20,
         "payments": 10,
         "kyc": 5,
+        "chat": 10,
     },
 }
+
+_fallback_rate_limits: dict[str, list[float]] = {}
 
 
 def get_user_tier(user: Optional[User]) -> str:
@@ -107,8 +112,6 @@ async def check_rate_limit(
     Returns:
         True if within limits, raises HTTPException if exceeded
     """
-    redis = await get_redis()
-
     # Determine identifier (user ID or IP)
     if user:
         identifier = f"user:{user.id}"
@@ -127,6 +130,8 @@ async def check_rate_limit(
     key = f"rate_limit:{identifier}:{endpoint_type}:{current_minute}"
 
     try:
+        redis = await get_redis()
+
         # Increment counter
         current = await redis.incr(key)
 
@@ -155,8 +160,24 @@ async def check_rate_limit(
     except HTTPException:
         raise
     except Exception as e:
-        # If Redis is down, allow request (fail open)
-        print(f"Rate limit check failed: {e}")
+        print(f"Rate limit check failed, using fallback: {e}")
+        now_ts = datetime.now(UTC).timestamp()
+        recent_calls = [ts for ts in _fallback_rate_limits.get(key, []) if now_ts - ts < window]
+
+        if len(recent_calls) >= limit:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={
+                    "error": "Rate limit exceeded",
+                    "tier": tier,
+                    "limit": limit,
+                    "window": "1 minute",
+                    "retry_after": window,
+                },
+            )
+
+        recent_calls.append(now_ts)
+        _fallback_rate_limits[key] = recent_calls
         return True
 
 
