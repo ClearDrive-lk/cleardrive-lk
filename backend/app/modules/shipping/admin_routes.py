@@ -4,8 +4,6 @@ Author: Kalidu
 Story: CD-70 - Exporter Assignment
 """
 
-from __future__ import annotations
-
 import logging
 
 from app.core.database import get_db
@@ -22,9 +20,26 @@ from app.modules.shipping.schemas import (
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
+
+@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
+async def get_assignable_orders(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """List orders eligible for exporter assignment."""
+    _ = current_user
+    orders = (
+        db.query(Order)
+        .outerjoin(ShipmentDetails, ShipmentDetails.order_id == Order.id)
+        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
+        .filter(ShipmentDetails.id.is_(None))
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+    return orders
 
 
 @router.post("/{order_id}/assign", response_model=ShippingDetailsResponse)
@@ -103,6 +118,7 @@ async def assign_exporter_to_order(
     db.add(history)
 
     db.commit()
+    db.refresh(order)
     db.refresh(shipment)
 
     try:
@@ -113,53 +129,10 @@ async def assign_exporter_to_order(
         )
     except Exception:
         logger.exception(
-            "Exporter assignment completed for order_id=%s, but notification dispatch failed",
+            "Exporter assignment notification dispatch failed for order_id=%s",
             order.id,
         )
-
     return shipment
-
-
-@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
-async def list_assignable_orders(
-    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
-    db: Session = Depends(get_db),
-):
-    """List paid orders that can be assigned to an exporter."""
-    orders = (
-        db.query(Order)
-        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
-        .order_by(Order.created_at.desc())
-        .all()
-    )
-
-    assignable_orders: list[AssignableOrderItem] = []
-    for order in orders:
-        if order.shipment_details is not None:
-            continue
-
-        vehicle = getattr(order, "vehicle", None)
-        user = getattr(order, "user", None)
-        vehicle_label = "Vehicle details unavailable"
-        if vehicle is not None:
-            vehicle_label = f"{vehicle.make} {vehicle.model} {vehicle.year}".strip()
-
-        assignable_orders.append(
-            AssignableOrderItem(
-                id=order.id,
-                customer_name=(getattr(user, "name", None) or "Unknown customer"),
-                customer_email=(getattr(user, "email", None) or "Unknown email"),
-                vehicle_label=vehicle_label,
-                status=order.status.value,
-                payment_status=order.payment_status.value,
-                total_cost_lkr=(
-                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
-                ),
-                created_at=order.created_at,
-            )
-        )
-
-    return assignable_orders
 
 
 @router.get("/all")
