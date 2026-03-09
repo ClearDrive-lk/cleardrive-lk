@@ -64,6 +64,12 @@ export default function DashboardPage() {
                 Vehicles
               </Link>
               <Link
+                href="/dashboard/shipping"
+                className="hover:text-white transition-colors"
+              >
+                Shipping
+              </Link>
+              <Link
                 href="/dashboard/profile"
                 className="hover:text-white transition-colors"
               >
@@ -127,6 +133,12 @@ export default function DashboardPage() {
                   href: "/dashboard/profile",
                   icon: User,
                   code: "USR-ACC",
+                },
+                {
+                  title: "Shipping",
+                  href: "/dashboard/shipping",
+                  icon: Package,
+                  code: "SHP-SUB",
                 },
                 {
                   title: "Documents",

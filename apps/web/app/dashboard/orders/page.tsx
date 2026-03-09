@@ -58,6 +58,12 @@ export default function OrdersPage() {
                 Vehicles
               </Link>
               <Link
+                href="/dashboard/shipping"
+                className="hover:text-white transition-colors"
+              >
+                Shipping
+              </Link>
+              <Link
                 href="/dashboard/profile"
                 className="hover:text-white transition-colors"
               >

@@ -4,12 +4,13 @@ Author: Kalidu
 Story: CD-70
 """
 
+import re
 from datetime import date, datetime
 from enum import Enum
 from typing import Dict, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ============== ENUMS ==============
@@ -29,15 +30,60 @@ class DocumentType(str, Enum):
 class ShippingDetailsSubmit(BaseModel):
     """Schema for submitting shipping details (CD-71)."""
 
-    vessel_name: str
-    voyage_number: str
-    departure_port: str
-    arrival_port: str
-    departure_date: str  # ISO format date string
-    estimated_arrival_date: str  # ISO format date string
-    container_number: str
-    seal_number: str
-    tracking_number: str
+    vessel_name: str = Field(min_length=3, max_length=255)
+    vessel_registration: str = Field(min_length=3, max_length=100)
+    voyage_number: str = Field(min_length=1, max_length=100)
+    departure_port: str = Field(min_length=3, max_length=255)
+    arrival_port: str = Field(min_length=3, max_length=255)
+    departure_date: date
+    estimated_arrival_date: date
+    container_number: str = Field(min_length=5, max_length=100)
+    bill_of_landing_number: str = Field(min_length=5, max_length=100)
+    seal_number: str = Field(min_length=2, max_length=100)
+    tracking_number: str = Field(min_length=2, max_length=255)
+
+    @field_validator(
+        "vessel_name",
+        "vessel_registration",
+        "voyage_number",
+        "departure_port",
+        "arrival_port",
+        "container_number",
+        "bill_of_landing_number",
+        "seal_number",
+        "tracking_number",
+        mode="before",
+    )
+    @classmethod
+    def _trim_required_strings(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Field cannot be empty")
+        return cleaned
+
+    @field_validator("container_number", mode="after")
+    @classmethod
+    def _validate_container_number(cls, value: str) -> str:
+        normalized = value.replace(" ", "").upper()
+        if not re.match(r"^[A-Z0-9-]{5,100}$", normalized):
+            raise ValueError("Invalid container number format")
+        return normalized
+
+    @field_validator("bill_of_landing_number", mode="after")
+    @classmethod
+    def _validate_bill_of_landing_number(cls, value: str) -> str:
+        normalized = value.replace(" ", "").upper()
+        if not re.match(r"^[A-Z0-9-]{5,100}$", normalized):
+            raise ValueError("Invalid bill of landing number format")
+        return normalized
+
+    @model_validator(mode="after")
+    def _validate_dates_and_ports(self):
+        if self.estimated_arrival_date <= self.departure_date:
+            raise ValueError("Estimated arrival date must be after departure date")
+        if self.departure_port.lower() == self.arrival_port.lower():
+            raise ValueError("Departure and arrival ports must be different")
+        return self
 
 
 class ShippingDetailsResponse(BaseModel):
