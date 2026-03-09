@@ -2,7 +2,7 @@
 Single entrypoint for scraping with explicit runtime mode.
 
 Usage:
-  python scripts/scrape_runner.py --mode local --count 50 --years 3
+  python scripts/scrape_runner.py --mode local --count 100 --years 3
   python scripts/scrape_runner.py --mode supabase --count 50 --years 3
 
 By default this script loads:
@@ -44,7 +44,12 @@ def _load_env_file(path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run vehicle scraping in local or supabase mode")
     parser.add_argument("--mode", choices=["local", "supabase"], required=True)
-    parser.add_argument("--count", type=int, default=50)
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="Number of listings to scrape. In local mode, defaults to 100; use 0 for all pages.",
+    )
     parser.add_argument("--years", type=int, default=3)
     args = parser.parse_args()
 
@@ -55,7 +60,9 @@ def main() -> None:
     _load_env_file(fallback_env)
 
     os.environ.setdefault("CD23_SCRAPER_MODE", "live")
-    os.environ["CD23_SCRAPE_COUNT"] = str(max(1, args.count))
+    default_count = 100 if args.mode == "local" else 50
+    scrape_count = default_count if args.count is None else max(0, args.count)
+    os.environ["CD23_SCRAPE_COUNT"] = str(scrape_count)
     os.environ["CD23_KEEP_LAST_YEARS"] = str(max(1, args.years))
 
     if args.mode == "supabase":

@@ -1,5 +1,14 @@
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const appDir = dirname(fileURLToPath(import.meta.url));
+
 const nextConfig = {
+  turbopack: {
+    root: appDir,
+  },
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "localhost" },
