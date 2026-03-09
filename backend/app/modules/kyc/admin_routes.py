@@ -14,6 +14,7 @@ from app.modules.kyc.schemas import (
     KYCAdminComparisonField,
     KYCAdminDetailResponse,
     KYCAdminPendingItem,
+    KYCManualExtractionRequest,
     KYCRejectRequest,
 )
 from app.services.email import send_email
@@ -111,7 +112,10 @@ def _extraction_method(kyc: KYCDocument) -> str:
 
 
 def _auto_extracted(kyc: KYCDocument) -> bool:
-    return bool((kyc.extracted_data or {}).get("front") or (kyc.extracted_data or {}).get("back"))
+    extracted = kyc.extracted_data or {}
+    if extracted.get("extraction_method") == "manual":
+        return False
+    return bool(extracted.get("front") or extracted.get("back"))
 
 
 def _needs_manual_extraction(kyc: KYCDocument) -> bool:
@@ -134,6 +138,7 @@ def _serialize_pending_item(kyc: KYCDocument) -> KYCAdminPendingItem:
 
 def _serialize_detail(kyc: KYCDocument) -> KYCAdminDetailResponse:
     rows = _comparison_rows(kyc)
+    extracted = kyc.extracted_data or {}
     return KYCAdminDetailResponse(
         id=kyc.id,
         user_id=kyc.user_id,
@@ -147,13 +152,15 @@ def _serialize_detail(kyc: KYCDocument) -> KYCAdminDetailResponse:
         nic_front_url=kyc.nic_front_url,
         nic_back_url=kyc.nic_back_url,
         selfie_url=kyc.selfie_url,
-        extracted_data=kyc.extracted_data or {},
+        extracted_data=extracted,
         user_provided_data=_user_provided_data(kyc),
         discrepancies={row.label.lower().replace(" ", "_"): not row.matches for row in rows},
         comparison_rows=rows,
         extraction_method=_extraction_method(kyc),
         auto_extracted=_auto_extracted(kyc),
         needs_manual_extraction=_needs_manual_extraction(kyc),
+        manual_extracted_by=_stringify(extracted.get("manually_extracted_by")),
+        manual_extracted_at=_stringify(extracted.get("manually_extracted_at")),
     )
 
 
@@ -245,6 +252,53 @@ async def get_kyc_review_detail(
     """Return a detailed KYC review payload for admins."""
     _ = current_user
     return _serialize_detail(_get_kyc_or_404(db, kyc_id))
+
+
+@router.post("/{kyc_id}/extract-manual", response_model=KYCAdminDetailResponse)
+async def extract_manual_kyc_data(
+    kyc_id: str,
+    payload: KYCManualExtractionRequest,
+    current_user: User = Depends(require_permission(Permission.REVIEW_KYC)),
+    db: Session = Depends(get_db),
+):
+    """Persist manual extraction data and move the KYC back to review-ready state."""
+    kyc = _get_kyc_or_404(db, kyc_id)
+    if kyc.status not in {KYCStatus.PENDING_MANUAL_REVIEW, KYCStatus.PENDING}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot save manual extraction for KYC with status {kyc.status.value}",
+        )
+
+    manual_timestamp = datetime.now(UTC).isoformat()
+    existing_extracted = kyc.extracted_data or {}
+    existing_front = existing_extracted.get("front")
+    front_payload = existing_front if isinstance(existing_front, dict) else {}
+    existing_back = existing_extracted.get("back")
+    back_payload = existing_back if isinstance(existing_back, dict) else {}
+
+    kyc.extracted_data = {
+        **{k: v for k, v in existing_extracted.items() if k not in {"front", "back"}},
+        "front": {
+            **front_payload,
+            "nic_number": payload.nic_number,
+            "full_name": payload.full_name,
+            "date_of_birth": payload.date_of_birth.isoformat(),
+        },
+        "back": {
+            **back_payload,
+            "address": payload.address,
+            "gender": payload.gender,
+            "issue_date": payload.issue_date.isoformat() if payload.issue_date else None,
+        },
+        "extraction_method": "manual",
+        "manually_extracted_by": current_user.email,
+        "manually_extracted_at": manual_timestamp,
+    }
+    kyc.status = KYCStatus.PENDING
+
+    db.commit()
+    db.refresh(kyc)
+    return _serialize_detail(kyc)
 
 
 @router.post("/{kyc_id}/approve")

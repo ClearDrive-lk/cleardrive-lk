@@ -111,6 +111,19 @@ class KYCAdminDetailResponse(BaseModel):
     extraction_method: str
     auto_extracted: bool
     needs_manual_extraction: bool
+    manual_extracted_by: Optional[str] = None
+    manual_extracted_at: Optional[str] = None
+
+
+class KYCManualExtractionRequest(BaseModel):
+    """Manual extraction payload entered by an admin reviewer."""
+
+    nic_number: str = Field(..., min_length=5)
+    full_name: str = Field(..., min_length=2)
+    date_of_birth: date
+    address: str = Field(..., min_length=5)
+    gender: str = Field(..., min_length=1)
+    issue_date: Optional[date] = None
 
 
 class KYCRejectRequest(BaseModel):

@@ -106,6 +106,37 @@ def test_get_kyc_detail_includes_comparison_rows(client, db, admin_headers, test
     assert any(row["matches"] is False for row in payload["comparison_rows"])
 
 
+def test_extract_manual_kyc_data_updates_payload_and_status(client, db, admin_headers, test_user):
+    kyc = _create_kyc_document(
+        db,
+        test_user,
+        status=KYCStatus.PENDING_MANUAL_REVIEW,
+        extracted_data={"extraction_method": "manual_review_required"},
+    )
+
+    response = client.post(
+        f"/api/v1/admin/kyc/{kyc.id}/extract-manual",
+        headers=admin_headers,
+        json={
+            "nic_number": "200099999999",
+            "full_name": "Manual Review Name",
+            "date_of_birth": "2000-02-03",
+            "address": "Manual Address",
+            "gender": "F",
+            "issue_date": "2024-01-15",
+        },
+    )
+
+    assert response.status_code == 200
+    db.refresh(kyc)
+    assert kyc.status == KYCStatus.PENDING
+    assert kyc.extracted_data["extraction_method"] == "manual"
+    assert kyc.extracted_data["front"]["full_name"] == "Manual Review Name"
+    assert kyc.extracted_data["back"]["issue_date"] == "2024-01-15"
+    assert response.json()["needs_manual_extraction"] is False
+    assert response.json()["manual_extracted_by"] == "admin@example.com"
+
+
 def test_approve_kyc_updates_status_creates_audit_and_sends_email(
     client, db, admin_headers, admin_user, test_user, monkeypatch
 ):

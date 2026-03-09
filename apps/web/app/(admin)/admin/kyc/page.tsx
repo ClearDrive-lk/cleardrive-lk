@@ -16,6 +16,25 @@ interface PendingKycItem {
   needs_manual_extraction: boolean;
 }
 
+function extractionBadge(item: PendingKycItem) {
+  if (item.needs_manual_extraction) {
+    return {
+      label: "Manual Review Required",
+      className: "bg-amber-100 text-amber-800",
+    };
+  }
+  if (item.extraction_method === "manual") {
+    return {
+      label: "Manually Extracted",
+      className: "bg-sky-100 text-sky-800",
+    };
+  }
+  return {
+    label: `Auto Extracted (${item.extraction_method})`,
+    className: "bg-emerald-100 text-emerald-800",
+  };
+}
+
 export default function AdminKycPage() {
   const [items, setItems] = useState<PendingKycItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,38 +154,44 @@ export default function AdminKycPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/80">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">
-                          {item.user_name}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {item.user_email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">
-                        {item.extraction_method}
-                        {item.needs_manual_extraction ? " / manual" : ""}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">
-                        {new Date(item.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <a
-                          href={`/admin/kyc/${item.id}`}
-                          className="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-                        >
-                          Review
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
+                  {items.map((item) => {
+                    const badge = extractionBadge(item);
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/80">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-900">
+                            {item.user_name}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {item.user_email}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-700">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-700">
+                          {new Date(item.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <a
+                            href={`/admin/kyc/${item.id}`}
+                            className="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                          >
+                            Review
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

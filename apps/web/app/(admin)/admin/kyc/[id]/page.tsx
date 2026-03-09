@@ -32,6 +32,17 @@ interface KycReviewDetail {
   extraction_method: string;
   auto_extracted: boolean;
   needs_manual_extraction: boolean;
+  manual_extracted_by: string | null;
+  manual_extracted_at: string | null;
+}
+
+interface ManualExtractionForm {
+  nic_number: string;
+  full_name: string;
+  date_of_birth: string;
+  address: string;
+  gender: string;
+  issue_date: string;
 }
 
 export default function AdminKycReviewDetailPage() {
@@ -44,6 +55,14 @@ export default function AdminKycReviewDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [manualForm, setManualForm] = useState<ManualExtractionForm>({
+    nic_number: "",
+    full_name: "",
+    date_of_birth: "",
+    address: "",
+    gender: "",
+    issue_date: "",
+  });
 
   useEffect(() => {
     const loadDetail = async () => {
@@ -54,6 +73,35 @@ export default function AdminKycReviewDetailPage() {
           `/admin/kyc/${kycId}`,
         );
         setDetail(response.data);
+        setManualForm({
+          nic_number: ((
+            response.data.extracted_data.front as Record<string, string>
+          )?.nic_number ??
+            response.data.user_provided_data.nic_number ??
+            "") as string,
+          full_name: ((
+            response.data.extracted_data.front as Record<string, string>
+          )?.full_name ??
+            response.data.user_provided_data.full_name ??
+            "") as string,
+          date_of_birth: ((
+            response.data.extracted_data.front as Record<string, string>
+          )?.date_of_birth ??
+            response.data.user_provided_data.date_of_birth ??
+            "") as string,
+          address: ((
+            response.data.extracted_data.back as Record<string, string>
+          )?.address ??
+            response.data.user_provided_data.address ??
+            "") as string,
+          gender: ((response.data.extracted_data.back as Record<string, string>)
+            ?.gender ??
+            response.data.user_provided_data.gender ??
+            "") as string,
+          issue_date: ((
+            response.data.extracted_data.back as Record<string, string>
+          )?.issue_date ?? "") as string,
+        });
       } catch (err: unknown) {
         if (isAxiosError(err)) {
           setError(
@@ -77,6 +125,28 @@ export default function AdminKycReviewDetailPage() {
     () => detail?.comparison_rows.filter((row) => !row.matches).length ?? 0,
     [detail],
   );
+
+  const extractionBadge = useMemo(() => {
+    if (!detail) {
+      return { label: "", className: "" };
+    }
+    if (detail.needs_manual_extraction) {
+      return {
+        label: "Manual Review Required",
+        className: "bg-amber-100 text-amber-800",
+      };
+    }
+    if (detail.extraction_method === "manual") {
+      return {
+        label: "Manually Extracted",
+        className: "bg-sky-100 text-sky-800",
+      };
+    }
+    return {
+      label: `Auto Extracted (${detail.extraction_method})`,
+      className: "bg-emerald-100 text-emerald-800",
+    };
+  }, [detail]);
 
   const approveKyc = async () => {
     if (!detail) {
@@ -132,6 +202,50 @@ export default function AdminKycReviewDetailPage() {
     }
   };
 
+  const saveManualExtraction = async () => {
+    if (!detail) {
+      return;
+    }
+    if (
+      !manualForm.nic_number.trim() ||
+      !manualForm.full_name.trim() ||
+      !manualForm.date_of_birth.trim() ||
+      !manualForm.address.trim() ||
+      !manualForm.gender.trim()
+    ) {
+      setError("Complete all required manual extraction fields.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await apiClient.post<KycReviewDetail>(
+        `/admin/kyc/${detail.id}/extract-manual`,
+        {
+          nic_number: manualForm.nic_number.trim(),
+          full_name: manualForm.full_name.trim(),
+          date_of_birth: manualForm.date_of_birth,
+          address: manualForm.address.trim(),
+          gender: manualForm.gender.trim(),
+          issue_date: manualForm.issue_date || null,
+        },
+      );
+      setDetail(response.data);
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        setError(
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+            "Failed to save manual extraction.",
+        );
+      } else {
+        setError("Failed to save manual extraction.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-6 text-slate-500">Loading KYC review...</div>;
   }
@@ -155,6 +269,18 @@ export default function AdminKycReviewDetailPage() {
             {detail.user_name}
           </h1>
           <p className="mt-2 text-sm text-slate-600">{detail.user_email}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${extractionBadge.className}`}
+            >
+              {extractionBadge.label}
+            </span>
+            {detail.manual_extracted_by ? (
+              <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                Saved by {detail.manual_extracted_by}
+              </span>
+            ) : null}
+          </div>
         </header>
 
         <section className="grid gap-4 sm:grid-cols-4">
@@ -210,6 +336,128 @@ export default function AdminKycReviewDetailPage() {
             />
           </div>
         </section>
+
+        {detail.needs_manual_extraction ? (
+          <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-slate-900">
+              Manual Extraction Required
+            </h2>
+            <p className="mt-2 text-sm text-slate-700">
+              Auto extraction did not complete. Enter the document data from the
+              images, save it, then continue with approval or rejection.
+            </p>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  NIC Number
+                </label>
+                <input
+                  type="text"
+                  value={manualForm.nic_number}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      nic_number: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={manualForm.full_name}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      full_name: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={manualForm.date_of_birth}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      date_of_birth: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Gender
+                </label>
+                <input
+                  type="text"
+                  value={manualForm.gender}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      gender: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Address
+                </label>
+                <textarea
+                  value={manualForm.address}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      address: event.target.value,
+                    }))
+                  }
+                  rows={3}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Issue Date
+                </label>
+                <input
+                  type="date"
+                  value={manualForm.issue_date}
+                  onChange={(event) =>
+                    setManualForm((current) => ({
+                      ...current,
+                      issue_date: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={saveManualExtraction}
+                disabled={submitting}
+                className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting ? "Saving..." : "Save Manual Extraction"}
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         <section className="rounded-3xl bg-white shadow-sm">
           <div className="border-b border-slate-200 px-6 py-4">
@@ -299,7 +547,7 @@ export default function AdminKycReviewDetailPage() {
             <button
               type="button"
               onClick={approveKyc}
-              disabled={submitting}
+              disabled={submitting || detail.needs_manual_extraction}
               className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Approve KYC"}
