@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
 from app.core.otp import generate_otp
+from app.core.rate_limit import clear_failed_login_state, record_failed_login
 from app.core.redis import (
     blacklist_token,
     check_otp_rate_limit,
@@ -333,9 +334,7 @@ async def verify_otp(
         logger.error(f"User not found after OTP verification: {verify_request.email}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    user.failed_auth_attempts = 0
-    user.last_failed_auth = None
-    db.commit()
+    await clear_failed_login_state(user, db)
 
     # ========================================================================
     # STEP 4: Extract Session Metadata
@@ -647,6 +646,7 @@ async def reset_password(
 @router.post("/login")
 async def login(
     login_request: LoginRequest,
+    request: Request,
     db: Session = Depends(get_db),
     redis=Depends(get_redis),
 ):
@@ -669,17 +669,13 @@ async def login(
         raise invalid_credentials_error
 
     if not verify_password(login_request.password, user.password_hash):
-        user.failed_auth_attempts = (user.failed_auth_attempts or 0) + 1
-        user.last_failed_auth = datetime.now(UTC)
-        db.commit()
+        await record_failed_login(user, db, request)
         logger.warning(
             f"Login failed for {email}: invalid password " f"(attempt {user.failed_auth_attempts})"
         )
         raise invalid_credentials_error
 
-    user.failed_auth_attempts = 0
-    user.last_failed_auth = None
-    db.commit()
+    await clear_failed_login_state(user, db)
 
     otp = generate_otp()
     try:

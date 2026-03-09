@@ -109,19 +109,44 @@ def test_chat_message_rate_limits_after_ten_requests(client, auth_headers, monke
             "contains_boundary_violation": False,
         }
 
-    store: dict[str, int] = {}
-
     class FakeRedis:
+        def __init__(self):
+            self.store: dict[str, int | str] = {}
+
         async def incr(self, key: str) -> int:
-            value = store.get(key, 0) + 1
-            store[key] = value
+            value = int(self.store.get(key, 0)) + 1
+            self.store[key] = value
             return value
 
         async def expire(self, key: str, _window: int) -> bool:
             return True
 
+        async def get(self, key: str):
+            return self.store.get(key)
+
+        async def set(self, key: str, value: int | str) -> bool:
+            self.store[key] = value
+            return True
+
+        async def setex(self, key: str, _expiry: int, value: int | str) -> bool:
+            self.store[key] = value
+            return True
+
+        async def delete(self, *keys: str) -> int:
+            deleted = 0
+            for key in keys:
+                if key in self.store:
+                    deleted += 1
+                    del self.store[key]
+            return deleted
+
+        async def exists(self, key: str) -> int:
+            return 1 if key in self.store else 0
+
+    fake_redis = FakeRedis()
+
     async def _get_redis():
-        return FakeRedis()
+        return fake_redis
 
     monkeypatch.setattr("app.modules.chat.routes.gemini_service.chat", _chat)
     monkeypatch.setattr("app.core.rate_limit.get_redis", _get_redis)

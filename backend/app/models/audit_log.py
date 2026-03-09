@@ -37,6 +37,8 @@ class AuditEventType(str, enum.Enum):
     LOGIN = "LOGIN"
     LOGOUT = "LOGOUT"
     PASSWORD_CHANGED = "PASSWORD_CHANGED"  # pragma: allowlist secret
+    USER_TIER_DOWNGRADED = "USER_TIER_DOWNGRADED"
+    USER_TIER_UPGRADED = "USER_TIER_UPGRADED"
 
 
 class AuditLog(Base):
