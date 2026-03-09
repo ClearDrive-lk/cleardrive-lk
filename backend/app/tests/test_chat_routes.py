@@ -142,3 +142,23 @@ def test_chat_message_rate_limits_after_ten_requests(client, auth_headers, monke
 
     assert limited.status_code == 429
     assert limited.json()["detail"]["error"] == "Rate limit exceeded"
+
+
+def test_chat_message_falls_back_when_gemini_fails(client, db, auth_headers, monkeypatch):
+    vehicle = _create_vehicle(db, "CHAT-999", model="Aqua")
+
+    async def _chat(user_message, vehicle_context, conversation_history):
+        raise RuntimeError("Gemini model unavailable")
+
+    monkeypatch.setattr("app.modules.chat.routes.gemini_service.chat", _chat)
+
+    response = client.post(
+        "/api/v1/chat/message",
+        headers=auth_headers,
+        json={"message": "Need a practical city car", "conversation_history": []},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert str(vehicle.id) in payload["vehicle_ids"]
+    assert "Here are a few vehicles that fit your request" in payload["message"]
