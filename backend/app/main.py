@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from app.core.config import settings
+from app.core.rate_limit_middleware import RateLimitMiddleware
 from app.core.redis_client import close_redis, get_redis
 from app.modules.admin.audit_routes import router as admin_audit_logs_router
 from app.modules.admin.dashboard import router as admin_dashboard_router
@@ -153,6 +154,10 @@ logger.info(
     f"{settings.BACKEND_CORS_ORIGINS}, "
     f"regex: {settings.BACKEND_CORS_ORIGIN_REGEX or 'none'}"
 )
+
+# 4. Tiered Rate Limit Middleware
+app.add_middleware(RateLimitMiddleware)
+logger.info("Tiered rate limit middleware enabled")
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)

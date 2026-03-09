@@ -301,6 +301,10 @@ def mock_redis(mocker):
         store[key] = value
         return True
 
+    async def set_value(key, value):
+        store[key] = value
+        return True
+
     async def get(key):
         return store.get(key)
 
@@ -341,6 +345,7 @@ def mock_redis(mocker):
 
     mock_client = AsyncMock()
     mock_client.setex.side_effect = setex
+    mock_client.set.side_effect = set_value
     mock_client.get.side_effect = get
     mock_client.delete.side_effect = delete
     mock_client.incr.side_effect = incr
@@ -351,4 +356,5 @@ def mock_redis(mocker):
 
     mocker.patch("app.core.redis_client.get_redis", return_value=mock_client)
     mocker.patch("app.core.redis.get_redis", return_value=mock_client)
+    mocker.patch("app.core.rate_limit.get_redis", return_value=mock_client)
     yield mock_client
