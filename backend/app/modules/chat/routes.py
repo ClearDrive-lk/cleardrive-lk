@@ -8,7 +8,6 @@ from typing import Literal
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_active_user
-from app.core.rate_limit import check_rate_limit
 from app.modules.auth.models import User
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 from app.services.gemini import gemini_service
@@ -178,8 +177,6 @@ async def chat_message(
                 f"(max {settings.CHATBOT_MAX_HISTORY_LENGTH} messages)"
             ),
         )
-
-    await check_rate_limit(request, current_user, "chat")
 
     vehicle_context = search_vehicles(db, payload.message)
     try:
