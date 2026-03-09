@@ -131,6 +131,38 @@ def search_vehicles(db: Session, query_text: str) -> list[dict[str, object]]:
     ]
 
 
+def _fallback_chat_response(vehicle_context: list[dict[str, object]]) -> dict[str, object]:
+    if not vehicle_context:
+        return {
+            "message": (
+                "I could not find a strong vehicle match right now. "
+                "Try a body type, budget, or fuel preference like SUV, hybrid, or sedan."
+            ),
+            "vehicle_ids": [],
+            "suggested_action": None,
+        }
+
+    shortlisted = vehicle_context[:3]
+    vehicle_labels = [
+        f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})" for vehicle in shortlisted
+    ]
+    if len(vehicle_labels) == 1:
+        summary = vehicle_labels[0]
+    elif len(vehicle_labels) == 2:
+        summary = f"{vehicle_labels[0]} and {vehicle_labels[1]}"
+    else:
+        summary = f"{vehicle_labels[0]}, {vehicle_labels[1]}, and {vehicle_labels[2]}"
+
+    return {
+        "message": (
+            f"Here are a few vehicles that fit your request: {summary}. "
+            "Open a vehicle card to compare the details more closely."
+        ),
+        "vehicle_ids": [str(vehicle["id"]) for vehicle in shortlisted],
+        "suggested_action": None,
+    }
+
+
 @router.post("/message", response_model=ChatResponse)
 async def chat_message(
     payload: ChatRequest,
@@ -150,14 +182,18 @@ async def chat_message(
     await check_rate_limit(request, current_user, "chat")
 
     vehicle_context = search_vehicles(db, payload.message)
-    ai_response = await gemini_service.chat(
-        user_message=payload.message,
-        vehicle_context=vehicle_context,
-        conversation_history=[
-            {"role": message.role, "content": message.content}
-            for message in payload.conversation_history
-        ],
-    )
+    try:
+        ai_response = await gemini_service.chat(
+            user_message=payload.message,
+            vehicle_context=vehicle_context,
+            conversation_history=[
+                {"role": message.role, "content": message.content}
+                for message in payload.conversation_history
+            ],
+        )
+    except Exception as exc:
+        logger.exception("Gemini chat failed, using local fallback: %s", exc)
+        ai_response = _fallback_chat_response(vehicle_context)
 
     suggested_action = None
     if "tax calculator" in str(ai_response["message"]).lower():
