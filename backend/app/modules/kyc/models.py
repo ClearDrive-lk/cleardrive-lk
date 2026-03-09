@@ -67,6 +67,7 @@ class KYCDocument(Base, UUIDMixin, TimestampMixin):
     selfie_url: Mapped[str] = mapped_column(Text, nullable=False)
 
     # AI extraction results (Claude API / CD-51 OCR)
+    user_provided_data: Mapped[dict | None] = mapped_column(JSON)
     extracted_data: Mapped[dict | None] = mapped_column(JSON)
     discrepancies: Mapped[dict | None] = mapped_column(
         JSON

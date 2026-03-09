@@ -55,7 +55,7 @@ class AuctionSiteScraper:
         AuctionTarget(
             name="RAMADBK",
             base_url="https://www.ramadbk.com",
-            listing_paths=("/stock_list.php", "/search_by_usual.php"),
+            listing_paths=("/search_by_usual.php?stock_country=1",),
         ),
     )
 
@@ -102,16 +102,18 @@ class AuctionSiteScraper:
             logger.warning("BeautifulSoup is not installed. Live scraper disabled for this run.")
             return []
 
+        unlimited = count < 1
         rows: list[dict[str, Any]] = []
         seen_stock: set[str] = set()
 
         for target in self.TARGETS:
             for path in target.listing_paths:
-                if len(rows) >= count:
+                if not unlimited and len(rows) >= count:
                     return rows[:count]
 
                 page_url = urljoin(target.base_url, path)
-                scraped = self._scrape_page(target, page_url, count - len(rows))
+                remaining = None if unlimited else count - len(rows)
+                scraped = self._scrape_page(target, page_url, remaining)
                 for row in scraped:
                     stock_no = str(row.get("stock_no") or "")
                     if stock_no and stock_no in seen_stock:
@@ -119,19 +121,20 @@ class AuctionSiteScraper:
                     if stock_no:
                         seen_stock.add(stock_no)
                     rows.append(row)
-                    if len(rows) >= count:
+                    if not unlimited and len(rows) >= count:
                         return rows[:count]
 
                 # RAMADBK exposes additional stock pages via `?page=N`.
                 if "search_by_usual.php" in page_url:
                     empty_pages = 0
                     for page in range(1, 200):
-                        if len(rows) >= count:
+                        if not unlimited and len(rows) >= count:
                             return rows[:count]
 
                         sep = "&" if "?" in page_url else "?"
                         paged_url = f"{page_url}{sep}page={page}"
-                        paged_rows = self._scrape_page(target, paged_url, count - len(rows))
+                        remaining = None if unlimited else count - len(rows)
+                        paged_rows = self._scrape_page(target, paged_url, remaining)
                         added = 0
                         for row in paged_rows:
                             stock_no = str(row.get("stock_no") or "")
@@ -141,7 +144,7 @@ class AuctionSiteScraper:
                                 seen_stock.add(stock_no)
                             rows.append(row)
                             added += 1
-                            if len(rows) >= count:
+                            if not unlimited and len(rows) >= count:
                                 return rows[:count]
 
                         if added == 0:
@@ -151,10 +154,10 @@ class AuctionSiteScraper:
                         else:
                             empty_pages = 0
 
-        return rows[:count]
+        return rows if unlimited else rows[:count]
 
     def _scrape_page(
-        self, target: AuctionTarget, page_url: str, limit: int
+        self, target: AuctionTarget, page_url: str, limit: int | None
     ) -> list[dict[str, Any]]:
         try:
             response = self._http.get(page_url, timeout=self.timeout_seconds)
@@ -170,7 +173,8 @@ class AuctionSiteScraper:
         cards = self._extract_cards(soup)
         rows: list[dict[str, Any]] = []
 
-        for card in cards[:limit]:
+        page_cards = cards if limit is None else cards[:limit]
+        for card in page_cards:
             row = self._parse_card(card, target, page_url)
             if row:
                 rows.append(row)

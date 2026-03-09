@@ -151,6 +151,18 @@ def _map_steering(value: str | None) -> str | None:
     return None
 
 
+def _normalize_row_enums(row: dict[str, Any]) -> None:
+    fuel_value = _map_fuel(row.get("fuel_type"))
+    if fuel_value is not None:
+        row["fuel_type"] = fuel_value
+
+    row["transmission"] = _map_transmission(row.get("transmission"))
+
+    row["vehicle_type"] = _map_vehicle_type(row.get("vehicle_type") or row.get("body_type"))
+    row["drive"] = _map_drive(row.get("drive") or row.get("drive_type"))
+    row["steering"] = _map_steering(row.get("steering"))
+
+
 class ScraperScheduler:
     def __init__(self) -> None:
         self.scheduler = (
@@ -167,7 +179,7 @@ class ScraperScheduler:
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
                 ),
-                "Referer": "https://www.ramadbk.com/search_by_usual.php",
+                "Referer": "https://www.ramadbk.com/search_by_usual.php?stock_country=1",
             }
         )
 
@@ -357,6 +369,17 @@ class ScraperScheduler:
         return self._scraper.scrape(count=count)
 
     @staticmethod
+    def _resolve_scrape_count() -> int:
+        raw_value = os.getenv("CD23_SCRAPE_COUNT", "10").strip().lower()
+        if raw_value in {"all", "full", "unlimited"}:
+            return 0
+        try:
+            return int(raw_value)
+        except ValueError:
+            logger.warning("Invalid CD23_SCRAPE_COUNT=%r, defaulting to 10", raw_value)
+            return 10
+
+    @staticmethod
     def _year_cutoff() -> int | None:
         keep_years_raw = os.getenv("CD23_KEEP_LAST_YEARS", "3").strip()
         try:
@@ -509,9 +532,7 @@ class ScraperScheduler:
 
     def scrape_and_import(self) -> dict[str, int]:
         stats = {"scraped": 0, "new": 0, "updated": 0, "skipped": 0, "removed": 0, "errors": 0}
-        scrape_count = int(os.getenv("CD23_SCRAPE_COUNT", "10"))
-        if scrape_count < 1:
-            scrape_count = 10
+        scrape_count = self._resolve_scrape_count()
         year_cutoff = self._year_cutoff()
 
         if not self._job_lock.acquire(blocking=False):
@@ -539,23 +560,7 @@ class ScraperScheduler:
                             continue
 
                     # Normalize scraper values before both update/insert paths.
-                    mapped_fuel = _map_fuel(row.get("fuel_type"))
-                    if mapped_fuel is not None:
-                        row["fuel_type"] = mapped_fuel
-                    mapped_transmission = _map_transmission(row.get("transmission"))
-                    if mapped_transmission is not None:
-                        row["transmission"] = mapped_transmission
-                    mapped_vehicle_type = _map_vehicle_type(
-                        row.get("vehicle_type") or row.get("body_type")
-                    )
-                    if mapped_vehicle_type is not None:
-                        row["vehicle_type"] = mapped_vehicle_type
-                    mapped_drive = _map_drive(row.get("drive") or row.get("drive_type"))
-                    if mapped_drive is not None:
-                        row["drive"] = mapped_drive
-                    mapped_steering = _map_steering(row.get("steering"))
-                    if mapped_steering is not None:
-                        row["steering"] = mapped_steering
+                    _normalize_row_enums(row)
 
                     downloaded_images = self._download_and_store_images(row)
                     if downloaded_images:

@@ -20,7 +20,7 @@ from app.core.dependencies import get_current_user
 from app.core.redis_client import get_redis
 from app.core.security import decrypt_field
 from app.modules.auth.models import User
-from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
+from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.payments.schemas import (
@@ -28,13 +28,23 @@ from app.modules.payments.schemas import (
     PaymentInitiateResponse,
     PaymentResponse,
 )
+from app.services.orders.status_history import status_history_service
 from app.services.payment_notifications import (
     send_payment_confirmation_email,
     send_payment_failure_email,
 )
 from app.services.payments.idempotency import payment_idempotency
 from app.services.payments.payhere_signature import payhere_verifier
-from fastapi import APIRouter, Depends, Form, Header, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -336,6 +346,7 @@ async def initiate_payment(
 
 @router.post("/webhook")
 async def payhere_webhook(
+    request: Request,
     merchant_id: str = Form(...),
     order_id: str = Form(...),
     payhere_amount: str = Form(...),
@@ -447,13 +458,16 @@ async def payhere_webhook(
             old_status = order.status
             order.status = OrderStatus.PAYMENT_CONFIRMED
             order.payment_status = OrderPaymentStatus.COMPLETED
-            history = OrderStatusHistory(
-                order_id=order.id,
+            status_history_service.create_history_entry(
+                db=db,
+                order=order,
                 from_status=old_status,
                 to_status=OrderStatus.PAYMENT_CONFIRMED,
+                changed_by=None,
                 notes=f"Payment completed: {payhere_payment_id or 'N/A'}",
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent"),
             )
-            db.add(history)
     else:
         payment.status = PaymentStatus.FAILED
         if order:

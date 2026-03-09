@@ -26,7 +26,7 @@ from app.modules.vehicles.models import (
     VehicleStatus,
     VehicleType,
 )
-from app.services.scraper.scheduler import ScraperScheduler
+from app.services.scraper.scheduler import ScraperScheduler, _normalize_row_enums
 
 
 def _seed_default_tax_rule(db):
@@ -658,6 +658,37 @@ def test_scheduler_scrape_mode_hybrid_falls_back_to_mock(mocker):
     assert rows[0]["stock_no"] == "M-2"
     live_scrape.assert_called_once_with(count=1)
     mock_scrape.assert_called_once_with(count=1)
+
+
+def test_scheduler_resolve_scrape_count_supports_all_keyword(mocker):
+    mocker.patch.dict(os.environ, {"CD23_SCRAPE_COUNT": "all"})
+
+    assert ScraperScheduler._resolve_scrape_count() == 0
+
+
+def test_scheduler_resolve_scrape_count_defaults_on_invalid_value(mocker):
+    mocker.patch.dict(os.environ, {"CD23_SCRAPE_COUNT": "not-a-number"})
+
+    assert ScraperScheduler._resolve_scrape_count() == 10
+
+
+def test_scheduler_normalize_row_enums_drops_invalid_enum_values():
+    row = {
+        "vehicle_type": "Cars",
+        "body_type": "Cars",
+        "steering": "Center",
+        "drive": "Unknown",
+        "transmission": "5MT",
+        "fuel_type": "Diesel",
+    }
+
+    _normalize_row_enums(row)
+
+    assert row["vehicle_type"] is None
+    assert row["steering"] is None
+    assert row["drive"] is None
+    assert row["transmission"] is None
+    assert row["fuel_type"] == "Diesel"
 
 
 def test_create_vehicle_authenticated(client, db, admin_headers):

@@ -38,7 +38,7 @@ def _pick_python(repo_root: Path, backend_dir: Path) -> str:
         ve = Path(virtual_env)
         candidates.extend([ve / "Scripts" / "python.exe", ve / "bin" / "python"])
 
-    for name in (".venv", "venv"):
+    for name in (".venv", "venv", "venv312"):
         candidates.extend(
             [
                 repo_root / name / "Scripts" / "python.exe",
