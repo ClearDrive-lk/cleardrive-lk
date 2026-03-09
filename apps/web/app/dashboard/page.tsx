@@ -8,6 +8,7 @@ import {
   Car,
   User,
   FileText,
+  ShieldCheck,
   TrendingUp,
   CheckCircle2,
   Terminal,
@@ -62,6 +63,12 @@ export default function DashboardPage() {
                 className="hover:text-white transition-colors"
               >
                 Vehicles
+              </Link>
+              <Link
+                href="/dashboard/kyc"
+                className="hover:text-white transition-colors"
+              >
+                KYC
               </Link>
               <Link
                 href="/dashboard/profile"
@@ -127,6 +134,12 @@ export default function DashboardPage() {
                   href: "/dashboard/profile",
                   icon: User,
                   code: "USR-ACC",
+                },
+                {
+                  title: "KYC",
+                  href: "/dashboard/kyc",
+                  icon: ShieldCheck,
+                  code: "KYC-ID",
                 },
                 {
                   title: "Documents",

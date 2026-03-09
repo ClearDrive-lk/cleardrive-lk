@@ -53,6 +53,20 @@ class OrderResponse(OrderBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OrderListItem(BaseModel):
+    """Lightweight order summary for dashboard lists."""
+
+    id: UUID
+    user_id: UUID
+    vehicle_id: UUID
+    status: str
+    payment_status: str
+    total_cost_lkr: Decimal | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderStatusHistoryResponse(BaseModel):
     """
     Order status history item.
@@ -67,7 +81,7 @@ class OrderStatusHistoryResponse(BaseModel):
     notes: Optional[str]
 
     # Who changed it
-    changed_by_id: UUID
+    changed_by_id: UUID | None
     changed_by_name: str
     changed_by_email: str
 

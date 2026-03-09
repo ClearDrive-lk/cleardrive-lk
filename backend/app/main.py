@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
 from app.modules.admin.dashboard import router as admin_dashboard_router
 from app.modules.gdpr.routes import router as gdpr_router
+from app.modules.kyc.admin_routes import router as admin_kyc_router
 from app.modules.kyc.routes import router as kyc_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,7 +42,7 @@ from app.modules.calculator.routes import router as calculator_router
 from app.modules.gazette.routes import router as gazette_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
-from app.modules.shipping.admin_routes import router as shipping_admin_router
+from app.modules.shipping.admin_routes import router as admin_shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.scraper.scheduler import scraper_scheduler
@@ -145,14 +146,16 @@ app.include_router(calculator_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
-app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_shipping_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
 logger.info(
-    "Routers registered: /auth, /vehicles, /calculate, /orders, /admin, /admin/dashboard, /test, /kyc, /gdpr, /gazette"
+    "Routers registered: /auth, /vehicles, /calculate, /orders, /admin, "
+    "/admin/dashboard, /admin/shipping, /admin/kyc, /test, /kyc, /gdpr, /gazette"
 )
 
 # Serve local runtime data files (e.g., scraped vehicle images).

@@ -160,7 +160,7 @@ def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
         ),
-        "Referer": "https://www.ramadbk.com/search_by_usual.php",
+        "Referer": "https://www.ramadbk.com/search_by_usual.php?stock_country=1",
     }
     try:
         response = requests.get(vehicle_url, timeout=20, headers=headers)

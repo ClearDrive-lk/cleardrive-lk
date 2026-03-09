@@ -47,6 +47,12 @@ export default function ProfilePage() {
                 Vehicles
               </Link>
               <Link
+                href="/dashboard/kyc"
+                className="hover:text-white transition-colors"
+              >
+                KYC
+              </Link>
+              <Link
                 href="/dashboard/profile"
                 className="text-white transition-colors flex items-center gap-2"
               >

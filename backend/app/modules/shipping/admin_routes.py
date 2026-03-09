@@ -4,33 +4,83 @@ Author: Kalidu
 Story: CD-70 - Exporter Assignment
 """
 
-from __future__ import annotations
-
 import logging
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
 from app.modules.notifications.service import send_status_change_notification
-from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
+from app.modules.orders.models import Order, OrderStatus
 from app.modules.shipping.models import ShipmentDetails
 from app.modules.shipping.schemas import (
     AssignableOrderItem,
     ExporterAssignment,
     ShippingDetailsResponse,
 )
-from fastapi import APIRouter, Depends, HTTPException, status
+from app.modules.vehicles.models import Vehicle
+from app.services.orders.status_history import status_history_service
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/shipping", tags=["admin-shipping"])
+
+@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
+async def get_assignable_orders(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """List orders eligible for exporter assignment."""
+    _ = current_user
+    orders = (
+        db.query(Order)
+        .outerjoin(ShipmentDetails, ShipmentDetails.order_id == Order.id)
+        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
+        .filter(ShipmentDetails.id.is_(None))
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    items: list[AssignableOrderItem] = []
+    for order in orders:
+        user = db.query(User).filter(User.id == order.user_id).first()
+        vehicle = db.query(Vehicle).filter(Vehicle.id == order.vehicle_id).first()
+
+        if user is None or vehicle is None:
+            logger.warning(
+                "Skipping assignable order with missing relations order_id=%s user_id=%s vehicle_id=%s",
+                order.id,
+                order.user_id,
+                order.vehicle_id,
+            )
+            continue
+
+        items.append(
+            AssignableOrderItem(
+                id=order.id,
+                user_id=order.user_id,
+                vehicle_id=order.vehicle_id,
+                customer_name=user.name or user.email,
+                customer_email=user.email,
+                vehicle_label=f"{vehicle.make} {vehicle.model} ({vehicle.year})",
+                status=order.status.value,
+                payment_status=order.payment_status.value,
+                total_cost_lkr=(
+                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
+                ),
+                created_at=order.created_at,
+            )
+        )
+
+    return items
 
 
 @router.post("/{order_id}/assign", response_model=ShippingDetailsResponse)
 async def assign_exporter_to_order(
     order_id: str,
     assignment: ExporterAssignment,
+    request: Request,
     current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
     db: Session = Depends(get_db),
 ):
@@ -93,16 +143,19 @@ async def assign_exporter_to_order(
     old_status = order.status
     order.status = OrderStatus.ASSIGNED_TO_EXPORTER
 
-    history = OrderStatusHistory(
-        order_id=order.id,
+    status_history_service.create_history_entry(
+        db=db,
+        order=order,
         from_status=old_status,
         to_status=OrderStatus.ASSIGNED_TO_EXPORTER,
-        changed_by=current_user.id,
+        changed_by=current_user,
         notes=f"Assigned to exporter: {exporter.email}",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
     )
-    db.add(history)
 
     db.commit()
+    db.refresh(order)
     db.refresh(shipment)
 
     try:
@@ -113,53 +166,10 @@ async def assign_exporter_to_order(
         )
     except Exception:
         logger.exception(
-            "Exporter assignment completed for order_id=%s, but notification dispatch failed",
+            "Exporter assignment notification dispatch failed for order_id=%s",
             order.id,
         )
-
     return shipment
-
-
-@router.get("/assignable-orders", response_model=list[AssignableOrderItem])
-async def list_assignable_orders(
-    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
-    db: Session = Depends(get_db),
-):
-    """List paid orders that can be assigned to an exporter."""
-    orders = (
-        db.query(Order)
-        .filter(Order.status == OrderStatus.PAYMENT_CONFIRMED)
-        .order_by(Order.created_at.desc())
-        .all()
-    )
-
-    assignable_orders: list[AssignableOrderItem] = []
-    for order in orders:
-        if order.shipment_details is not None:
-            continue
-
-        vehicle = getattr(order, "vehicle", None)
-        user = getattr(order, "user", None)
-        vehicle_label = "Vehicle details unavailable"
-        if vehicle is not None:
-            vehicle_label = f"{vehicle.make} {vehicle.model} {vehicle.year}".strip()
-
-        assignable_orders.append(
-            AssignableOrderItem(
-                id=order.id,
-                customer_name=(getattr(user, "name", None) or "Unknown customer"),
-                customer_email=(getattr(user, "email", None) or "Unknown email"),
-                vehicle_label=vehicle_label,
-                status=order.status.value,
-                payment_status=order.payment_status.value,
-                total_cost_lkr=(
-                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
-                ),
-                created_at=order.created_at,
-            )
-        )
-
-    return assignable_orders
 
 
 @router.get("/all")

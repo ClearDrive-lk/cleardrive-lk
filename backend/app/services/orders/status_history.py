@@ -6,12 +6,12 @@ Author: Parindra Gallage
 Story: CD-32.3 - Track status changes
 """
 
-from sqlalchemy.orm import Session
 from typing import Optional, Union
 from uuid import UUID
 
-from app.modules.orders.models import Order, OrderStatusHistory, OrderStatus
 from app.modules.auth.models import User
+from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
+from sqlalchemy.orm import Session
 
 
 class OrderStatusHistoryService:
@@ -27,7 +27,7 @@ class OrderStatusHistoryService:
         order: Order,
         from_status: Optional[OrderStatus],
         to_status: OrderStatus,
-        changed_by: User,
+        changed_by: User | None,
         notes: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
@@ -53,7 +53,7 @@ class OrderStatusHistoryService:
             order_id=order.id,
             from_status=from_status.value if from_status else None,
             to_status=to_status.value,
-            changed_by=changed_by.id,
+            changed_by=changed_by.id if changed_by is not None else None,
             notes=notes,
             ip_address=ip_address,
             user_agent=user_agent,
@@ -64,7 +64,7 @@ class OrderStatusHistoryService:
         print("📝 Status History Created:")
         print(f"   Order: {order.id}")
         print(f"   Change: {from_status.value if from_status else 'None'} -> {to_status.value}")
-        print(f"   By: {changed_by.email}")
+        print(f"   By: {changed_by.email if changed_by is not None else 'system'}")
 
         return history
 

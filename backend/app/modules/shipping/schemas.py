@@ -73,15 +73,17 @@ class ShipmentDetailsResponse(ShippingDetailsResponse):
 
 
 class AssignableOrderItem(BaseModel):
-    """Admin-facing order summary for exporter assignment."""
+    """Admin list item for orders eligible for exporter assignment."""
 
     id: UUID
+    user_id: UUID
+    vehicle_id: UUID
     customer_name: str
     customer_email: str
     vehicle_label: str
     status: str
     payment_status: str
-    total_cost_lkr: Optional[float] = None
+    total_cost_lkr: float | None = None
     created_at: datetime
 
     class Config:
