@@ -1,6 +1,9 @@
-// apps/web/components/OrderTimeline.tsx
-
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+
+import { Badge } from "@/components/ui/badge";
+import apiClient from "@/lib/api-client";
+import { AlertCircle, CheckCircle2, Clock3, PackageCheck } from "lucide-react";
 
 interface TimelineEvent {
   id: string;
@@ -14,64 +17,137 @@ interface TimelineEvent {
 
 interface OrderTimelineProps {
   orderId: string;
+  onTimelineUpdate?: () => void;
 }
 
-export function OrderTimeline({ orderId }: OrderTimelineProps) {
+const statusStyles: Record<string, string> = {
+  CREATED: "border-sky-500/20 bg-sky-500/10 text-sky-200",
+  PAYMENT_CONFIRMED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
+  LC_REQUESTED: "border-amber-500/20 bg-amber-500/10 text-amber-200",
+  LC_APPROVED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
+  LC_REJECTED: "border-red-500/20 bg-red-500/10 text-red-200",
+  ASSIGNED_TO_EXPORTER:
+    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
+  SHIPMENT_DOCS_UPLOADED:
+    "border-violet-500/20 bg-violet-500/10 text-violet-200",
+  AWAITING_SHIPMENT_CONFIRMATION:
+    "border-orange-500/20 bg-orange-500/10 text-orange-200",
+  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
+  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
+  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
+  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
+  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
+  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
+};
+
+function getStatusIcon(status: string) {
+  const icons: Record<string, ReactNode> = {
+    CREATED: <PackageCheck className="h-4 w-4" />,
+    PAYMENT_CONFIRMED: <CheckCircle2 className="h-4 w-4" />,
+    LC_REQUESTED: <Clock3 className="h-4 w-4" />,
+    LC_APPROVED: <CheckCircle2 className="h-4 w-4" />,
+    LC_REJECTED: <AlertCircle className="h-4 w-4" />,
+    ASSIGNED_TO_EXPORTER: <PackageCheck className="h-4 w-4" />,
+    SHIPMENT_DOCS_UPLOADED: <PackageCheck className="h-4 w-4" />,
+    AWAITING_SHIPMENT_CONFIRMATION: <Clock3 className="h-4 w-4" />,
+    SHIPPED: <PackageCheck className="h-4 w-4" />,
+    IN_TRANSIT: <Clock3 className="h-4 w-4" />,
+    ARRIVED_AT_PORT: <PackageCheck className="h-4 w-4" />,
+    CUSTOMS_CLEARANCE: <Clock3 className="h-4 w-4" />,
+    DELIVERED: <CheckCircle2 className="h-4 w-4" />,
+    CANCELLED: <AlertCircle className="h-4 w-4" />,
+  };
+
+  return icons[status] ?? <Clock3 className="h-4 w-4" />;
+}
+
+export function OrderTimeline({
+  orderId,
+  onTimelineUpdate,
+}: OrderTimelineProps) {
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTimeline();
+    void fetchTimeline();
   }, [orderId]);
 
-  const fetchTimeline = async () => {
-    try {
-      const response = await fetch(`/api/v1/orders/${orderId}/timeline`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+  useEffect(() => {
+    const accessToken = sessionStorage.getItem("access_token");
+    const streamUrl = `${apiClient.defaults.baseURL}/orders/${orderId}/timeline/stream`;
+    const controller = new AbortController();
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch timeline");
-      }
-
-      const data = await response.json();
-      setTimeline(data.timeline);
-      setLoading(false);
-    } catch (err: any) {
-      setError(err.message);
-      setLoading(false);
+    if (!accessToken) {
+      return () => controller.abort();
     }
-  };
 
-  const getStatusIcon = (status: string) => {
-    const icons: Record<string, string> = {
-      CREATED: "📝",
-      PAYMENT_CONFIRMED: "💳",
-      ASSIGNED_TO_EXPORTER: "👤",
-      SHIPPING_STARTED: "🚢",
-      IN_TRANSIT: "🌊",
-      CUSTOMS_CLEARANCE: "🛃",
-      DELIVERED: "✅",
-      CANCELLED: "❌",
-    };
-    return icons[status] || "📌";
-  };
+    const subscribe = async () => {
+      try {
+        const response = await fetch(streamUrl, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "text/event-stream",
+          },
+          signal: controller.signal,
+        });
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      CREATED: "bg-blue-100 text-blue-800",
-      PAYMENT_CONFIRMED: "bg-green-100 text-green-800",
-      ASSIGNED_TO_EXPORTER: "bg-purple-100 text-purple-800",
-      SHIPPING_STARTED: "bg-indigo-100 text-indigo-800",
-      IN_TRANSIT: "bg-cyan-100 text-cyan-800",
-      CUSTOMS_CLEARANCE: "bg-yellow-100 text-yellow-800",
-      DELIVERED: "bg-green-200 text-green-900",
-      CANCELLED: "bg-red-100 text-red-800",
+        if (!response.ok || !response.body) {
+          throw new Error("Realtime timeline stream unavailable");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (!controller.signal.aborted) {
+          const { done, value } = await reader.read();
+          if (done) {
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split("\n\n");
+          buffer = events.pop() ?? "";
+
+          for (const eventBlock of events) {
+            if (!eventBlock.includes("event: timeline")) {
+              continue;
+            }
+            void fetchTimeline({ silent: true });
+            onTimelineUpdate?.();
+          }
+        }
+      } catch {
+        // Keep the UI functional even if streaming is unavailable.
+      }
     };
-    return colors[status] || "bg-gray-100 text-gray-800";
+
+    void subscribe();
+
+    return () => controller.abort();
+  }, [orderId, onTimelineUpdate]);
+
+  const fetchTimeline = async ({
+    silent = false,
+  }: { silent?: boolean } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+
+    try {
+      const { data } = await apiClient.get(`/orders/${orderId}/timeline`);
+      setTimeline(data.timeline);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch timeline";
+      setError(message);
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -87,44 +163,45 @@ export function OrderTimeline({ orderId }: OrderTimelineProps) {
 
   if (loading) {
     return (
-      <div className="flex justify-center p-8">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-8 text-sm text-gray-400">
+        Loading timeline...
       </div>
     );
   }
 
   if (error) {
-    return <div className="alert alert-danger">{error}</div>;
+    return (
+      <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div className="order-timeline">
-      <h3 className="text-xl font-semibold mb-4">Order Timeline</h3>
+    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
+      <h3 className="mb-6 text-xl font-semibold text-white">Order Timeline</h3>
 
       <div className="relative">
-        {/* Timeline line */}
-        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+        <div className="absolute bottom-0 left-4 top-0 w-px bg-white/10"></div>
 
-        {/* Timeline events */}
         <div className="space-y-6">
-          {timeline.map((event, index) => (
+          {timeline.map((event) => (
             <div key={event.id} className="relative pl-10">
-              {/* Icon */}
-              <div className="absolute left-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center text-lg">
+              <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border border-[#FE7743]/20 bg-[#111111] text-[#FE7743]">
                 {getStatusIcon(event.to_status)}
               </div>
 
-              {/* Content */}
-              <div className="bg-white rounded-lg shadow-sm border p-4">
-                <div className="flex items-start justify-between mb-2">
+              <div className="rounded-2xl border border-white/10 bg-[#0D0D0D] p-4">
+                <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(event.to_status)}`}
+                    <Badge
+                      className={
+                        statusStyles[event.to_status] ??
+                        "border-white/10 bg-white/5 text-white"
+                      }
                     >
                       {event.to_status.replace(/_/g, " ")}
-                    </span>
+                    </Badge>
                   </div>
                   <span className="text-sm text-gray-500">
                     {formatDate(event.created_at)}
@@ -132,12 +209,16 @@ export function OrderTimeline({ orderId }: OrderTimelineProps) {
                 </div>
 
                 {event.notes && (
-                  <p className="text-gray-700 mb-2">{event.notes}</p>
+                  <p className="mb-2 text-sm text-gray-300">{event.notes}</p>
                 )}
 
                 <p className="text-sm text-gray-500">
-                  Changed by:{" "}
-                  <span className="font-medium">{event.changed_by_name}</span>
+                  Changed by{" "}
+                  <span className="font-medium text-white">
+                    {event.changed_by_name}
+                  </span>
+                  {" · "}
+                  <span>{event.changed_by_email}</span>
                 </p>
               </div>
             </div>
@@ -146,7 +227,7 @@ export function OrderTimeline({ orderId }: OrderTimelineProps) {
       </div>
 
       {timeline.length === 0 && (
-        <p className="text-center text-gray-500 py-8">No timeline events yet</p>
+        <p className="py-8 text-center text-gray-500">No timeline events yet</p>
       )}
     </div>
   );
