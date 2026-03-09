@@ -1,3 +1,5 @@
+import asyncio
+import json
 import logging
 from datetime import datetime
 from typing import Optional
@@ -14,28 +16,31 @@ from app.core.permissions import (
     verify_resource_ownership,
 )
 from app.core.security import encrypt_field
-from app.modules.auth.models import User
+from app.modules.auth.models import Role, User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import (
     Order,
     OrderStatus,
+    OrderStatusHistory,
     PaymentStatus,
 )
 from app.modules.orders.schemas import (
     OrderCreate,
+    OrderListItem,
     OrderResponse,
-    OrderTimelineResponse,
     OrderStatusHistoryResponse,
+    OrderTimelineResponse,
 )
-from app.services.orders.status_history import status_history_service
 from app.modules.orders.state_machine import (
     get_allowed_next_states,
     validate_state_transition,
 )
 from app.services.email import send_email
+from app.services.orders.status_history import status_history_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import text
+from fastapi.responses import StreamingResponse
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -50,6 +55,10 @@ def _get_vehicle_for_order(db: Session, vehicle_id: str):
         WHERE id = :vehicle_id
         """)
     return db.execute(query, {"vehicle_id": vehicle_id}).mappings().first()
+
+
+def _customer_must_own_order(order: Order, current_user: User) -> bool:
+    return current_user.role == Role.CUSTOMER and order.user_id != current_user.id
 
 
 @router.post("", response_model=OrderResponse, status_code=201)
@@ -119,8 +128,7 @@ async def create_order(
     )
 
     db.add(new_order)
-    db.commit()
-    db.refresh(new_order)
+    db.flush()
 
     # ===============================================================
     # CD-32.3: CREATE INITIAL STATUS HISTORY
@@ -136,6 +144,7 @@ async def create_order(
         user_agent=request.headers.get("user-agent"),
     )
     db.commit()
+    db.refresh(new_order)
 
     # 6. Update vehicle status to RESERVED
     db.execute(
@@ -178,6 +187,21 @@ async def create_order(
         )
 
     return new_order
+
+
+@router.get("", response_model=list[OrderListItem])
+@require_permission_decorator(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
+async def list_orders(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """List orders for customer and staff dashboards."""
+    query = db.query(Order)
+
+    if current_user.role == Role.CUSTOMER:
+        query = query.filter(Order.user_id == current_user.id)
+
+    return query.order_by(Order.created_at.desc()).all()
 
 
 @router.get("/{order_id}")
@@ -433,7 +457,7 @@ async def get_order_timeline(
 
     **Access**:
     - Customer: Own orders only
-    - Admin: All orders
+    - Staff roles: All orders
 
     **Returns**:
     - Complete chronological timeline
@@ -452,11 +476,11 @@ async def get_order_timeline(
     - Delivered
     """
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("📋 FETCHING ORDER TIMELINE")
     print(f"   Order: {order_id}")
     print(f"   User: {current_user.email}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     # Get order
     order = db.query(Order).filter(Order.id == order_id).first()
@@ -464,8 +488,8 @@ async def get_order_timeline(
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
-    # Check access (customer can only see own orders)
-    if current_user.role != "ADMIN" and order.user_id != current_user.id:
+    # Customers can only see their own orders. Staff roles can view all orders.
+    if _customer_must_own_order(order, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     # Get timeline
@@ -475,6 +499,12 @@ async def get_order_timeline(
     timeline = []
 
     for record in history_records:
+        actor_name = "System"
+        actor_email = "system@cleardrive.local"
+        if record.user is not None:
+            actor_name = record.user.name or record.user.email
+            actor_email = record.user.email
+
         timeline_item = OrderStatusHistoryResponse(
             id=record.id,
             order_id=record.order_id,
@@ -482,14 +512,14 @@ async def get_order_timeline(
             to_status=record.to_status,
             notes=record.notes,
             changed_by_id=record.changed_by,
-            changed_by_name=record.user.name or record.user.email,
-            changed_by_email=record.user.email,
+            changed_by_name=actor_name,
+            changed_by_email=actor_email,
             created_at=record.created_at,
         )
         timeline.append(timeline_item)
 
     print(f"✅ Timeline fetched: {len(timeline)} events")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     return OrderTimelineResponse(
         order_id=order.id,
@@ -497,6 +527,68 @@ async def get_order_timeline(
         created_at=order.created_at,
         total_events=len(timeline),
         timeline=timeline,
+    )
+
+
+@router.get("/{order_id}/timeline/stream")
+async def stream_order_timeline(
+    order_id: str,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Stream timeline updates as Server-Sent Events.
+
+    CD-32.5: push timeline refresh signals to the frontend when order status
+    history changes.
+    """
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    if _customer_must_own_order(order, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    def snapshot() -> dict[str, str | int]:
+        history_count = (
+            db.query(func.count(OrderStatusHistory.id))
+            .filter(OrderStatusHistory.order_id == order.id)
+            .scalar()
+            or 0
+        )
+        latest_history_at = (
+            db.query(func.max(OrderStatusHistory.created_at))
+            .filter(OrderStatusHistory.order_id == order.id)
+            .scalar()
+        )
+        return {
+            "status": order.status.value,
+            "history_count": int(history_count),
+            "latest_history_at": latest_history_at.isoformat() if latest_history_at else "",
+        }
+
+    async def event_stream():
+        last_snapshot = snapshot()
+        yield f"event: timeline\ndata: {json.dumps(last_snapshot)}\n\n"
+
+        while True:
+            if await request.is_disconnected():
+                break
+
+            db.expire_all()
+            current_snapshot = snapshot()
+            if current_snapshot != last_snapshot:
+                last_snapshot = current_snapshot
+                yield f"event: timeline\ndata: {json.dumps(current_snapshot)}\n\n"
+
+            yield ": keepalive\n\n"
+            await asyncio.sleep(2)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
@@ -527,8 +619,8 @@ async def get_order_allowed_transitions(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found"
         )
 
-    # Check authorization
-    if current_user.role != "ADMIN" and order.user_id != current_user.id:
+    # Customers can only inspect their own orders. Staff roles can inspect all.
+    if _customer_must_own_order(order, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to view this order",

@@ -1,10 +1,11 @@
 """
-Run one-shot live scrape and upload images directly to Supabase Storage.
+Run one-shot live scrape and import directly into the local database.
 
-This script loads backend/.env.supabase first, then falls back to backend/.env.
+This script loads backend/.env.localdb first, then falls back to backend/.env.
 Usage:
-    python scripts/scrape_to_supabase.py
-    python scripts/scrape_to_supabase.py --count 80 --years 3
+    python scripts/scrape_to_local.py
+    python scripts/scrape_to_local.py --count 100 --years 3
+    python scripts/scrape_to_local.py --count 0 --years 3
 """
 
 from __future__ import annotations
@@ -37,30 +38,27 @@ def _load_env_file(path: Path) -> None:
 
 
 def main() -> None:
-    try:
-        import supabase  # noqa: F401
-    except Exception as exc:
-        raise SystemExit(
-            "Missing 'supabase' package. Install backend requirements first: "
-            "pip install -r requirements.txt"
-        ) from exc
-
-    parser = argparse.ArgumentParser(description="Scrape vehicles and upload images directly to Supabase")
-    parser.add_argument("--count", type=int, default=50, help="Number of listings to scrape")
+    parser = argparse.ArgumentParser(description="Scrape vehicles and import directly into the local database")
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=100,
+        help="Number of listings to scrape. Use 0 to import all available pages.",
+    )
     parser.add_argument("--years", type=int, default=3, help="Keep only last N years")
     args = parser.parse_args()
 
-    _load_env_file(ROOT / ".env.supabase")
+    _load_env_file(ROOT / ".env.localdb")
     _load_env_file(ROOT / ".env")
 
     os.environ.setdefault("CD23_SCRAPER_MODE", "live")
-    os.environ["CD23_SCRAPE_COUNT"] = str(max(1, args.count))
+    os.environ["CD23_SCRAPE_COUNT"] = str(max(0, args.count))
     os.environ["CD23_KEEP_LAST_YEARS"] = str(max(1, args.years))
-    os.environ["CD23_UPLOAD_IMAGES_SUPABASE"] = "true"
-    os.environ["CD23_REQUIRE_SUPABASE_UPLOAD"] = "true"
-    os.environ["CD23_STORE_IMAGES_LOCAL"] = "false"
-    os.environ["CD23_FUEL_ENUM_STYLE"] = "upper"
-    os.environ["CD23_TRANSMISSION_ENUM_STYLE"] = "upper"
+    os.environ["CD23_UPLOAD_IMAGES_SUPABASE"] = "false"
+    os.environ["CD23_REQUIRE_SUPABASE_UPLOAD"] = "false"
+    os.environ["CD23_STORE_IMAGES_LOCAL"] = "true"
+    os.environ["CD23_FUEL_ENUM_STYLE"] = "title"
+    os.environ["CD23_TRANSMISSION_ENUM_STYLE"] = "title"
 
     from app.services.scraper.scheduler import scraper_scheduler
 
