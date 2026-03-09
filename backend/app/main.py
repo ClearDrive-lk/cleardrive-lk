@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
+from app.modules.admin.audit_routes import router as admin_audit_logs_router
 from app.modules.admin.dashboard import router as admin_dashboard_router
 from app.modules.gdpr.routes import router as gdpr_router
 from app.modules.kyc.admin_routes import router as admin_kyc_router
@@ -161,6 +162,7 @@ app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_audit_logs_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(security_router, prefix=settings.API_V1_PREFIX)
@@ -170,7 +172,8 @@ app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
 logger.info(
     "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
-    "/admin/dashboard, /admin/shipping, /admin/kyc, /security, /test, /kyc, /gdpr, /gazette"
+    "/admin/dashboard, /admin/audit-logs, /admin/shipping, /admin/kyc, "
+    "/security, /test, /kyc, /gdpr, /gazette"
 )
 
 # Serve local runtime data files (e.g., scraped vehicle images).
