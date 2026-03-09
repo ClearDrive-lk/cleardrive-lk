@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from datetime import UTC, datetime
+from datetime import UTC
+from datetime import date as dt_date
+from datetime import datetime
 from typing import TypedDict, cast
 
 try:
@@ -30,7 +32,7 @@ from app.modules.kyc.schemas import (
 from app.modules.security.models import FileIntegrity, VerificationStatus
 from app.services.email import send_email
 from app.services.vps_proxy import extract_nic_with_retry
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/kyc", tags=["kyc"])
@@ -45,6 +47,19 @@ class KYCFilePayload(TypedDict):
 
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # CD-50.4 (10MB)
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+def _parse_optional_date(value: str | None) -> dt_date | None:
+    if not value or not value.strip():
+        return None
+    return dt_date.fromisoformat(value.strip())
+
+
+def _clean_optional_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    return cleaned or None
 
 
 def _detect_mime_type(file_content: bytes, declared_content_type: str | None) -> str:
@@ -96,6 +111,11 @@ async def upload_kyc_documents(
     nic_front: UploadFile = File(..., description="NIC front image"),
     nic_back: UploadFile = File(..., description="NIC back image"),
     selfie: UploadFile = File(..., description="Selfie photo"),
+    nic_number: str | None = Form(default=None),
+    full_name: str | None = Form(default=None),
+    date_of_birth: str | None = Form(default=None),
+    address: str | None = Form(default=None),
+    gender: str | None = Form(default=None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -121,6 +141,13 @@ async def upload_kyc_documents(
 
     files = {"nic_front": nic_front, "nic_back": nic_back, "selfie": selfie}
     file_contents: dict[str, KYCFilePayload] = {}
+    user_provided_data = {
+        "nic_number": _clean_optional_text(nic_number),
+        "full_name": _clean_optional_text(full_name),
+        "date_of_birth": _clean_optional_text(date_of_birth),
+        "address": _clean_optional_text(address),
+        "gender": _clean_optional_text(gender),
+    }
 
     for file_name, file in files.items():
         content = await file.read()
@@ -220,9 +247,15 @@ async def upload_kyc_documents(
 
     kyc_document = KYCDocument(
         user_id=current_user.id,
+        nic_number=user_provided_data["nic_number"],
+        full_name=user_provided_data["full_name"],
+        date_of_birth=_parse_optional_date(user_provided_data["date_of_birth"]),
+        address=user_provided_data["address"],
+        gender=user_provided_data["gender"],
         nic_front_url=uploaded_urls["nic_front"],
         nic_back_url=uploaded_urls["nic_back"],
         selfie_url=uploaded_urls["selfie"],
+        user_provided_data=user_provided_data,
         extracted_data=extracted_payload,
         status=(KYCStatus.PENDING_MANUAL_REVIEW if manual_review_required else KYCStatus.PENDING),
     )
