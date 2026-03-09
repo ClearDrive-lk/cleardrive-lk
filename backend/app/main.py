@@ -6,6 +6,7 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.redis_client import close_redis, get_redis
+from app.modules.admin.audit_routes import router as admin_audit_router
 from app.modules.admin.dashboard import router as admin_dashboard_router
 from app.modules.gdpr.routes import router as gdpr_router
 from app.modules.kyc.routes import router as kyc_router
@@ -145,6 +146,7 @@ app.include_router(calculator_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_audit_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)

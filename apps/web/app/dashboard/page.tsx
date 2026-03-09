@@ -152,10 +152,6 @@ export default function DashboardPage() {
                   href: "/dashboard/shipping",
                   icon: Package,
                   code: "SHP-SUB",
-                  title: "KYC",
-                  href: "/dashboard/kyc",
-                  icon: ShieldCheck,
-                  code: "KYC-ID",
                 },
                 {
                   title: "Documents",
