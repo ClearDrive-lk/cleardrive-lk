@@ -21,6 +21,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.storage import storage
+from app.models.audit_log import AuditEventType, AuditLog
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.kyc.schemas import (
@@ -259,6 +260,31 @@ async def upload_kyc_documents(
     db.refresh(kyc_document)
 
     if manual_review_required:
+        db.add(
+            AuditLog(
+                event_type=AuditEventType.KYC_AUTO_EXTRACTION_FAILED,
+                user_id=current_user.id,
+                admin_id=None,
+                details={
+                    "kyc_id": str(kyc_document.id),
+                    "user_email": current_user.email,
+                    "queued_for_manual_review": True,
+                },
+            )
+        )
+        db.add(
+            AuditLog(
+                event_type=AuditEventType.KYC_MANUAL_REVIEW_QUEUED,
+                user_id=current_user.id,
+                admin_id=None,
+                details={
+                    "kyc_id": str(kyc_document.id),
+                    "user_email": current_user.email,
+                },
+            )
+        )
+        db.commit()
+        db.refresh(kyc_document)
         try:
             await _notify_admin_manual_review_needed(
                 user_id=str(current_user.id),
