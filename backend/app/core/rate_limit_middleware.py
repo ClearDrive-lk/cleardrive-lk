@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Generator
+from typing import Callable, cast
 
 from app.core.database import get_db
 from app.core.rate_limit import (
@@ -18,6 +19,7 @@ from app.core.security import decode_access_token
 from app.modules.auth.models import User
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
@@ -67,7 +69,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         finally:
             self._close_db_generator(db_generator)
 
-    async def _resolve_user(self, request: Request, db) -> User | None:
+    async def _resolve_user(self, request: Request, db: Session) -> User | None:
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return None
@@ -85,13 +87,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not user_id:
             return None
 
-        return db.query(User).filter(User.id == user_id).first()
+        return cast(User | None, db.query(User).filter(User.id == user_id).first())
 
-    def _get_db_generator(self, request: Request) -> Generator:
-        db_dependency = request.app.dependency_overrides.get(get_db, get_db)
-        return db_dependency()
+    def _get_db_generator(self, request: Request) -> Generator[Session, None, None]:
+        db_dependency = cast(
+            Callable[[], Generator[Session, None, None]],
+            request.app.dependency_overrides.get(get_db, get_db),
+        )
+        return cast(Generator[Session, None, None], db_dependency())
 
-    def _close_db_generator(self, generator: Generator) -> None:
+    def _close_db_generator(self, generator: Generator[Session, None, None]) -> None:
         try:
             next(generator)
         except StopIteration:
