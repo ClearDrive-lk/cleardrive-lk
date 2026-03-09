@@ -152,7 +152,10 @@ app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
 logger.info(
-    "Routers registered: /auth, /vehicles, /calculate, /orders, /admin, /admin/dashboard, /test, /kyc, /gdpr, /gazette"
+    "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
+    "/shipping, /admin, "
+    "/admin/dashboard, /admin/audit-logs, /admin/shipping, /admin/kyc, "
+    "/security, /test, /kyc, /gdpr, /gazette"
 )
 
 # Serve local runtime data files (e.g., scraped vehicle images).

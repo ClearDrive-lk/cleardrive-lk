@@ -146,6 +146,12 @@ export default function OrdersPage() {
                 Shipping
               </Link>
               <Link
+                href="/dashboard/kyc"
+                className="hover:text-white transition-colors"
+              >
+                KYC
+              </Link>
+              <Link
                 href="/dashboard/profile"
                 className="hover:text-white transition-colors"
               >
