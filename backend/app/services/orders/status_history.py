@@ -6,12 +6,12 @@ Author: Parindra Gallage
 Story: CD-32.3 - Track status changes
 """
 
-from sqlalchemy.orm import Session
 from typing import Optional, Union
 from uuid import UUID
 
-from app.modules.orders.models import Order, OrderStatusHistory, OrderStatus
 from app.modules.auth.models import User
+from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
+from sqlalchemy.orm import Session
 
 
 class OrderStatusHistoryService:

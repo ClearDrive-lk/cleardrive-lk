@@ -25,15 +25,15 @@ from app.modules.orders.models import (
 from app.modules.orders.schemas import (
     OrderCreate,
     OrderResponse,
-    OrderTimelineResponse,
     OrderStatusHistoryResponse,
+    OrderTimelineResponse,
 )
-from app.services.orders.status_history import status_history_service
 from app.modules.orders.state_machine import (
     get_allowed_next_states,
     validate_state_transition,
 )
 from app.services.email import send_email
+from app.services.orders.status_history import status_history_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -452,11 +452,11 @@ async def get_order_timeline(
     - Delivered
     """
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("📋 FETCHING ORDER TIMELINE")
     print(f"   Order: {order_id}")
     print(f"   User: {current_user.email}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     # Get order
     order = db.query(Order).filter(Order.id == order_id).first()
@@ -489,7 +489,7 @@ async def get_order_timeline(
         timeline.append(timeline_item)
 
     print(f"✅ Timeline fetched: {len(timeline)} events")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     return OrderTimelineResponse(
         order_id=order.id,
