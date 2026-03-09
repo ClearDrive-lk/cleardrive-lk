@@ -1,17 +1,21 @@
 from __future__ import annotations
 
-from io import BytesIO
 from unittest.mock import AsyncMock
 
+import pytest
 from fastapi.testclient import TestClient
-from PIL import Image
+
+pytest.importorskip("PIL")
 from vps_nic_extractor import main as vps_main
 
 
 def _valid_png_bytes() -> bytes:
-    buf = BytesIO()
-    Image.new("RGB", (2, 2), color=(255, 255, 255)).save(buf, format="PNG")
-    return buf.getvalue()
+    # 1x1 transparent PNG to avoid requiring Pillow in test environments.
+    return (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\x0bIDATx\x9cc`\x00\x02"
+        b"\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
 
 
 def test_extract_nic_requires_internal_secret(monkeypatch):

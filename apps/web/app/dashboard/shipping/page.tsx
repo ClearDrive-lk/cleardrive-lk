@@ -56,7 +56,10 @@ function validate(form: FormState): string | null {
     if (!form[field].trim()) return `${label} is required`;
   }
 
-  if (form.departurePort.trim().toLowerCase() === form.arrivalPort.trim().toLowerCase()) {
+  if (
+    form.departurePort.trim().toLowerCase() ===
+    form.arrivalPort.trim().toLowerCase()
+  ) {
     return "Departure and arrival ports must be different";
   }
 
@@ -73,7 +76,9 @@ function validate(form: FormState): string | null {
   if (!basicCode.test(form.containerNumber.replace(/\s+/g, "").toUpperCase())) {
     return "Invalid container number format";
   }
-  if (!basicCode.test(form.billOfLandingNumber.replace(/\s+/g, "").toUpperCase())) {
+  if (
+    !basicCode.test(form.billOfLandingNumber.replace(/\s+/g, "").toUpperCase())
+  ) {
     return "Invalid bill of landing number format";
   }
 
@@ -123,7 +128,8 @@ export default function ShippingDetailsPage() {
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         const detail =
-          (err.response?.data as { detail?: string } | undefined)?.detail ?? err.message;
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+          err.message;
         setError(detail);
       } else {
         setError("Failed to submit shipping details.");
@@ -139,17 +145,25 @@ export default function ShippingDetailsPage() {
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Shipping Details Submission</h1>
+              <h1 className="text-3xl font-bold">
+                Shipping Details Submission
+              </h1>
               <p className="text-gray-400 mt-1">
                 Submit vessel and shipment details for your assigned order.
               </p>
             </div>
-            <Link href="/dashboard/orders" className="text-[#FE7743] hover:underline">
+            <Link
+              href="/dashboard/orders"
+              className="text-[#FE7743] hover:underline"
+            >
               Back to Orders
             </Link>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-4 bg-[#0A0A0A] border border-white/10 rounded-lg p-6">
+          <form
+            onSubmit={onSubmit}
+            className="space-y-4 bg-[#0A0A0A] border border-white/10 rounded-lg p-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 className="px-3 py-2 rounded bg-black border border-white/15"
@@ -167,7 +181,9 @@ export default function ShippingDetailsPage() {
                 className="px-3 py-2 rounded bg-black border border-white/15"
                 placeholder="Vessel Registration"
                 value={form.vesselRegistration}
-                onChange={(e) => updateField("vesselRegistration", e.target.value)}
+                onChange={(e) =>
+                  updateField("vesselRegistration", e.target.value)
+                }
               />
               <input
                 className="px-3 py-2 rounded bg-black border border-white/15"
@@ -197,7 +213,9 @@ export default function ShippingDetailsPage() {
                 type="date"
                 className="px-3 py-2 rounded bg-black border border-white/15"
                 value={form.estimatedArrivalDate}
-                onChange={(e) => updateField("estimatedArrivalDate", e.target.value)}
+                onChange={(e) =>
+                  updateField("estimatedArrivalDate", e.target.value)
+                }
               />
               <input
                 className="px-3 py-2 rounded bg-black border border-white/15"
@@ -209,7 +227,9 @@ export default function ShippingDetailsPage() {
                 className="px-3 py-2 rounded bg-black border border-white/15"
                 placeholder="Bill of Landing Number"
                 value={form.billOfLandingNumber}
-                onChange={(e) => updateField("billOfLandingNumber", e.target.value)}
+                onChange={(e) =>
+                  updateField("billOfLandingNumber", e.target.value)
+                }
               />
               <input
                 className="px-3 py-2 rounded bg-black border border-white/15"

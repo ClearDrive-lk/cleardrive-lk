@@ -159,6 +159,12 @@ function VehicleDetail() {
                 LIVE
               </Badge>
             </Link>
+            <Link
+              href="/dashboard/kyc"
+              className="hover:text-white transition-colors"
+            >
+              KYC
+            </Link>
           </div>
         </div>
       </nav>

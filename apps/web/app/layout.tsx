@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import FloatingChatbot from "@/components/chat/FloatingChatbot";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
 import CookieBanner from "@/components/cookie/cookieBanner";
@@ -24,7 +25,10 @@ export default function RootLayout({
     <html lang="en">
       {/* Apply the font variable */}
       <body className={`${inter.variable} font-sans antialiased bg-[#050505]`}>
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          {children}
+          <FloatingChatbot />
+        </StoreProvider>
         <CookieBanner />
       </body>
     </html>

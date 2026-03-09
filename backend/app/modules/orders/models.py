@@ -86,7 +86,10 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     vehicle: Mapped[Vehicle] = relationship("Vehicle", back_populates="orders")
     status_history: Mapped[list[OrderStatusHistory]] = relationship(
-        "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
+        "OrderStatusHistory",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="OrderStatusHistory.created_at",
     )
     # Tharin - 09/02/2026
     payments: Mapped[list[Payment]] = relationship(
@@ -115,6 +118,10 @@ class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
     """Order status change history."""
 
     __tablename__ = "order_status_history"
+    __table_args__ = (
+        Index("idx_order_status_history_created_at", "created_at"),
+        Index("idx_order_status_history_to_status", "to_status"),
+    )
 
     order_id: Mapped[PyUUID] = mapped_column(
         GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
@@ -127,9 +134,12 @@ class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
     # Who changed it
     changed_by: Mapped[PyUUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
     notes: Mapped[str | None] = mapped_column(Text)
+    ip_address: Mapped[str | None] = mapped_column(String(45))
+    user_agent: Mapped[str | None] = mapped_column(String(255))
 
     # Relationships
     order: Mapped[Order] = relationship("Order", back_populates="status_history")
+    user: Mapped["User"] = relationship("User", foreign_keys=[changed_by])
 
     def __repr__(self):
         return f"<OrderStatusHistory {self.from_status} -> {self.to_status}>"

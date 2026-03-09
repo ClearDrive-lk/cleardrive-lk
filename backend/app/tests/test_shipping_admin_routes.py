@@ -136,5 +136,9 @@ def test_list_assignable_orders_returns_only_paid_unassigned_orders(
     assert response.status_code == 200
     payload = response.json()
     assert [item["id"] for item in payload] == [str(assignable_order.id)]
+    assert payload[0]["customer_name"] == (test_user.name or test_user.email)
+    assert payload[0]["customer_email"] == test_user.email
+    assert payload[0]["vehicle_label"] == "Toyota Corolla (2021)"
     assert payload[0]["status"] == "PAYMENT_CONFIRMED"
     assert payload[0]["payment_status"] == "COMPLETED"
+    assert payload[0]["total_cost_lkr"] == 650000.0
