@@ -1,5 +1,3 @@
-# backend/app/modules/orders/models.py
-
 from __future__ import annotations
 
 import enum
@@ -18,6 +16,7 @@ if TYPE_CHECKING:
     from app.modules.payments.models import Payment
     from app.modules.shipping.models import ShipmentDetails
     from app.modules.vehicles.models import Vehicle
+    from app.modules.finance.models import LetterOfCredit, VehicleFinance, VehicleInsurance
 
 
 class OrderStatus(str, enum.Enum):
@@ -105,6 +104,11 @@ class Order(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self):
         return f"<Order {self.id} - {self.status}>"
+        
+    # Relationships with financial services
+    letter_of_credit: Mapped[LetterOfCredit | None] = relationship("LetterOfCredit", back_populates="order", uselist=False)
+    vehicle_finance: Mapped[VehicleFinance | None] = relationship("VehicleFinance", back_populates="order", uselist=False)
+    vehicle_insurance: Mapped[VehicleInsurance | None] = relationship("VehicleInsurance", back_populates="order", uselist=False)
 
     # Inspection fields (Tharin - 10/02/2026)
     # inspection_status: Mapped[str | None] = mapped_column(String(50))

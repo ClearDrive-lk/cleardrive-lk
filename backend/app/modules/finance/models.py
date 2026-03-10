@@ -1,6 +1,6 @@
 """
 Financial services models - LC, Finance, Insurance.
-Author: Tharin
+Author: Parindra Gallage
 Story: CD-33
 """
 
