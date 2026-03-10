@@ -159,7 +159,7 @@ def test_status_update_appends_to_timeline(client, db, auth_headers, test_user):
     update_response = client.patch(
         f"/api/v1/orders/{order.id}/status",
         params={"new_status": "PAYMENT_CONFIRMED", "notes": "Payment verified via test"},
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert update_response.status_code == 200
 
@@ -191,11 +191,11 @@ def test_multiple_status_changes_tracked(client, db, auth_headers, test_user):
     # 1st change to PAYMENT_CONFIRMED
     order.payment_status = PaymentStatus.COMPLETED
     db.commit()
-    
+
     update_response = client.patch(
         f"/api/v1/orders/{order.id}/status",
         params={"new_status": "PAYMENT_CONFIRMED"},
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert update_response.status_code == 200
 
@@ -207,7 +207,7 @@ def test_multiple_status_changes_tracked(client, db, auth_headers, test_user):
     update_response = client.patch(
         f"/api/v1/orders/{order.id}/status",
         params={"new_status": "ASSIGNED_TO_EXPORTER"},
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert update_response.status_code == 200
 
@@ -215,7 +215,7 @@ def test_multiple_status_changes_tracked(client, db, auth_headers, test_user):
     update_response = client.patch(
         f"/api/v1/orders/{order.id}/status",
         params={"new_status": "CANCELLED"},
-        headers=admin_headers
+        headers=admin_headers,
     )
     assert update_response.status_code == 200
 
