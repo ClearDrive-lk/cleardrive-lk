@@ -28,11 +28,16 @@ async def send_test_email(
     **Story**: CD-120 - Email testing
     """
     
+    from app.services.email import template_env
+
+    template = template_env.get_template("test_email.html")
+    html_content = template.render(name=current_admin.name or 'Admin', frontend_url='http://localhost:3000')
+
     # Send test email
     success = await send_email(
         to_email=current_admin.email,
         subject="ClearDrive Email Test",
-        html_content="<h2>Hello Test!</h2><p>This is a test email from ClearDrive.lk email service.</p>"
+        html_content=html_content
     )
     
     if success:
@@ -56,11 +61,15 @@ async def queue_test_email(
     
     **Story**: CD-120.3 - Email queue testing
     """
-    
+    from app.services.email import template_env
+
+    template = template_env.get_template("test_email.html")
+    html_content = template.render(name=current_admin.name or 'Admin', frontend_url='http://localhost:3000')
+
     email_id = await email_queue.enqueue(
         to_email=current_admin.email,
         subject="ClearDrive Queued Email Test",
-        html_body="<h2>Hello Queued Test!</h2><p>This is a queued test email.</p>",
+        html_body=html_content,
         priority=1  # High priority
     )
     
