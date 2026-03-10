@@ -29,6 +29,7 @@ from app.modules.security.models import (
 )
 from app.modules.shipping.models import ShipmentDetails, ShippingDocument
 from app.modules.vehicles.models import Vehicle
+from app.modules.notifications.models import EmailLog
 
 # ... rest of the file stays the same
 
