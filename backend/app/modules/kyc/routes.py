@@ -7,7 +7,6 @@ Story: CD-50 - KYC Document Upload
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from datetime import UTC
 from datetime import date as dt_date
@@ -22,6 +21,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.storage import storage
+from app.models.audit_log import AuditEventType, AuditLog
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.kyc.schemas import (
@@ -29,8 +29,8 @@ from app.modules.kyc.schemas import (
     KYCUploadResponse,
     KYCUploadResultResponse,
 )
-from app.modules.security.models import FileIntegrity, VerificationStatus
 from app.services.email import send_email
+from app.services.security.file_integrity import file_integrity_service
 from app.services.vps_proxy import extract_nic_with_retry
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -178,12 +178,9 @@ async def upload_kyc_documents(
         )
 
     uploaded_urls: dict[str, str] = {}
-    checksums: dict[str, str] = {}
     extension_map = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 
     for file_name, file_data in file_contents.items():
-        checksum = hashlib.sha256(file_data["content"]).hexdigest()
-        checksums[file_name] = checksum
         extension = extension_map.get(file_data["mime_type"], "jpg")
         file_path = f"{current_user.id}/{file_name}.{extension}"
 
@@ -204,16 +201,14 @@ async def upload_kyc_documents(
 
     for file_name, file_data in file_contents.items():
         extension = extension_map.get(file_data["mime_type"], "jpg")
-        integrity_record = FileIntegrity(
+        file_integrity_service.create_integrity_record(
+            db,
             file_url=uploaded_urls[file_name],
             file_name=f"{file_name}.{extension}",
-            file_size=file_data["size"],
+            file_bytes=file_data["content"],
             mime_type=file_data["mime_type"],
-            sha256_hash=checksums[file_name],
-            uploaded_by=current_user.id,
-            verification_status=VerificationStatus.VERIFIED,
+            uploaded_by_id=str(current_user.id),
         )
-        db.add(integrity_record)
 
     # Needed before creating dependent records in same transaction.
     db.flush()
@@ -265,6 +260,31 @@ async def upload_kyc_documents(
     db.refresh(kyc_document)
 
     if manual_review_required:
+        db.add(
+            AuditLog(
+                event_type=AuditEventType.KYC_AUTO_EXTRACTION_FAILED,
+                user_id=current_user.id,
+                admin_id=None,
+                details={
+                    "kyc_id": str(kyc_document.id),
+                    "user_email": current_user.email,
+                    "queued_for_manual_review": True,
+                },
+            )
+        )
+        db.add(
+            AuditLog(
+                event_type=AuditEventType.KYC_MANUAL_REVIEW_QUEUED,
+                user_id=current_user.id,
+                admin_id=None,
+                details={
+                    "kyc_id": str(kyc_document.id),
+                    "user_email": current_user.email,
+                },
+            )
+        )
+        db.commit()
+        db.refresh(kyc_document)
         try:
             await _notify_admin_manual_review_needed(
                 user_id=str(current_user.id),
