@@ -35,7 +35,6 @@ except ImportError:
     get_redis = None  # type: ignore
 
 
-
 # Import routers
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
@@ -54,6 +53,7 @@ from app.services.scraper.scheduler import scraper_scheduler
 from app.services.email_scheduler import email_scheduler
 
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -106,7 +106,7 @@ async def lifespan(app: FastAPI):
         scraper_scheduler.stop()
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to stop cleanly: {e}")
-        
+
     try:
         email_scheduler.stop()
     except Exception as e:
