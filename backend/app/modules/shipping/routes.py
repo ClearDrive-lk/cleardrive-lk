@@ -1,0 +1,385 @@
+"""Exporter shipping endpoints.
+
+Author: Kalidu
+Story: CD-72 - Shipping Document Upload
+"""
+
+import hashlib
+import logging
+
+from app.core.database import get_db
+from app.core.permissions import Permission, require_permission
+from app.core.storage import storage
+from app.modules.auth.models import User
+from app.modules.shipping.models import (
+    DocumentType,
+    ShipmentDetails,
+    ShipmentStatus,
+    ShippingDocument,
+)
+from app.modules.shipping.schemas import (
+    DocumentListItem,
+    DocumentUploadResponse,
+    RequiredDocumentsCheck,
+    ShippingDetailsResponse,
+    ShippingDetailsSubmit,
+)
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from sqlalchemy.orm import Session
+
+router = APIRouter(prefix="/shipping", tags=["shipping"])
+logger = logging.getLogger(__name__)
+
+# ─── Constants ─────────────────────────────────────────────────────────────────
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+}
+
+# Required document types that must be present before admin approval
+REQUIRED_DOCUMENT_TYPES = {
+    DocumentType.BILL_OF_LADING,
+    DocumentType.BILL_OF_LANDING,
+    DocumentType.COMMERCIAL_INVOICE,
+    DocumentType.PACKING_LIST,
+}
+
+
+# ─── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def _get_shipment_for_exporter(
+    order_id: str,
+    current_user: User,
+    db: Session,
+) -> ShipmentDetails:
+    """Fetch shipment and verify the current user is the assigned exporter."""
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
+    if not shipment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment for order {order_id} not found.",
+        )
+    if shipment.exporter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the assigned exporter can manage documents for this shipment.",
+        )
+    return shipment
+
+
+def _compute_sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
+    """Return labels of required document types not yet uploaded."""
+    uploaded = {doc.document_type for doc in shipment.documents}
+
+    # BILL_OF_LADING and BILL_OF_LANDING are the same document — accept either
+    bol_present = (
+        DocumentType.BILL_OF_LADING in uploaded or DocumentType.BILL_OF_LANDING in uploaded
+    )
+
+    missing: list[str] = []
+    if not bol_present:
+        missing.append("BILL_OF_LADING")
+    if DocumentType.COMMERCIAL_INVOICE not in uploaded:
+        missing.append("COMMERCIAL_INVOICE")
+    if DocumentType.PACKING_LIST not in uploaded:
+        missing.append("PACKING_LIST")
+    return missing
+
+
+# ─── CD-71: Submit shipping details ────────────────────────────────────────────
+
+
+@router.post("/{order_id}/details", response_model=ShippingDetailsResponse)
+async def submit_shipping_details(
+    order_id: str,
+    payload: ShippingDetailsSubmit,
+    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    db: Session = Depends(get_db),
+):
+    """
+    Submit shipping details for an assigned order (Exporter only).
+
+    **Story**: CD-71
+    """
+    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+
+    shipment.vessel_name = payload.vessel_name
+    shipment.voyage_number = payload.voyage_number
+    shipment.departure_port = payload.departure_port
+    shipment.arrival_port = payload.arrival_port
+    shipment.container_number = payload.container_number
+    shipment.seal_number = payload.seal_number
+    shipment.tracking_number = payload.tracking_number
+
+    # Parse date strings (ISO format)
+    import datetime as dt
+
+    shipment.estimated_departure_date = dt.date.fromisoformat(payload.departure_date)
+    shipment.estimated_arrival_date = dt.date.fromisoformat(payload.estimated_arrival_date)
+
+    db.commit()
+    db.refresh(shipment)
+
+    logger.info(
+        "Shipping details submitted order_id=%s exporter_id=%s",
+        order_id,
+        current_user.id,
+    )
+    return shipment
+
+
+@router.get("/{order_id}/details", response_model=ShippingDetailsResponse)
+async def get_shipping_details(
+    order_id: str,
+    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    db: Session = Depends(get_db),
+):
+    """Get shipping details for an order (Exporter only)."""
+    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+    return shipment
+
+
+# ─── CD-72.1: Upload document ──────────────────────────────────────────────────
+
+
+@router.post(
+    "/{order_id}/documents",
+    response_model=DocumentUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_shipping_document(
+    order_id: str,
+    document_type: str = Form(...),
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload a shipping document (Exporter only).
+
+    **Story**: CD-72.1
+
+    **Document Types** (CD-72.2):
+    - BILL_OF_LADING / BILL_OF_LANDING (Required)
+    - COMMERCIAL_INVOICE (Required)
+    - PACKING_LIST (Required)
+    - EXPORT_CERTIFICATE (Optional)
+    - INSURANCE_CERTIFICATE (Optional)
+
+    **Validations** (CD-72.3):
+    - MIME type: PDF or images only
+    - File size: Max 10 MB
+    - Document type: Must be valid enum
+
+    **Security** (CD-72.4):
+    - SHA-256 hash stored for file integrity
+    """
+
+    print(f"\n{'=' * 70}")
+    print("📄 SHIPPING DOCUMENT UPLOAD")
+    print(f"   Order:     {order_id}")
+    print(f"   Type:      {document_type}")
+    print(f"   File:      {file.filename}")
+    print(f"   Exporter:  {current_user.email}")
+    print(f"{'=' * 70}\n")
+
+    # ── 1. Shipment & access ────────────────────────────────────────────────
+    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+
+    # ── 2. Validate document type (CD-72.2) ─────────────────────────────────
+    try:
+        doc_type = DocumentType(document_type)
+    except ValueError:
+        valid = ", ".join(t.value for t in DocumentType)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid document type '{document_type}'. Valid types: {valid}",
+        )
+
+    # ── 3. Read file content ────────────────────────────────────────────────
+    content = await file.read()
+
+    # ── 4. Validate MIME type (CD-72.3) ─────────────────────────────────────
+    mime_type = file.content_type or "application/octet-stream"
+    if mime_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file type '{mime_type}'. Allowed: PDF, JPEG, PNG, WebP",
+        )
+
+    # ── 5. Validate file size (CD-72.3) ─────────────────────────────────────
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large ({len(content) // (1024 * 1024)} MB). Maximum size: 10 MB",
+        )
+
+    # ── 6. SHA-256 integrity hash (CD-72.4) ─────────────────────────────────
+    sha256_hash = _compute_sha256(content)
+
+    # ── 7. Upload to Supabase storage ───────────────────────────────────────
+    storage_path = f"shipping/{order_id}/{doc_type.value}/{file.filename}"
+    try:
+        file_url = await storage.upload(
+            path=storage_path,
+            content=content,
+            content_type=mime_type,
+        )
+    except Exception as exc:
+        logger.exception("Storage upload failed order_id=%s doc_type=%s", order_id, doc_type)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="File storage failed. Please try again.",
+        ) from exc
+
+    # ── 8. Remove previous upload of same type (replace semantics) ──────────
+    existing = (
+        db.query(ShippingDocument)
+        .filter(
+            ShippingDocument.shipment_id == shipment.id,
+            ShippingDocument.document_type == doc_type,
+        )
+        .first()
+    )
+    if existing:
+        db.delete(existing)
+        db.flush()
+
+    # ── 9. Persist record ───────────────────────────────────────────────────
+    doc = ShippingDocument(
+        shipment_id=shipment.id,
+        document_type=doc_type,
+        file_name=file.filename or f"{doc_type.value}.bin",
+        file_url=file_url,
+        file_size=len(content),
+        mime_type=mime_type,
+        uploaded_by=current_user.id,
+    )
+    db.add(doc)
+
+    # ── 10. Update shipment status if first upload ───────────────────────────
+    if shipment.status == ShipmentStatus.PENDING_SHIPMENT:
+        shipment.status = ShipmentStatus.DOCS_UPLOADED
+
+    # ── 11. Check if all required docs present ──────────────────────────────
+    db.flush()
+    db.refresh(shipment)
+    missing = _missing_required_docs(shipment)
+    if not missing:
+        shipment.documents_uploaded = True
+        shipment.status = ShipmentStatus.AWAITING_ADMIN_APPROVAL
+        logger.info(
+            "All required documents uploaded — order_id=%s awaiting admin approval",
+            order_id,
+        )
+
+    db.commit()
+    db.refresh(doc)
+
+    # Build response (attach order_id for schema)
+    response = DocumentUploadResponse(
+        id=doc.id,
+        shipment_id=doc.shipment_id,
+        order_id=shipment.order_id,
+        document_type=doc.document_type.value,
+        file_name=doc.file_name,
+        file_size=doc.file_size,
+        mime_type=doc.mime_type,
+        file_url=doc.file_url,
+        verified=doc.verified,
+        uploaded_at=doc.uploaded_at,
+        uploaded_by=doc.uploaded_by,
+    )
+
+    logger.info(
+        "Document uploaded order_id=%s type=%s file=%s hash=%s",
+        order_id,
+        doc_type.value,
+        file.filename,
+        sha256_hash[:12],
+    )
+
+    return response
+
+
+# ─── CD-72: List documents ─────────────────────────────────────────────────────
+
+
+@router.get("/{order_id}/documents", response_model=list[DocumentListItem])
+async def list_shipping_documents(
+    order_id: str,
+    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    db: Session = Depends(get_db),
+):
+    """
+    List all uploaded documents for a shipment (Exporter only).
+
+    **Story**: CD-72
+    """
+    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+
+    return [
+        DocumentListItem(
+            id=doc.id,
+            shipment_id=doc.shipment_id,
+            order_id=shipment.order_id,
+            document_type=doc.document_type.value,
+            file_name=doc.file_name,
+            file_size=doc.file_size or 0,
+            mime_type=doc.mime_type or "",
+            file_url=doc.file_url,
+            verified=doc.verified,
+            uploaded_at=doc.uploaded_at,
+            uploaded_by=doc.uploaded_by,
+        )
+        for doc in shipment.documents
+    ]
+
+
+# ─── CD-72.5: Required documents check ────────────────────────────────────────
+
+
+@router.get("/{order_id}/documents/check", response_model=RequiredDocumentsCheck)
+async def check_required_documents(
+    order_id: str,
+    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    db: Session = Depends(get_db),
+):
+    """
+    Check whether all required documents have been uploaded.
+
+    **Story**: CD-72.5
+
+    Required:
+    - BILL_OF_LADING (or BILL_OF_LANDING)
+    - COMMERCIAL_INVOICE
+    - PACKING_LIST
+    """
+    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+
+    uploaded_types = [doc.document_type.value for doc in shipment.documents]
+    missing = _missing_required_docs(shipment)
+    required_labels = ["BILL_OF_LADING", "COMMERCIAL_INVOICE", "PACKING_LIST"]
+    total_required = len(required_labels)
+    total_uploaded = total_required - len(missing)
+    pct = int((total_uploaded / total_required) * 100) if total_required else 100
+
+    return RequiredDocumentsCheck(
+        order_id=shipment.order_id,
+        total_required=total_required,
+        total_uploaded=total_uploaded,
+        all_uploaded=len(missing) == 0,
+        uploaded_documents=uploaded_types,
+        missing_documents=missing,
+        completion_percentage=pct,
+    )
