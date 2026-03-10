@@ -143,3 +143,86 @@ def test_timeline_returns_system_fallback_for_system_generated_history(
     assert payload["timeline"][1]["changed_by_id"] is None
     assert payload["timeline"][1]["changed_by_name"] == "System"
     assert payload["timeline"][1]["changed_by_email"] == "system@cleardrive.local"
+
+
+def test_status_update_appends_to_timeline(client, db, auth_headers, test_user):
+    vehicle = _create_vehicle(db, stock_no="ORDER-TL-201")
+    order = _create_order_with_history(db, test_user, vehicle)
+
+    admin_user = _create_staff_user(db, email="admin@test.com", role=Role.ADMIN)
+    admin_headers = _make_headers(admin_user)
+
+    # Precondition for PAYMENT_CONFIRMED
+    order.payment_status = PaymentStatus.COMPLETED
+    db.commit()
+
+    update_response = client.patch(
+        f"/api/v1/orders/{order.id}/status",
+        params={"new_status": "PAYMENT_CONFIRMED", "notes": "Payment verified via test"},
+        headers=admin_headers
+    )
+    assert update_response.status_code == 200
+
+    timeline_response = client.get(f"/api/v1/orders/{order.id}/timeline", headers=auth_headers)
+    assert timeline_response.status_code == 200
+
+    payload = timeline_response.json()
+    assert payload["total_events"] == 2
+
+    event_1 = payload["timeline"][0]
+    event_2 = payload["timeline"][1]
+
+    assert event_1["to_status"] == "CREATED"
+    assert event_2["from_status"] == "CREATED"
+    assert event_2["to_status"] == "PAYMENT_CONFIRMED"
+    assert event_2["notes"] == "Payment verified via test"
+    assert event_2["changed_by_id"] == str(admin_user.id)
+
+
+def test_multiple_status_changes_tracked(client, db, auth_headers, test_user):
+    from app.modules.shipping.models import ShipmentDetails
+
+    vehicle = _create_vehicle(db, stock_no="ORDER-TL-202")
+    order = _create_order_with_history(db, test_user, vehicle)
+
+    admin_user = _create_staff_user(db, email="admin2@test.com", role=Role.ADMIN)
+    admin_headers = _make_headers(admin_user)
+
+    # 1st change to PAYMENT_CONFIRMED
+    order.payment_status = PaymentStatus.COMPLETED
+    db.commit()
+    
+    update_response = client.patch(
+        f"/api/v1/orders/{order.id}/status",
+        params={"new_status": "PAYMENT_CONFIRMED"},
+        headers=admin_headers
+    )
+    assert update_response.status_code == 200
+
+    # 2nd change to ASSIGNED_TO_EXPORTER
+    shipment = ShipmentDetails(order_id=order.id, exporter_id=admin_user.id)
+    db.add(shipment)
+    db.commit()
+
+    update_response = client.patch(
+        f"/api/v1/orders/{order.id}/status",
+        params={"new_status": "ASSIGNED_TO_EXPORTER"},
+        headers=admin_headers
+    )
+    assert update_response.status_code == 200
+
+    # 3rd change to CANCELLED (which is valid from ASSIGNED_TO_EXPORTER)
+    update_response = client.patch(
+        f"/api/v1/orders/{order.id}/status",
+        params={"new_status": "CANCELLED"},
+        headers=admin_headers
+    )
+    assert update_response.status_code == 200
+
+    timeline_response = client.get(f"/api/v1/orders/{order.id}/timeline", headers=auth_headers)
+    payload = timeline_response.json()
+
+    assert payload["total_events"] == 4
+    assert payload["timeline"][-1]["to_status"] == "CANCELLED"
+    assert payload["timeline"][-2]["to_status"] == "ASSIGNED_TO_EXPORTER"
+    assert payload["timeline"][-3]["to_status"] == "PAYMENT_CONFIRMED"
