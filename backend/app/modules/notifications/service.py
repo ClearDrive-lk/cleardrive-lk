@@ -1,5 +1,3 @@
-# backend/app/modules/notifications/service.py
-
 """
 Notification service for order status changes.
 Author: Tharin

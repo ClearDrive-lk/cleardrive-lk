@@ -1,5 +1,3 @@
-# backend/app/main.py
-
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -51,11 +49,11 @@ from app.modules.shipping.admin_routes import router as shipping_admin_router
 from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
+from app.modules.notifications.routes import router as notifications_router
 from app.services.scraper.scheduler import scraper_scheduler
 from app.services.email_scheduler import email_scheduler
 
 logger = logging.getLogger(__name__)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -175,11 +173,12 @@ app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(security_router, prefix=settings.API_V1_PREFIX)
+app.include_router(notifications_router, prefix=settings.API_V1_PREFIX)
 logger.info(
     "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
     "/shipping, /admin, "
     "/admin/dashboard, /admin/audit-logs, /admin/shipping, /admin/kyc, "
-    "/security, /test, /kyc, /gdpr, /gazette"
+    "/security, /test, /kyc, /gdpr, /gazette, /notifications"
 )
 
 # Serve local runtime data files (e.g., scraped vehicle images).
