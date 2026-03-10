@@ -8,11 +8,11 @@ Story: CD-120.3
 
 import json
 import uuid
-from typing import Dict, Optional
+from typing import Optional
 from datetime import datetime
 
 from app.core.database import SessionLocal
-from app.services.email import send_email, send_otp_email
+from app.services.email import send_email
 from app.modules.notifications.models import EmailLog, EmailStatus
 from app.core.redis_client import get_redis
 

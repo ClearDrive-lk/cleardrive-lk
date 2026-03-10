@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock
-import json
 from app.services.email import send_email
 from app.services.email_queue import email_queue
 

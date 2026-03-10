@@ -1,12 +1,9 @@
-# backend/app/services/email_scheduler.py
-
 """
 Email queue processor scheduler.
 Author: Kalidu
 Story: CD-120.4 - Async email sending
 """
 
-import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -52,8 +49,8 @@ class EmailScheduler:
         self.is_running = True
 
         print(f"\n{'='*70}")
-        print(f"✅ EMAIL SCHEDULER STARTED")
-        print(f"   Interval: Every 60 seconds")
+        print("✅ EMAIL SCHEDULER STARTED")
+        print("   Interval: Every 60 seconds")
         print(f"{'='*70}\n")
 
     def stop(self):

@@ -4,8 +4,8 @@ Author: Parindra gallage
 Story: CD-120.5
 """
 
-from sqlalchemy import Column, String, DateTime, Boolean, Text, Integer, Enum as SQLEnum, JSON
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import Column, String, DateTime, Text, Integer, Enum as SQLEnum, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 import uuid
 import enum
