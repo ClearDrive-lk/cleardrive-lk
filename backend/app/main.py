@@ -50,7 +50,6 @@ from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.scraper.scheduler import scraper_scheduler
-from app.services.security.integrity_scheduler import integrity_scheduler
 from app.modules.finance.lc_routes import router as lc_router
 from app.modules.finance.finance_routes import router as finance_router
 from app.modules.finance.insurance_routes import router as insurance_router
