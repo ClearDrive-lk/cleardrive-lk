@@ -71,6 +71,12 @@ export default function DashboardPage() {
                 KYC
               </Link>
               <Link
+                href="/dashboard/shipping"
+                className="hover:text-white transition-colors"
+              >
+                Shipping
+              </Link>
+              <Link
                 href="/dashboard/profile"
                 className="hover:text-white transition-colors"
               >
@@ -140,6 +146,12 @@ export default function DashboardPage() {
                   href: "/dashboard/kyc",
                   icon: ShieldCheck,
                   code: "KYC-ID",
+                },
+                {
+                  title: "Shipping",
+                  href: "/dashboard/shipping",
+                  icon: Package,
+                  code: "SHP-SUB",
                 },
                 {
                   title: "Documents",
