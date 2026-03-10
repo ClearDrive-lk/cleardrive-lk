@@ -4,7 +4,7 @@ Author: Parindra gallage
 Story: CD-120.5
 """
 
-from sqlalchemy import Column, String, DateTime, Boolean, Text, Integer, Enum as SQLEnum
+from sqlalchemy import Column, String, DateTime, Boolean, Text, Integer, Enum as SQLEnum, JSON
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from datetime import datetime
 import uuid
@@ -43,7 +43,7 @@ class EmailLog(Base):
     
     # Template
     template_name = Column(String(100), nullable=True)
-    template_data = Column(JSONB, nullable=True)
+    template_data = Column(JSON, nullable=True)
     
     # Content
     html_body = Column(Text, nullable=True)

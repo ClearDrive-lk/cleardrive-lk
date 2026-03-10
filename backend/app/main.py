@@ -36,7 +36,7 @@ except ImportError:
     close_redis = None  # type: ignore
     get_redis = None  # type: ignore
 
-from app.services.email_scheduler import email_scheduler
+
 
 # Import routers
 from app.modules.admin.routes import router as admin_router
@@ -52,6 +52,7 @@ from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.scraper.scheduler import scraper_scheduler
+from app.services.email_scheduler import email_scheduler
 
 logger = logging.getLogger(__name__)
 
