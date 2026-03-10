@@ -10,9 +10,11 @@ from typing import Callable, cast
 
 from app.core.database import get_db
 from app.core.rate_limit import (
+    UserTier,
     apply_rate_limit_headers,
     check_rate_limit,
     get_endpoint_type,
+    get_rate_limit,
 )
 from app.core.redis import is_token_blacklisted
 from app.core.security import decode_access_token
@@ -43,17 +45,29 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
+        if path.startswith("/api/v1/chat/"):
+            return await call_next(request)
         if path in self.SKIP_EXACT or path in self.SKIP_PREFIXES:
             return await call_next(request)
         if any(path.startswith(prefix) for prefix in self.SKIP_PREFIXES[2:]):
             return await call_next(request)
+
+        endpoint_type = get_endpoint_type(path)
+        default_limits = get_rate_limit(UserTier.STANDARD, endpoint_type)
+        request.state.rate_limit_context = {
+            "tier": UserTier.STANDARD.value,
+            "minute_limit": default_limits["minute"],
+            "minute_remaining": default_limits["minute"],
+            "hour_limit": default_limits["hour"],
+            "hour_remaining": default_limits["hour"],
+        }
 
         db_generator = self._get_db_generator(request)
         db = next(db_generator)
 
         try:
             user = await self._resolve_user(request, db)
-            await check_rate_limit(request, user, get_endpoint_type(path), db=db)
+            await check_rate_limit(request, user, endpoint_type, db=db)
             response = await call_next(request)
             apply_rate_limit_headers(response, request)
             return response
@@ -65,7 +79,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
         except Exception as exc:
             logger.exception("Rate limit middleware failed open for %s: %s", path, exc)
-            return await call_next(request)
+            response = await call_next(request)
+            apply_rate_limit_headers(response, request)
+            return response
         finally:
             self._close_db_generator(db_generator)
 
