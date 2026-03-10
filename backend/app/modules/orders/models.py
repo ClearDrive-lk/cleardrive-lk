@@ -153,3 +153,7 @@ class OrderStatusHistory(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self):
         return f"<OrderStatusHistory {self.from_status} -> {self.to_status}>"
+
+
+# Import at the bottom to register models in SQLAlchemy without circular dependencies
+import app.modules.finance.models  # noqa: E402, F401
