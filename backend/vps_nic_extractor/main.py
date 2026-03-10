@@ -163,13 +163,24 @@ async def extract_nic(
     if len(image_bytes) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(status_code=400, detail="File too large. Max 10MB.")
 
+    def _detect_format(raw: bytes) -> str:
+        if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+            return "PNG"
+        if raw.startswith(b"\xff\xd8\xff"):
+            return "JPEG"
+        if raw.startswith(b"RIFF") and b"WEBP" in raw[8:16]:
+            return "WEBP"
+        return ""
+
     try:
         # Validate image in memory only.
         with Image.open(BytesIO(image_bytes)) as img:
             img.verify()
             detected_format = (img.format or "").upper()
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Invalid image: {exc}") from exc
+        detected_format = _detect_format(image_bytes)
+        if not detected_format:
+            raise HTTPException(status_code=400, detail=f"Invalid image: {exc}") from exc
 
     if image.content_type not in ALLOWED_MIME_TYPES:
         allowed_formats = {"JPEG", "JPG", "PNG", "WEBP"}
