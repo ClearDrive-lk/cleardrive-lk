@@ -159,12 +159,6 @@ async def extract_nic(
     if side not in {"front", "back"}:
         raise HTTPException(status_code=400, detail="X-Side must be 'front' or 'back'")
 
-    if image.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type {image.content_type}. Allowed: {sorted(ALLOWED_MIME_TYPES)}",
-        )
-
     image_bytes = await image.read()
     if len(image_bytes) > MAX_FILE_SIZE_BYTES:
         raise HTTPException(status_code=400, detail="File too large. Max 10MB.")
@@ -173,8 +167,20 @@ async def extract_nic(
         # Validate image in memory only.
         with Image.open(BytesIO(image_bytes)) as img:
             img.verify()
+            detected_format = (img.format or "").upper()
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Invalid image: {exc}") from exc
+
+    if image.content_type not in ALLOWED_MIME_TYPES:
+        allowed_formats = {"JPEG", "JPG", "PNG", "WEBP"}
+        if detected_format not in allowed_formats:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Invalid file type {image.content_type}. "
+                    f"Allowed: {sorted(ALLOWED_MIME_TYPES)}"
+                ),
+            )
 
     try:
         data = await _extract_with_ollama(image_bytes, side)
