@@ -27,14 +27,14 @@ except ImportError:
 
 # Import Redis helpers for initialization
 try:
-    from app.core.redis_client import close_redis, get_redis
-    from app.core.redis_client import init_redis as redis_init
+    from app.core.redis_client import close_redis, get_redis, init_redis
 
     REDIS_INIT_AVAILABLE = True
 except ImportError:
     REDIS_INIT_AVAILABLE = False
     init_redis = None  # type: ignore
-    redis_close = None  # type: ignore
+    close_redis = None  # type: ignore
+    get_redis = None  # type: ignore
 
 # Import routers
 from app.modules.admin.routes import router as admin_router
@@ -67,17 +67,18 @@ async def lifespan(app: FastAPI):
 
     if REDIS_INIT_AVAILABLE and init_redis is not None:
         try:
-            await redis_init()
-            logger.info("Redis connection initialized (using init_redis)")
+            await init_redis()
+            logger.info("Redis connection initialized")
         except Exception as e:
             logger.warning(f"Redis init_redis() failed: {e}")
 
-    try:
-        redis = await get_redis()
-        await redis.ping()
-        logger.info("Redis connected and responsive")
-    except Exception as e:
-        logger.warning(f"Redis not available: {e}")
+    if get_redis is not None:
+        try:
+            redis = await get_redis()
+            await redis.ping()
+            logger.info("Redis connected and responsive")
+        except Exception as e:
+            logger.warning(f"Redis not available: {e}")
 
     try:
         scraper_scheduler.start()
@@ -94,12 +95,6 @@ async def lifespan(app: FastAPI):
             logger.info("Redis connection closed (using redis_client)")
         except Exception as e:
             logger.warning(f"Error while closing Redis (close_redis): {e}")
-
-    try:
-        await close_redis()
-        logger.info("Redis connection closed (using redis_client)")
-    except Exception as e:
-        logger.warning(f"Error while closing Redis (redis_client): {e}")
 
     try:
         scraper_scheduler.stop()
@@ -128,10 +123,8 @@ if SECURITY_MIDDLEWARE_AVAILABLE:
 else:
     logger.warning("Security Headers Middleware not available")
 
-# 3. CORS Middleware
-# This should be placed before other middleware that might handle requests
-# like RateLimitMiddleware if you want CORS headers on error responses.
-# Rate Limit Middleware (Inner)
+# 3. Rate Limit Middleware
+# Placed inside (after) CORS so that CORS headers are applied to Rate Limit responses.
 app.add_middleware(RateLimitMiddleware)
 logger.info("Rate Limit Middleware enabled")
 
@@ -212,13 +205,16 @@ async def health_check():
     - Environment configuration
     """
     redis_status = "unknown"
-    try:
-        redis = await get_redis()
-        await redis.ping()
-        redis_status = "healthy"
-    except Exception as e:
-        redis_status = f"unhealthy: {str(e)}"
-        logger.warning(f"Redis health check failed: {e}")
+    if get_redis is not None:
+        try:
+            redis = await get_redis()
+            await redis.ping()
+            redis_status = "healthy"
+        except Exception as e:
+            redis_status = f"unhealthy: {str(e)}"
+            logger.warning(f"Redis health check failed: {e}")
+    else:
+        redis_status = "disabled"
 
     return {
         "status": "healthy",
