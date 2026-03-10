@@ -7,8 +7,8 @@ from typing import Literal
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.rate_limit import rate_limit
 from app.core.dependencies import get_current_active_user
+from app.core.rate_limit import rate_limit
 from app.modules.auth.models import User
 from app.modules.vehicles.models import Vehicle, VehicleStatus
 from app.services.gemini import gemini_service

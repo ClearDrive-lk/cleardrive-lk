@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from app.core.config import settings
-from app.core.redis_client import close_redis, get_redis
+from app.core.rate_limit_middleware import RateLimitMiddleware
 from app.modules.admin.audit_routes import router as admin_audit_router
 from app.modules.admin.dashboard import router as admin_dashboard_router
 from app.modules.gdpr.routes import router as gdpr_router
@@ -27,8 +27,8 @@ except ImportError:
 
 # Import Redis helpers for initialization
 try:
-    from app.core.redis_client import close_redis as redis_close
-    from app.core.redis_client import init_redis
+    from app.core.redis_client import close_redis, get_redis
+    from app.core.redis_client import init_redis as redis_init
 
     REDIS_INIT_AVAILABLE = True
 except ImportError:
@@ -44,7 +44,9 @@ from app.modules.chat.routes import router as chat_router
 from app.modules.gazette.routes import router as gazette_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
+from app.modules.security.routes import router as security_router
 from app.modules.shipping.admin_routes import router as shipping_admin_router
+from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.scraper.scheduler import scraper_scheduler
@@ -65,7 +67,7 @@ async def lifespan(app: FastAPI):
 
     if REDIS_INIT_AVAILABLE and init_redis is not None:
         try:
-            await init_redis()
+            await redis_init()
             logger.info("Redis connection initialized (using init_redis)")
         except Exception as e:
             logger.warning(f"Redis init_redis() failed: {e}")
@@ -86,10 +88,10 @@ async def lifespan(app: FastAPI):
 
     logger.info("Shutting down ClearDrive.lk API...")
 
-    if REDIS_INIT_AVAILABLE and redis_close is not None:
+    if REDIS_INIT_AVAILABLE and close_redis is not None:
         try:
-            await redis_close()
-            logger.info("Redis connection closed (using close_redis)")
+            await close_redis()
+            logger.info("Redis connection closed (using redis_client)")
         except Exception as e:
             logger.warning(f"Error while closing Redis (close_redis): {e}")
 
@@ -127,6 +129,13 @@ else:
     logger.warning("Security Headers Middleware not available")
 
 # 3. CORS Middleware
+# This should be placed before other middleware that might handle requests
+# like RateLimitMiddleware if you want CORS headers on error responses.
+# Rate Limit Middleware (Inner)
+app.add_middleware(RateLimitMiddleware)
+logger.info("Rate Limit Middleware enabled")
+
+# 4. CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -157,6 +166,8 @@ app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
+app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
+app.include_router(security_router, prefix=settings.API_V1_PREFIX)
 logger.info(
     "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
     "/shipping, /admin, "
