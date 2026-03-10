@@ -93,7 +93,7 @@ def main() -> int:
             "SMTP_HOST": "smtp.gmail.com",
             "SMTP_USERNAME": "test@gmail.com",
             "SMTP_PASSWORD": "test-password",  # pragma: allowlist secret
-            "ADMIN_EMAILS": "cleardrivelk@gmail.com",
+            "ADMIN_EMAILS": "admin@cleardrive.lk",
             "ENVIRONMENT": "test",
             "COVERAGE_RCFILE": str(repo_root / ".coveragerc"),
         }
@@ -121,8 +121,9 @@ def main() -> int:
             cwd=backend_dir,
             env=env,
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
             check=False,
             timeout=args.timeout_seconds,
         )
@@ -136,6 +137,10 @@ def main() -> int:
         return 0
 
     print("Backend tests failed in hook.")
+    if result.stdout:
+        print(result.stdout.rstrip())
+    if result.stderr:
+        print(result.stderr.rstrip())
     print("Run `pre-commit run --hook-stage pre-commit pytest --all-files -v` for details.")
     return int(result.returncode)
 

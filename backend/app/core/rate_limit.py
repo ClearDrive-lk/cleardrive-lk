@@ -473,13 +473,27 @@ async def check_rate_limit(
     db: Session | None = None,
 ) -> bool:
     """
-    Check whether a request is within the configured tier limits.
+    Check if request should be rate limited.
+
+    Args:
+        request: FastAPI request object
+        user: Current user (if authenticated)
+        endpoint_type: Type of endpoint
+
+    Returns:
+        True if within limits, raises HTTPException if exceeded
     """
+    # Determine identifier (user ID or IP)
+    if user:
+        identifier = f"user:{user.id}"
+    else:
+        # For anonymous users, use IP
+        client_ip = request.client.host if request.client else "unknown"
+        identifier = f"ip:{client_ip}"
+
+    now = datetime.now(UTC)
     tier = await get_user_tier(user, db)
     limits = get_rate_limit(tier, endpoint_type)
-
-    identifier = f"user:{user.id}" if user is not None else f"ip:{_client_ip(request)}"
-    now = datetime.now(UTC)
     minute_key = f"rate_limit:{identifier}:{endpoint_type}:minute:{now.strftime('%Y%m%d%H%M')}"
     hour_key = f"rate_limit:{identifier}:{endpoint_type}:hour:{now.strftime('%Y%m%d%H')}"
 

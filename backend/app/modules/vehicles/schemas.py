@@ -126,6 +126,8 @@ class VehicleResponse(VehicleBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+    # Allow zero in responses to avoid 500s when scraped data is missing a price.
+    price_jpy: Decimal = Field(..., ge=0, description="Price in Japanese Yen")
 
     model_config = ConfigDict(from_attributes=True)
 
