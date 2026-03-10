@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_admin
@@ -127,7 +127,7 @@ async def approve_finance(
     finance.monthly_payment = Decimal(str(round(monthly_payment, 2)))
     finance.admin_notes = request.admin_notes
     finance.reviewed_by = current_admin.id
-    finance.reviewed_at = datetime.utcnow()
+    finance.reviewed_at = datetime.now(timezone.utc)
     
     db.commit()
     db.refresh(finance)

@@ -7,7 +7,7 @@ Story: CD-33.1, CD-33.2
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_admin
@@ -111,7 +111,7 @@ async def approve_letter_of_credit(
     lc.expiry_date = request.expiry_date
     lc.admin_notes = request.admin_notes
     lc.reviewed_by = current_admin.id
-    lc.reviewed_at = datetime.utcnow()
+    lc.reviewed_at = datetime.now(timezone.utc)
     
     db.commit()
     db.refresh(lc)

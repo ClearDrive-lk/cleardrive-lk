@@ -7,7 +7,7 @@ Story: CD-33.5, CD-33.6
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_admin
@@ -107,7 +107,7 @@ async def approve_insurance_quote(
     insurance.policy_end_date = request.policy_end_date
     insurance.admin_notes = request.admin_notes
     insurance.reviewed_by = current_admin.id
-    insurance.reviewed_at = datetime.utcnow()
+    insurance.reviewed_at = datetime.now(timezone.utc)
     
     db.commit()
     db.refresh(insurance)
@@ -142,7 +142,7 @@ async def reject_insurance_quote(
     insurance.status = InsuranceStatus.REJECTED
     insurance.rejection_reason = request.rejection_reason
     insurance.reviewed_by = current_admin.id
-    insurance.reviewed_at = datetime.utcnow()
+    insurance.reviewed_at = datetime.now(timezone.utc)
     
     db.commit()
     db.refresh(insurance)

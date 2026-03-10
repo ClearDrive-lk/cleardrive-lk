@@ -4,11 +4,12 @@ Author: Parindra Gallage
 Story: CD-33
 """
 
-from pydantic import BaseModel, Field, validator
-from typing import Optional
-from datetime import datetime
-from uuid import UUID
 from decimal import Decimal
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # ===================================================================
@@ -48,14 +49,13 @@ class LCResponse(BaseModel):
     
     id: UUID
     order_id: UUID
-    lc_number: Optional[str]
+    lc_number: Optional[str] = None
     bank_name: str
     amount: Decimal
     status: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ===================================================================
@@ -73,11 +73,11 @@ class FinanceApplicationRequest(BaseModel):
     employer_name: str = Field(..., max_length=255)
     years_employed: Decimal = Field(..., ge=0)
     
-    @validator('down_payment')
-    def validate_down_payment(cls, v, values):
-        if 'vehicle_price' in values and v > values['vehicle_price']:
+    @model_validator(mode='after')
+    def validate_down_payment(self) -> 'FinanceApplicationRequest':
+        if self.down_payment > self.vehicle_price:
             raise ValueError('Down payment cannot exceed vehicle price')
-        return v
+        return self
 
 
 class FinanceApproveRequest(BaseModel):
@@ -100,16 +100,15 @@ class FinanceResponse(BaseModel):
     
     id: UUID
     order_id: UUID
-    loan_number: Optional[str]
+    loan_number: Optional[str] = None
     loan_amount: Decimal
-    interest_rate: Optional[Decimal]
-    loan_period_months: Optional[int]
-    monthly_payment: Optional[Decimal]
+    interest_rate: Optional[Decimal] = None
+    loan_period_months: Optional[int] = None
+    monthly_payment: Optional[Decimal] = None
     status: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ===================================================================
@@ -152,12 +151,11 @@ class InsuranceResponse(BaseModel):
     
     id: UUID
     order_id: UUID
-    policy_number: Optional[str]
+    policy_number: Optional[str] = None
     insurance_type: str
     vehicle_value: Decimal
-    annual_premium: Optional[Decimal]
+    annual_premium: Optional[Decimal] = None
     status: str
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
