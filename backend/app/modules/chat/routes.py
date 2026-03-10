@@ -7,6 +7,7 @@ from typing import Literal
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.rate_limit import rate_limit
 from app.core.dependencies import get_current_active_user
 from app.modules.auth.models import User
 from app.modules.vehicles.models import Vehicle, VehicleStatus
@@ -163,6 +164,7 @@ def _fallback_chat_response(vehicle_context: list[dict[str, object]]) -> dict[st
 
 
 @router.post("/message", response_model=ChatResponse)
+@rate_limit("chat")
 async def chat_message(
     payload: ChatRequest,
     request: Request,

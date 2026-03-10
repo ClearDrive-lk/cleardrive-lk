@@ -40,6 +40,7 @@ except ImportError:
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.calculator.routes import router as calculator_router
+from app.modules.chat.routes import router as chat_router
 from app.modules.gazette.routes import router as gazette_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
@@ -144,6 +145,7 @@ logger.info(
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)
 app.include_router(calculator_router, prefix=settings.API_V1_PREFIX)
+app.include_router(chat_router, prefix=settings.API_V1_PREFIX)
 app.include_router(orders_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
