@@ -475,7 +475,7 @@ async def check_rate_limit(
     """
     Check whether a request is within the configured tier limits.
     """
-    tier = await get_user_tier(user, db)
+    tier = UserTier.STANDARD
     limits = get_rate_limit(tier, endpoint_type)
 
     identifier = f"user:{user.id}" if user is not None else f"ip:{_client_ip(request)}"
@@ -484,6 +484,8 @@ async def check_rate_limit(
     hour_key = f"rate_limit:{identifier}:{endpoint_type}:hour:{now.strftime('%Y%m%d%H')}"
 
     try:
+        tier = await get_user_tier(user, db)
+        limits = get_rate_limit(tier, endpoint_type)
         redis = await get_redis()
         current_minute = int(await redis.incr(minute_key))
         if current_minute == 1:
