@@ -32,17 +32,41 @@ def upgrade() -> None:
     op.add_column('order_status_history', sa.Column('user_agent', sa.String(length=255), nullable=True))
     op.create_index('idx_order_status_history_created_at', 'order_status_history', ['created_at'], unique=False)
     op.create_index('idx_order_status_history_to_status', 'order_status_history', ['to_status'], unique=False)
-    op.drop_index('idx_payments_created_at', table_name='payments')
-    op.drop_index('idx_payments_status', table_name='payments')
-    op.drop_index('idx_payments_user_id', table_name='payments')
-    op.create_index(op.f('ix_payments_status'), 'payments', ['status'], unique=False)
-    op.create_index(op.f('ix_payments_user_id'), 'payments', ['user_id'], unique=False)
-    op.add_column('shipment_details', sa.Column('vessel_registration', sa.String(length=100), nullable=True))
-    op.add_column('shipment_details', sa.Column('estimated_departure_date', sa.Date(), nullable=True))
-    op.add_column('shipment_details', sa.Column('actual_departure_date', sa.Date(), nullable=True))
-    op.add_column('shipment_details', sa.Column('bill_of_landing_number', sa.String(length=100), nullable=True))
-    op.add_column('shipment_details', sa.Column('documents_uploaded', sa.Boolean(), nullable=False))
-    op.add_column('shipment_details', sa.Column('approved', sa.Boolean(), nullable=False))
+    op.drop_index('idx_payments_created_at', table_name='payments', if_exists=True)
+    op.drop_index('idx_payments_status', table_name='payments', if_exists=True)
+    op.drop_index('idx_payments_user_id', table_name='payments', if_exists=True)
+    op.create_index(
+        op.f('ix_payments_status'),
+        'payments',
+        ['status'],
+        unique=False,
+        if_not_exists=True,
+    )
+    op.create_index(
+        op.f('ix_payments_user_id'),
+        'payments',
+        ['user_id'],
+        unique=False,
+        if_not_exists=True,
+    )
+    op.execute(
+        "ALTER TABLE shipment_details ADD COLUMN IF NOT EXISTS vessel_registration VARCHAR(100)"
+    )
+    op.execute(
+        "ALTER TABLE shipment_details ADD COLUMN IF NOT EXISTS estimated_departure_date DATE"
+    )
+    op.execute(
+        "ALTER TABLE shipment_details ADD COLUMN IF NOT EXISTS actual_departure_date DATE"
+    )
+    op.execute(
+        "ALTER TABLE shipment_details ADD COLUMN IF NOT EXISTS bill_of_landing_number VARCHAR(100)"
+    )
+    op.execute(
+        "ALTER TABLE shipment_details ADD COLUMN IF NOT EXISTS documents_uploaded BOOLEAN NOT NULL DEFAULT false"
+    )
+    op.execute(
+        "ALTER TABLE shipment_details ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT false"
+    )
     op.alter_column('vehicles', 'fuel_type',
                existing_type=postgresql.ENUM('PETROL', 'DIESEL', 'HYBRID', 'ELECTRIC', 'CNG', name='fueltype'),
                type_=sa.String(length=50),
@@ -70,13 +94,19 @@ def downgrade() -> None:
     op.drop_column('shipment_details', 'actual_departure_date')
     op.drop_column('shipment_details', 'estimated_departure_date')
     op.drop_column('shipment_details', 'vessel_registration')
-    op.drop_index(op.f('ix_payments_user_id'), table_name='payments')
-    op.drop_index(op.f('ix_payments_status'), table_name='payments')
+    op.drop_index(op.f('ix_payments_user_id'), table_name='payments', if_exists=True)
+    op.drop_index(op.f('ix_payments_status'), table_name='payments', if_exists=True)
     op.create_index('idx_payments_user_id', 'payments', ['user_id'], unique=False)
     op.create_index('idx_payments_status', 'payments', ['status'], unique=False)
     op.create_index('idx_payments_created_at', 'payments', ['created_at'], unique=False)
-    op.drop_index('idx_order_status_history_to_status', table_name='order_status_history')
-    op.drop_index('idx_order_status_history_created_at', table_name='order_status_history')
+    op.drop_index(
+        'idx_order_status_history_to_status', table_name='order_status_history', if_exists=True
+    )
+    op.drop_index(
+        'idx_order_status_history_created_at',
+        table_name='order_status_history',
+        if_exists=True,
+    )
     op.drop_column('order_status_history', 'user_agent')
     op.drop_column('order_status_history', 'ip_address')
     op.alter_column('gazettes', 'raw_extracted',

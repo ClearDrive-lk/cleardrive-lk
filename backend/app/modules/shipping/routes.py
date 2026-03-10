@@ -4,7 +4,6 @@ Author: Kalidu
 Story: CD-72 - Shipping Document Upload
 """
 
-import hashlib
 import logging
 
 from app.core.database import get_db
@@ -24,13 +23,14 @@ from app.modules.shipping.schemas import (
     ShippingDetailsResponse,
     ShippingDetailsSubmit,
 )
+from app.services.security.file_integrity import file_integrity_service
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/shipping", tags=["shipping"])
 logger = logging.getLogger(__name__)
 
-# ─── Constants ─────────────────────────────────────────────────────────────────
+# --- Constants ---
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
@@ -41,16 +41,8 @@ ALLOWED_MIME_TYPES = {
     "image/webp",
 }
 
-# Required document types that must be present before admin approval
-REQUIRED_DOCUMENT_TYPES = {
-    DocumentType.BILL_OF_LADING,
-    DocumentType.BILL_OF_LANDING,
-    DocumentType.COMMERCIAL_INVOICE,
-    DocumentType.PACKING_LIST,
-}
 
-
-# ─── Helpers ───────────────────────────────────────────────────────────────────
+# --- Helpers ---
 
 
 def _get_shipment_for_exporter(
@@ -73,15 +65,11 @@ def _get_shipment_for_exporter(
     return shipment
 
 
-def _compute_sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
 def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     """Return labels of required document types not yet uploaded."""
     uploaded = {doc.document_type for doc in shipment.documents}
 
-    # BILL_OF_LADING and BILL_OF_LANDING are the same document — accept either
+    # BILL_OF_LADING and BILL_OF_LANDING are the same document - accept either.
     bol_present = (
         DocumentType.BILL_OF_LADING in uploaded or DocumentType.BILL_OF_LANDING in uploaded
     )
@@ -96,7 +84,7 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     return missing
 
 
-# ─── CD-71: Submit shipping details ────────────────────────────────────────────
+# CD-71: Submit shipping details
 
 
 @router.post("/{order_id}/details", response_model=ShippingDetailsResponse)
@@ -121,7 +109,6 @@ async def submit_shipping_details(
     shipment.seal_number = payload.seal_number
     shipment.tracking_number = payload.tracking_number
 
-    # Parse date strings (ISO format)
     import datetime as dt
 
     shipment.estimated_departure_date = dt.date.fromisoformat(payload.departure_date)
@@ -149,7 +136,7 @@ async def get_shipping_details(
     return shipment
 
 
-# ─── CD-72.1: Upload document ──────────────────────────────────────────────────
+# CD-72.1: Upload document
 
 
 @router.post(
@@ -182,21 +169,22 @@ async def upload_shipping_document(
     - Document type: Must be valid enum
 
     **Security** (CD-72.4):
-    - SHA-256 hash stored for file integrity
+    - SHA-256 hash stored on document record
+    - FileIntegrity record created (CD-53 integration)
     """
 
-    print(f"\n{'=' * 70}")
-    print("📄 SHIPPING DOCUMENT UPLOAD")
-    print(f"   Order:     {order_id}")
-    print(f"   Type:      {document_type}")
-    print(f"   File:      {file.filename}")
-    print(f"   Exporter:  {current_user.email}")
-    print(f"{'=' * 70}\n")
+    logger.info(
+        "Shipping document upload order_id=%s type=%s file=%s exporter=%s",
+        order_id,
+        document_type,
+        file.filename,
+        current_user.email,
+    )
 
-    # ── 1. Shipment & access ────────────────────────────────────────────────
+    # 1. Shipment & access
     shipment = _get_shipment_for_exporter(order_id, current_user, db)
 
-    # ── 2. Validate document type (CD-72.2) ─────────────────────────────────
+    # 2. Validate document type (CD-72.2)
     try:
         doc_type = DocumentType(document_type)
     except ValueError:
@@ -206,10 +194,10 @@ async def upload_shipping_document(
             detail=f"Invalid document type '{document_type}'. Valid types: {valid}",
         )
 
-    # ── 3. Read file content ────────────────────────────────────────────────
+    # 3. Read file content
     content = await file.read()
 
-    # ── 4. Validate MIME type (CD-72.3) ─────────────────────────────────────
+    # 4. Validate MIME type (CD-72.3)
     mime_type = file.content_type or "application/octet-stream"
     if mime_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
@@ -217,17 +205,18 @@ async def upload_shipping_document(
             detail=f"Invalid file type '{mime_type}'. Allowed: PDF, JPEG, PNG, WebP",
         )
 
-    # ── 5. Validate file size (CD-72.3) ─────────────────────────────────────
+    # 5. Validate file size (CD-72.3)
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large ({len(content) // (1024 * 1024)} MB). Maximum size: 10 MB",
+            detail=f"File too large ({len(content) / (1024 * 1024):.1f} MB). Maximum size: 10 MB",
         )
 
-    # ── 6. SHA-256 integrity hash (CD-72.4) ─────────────────────────────────
-    sha256_hash = _compute_sha256(content)
+    # 6. SHA-256 integrity hash (CD-72.4)
+    sha256_hash = file_integrity_service.calculate_sha256(content)
+    logger.debug("SHA-256 computed hash_prefix=%s", sha256_hash[:16])
 
-    # ── 7. Upload to Supabase storage ───────────────────────────────────────
+    # 7. Upload to Supabase storage
     storage_path = f"shipping/{order_id}/{doc_type.value}/{file.filename}"
     try:
         file_url = await storage.upload(
@@ -242,7 +231,7 @@ async def upload_shipping_document(
             detail="File storage failed. Please try again.",
         ) from exc
 
-    # ── 8. Remove previous upload of same type (replace semantics) ──────────
+    # 8. Remove previous upload of same type (replace semantics)
     existing = (
         db.query(ShippingDocument)
         .filter(
@@ -255,7 +244,7 @@ async def upload_shipping_document(
         db.delete(existing)
         db.flush()
 
-    # ── 9. Persist record ───────────────────────────────────────────────────
+    # 9. Persist document record with sha256_hash (CD-72.4)
     doc = ShippingDocument(
         shipment_id=shipment.id,
         document_type=doc_type,
@@ -263,15 +252,31 @@ async def upload_shipping_document(
         file_url=file_url,
         file_size=len(content),
         mime_type=mime_type,
+        sha256_hash=sha256_hash,
         uploaded_by=current_user.id,
     )
     db.add(doc)
 
-    # ── 10. Update shipment status if first upload ───────────────────────────
+    # 10. Create FileIntegrity record (CD-53 integration)
+    try:
+        file_integrity_service.create_integrity_record(
+            db=db,
+            file_url=file_url,
+            file_name=file.filename or f"{doc_type.value}.bin",
+            file_bytes=content,
+            mime_type=mime_type,
+            uploaded_by_id=str(current_user.id),
+        )
+        logger.info("FileIntegrity record created order_id=%s", order_id)
+    except Exception as exc:
+        # Don't fail the upload if integrity record creation fails
+        logger.warning("FileIntegrity record creation failed order_id=%s: %s", order_id, exc)
+
+    # 11. Update shipment status if first upload
     if shipment.status == ShipmentStatus.PENDING_SHIPMENT:
         shipment.status = ShipmentStatus.DOCS_UPLOADED
 
-    # ── 11. Check if all required docs present ──────────────────────────────
+    # 12. Check if all required docs present (CD-72.5)
     db.flush()
     db.refresh(shipment)
     missing = _missing_required_docs(shipment)
@@ -279,15 +284,24 @@ async def upload_shipping_document(
         shipment.documents_uploaded = True
         shipment.status = ShipmentStatus.AWAITING_ADMIN_APPROVAL
         logger.info(
-            "All required documents uploaded — order_id=%s awaiting admin approval",
+            "All required documents uploaded - order_id=%s awaiting admin approval",
             order_id,
         )
+    else:
+        logger.info("Missing documents order_id=%s missing=%s", order_id, ", ".join(missing))
 
     db.commit()
     db.refresh(doc)
 
-    # Build response (attach order_id for schema)
-    response = DocumentUploadResponse(
+    logger.info(
+        "Document uploaded order_id=%s type=%s file=%s hash=%s",
+        order_id,
+        doc_type.value,
+        file.filename,
+        sha256_hash[:12],
+    )
+
+    return DocumentUploadResponse(
         id=doc.id,
         shipment_id=doc.shipment_id,
         order_id=shipment.order_id,
@@ -301,18 +315,8 @@ async def upload_shipping_document(
         uploaded_by=doc.uploaded_by,
     )
 
-    logger.info(
-        "Document uploaded order_id=%s type=%s file=%s hash=%s",
-        order_id,
-        doc_type.value,
-        file.filename,
-        sha256_hash[:12],
-    )
 
-    return response
-
-
-# ─── CD-72: List documents ─────────────────────────────────────────────────────
+# CD-72: List documents
 
 
 @router.get("/{order_id}/documents", response_model=list[DocumentListItem])
@@ -346,7 +350,7 @@ async def list_shipping_documents(
     ]
 
 
-# ─── CD-72.5: Required documents check ────────────────────────────────────────
+# CD-72.5: Required documents check
 
 
 @router.get("/{order_id}/documents/check", response_model=RequiredDocumentsCheck)

@@ -133,6 +133,9 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     file_size: Mapped[int | None] = mapped_column(Integer)
     mime_type: Mapped[str | None] = mapped_column(String(100))
 
+    # File integrity (CD-72.4 / CD-53)
+    sha256_hash: Mapped[str | None] = mapped_column(String(64))
+
     # Upload info
     uploaded_by: Mapped[PyUUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     uploaded_at: Mapped[dt.datetime] = mapped_column(
