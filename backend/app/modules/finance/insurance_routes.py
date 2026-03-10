@@ -1,5 +1,3 @@
-# backend/app/modules/finance/insurance_routes.py
-
 """
 Vehicle insurance endpoints.
 Author: Parindra Gallage

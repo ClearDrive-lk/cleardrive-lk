@@ -1,5 +1,3 @@
-# backend/app/modules/finance/finance_routes.py
-
 """
 Vehicle finance endpoints.
 Author: Parindra Gallage
