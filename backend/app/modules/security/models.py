@@ -89,6 +89,9 @@ class FileIntegrity(Base, UUIDMixin, TimestampMixin):
         nullable=False,
         index=True,
     )
+    verification_error: Mapped[str | None] = mapped_column(String(500))
+    tampering_detected: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    tampering_detected_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     def __repr__(self):
         return f"<FileIntegrity {self.file_url} - {self.verification_status}>"

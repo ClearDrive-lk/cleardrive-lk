@@ -64,6 +64,10 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str | None = None
     DOCUMENT_AI_PROCESSOR_ID: str | None = None
     GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL: str = "gemini-1.5-pro-latest"
+    CHATBOT_RATE_LIMIT_PER_MINUTE: int = 10
+    CHATBOT_MAX_MESSAGE_LENGTH: int = 500
+    CHATBOT_MAX_HISTORY_LENGTH: int = 10
     MAX_GAZETTE_SIZE_MB: int = 50
     GAZETTE_UPLOAD_PATH: str = "data/gazettes"
 
