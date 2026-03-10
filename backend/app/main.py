@@ -36,6 +36,8 @@ except ImportError:
     close_redis = None  # type: ignore
     get_redis = None  # type: ignore
 
+from app.services.email_scheduler import email_scheduler
+
 # Import routers
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
@@ -85,6 +87,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to start: {e}")
 
+    try:
+        email_scheduler.start()
+    except Exception as e:
+        logger.warning(f"CD-120 email scheduler failed to start: {e}")
+
     yield
 
     logger.info("Shutting down ClearDrive.lk API...")
@@ -100,6 +107,11 @@ async def lifespan(app: FastAPI):
         scraper_scheduler.stop()
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to stop cleanly: {e}")
+        
+    try:
+        email_scheduler.stop()
+    except Exception as e:
+        logger.warning(f"CD-120 email scheduler failed to stop cleanly: {e}")
 
 
 app = FastAPI(
