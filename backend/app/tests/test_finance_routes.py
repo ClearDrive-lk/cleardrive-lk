@@ -140,7 +140,9 @@ def test_insurance_quote_and_admin_approval_flow(
         "license_number": "B1234567",
         "previous_claims": 0,
     }
-    quote_response = client.post("/api/v1/insurance/quote", headers=auth_headers, json=quote_payload)
+    quote_response = client.post(
+        "/api/v1/insurance/quote", headers=auth_headers, json=quote_payload
+    )
 
     assert quote_response.status_code == 200
     created = quote_response.json()
