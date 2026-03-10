@@ -5,7 +5,7 @@ Story: CD-120.5
 """
 
 from typing import Optional
-from sqlalchemy import Column, String, DateTime, Text, Integer, Enum as SQLEnum, JSON
+from sqlalchemy import String, DateTime, Text, Integer, Enum as SQLEnum, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
 import uuid
