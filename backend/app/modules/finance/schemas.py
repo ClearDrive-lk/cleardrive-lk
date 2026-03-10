@@ -11,14 +11,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-
 # ===================================================================
 # LETTER OF CREDIT SCHEMAS (CD-33.1, CD-33.2)
 # ===================================================================
 
+
 class LCCreateRequest(BaseModel):
     """Request to create Letter of Credit."""
-    
+
     order_id: UUID
     bank_name: str = Field(..., min_length=3, max_length=255)
     bank_branch: Optional[str] = Field(None, max_length=255)
@@ -28,7 +28,7 @@ class LCCreateRequest(BaseModel):
 
 class LCApproveRequest(BaseModel):
     """Admin approval of LC."""
-    
+
     lc_number: str = Field(..., min_length=5, max_length=50)
     beneficiary_name: str
     beneficiary_bank: str
@@ -40,13 +40,13 @@ class LCApproveRequest(BaseModel):
 
 class LCRejectRequest(BaseModel):
     """Admin rejection of LC."""
-    
+
     rejection_reason: str = Field(..., min_length=10, max_length=500)
 
 
 class LCResponse(BaseModel):
     """LC response."""
-    
+
     id: UUID
     order_id: UUID
     lc_number: Optional[str] = None
@@ -54,7 +54,7 @@ class LCResponse(BaseModel):
     amount: Decimal
     status: str
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -62,9 +62,10 @@ class LCResponse(BaseModel):
 # VEHICLE FINANCE SCHEMAS (CD-33.3, CD-33.4)
 # ===================================================================
 
+
 class FinanceApplicationRequest(BaseModel):
     """Finance loan application."""
-    
+
     order_id: UUID
     vehicle_price: Decimal = Field(..., gt=0)
     down_payment: Decimal = Field(..., gt=0)
@@ -72,17 +73,17 @@ class FinanceApplicationRequest(BaseModel):
     employment_type: str = Field(..., max_length=50)
     employer_name: str = Field(..., max_length=255)
     years_employed: Decimal = Field(..., ge=0)
-    
-    @model_validator(mode='after')
-    def validate_down_payment(self) -> 'FinanceApplicationRequest':
+
+    @model_validator(mode="after")
+    def validate_down_payment(self) -> "FinanceApplicationRequest":
         if self.down_payment > self.vehicle_price:
-            raise ValueError('Down payment cannot exceed vehicle price')
+            raise ValueError("Down payment cannot exceed vehicle price")
         return self
 
 
 class FinanceApproveRequest(BaseModel):
     """Admin approval of finance."""
-    
+
     loan_number: str = Field(..., min_length=5, max_length=50)
     interest_rate: Decimal = Field(..., gt=0, le=100)  # Percentage
     loan_period_months: int = Field(..., gt=0, le=120)  # Max 10 years
@@ -91,13 +92,13 @@ class FinanceApproveRequest(BaseModel):
 
 class FinanceRejectRequest(BaseModel):
     """Admin rejection of finance."""
-    
+
     rejection_reason: str = Field(..., min_length=10, max_length=500)
 
 
 class FinanceResponse(BaseModel):
     """Finance response."""
-    
+
     id: UUID
     order_id: UUID
     loan_number: Optional[str] = None
@@ -107,7 +108,7 @@ class FinanceResponse(BaseModel):
     monthly_payment: Optional[Decimal] = None
     status: str
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -115,9 +116,10 @@ class FinanceResponse(BaseModel):
 # VEHICLE INSURANCE SCHEMAS (CD-33.5, CD-33.6)
 # ===================================================================
 
+
 class InsuranceQuoteRequest(BaseModel):
     """Insurance quote request."""
-    
+
     order_id: UUID
     insurance_type: str = Field(..., max_length=50)
     vehicle_value: Decimal = Field(..., gt=0)
@@ -129,7 +131,7 @@ class InsuranceQuoteRequest(BaseModel):
 
 class InsuranceApproveRequest(BaseModel):
     """Admin approval of insurance with quote."""
-    
+
     policy_number: str = Field(..., min_length=5, max_length=50)
     coverage_amount: Decimal = Field(..., gt=0)
     annual_premium: Decimal = Field(..., gt=0)
@@ -142,13 +144,13 @@ class InsuranceApproveRequest(BaseModel):
 
 class InsuranceRejectRequest(BaseModel):
     """Admin rejection of insurance."""
-    
+
     rejection_reason: str = Field(..., min_length=10, max_length=500)
 
 
 class InsuranceResponse(BaseModel):
     """Insurance response."""
-    
+
     id: UUID
     order_id: UUID
     policy_number: Optional[str] = None
@@ -157,5 +159,5 @@ class InsuranceResponse(BaseModel):
     annual_premium: Optional[Decimal] = None
     status: str
     created_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
