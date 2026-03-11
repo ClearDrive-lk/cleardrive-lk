@@ -24,7 +24,9 @@ async def send_payment_confirmation_email(payment: Payment, order: Order) -> Non
         return
 
     receipt_id = payment.payhere_payment_id or str(payment.id)
-    payment_date = payment.completed_at.strftime("%Y-%m-%d %H:%M:%S") if payment.completed_at else "Unknown"
+    payment_date = (
+        payment.completed_at.strftime("%Y-%m-%d %H:%M:%S") if payment.completed_at else "Unknown"
+    )
 
     email_sent_id = await notification_service.send_payment_confirmation(
         email=recipient,
@@ -33,7 +35,7 @@ async def send_payment_confirmation_email(payment: Payment, order: Order) -> Non
         amount=f"{payment.amount} {payment.currency}",
         receipt_id=receipt_id,
         payment_date=payment_date,
-        payment_method=payment.payment_method or "Not available"
+        payment_method=payment.payment_method or "Not available",
     )
 
     if not email_sent_id:
@@ -44,6 +46,7 @@ async def send_payment_confirmation_email(payment: Payment, order: Order) -> Non
             payment.amount,
             payment.currency,
         )
+
 
 async def send_payment_failure_email(payment: Payment, order: Order) -> None:
     """Send payment failure email to the customer."""

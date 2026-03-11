@@ -24,9 +24,9 @@ async def send_status_change_notification(
     - SHIPPED: Notify customer with tracking info
     - DELIVERED: Request customer feedback/review
     """
-    
+
     # We use notification_service.send_status_change to send the general status updates
-    
+
     status_messages = {
         OrderStatus.PAYMENT_CONFIRMED: "Your payment is confirmed. We will assign an exporter and keep you updated.",
         OrderStatus.LC_REQUESTED: "Your order is now under LC review.",
@@ -37,7 +37,7 @@ async def send_status_change_notification(
         OrderStatus.DELIVERED: "Your order has been delivered. Thank you for choosing ClearDrive.lk.",
         OrderStatus.CANCELLED: "Your order was cancelled.",
     }
-    
+
     # Exporter-specific assignment notification is handled via a generic email send from NotificationService
     # or just through the generic status_change template.
     if new_status == OrderStatus.ASSIGNED_TO_EXPORTER:
@@ -45,7 +45,7 @@ async def send_status_change_notification(
         if order.shipment_details:
             exporter = getattr(order.shipment_details, "exporter", None)
             exporter_email = getattr(exporter, "email", None)
-            
+
         if exporter_email:
             try:
                 # We can enqueue a simple status change for the exporter as well
@@ -57,13 +57,13 @@ async def send_status_change_notification(
                         "user_name": "Exporter",
                         "order_id": str(order.id),
                         "new_status": "Assigned",
-                        "status_message": f"You have been assigned to export Order #{order.id}."
+                        "status_message": f"You have been assigned to export Order #{order.id}.",
                     },
-                    priority=4
+                    priority=4,
                 )
             except Exception as e:
                 logger.warning(f"Failed to send assignment to exporter: {str(e)}")
-    
+
     msg = status_messages.get(new_status)
     if msg and order.user and getattr(order.user, "email", None):
         try:
@@ -72,7 +72,9 @@ async def send_status_change_notification(
                 user_name=order.user.name or "Customer",
                 order_id=str(order.id),
                 new_status=new_status.value.replace("_", " ").title(),
-                status_message=msg
+                status_message=msg,
             )
         except Exception as e:
-            logger.warning("Failed to send status change notification for order_id=%s: %s", order.id, str(e))
+            logger.warning(
+                "Failed to send status change notification for order_id=%s: %s", order.id, str(e)
+            )

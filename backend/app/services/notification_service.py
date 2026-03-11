@@ -41,7 +41,9 @@ class NotificationService:
             html_content = template.render(**context)
 
             # A simple text fallback instructing the user to view in HTML
-            text_content = f"Please view this email in an HTML-compatible client. Link: {self.frontend_url}"
+            text_content = (
+                f"Please view this email in an HTML-compatible client. Link: {self.frontend_url}"
+            )
 
             email_id = await email_queue.enqueue(
                 to_email=to_email,
@@ -57,7 +59,13 @@ class NotificationService:
             return ""
 
     async def send_order_confirmation(
-        self, email: str, user_name: str, order_id: str, vehicle_name: str, chassis_no: str, total_price: str
+        self,
+        email: str,
+        user_name: str,
+        order_id: str,
+        vehicle_name: str,
+        chassis_no: str,
+        total_price: str,
     ) -> str:
         """CD-121.2 - Send Order Confirmation."""
         return await self._enqueue_template(
@@ -121,7 +129,13 @@ class NotificationService:
         )
 
     async def send_shipment_notification(
-        self, email: str, user_name: str, order_id: str, vessel_name: str, tracking_number: str, estimated_arrival: str
+        self,
+        email: str,
+        user_name: str,
+        order_id: str,
+        vessel_name: str,
+        tracking_number: str,
+        estimated_arrival: str,
     ) -> str:
         """CD-121.5 - Send Shipment Notification."""
         return await self._enqueue_template(
@@ -139,7 +153,12 @@ class NotificationService:
         )
 
     async def send_status_change(
-        self, email: str, user_name: str, order_id: str, new_status: str, status_message: Optional[str] = None
+        self,
+        email: str,
+        user_name: str,
+        order_id: str,
+        new_status: str,
+        status_message: Optional[str] = None,
     ) -> str:
         """CD-121.6 - Send Status Change Updates."""
         return await self._enqueue_template(

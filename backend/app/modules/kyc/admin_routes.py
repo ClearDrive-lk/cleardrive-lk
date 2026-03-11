@@ -175,18 +175,16 @@ async def _send_kyc_review_email(
 ) -> None:
     if approved:
         sent_id = await notification_service.send_kyc_approved(
-            email=user_email,
-            user_name=user_name
+            email=user_email, user_name=user_name
         )
     else:
         sent_id = await notification_service.send_kyc_rejected(
-            email=user_email,
-            user_name=user_name,
-            rejection_reason=reason or "No reason provided"
+            email=user_email, user_name=user_name, rejection_reason=reason or "No reason provided"
         )
 
     if not sent_id:
         logger.warning("Failed to enqueue KYC review email to %s", user_email)
+
 
 def _get_kyc_or_404(db: Session, kyc_id: str) -> KYCDocument:
     kyc = db.query(KYCDocument).filter(KYCDocument.id == kyc_id).first()

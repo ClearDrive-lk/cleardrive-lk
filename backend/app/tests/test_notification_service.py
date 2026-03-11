@@ -6,14 +6,18 @@ from app.services.notification_service import notification_service
 
 @pytest.fixture
 def mock_enqueue():
-    with patch("app.services.notification_service.email_queue.enqueue", new_callable=AsyncMock) as mock:
+    with patch(
+        "app.services.notification_service.email_queue.enqueue", new_callable=AsyncMock
+    ) as mock:
         mock.return_value = "mock_email_id"
         yield mock
 
 
 @pytest.fixture
 def mock_base_otp():
-    with patch("app.services.notification_service.base_send_otp_email", new_callable=AsyncMock) as mock:
+    with patch(
+        "app.services.notification_service.base_send_otp_email", new_callable=AsyncMock
+    ) as mock:
         mock.return_value = True
         yield mock
 
@@ -33,7 +37,7 @@ async def test_send_order_confirmation(mock_enqueue):
         order_id="123",
         vehicle_name="Toyota Prius 2020",
         chassis_no="ZVW50-XXXXXXX",
-        total_price="LKR 8,000,000"
+        total_price="LKR 8,000,000",
     )
     assert email_id == "mock_email_id"
     mock_enqueue.assert_called_once()
@@ -53,7 +57,7 @@ async def test_send_payment_confirmation(mock_enqueue):
         amount="LKR 8,000,000",
         receipt_id="REC-001",
         payment_date="2026-03-11",
-        payment_method="Credit Card"
+        payment_method="Credit Card",
     )
     assert email_id == "mock_email_id"
     mock_enqueue.assert_called_once()
@@ -77,7 +81,9 @@ async def test_send_kyc_approved(mock_enqueue):
 
 @pytest.mark.asyncio
 async def test_send_kyc_rejected(mock_enqueue):
-    email_id = await notification_service.send_kyc_rejected("test@example.com", "John", "Blurry image")
+    email_id = await notification_service.send_kyc_rejected(
+        "test@example.com", "John", "Blurry image"
+    )
     assert email_id == "mock_email_id"
     mock_enqueue.assert_called_once()
     kwargs = mock_enqueue.call_args.kwargs
@@ -93,7 +99,7 @@ async def test_send_shipment_notification(mock_enqueue):
         order_id="123",
         vessel_name="Oceania",
         tracking_number="TRK-999",
-        estimated_arrival="2026-04-10"
+        estimated_arrival="2026-04-10",
     )
     assert email_id == "mock_email_id"
     mock_enqueue.assert_called_once()
@@ -111,7 +117,7 @@ async def test_send_status_change(mock_enqueue):
         user_name="John",
         order_id="123",
         new_status="Delivered",
-        status_message="Thank you for your purchase!"
+        status_message="Thank you for your purchase!",
     )
     assert email_id == "mock_email_id"
     mock_enqueue.assert_called_once()

@@ -97,7 +97,7 @@ async def submit_shipping_details(
     db.commit()
     db.refresh(shipment)
     db.refresh(order)
-    
+
     # Notify customer about shipment details
     if order.user:
         try:
@@ -107,7 +107,11 @@ async def submit_shipping_details(
                 order_id=str(order.id),
                 vessel_name=shipment.vessel_name,
                 tracking_number=shipment.tracking_number or "Pending",
-                estimated_arrival=shipment.estimated_arrival_date.strftime("%Y-%m-%d") if shipment.estimated_arrival_date else "TBD"
+                estimated_arrival=(
+                    shipment.estimated_arrival_date.strftime("%Y-%m-%d")
+                    if shipment.estimated_arrival_date
+                    else "TBD"
+                ),
             )
         except Exception:
             pass

@@ -155,16 +155,20 @@ async def create_order(
     db.commit()
 
     # 7. Send confirmation email (CD-30.7)
-    vehicle_name = f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})" if 'make' in vehicle else "Selected Vehicle"
-    chassis_no = vehicle.get('chassis_no', 'N/A')
-    
+    vehicle_name = (
+        f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})"
+        if "make" in vehicle
+        else "Selected Vehicle"
+    )
+    chassis_no = vehicle.get("chassis_no", "N/A")
+
     email_sent_id = await notification_service.send_order_confirmation(
         email=current_user.email,
         user_name=current_user.name or "Customer",
         order_id=str(new_order.id),
         vehicle_name=vehicle_name,
         chassis_no=chassis_no,
-        total_price=f"LKR {new_order.total_cost_lkr:,.2f}" if new_order.total_cost_lkr else "N/A"
+        total_price=f"LKR {new_order.total_cost_lkr:,.2f}" if new_order.total_cost_lkr else "N/A",
     )
 
     if not email_sent_id:
