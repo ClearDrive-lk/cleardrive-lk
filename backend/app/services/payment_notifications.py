@@ -8,6 +8,7 @@ from html import escape
 from app.modules.orders.models import Order
 from app.modules.payments.models import Payment
 from app.services.email import send_email
+from app.services.notification_service import notification_service
 
 logger = logging.getLogger(__name__)
 
@@ -22,30 +23,20 @@ async def send_payment_confirmation_email(payment: Payment, order: Order) -> Non
         )
         return
 
-    masked_card = f"**** {payment.card_no}" if payment.card_no else "Not available"
-    subject = "Payment Confirmed - ClearDrive.lk"
-    html_content = (
-        "<h2>Payment Confirmed</h2>"
-        f"<p>Your payment for order <strong>{escape(str(order.id))}</strong> has been confirmed.</p>"
-        "<p>Payment details:</p>"
-        "<ul>"
-        f"<li>Amount: {escape(str(payment.amount))} {escape(payment.currency)}</li>"
-        f"<li>Method: {escape(payment.payment_method or 'Not available')}</li>"
-        f"<li>Card: {escape(masked_card)}</li>"
-        "</ul>"
-        "<p>Next step: our team will review your order and assign an exporter.</p>"
-    )
-    text_content = (
-        "Payment Confirmed\n\n"
-        f"Order: {order.id}\n"
-        f"Amount: {payment.amount} {payment.currency}\n"
-        f"Method: {payment.payment_method or 'Not available'}\n"
-        f"Card: {masked_card}\n\n"
-        "Next step: our team will review your order and assign an exporter."
+    receipt_id = payment.payhere_payment_id or str(payment.id)
+    payment_date = payment.completed_at.strftime("%Y-%m-%d %H:%M:%S") if payment.completed_at else "Unknown"
+
+    email_sent_id = await notification_service.send_payment_confirmation(
+        email=recipient,
+        user_name=getattr(user, "name", "Customer") or "Customer",
+        order_id=str(order.id),
+        amount=f"{payment.amount} {payment.currency}",
+        receipt_id=receipt_id,
+        payment_date=payment_date,
+        payment_method=payment.payment_method or "Not available"
     )
 
-    sent = await send_email(recipient, subject, html_content, text_content)
-    if not sent:
+    if not email_sent_id:
         logger.warning(
             "Payment confirmation email failed: order_id=%s payment_id=%s amount=%s %s",
             order.id,
@@ -53,7 +44,6 @@ async def send_payment_confirmation_email(payment: Payment, order: Order) -> Non
             payment.amount,
             payment.currency,
         )
-
 
 async def send_payment_failure_email(payment: Payment, order: Order) -> None:
     """Send payment failure email to the customer."""

@@ -37,6 +37,7 @@ from app.modules.orders.state_machine import (
     validate_state_transition,
 )
 from app.services.email import send_email
+from app.services.notification_service import notification_service
 from app.services.orders.status_history import status_history_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -154,34 +155,19 @@ async def create_order(
     db.commit()
 
     # 7. Send confirmation email (CD-30.7)
-    subject = "Order Confirmation - ClearDrive.lk"
-    html_content = f"""
-    <html>
-      <body>
-        <h2>Order Confirmed</h2>
-        <p>Hello {current_user.name or 'Customer'},</p>
-        <p>Your order has been created successfully.</p>
-        <p><strong>Order ID:</strong> {new_order.id}</p>
-        <p><strong>Status:</strong> {new_order.status}</p>
-        <p><strong>Total Cost (LKR):</strong> {new_order.total_cost_lkr}</p>
-      </body>
-    </html>
-    """
-    text_content = (
-        f"Hello {current_user.name or 'Customer'},\n\n"
-        "Your order has been created successfully.\n"
-        f"Order ID: {new_order.id}\n"
-        f"Status: {new_order.status}\n"
-        f"Total Cost (LKR): {new_order.total_cost_lkr}\n"
+    vehicle_name = f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})" if 'make' in vehicle else "Selected Vehicle"
+    chassis_no = vehicle.get('chassis_no', 'N/A')
+    
+    email_sent_id = await notification_service.send_order_confirmation(
+        email=current_user.email,
+        user_name=current_user.name or "Customer",
+        order_id=str(new_order.id),
+        vehicle_name=vehicle_name,
+        chassis_no=chassis_no,
+        total_price=f"LKR {new_order.total_cost_lkr:,.2f}" if new_order.total_cost_lkr else "N/A"
     )
 
-    email_sent = await send_email(
-        to_email=current_user.email,
-        subject=subject,
-        html_content=html_content,
-        text_content=text_content,
-    )
-    if not email_sent:
+    if not email_sent_id:
         logger.warning(
             "Order created but confirmation email failed for user_id=%s", current_user.id
         )
