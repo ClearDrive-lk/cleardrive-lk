@@ -32,7 +32,7 @@ async def send_status_change_notification(
         OrderStatus.LC_REQUESTED: "Your order is now under LC review.",
         OrderStatus.LC_APPROVED: "Your LC has been approved.",
         OrderStatus.LC_REJECTED: "Your LC was rejected.",
-        OrderStatus.ASSIGNED_TO_EXPORTER: f"An exporter was assigned to your order.",
+        OrderStatus.ASSIGNED_TO_EXPORTER: "An exporter was assigned to your order.",
         OrderStatus.SHIPPED: "Your order has been marked as shipped.",
         OrderStatus.DELIVERED: "Your order has been delivered. Thank you for choosing ClearDrive.lk.",
         OrderStatus.CANCELLED: "Your order was cancelled.",

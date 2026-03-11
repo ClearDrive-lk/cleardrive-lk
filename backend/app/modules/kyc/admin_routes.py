@@ -17,7 +17,6 @@ from app.modules.kyc.schemas import (
     KYCManualExtractionRequest,
     KYCRejectRequest,
 )
-from app.services.email import send_email
 from app.services.notification_service import notification_service
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_

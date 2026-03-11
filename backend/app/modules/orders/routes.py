@@ -36,7 +36,6 @@ from app.modules.orders.state_machine import (
     get_allowed_next_states,
     validate_state_transition,
 )
-from app.services.email import send_email
 from app.services.notification_service import notification_service
 from app.services.orders.status_history import status_history_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
