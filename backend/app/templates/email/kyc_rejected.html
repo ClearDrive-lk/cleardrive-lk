@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>KYC Verification Update Required</h2>
+<p>Dear {{ user_name }},</p>
+<p>We have reviewed your recent KYC document submission, but unfortunately, we could not verify your identity at this time.</p>
+<div style="background-color: #fff5f5; border-left: 4px solid #f56565; padding: 15px; margin: 20px 0;">
+    <p style="margin: 0; color: #c53030;"><strong>Reason:</strong> {{ rejection_reason }}</p>
+</div>
+<p>Please log in to your account to review the feedback and submit the updated documents.</p>
+<div style="text-align: center;">
+    <a href="{{ frontend_url }}/dashboard/kyc" class="button">Resubmit KYC</a>
+</div>
+<p>If you have any questions or need assistance, our support team is ready to help.</p>
+<p>Best regards,<br>The ClearDrive.lk Team</p>
+{% endblock %}
