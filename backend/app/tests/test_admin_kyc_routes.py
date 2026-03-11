@@ -147,7 +147,9 @@ def test_approve_kyc_updates_status_creates_audit_and_sends_email(
         sent_emails.append((email, "KYC Approved - ClearDrive.lk"))
         return "mock_id"
 
-    monkeypatch.setattr("app.modules.kyc.admin_routes.notification_service.send_kyc_approved", _send_kyc_approved)
+    monkeypatch.setattr(
+        "app.modules.kyc.admin_routes.notification_service.send_kyc_approved", _send_kyc_approved
+    )
 
     response = client.post(f"/api/v1/admin/kyc/{kyc.id}/approve", headers=admin_headers)
 
@@ -172,7 +174,9 @@ def test_reject_kyc_requires_reason_and_sends_email(
         sent_emails.append((email, "KYC Rejected - ClearDrive.lk"))
         return "mock_id"
 
-    monkeypatch.setattr("app.modules.kyc.admin_routes.notification_service.send_kyc_rejected", _send_kyc_rejected)
+    monkeypatch.setattr(
+        "app.modules.kyc.admin_routes.notification_service.send_kyc_rejected", _send_kyc_rejected
+    )
 
     short_reason_response = client.post(
         f"/api/v1/admin/kyc/{kyc.id}/reject",
