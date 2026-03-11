@@ -47,28 +47,20 @@ class TestOTPVerification:
         """Test constant-time property (basic check)."""
         import time
 
-        # Run multiple iterations to get average
-        iterations = 100
+        def measure_batch(stored: str, provided: str, iterations: int) -> int:
+            start = time.perf_counter_ns()
+            for _ in range(iterations):
+                verify_otp_constant_time(stored, provided)
+            return time.perf_counter_ns() - start
 
-        # Measure time for matching OTPs
-        total_match = 0
-        for _ in range(iterations):
-            start = time.perf_counter()
-            verify_otp_constant_time("123456", "123456")
-            total_match += time.perf_counter() - start
-        avg_match = total_match / iterations
+        # Use larger batches to smooth out scheduler noise in CI and hooks.
+        iterations = 10_000
+        total_match = measure_batch("123456", "123456", iterations)
+        total_no_match = measure_batch("123456", "999999", iterations)
 
-        # Measure time for non-matching OTPs
-        total_no_match = 0
-        for _ in range(iterations):
-            start = time.perf_counter()
-            verify_otp_constant_time("123456", "999999")
-            total_no_match += time.perf_counter() - start
-        avg_no_match = total_no_match / iterations
-
-        # Times should be similar (within 2x when averaged)
+        # Times should be similar (within 2x over the full batch)
         # This is a relaxed check since hmac.compare_digest is already constant-time
-        time_ratio = max(avg_match, avg_no_match) / min(avg_match, avg_no_match)
+        time_ratio = max(total_match, total_no_match) / min(total_match, total_no_match)
         assert time_ratio < 2.0, f"Time ratio {time_ratio} suggests non-constant time"
 
 

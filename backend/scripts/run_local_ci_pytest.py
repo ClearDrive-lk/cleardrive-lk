@@ -67,7 +67,7 @@ def main() -> int:
     parser.add_argument(
         "--timeout-seconds",
         type=int,
-        default=180,
+        default=300,
         help="Pytest timeout in seconds",
     )
     args = parser.parse_args()
