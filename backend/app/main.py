@@ -1,5 +1,3 @@
-# backend/app/main.py
-
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -36,6 +34,7 @@ except ImportError:
     close_redis = None  # type: ignore
     get_redis = None  # type: ignore
 
+
 # Import routers
 from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
@@ -49,7 +48,9 @@ from app.modules.shipping.admin_routes import router as shipping_admin_router
 from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
+from app.modules.notifications.routes import router as notifications_router
 from app.services.scraper.scheduler import scraper_scheduler
+from app.services.email_scheduler import email_scheduler
 from app.modules.finance.lc_routes import router as lc_router
 from app.modules.finance.finance_routes import router as finance_router
 from app.modules.finance.insurance_routes import router as insurance_router
@@ -88,6 +89,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to start: {e}")
 
+    try:
+        email_scheduler.start()
+    except Exception as e:
+        logger.warning(f"CD-120 email scheduler failed to start: {e}")
+
     yield
 
     logger.info("Shutting down ClearDrive.lk API...")
@@ -103,6 +109,11 @@ async def lifespan(app: FastAPI):
         scraper_scheduler.stop()
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to stop cleanly: {e}")
+
+    try:
+        email_scheduler.stop()
+    except Exception as e:
+        logger.warning(f"CD-120 email scheduler failed to stop cleanly: {e}")
 
 
 app = FastAPI(
@@ -168,11 +179,12 @@ app.include_router(insurance_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(security_router, prefix=settings.API_V1_PREFIX)
+app.include_router(notifications_router, prefix=settings.API_V1_PREFIX)
 logger.info(
     "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
     "/shipping, /admin, "
     "/admin/dashboard, /admin/audit-logs, /admin/shipping, /admin/kyc, "
-    "/security, /test, /kyc, /gdpr, /gazette, /lc, /finance, /insurance"
+    "/security, /test, /kyc, /gdpr, /gazette, /lc, /finance, /insurance, /notifications"
 )
 
 # Serve local runtime data files (e.g., scraped vehicle images).
