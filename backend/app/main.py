@@ -50,6 +50,9 @@ from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.scraper.scheduler import scraper_scheduler
+from app.modules.finance.lc_routes import router as lc_router
+from app.modules.finance.finance_routes import router as finance_router
+from app.modules.finance.insurance_routes import router as insurance_router
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +162,9 @@ app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gdpr_router, prefix=settings.API_V1_PREFIX)
 app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
+app.include_router(lc_router, prefix=settings.API_V1_PREFIX)
+app.include_router(finance_router, prefix=settings.API_V1_PREFIX)
+app.include_router(insurance_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(security_router, prefix=settings.API_V1_PREFIX)
@@ -166,7 +172,7 @@ logger.info(
     "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
     "/shipping, /admin, "
     "/admin/dashboard, /admin/audit-logs, /admin/shipping, /admin/kyc, "
-    "/security, /test, /kyc, /gdpr, /gazette"
+    "/security, /test, /kyc, /gdpr, /gazette, /lc, /finance, /insurance"
 )
 
 # Serve local runtime data files (e.g., scraped vehicle images).
