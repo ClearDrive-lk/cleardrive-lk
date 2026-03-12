@@ -69,9 +69,9 @@ export function useVehicles(params: VehiclesQueryParams) {
                 ? "Gasoline/hybrid"
                 : params.fuel === "Hybrid"
                   ? "Gasoline/hybrid"
-              : params.fuel === "All"
-                ? undefined
-                : params.fuel,
+                  : params.fuel === "All"
+                    ? undefined
+                    : params.fuel,
         status:
           params.status === "Sold"
             ? "SOLD"
@@ -83,7 +83,7 @@ export function useVehicles(params: VehiclesQueryParams) {
         sort_by:
           params.sort === "price_asc" || params.sort === "price_desc"
             ? "price_jpy"
-          : params.sort === "year_desc"
+            : params.sort === "year_desc"
               ? "year"
               : params.sort === "mileage_asc"
                 ? "mileage_km"
@@ -105,7 +105,8 @@ export function useVehicles(params: VehiclesQueryParams) {
               : params.transmission === "All"
                 ? undefined
                 : params.transmission,
-        vehicle_type: params.vehicleType === "All" ? undefined : params.vehicleType,
+        vehicle_type:
+          params.vehicleType === "All" ? undefined : params.vehicleType,
       };
 
       const response = await apiClient.get("/vehicles", {

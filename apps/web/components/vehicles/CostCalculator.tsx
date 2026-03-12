@@ -30,10 +30,7 @@ type CostBreakdown = {
   fees_percentage: number | string;
 };
 
-export function CostCalculator({
-  vehicleId,
-  priceJPY,
-}: CostCalculatorProps) {
+export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
   const { data, isLoading, isError } = useQuery<CostBreakdown>({
     queryKey: ["vehicle-cost", vehicleId],
     queryFn: async () => {
@@ -153,9 +150,7 @@ export function CostCalculator({
           </div>
           <div className="flex justify-between font-bold text-white pt-2 border-t border-white/5">
             <span>Exchange Rate</span>
-            <span>
-              1 JPY = {Number(data.exchange_rate).toFixed(2)} LKR
-            </span>
+            <span>1 JPY = {Number(data.exchange_rate).toFixed(2)} LKR</span>
           </div>
         </div>
 
@@ -187,9 +182,7 @@ export function CostCalculator({
           </div>
           <div className="flex justify-between text-white font-bold pt-1 border-t border-white/5">
             <span>Total Taxes</span>
-            <span>
-              {formatLKR(taxesTotal)}
-            </span>
+            <span>{formatLKR(taxesTotal)}</span>
           </div>
         </div>
 

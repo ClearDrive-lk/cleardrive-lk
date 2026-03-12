@@ -45,7 +45,6 @@ import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
 
 // --- CONSTANTS ---
 
-
 function VehicleCatalog() {
   const { logout, isLoading: isLogoutLoading } = useLogout();
   const router = useRouter();
@@ -70,8 +69,7 @@ function VehicleCatalog() {
       ? 50000000
       : Math.max(1000000, Math.round(50000000 / exchangeRate));
   const currentMinPrice = Number(searchParams.get("minPrice")) || 0;
-  const currentMaxPrice =
-    Number(searchParams.get("maxPrice")) || priceMaxLimit;
+  const currentMaxPrice = Number(searchParams.get("maxPrice")) || priceMaxLimit;
   const currentMinYear = Number(searchParams.get("minYear")) || 2000;
   const currentMaxYear =
     Number(searchParams.get("maxYear")) || new Date().getFullYear();
@@ -124,9 +122,7 @@ function VehicleCatalog() {
   );
 
   const lkrToCurrent = (value: number) =>
-    currentCurrency === "LKR"
-      ? value
-      : Math.round(value / exchangeRate);
+    currentCurrency === "LKR" ? value : Math.round(value / exchangeRate);
 
   const quickFilters = [
     { label: "Toyota", params: { search: "Toyota" } },
