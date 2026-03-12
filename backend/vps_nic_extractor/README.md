@@ -16,6 +16,7 @@ This folder contains deployable assets for CD-51 local VPS NIC extraction.
 ## VPS deployment steps (manual)
 
 1. Provision droplet:
+
 ```bash
 doctl compute droplet create cleardrive-nic-extraction \
   --region sgp1 \
@@ -27,6 +28,7 @@ doctl compute droplet create cleardrive-nic-extraction \
 ```
 
 2. Install runtime:
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3.11 python3.11-venv python3-pip curl ufw fail2ban
@@ -35,6 +37,7 @@ ollama pull minicpm-v
 ```
 
 3. Deploy service:
+
 ```bash
 mkdir -p /home/ollama/nic-extractor
 cd /home/ollama/nic-extractor
@@ -50,6 +53,7 @@ sudo systemctl start nic-extractor
 ```
 
 4. Configure firewall:
+
 ```bash
 RENDER_IP=<render-ip> YOUR_IP=<your-ip> ./ufw-setup.sh
 ```

@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 import apiClient from "@/lib/api-client";
 import { useAppSelector } from "@/lib/store/store";
+import { mapBackendVehicle } from "@/lib/vehicle-mapper";
+import { Vehicle } from "@/types/vehicle";
+import { VehicleCard } from "@/components/vehicles/VehicleCard";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 
 type ChatRole = "user" | "assistant";
@@ -50,6 +54,36 @@ export default function FloatingChatbot() {
     },
   ]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const vehicleIds = useMemo(() => {
+    const ids = new Set<string>();
+    messages.forEach((message) => {
+      message.vehicleIds?.forEach((vehicleId) => ids.add(vehicleId));
+    });
+    return Array.from(ids);
+  }, [messages]);
+
+  const vehicleQueries = useQueries({
+    queries: vehicleIds.map((vehicleId) => ({
+      queryKey: ["chat-vehicle", vehicleId],
+      queryFn: async () => {
+        const response = await apiClient.get(`/vehicles/${vehicleId}`);
+        return mapBackendVehicle(response.data);
+      },
+      enabled: isOpen,
+      staleTime: 1000 * 60 * 2,
+    })),
+  });
+
+  const vehicleLookup = useMemo(() => {
+    const lookup = new Map<string, Vehicle>();
+    vehicleIds.forEach((vehicleId, index) => {
+      const vehicle = vehicleQueries[index]?.data;
+      if (vehicle) {
+        lookup.set(vehicleId, vehicle);
+      }
+    });
+    return lookup;
+  }, [vehicleIds, vehicleQueries]);
 
   const isHiddenRoute = useMemo(() => {
     return (
@@ -156,33 +190,55 @@ export default function FloatingChatbot() {
                 key={`${message.role}-${index}`}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                    message.role === "user"
-                      ? "bg-[#FE7743] text-black"
-                      : "border border-white/10 bg-white/5 text-gray-100"
-                  }`}
-                >
-                  <p>{message.content}</p>
-                  {message.suggestedAction === "open_tax_calculator" ? (
-                    <Link
-                      href="/dashboard/vehicles"
-                      className="mt-3 inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
-                    >
-                      Browse vehicles instead
-                    </Link>
-                  ) : null}
+                <div className="max-w-[85%] space-y-3">
+                  <div
+                    className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
+                      message.role === "user"
+                        ? "bg-[#FE7743] text-black"
+                        : "border border-white/10 bg-white/5 text-gray-100"
+                    }`}
+                  >
+                    <p>{message.content}</p>
+                    {message.suggestedAction === "open_tax_calculator" ? (
+                      <Link
+                        href={
+                          message.vehicleIds?.length
+                            ? `/dashboard/vehicles/${message.vehicleIds[0]}#cost-calculator`
+                            : "/dashboard/vehicles"
+                        }
+                        className="mt-3 inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
+                      >
+                        Calculate Tax
+                      </Link>
+                    ) : null}
+                  </div>
+
                   {message.vehicleIds?.length ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {message.vehicleIds.map((vehicleId) => (
-                        <Link
-                          key={vehicleId}
-                          href={`/dashboard/vehicles/${vehicleId}`}
-                          className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-white transition hover:border-[#FE7743]/40 hover:text-[#FE7743]"
-                        >
-                          Open vehicle
-                        </Link>
-                      ))}
+                    <div className="space-y-3">
+                      {message.vehicleIds.map((vehicleId) => {
+                        const vehicle = vehicleLookup.get(vehicleId);
+                        if (!vehicle) {
+                          return (
+                            <div
+                              key={vehicleId}
+                              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-gray-400"
+                            >
+                              Loading vehicle details...
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={vehicleId} className="space-y-2">
+                            <VehicleCard vehicle={vehicle} />
+                            <Link
+                              href={`/dashboard/vehicles/${vehicleId}#cost-calculator`}
+                              className="inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
+                            >
+                              Calculate Tax
+                            </Link>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : null}
                 </div>

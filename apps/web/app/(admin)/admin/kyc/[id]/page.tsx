@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { isAxiosError } from "axios";
 import { apiClient } from "@/lib/api-client";
 
@@ -313,27 +314,39 @@ export default function AdminKycReviewDetailPage() {
         <section className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-3xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">NIC Front</h2>
-            <img
-              src={detail.nic_front_url}
-              alt="NIC front"
-              className="mt-4 w-full rounded-2xl border border-slate-200 object-cover"
-            />
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-slate-200">
+              <Image
+                src={detail.nic_front_url}
+                alt="NIC front"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            </div>
           </div>
           <div className="rounded-3xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">NIC Back</h2>
-            <img
-              src={detail.nic_back_url}
-              alt="NIC back"
-              className="mt-4 w-full rounded-2xl border border-slate-200 object-cover"
-            />
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-slate-200">
+              <Image
+                src={detail.nic_back_url}
+                alt="NIC back"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            </div>
           </div>
           <div className="rounded-3xl bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Selfie</h2>
-            <img
-              src={detail.selfie_url}
-              alt="Selfie"
-              className="mt-4 w-full rounded-2xl border border-slate-200 object-cover"
-            />
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-slate-200">
+              <Image
+                src={detail.selfie_url}
+                alt="Selfie"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            </div>
           </div>
         </section>
 

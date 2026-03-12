@@ -1,23 +1,45 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <h2>Order Status Update</h2>
 <p>Dear {{ user_name }},</p>
-<p>There has been an update regarding your order <strong>#{{ order_id }}</strong>.</p>
-<div style="text-align: center; margin: 30px 0;">
-    <p style="margin-bottom: 5px; color: #666;">New Status:</p>
-    <span style="display: inline-block; background-color: #ebf4ff; color: #3182ce; padding: 10px 20px; border-radius: 5px; font-weight: bold; font-size: 18px; border: 1px solid #bee3f8;">
-        {{ new_status }}
-    </span>
+<p>
+  There has been an update regarding your order
+  <strong>#{{ order_id }}</strong>.
+</p>
+<div style="text-align: center; margin: 30px 0">
+  <p style="margin-bottom: 5px; color: #666">New Status:</p>
+  <span
+    style="
+      display: inline-block;
+      background-color: #ebf4ff;
+      color: #3182ce;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 18px;
+      border: 1px solid #bee3f8;
+    "
+  >
+    {{ new_status }}
+  </span>
 </div>
 {% if status_message %}
-<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center;">
-    <p style="margin: 0;">{{ status_message }}</p>
+<div
+  style="
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+    text-align: center;
+  "
+>
+  <p style="margin: 0">{{ status_message }}</p>
 </div>
 {% endif %}
 <p>Log in to your account for more detailed information and next steps.</p>
-<div style="text-align: center;">
-    <a href="{{ frontend_url }}/dashboard/orders/{{ order_id }}" class="button">View Order Details</a>
+<div style="text-align: center">
+  <a href="{{ frontend_url }}/dashboard/orders/{{ order_id }}" class="button"
+    >View Order Details</a
+  >
 </div>
-<p>Best regards,<br>The ClearDrive.lk Team</p>
+<p>Best regards,<br />The ClearDrive.lk Team</p>
 {% endblock %}

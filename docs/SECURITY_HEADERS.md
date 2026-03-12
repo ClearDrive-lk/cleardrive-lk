@@ -2,6 +2,7 @@ SECURITY_HEADERS.md
 markdown# Security Headers & CSP Policy
 
 ## Overview
+
 The backend applies security headers for all non-docs routes via `SecurityHeadersMiddleware`
 (`backend/app/middleware/security_headers.py`). This includes a nonce-based CSP.
 
@@ -9,6 +10,7 @@ Docs endpoints (`/api/v1/docs`, `/api/v1/redoc`, `/api/v1/openapi.json`) intenti
 because Swagger/ReDoc use inline assets and external CDNs.
 
 ## CSP Policy (Backend)
+
 The CSP is emitted as a header and includes a per-request nonce:
 
 - `default-src 'self'`
@@ -26,6 +28,7 @@ The CSP is emitted as a header and includes a per-request nonce:
 - `report-uri /api/v1/security/csp-report` (production only)
 
 ## Nonce Usage
+
 The nonce is generated per request in the middleware and attached to the CSP header.
 If any server-rendered HTML includes inline scripts/styles, they must include a matching
 `nonce` attribute.
@@ -34,5 +37,6 @@ Note: The backend currently does not serve HTML pages (other than Swagger/ReDoc)
 so there are no runtime HTML inline scripts/styles to annotate.
 
 ## Email Templates
+
 Email HTML is not subject to CSP headers, but inline `<style>` tags in email templates
 use a nonce attribute for consistency. See `backend/app/templates/email/otp_email.html`.
