@@ -31,13 +31,13 @@ class ShipmentStatus(str, enum.Enum):
 class DocumentType(str, enum.Enum):
     """Shipping document types."""
 
-    # Keep both spellings for backward compatibility across modules/old code paths.
-    BILL_OF_LADING = "BILL_OF_LANDING"
-    BILL_OF_LANDING = "BILL_OF_LANDING"
-    PACKING_LIST = "PACKING_LIST"
-    EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
-    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
-    INSURANCE_CERTIFICATE = "INSURANCE_CERTIFICATE"
+    BILL_OF_LADING = "BILL_OF_LADING"  # Required
+    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"  # Required
+    PACKING_LIST = "PACKING_LIST"  # Required
+    CUSTOMS_DECLARATION = "CUSTOMS_DECLARATION"  # Required
+    CERTIFICATE_OF_ORIGIN = "CERTIFICATE_OF_ORIGIN"  # Optional
+    CONTAINER_PHOTO = "CONTAINER_PHOTO"  # Optional (multiple)
+    OTHER = "OTHER"  # Optional
 
 
 class ShipmentDetails(Base, UUIDMixin, TimestampMixin):

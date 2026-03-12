@@ -161,8 +161,8 @@ def check_docs_uploaded_prerequisites(order, db) -> tuple[bool, str]:
     required_types = {
         DocumentType.BILL_OF_LADING,
         DocumentType.COMMERCIAL_INVOICE,
-        DocumentType.EXPORT_CERTIFICATE,
         DocumentType.PACKING_LIST,
+        DocumentType.CUSTOMS_DECLARATION,
     }
 
     missing_types = required_types - uploaded_types

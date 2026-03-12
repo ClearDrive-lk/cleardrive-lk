@@ -8,11 +8,12 @@ import { apiClient } from "@/lib/api-client";
 
 type DocumentType =
   | "BILL_OF_LADING"
-  | "BILL_OF_LANDING"
-  | "PACKING_LIST"
-  | "EXPORT_CERTIFICATE"
   | "COMMERCIAL_INVOICE"
-  | "INSURANCE_CERTIFICATE";
+  | "PACKING_LIST"
+  | "CUSTOMS_DECLARATION"
+  | "CERTIFICATE_OF_ORIGIN"
+  | "CONTAINER_PHOTO"
+  | "OTHER";
 
 interface DocumentMeta {
   label: string;
@@ -59,12 +60,6 @@ const DOCUMENT_TYPES: Record<DocumentType, DocumentMeta> = {
     accept: "application/pdf",
     hint: "PDF only · max 10 MB",
   },
-  BILL_OF_LANDING: {
-    label: "Bill of Landing",
-    required: true,
-    accept: "application/pdf",
-    hint: "PDF only · max 10 MB",
-  },
   COMMERCIAL_INVOICE: {
     label: "Commercial Invoice",
     required: true,
@@ -77,14 +72,26 @@ const DOCUMENT_TYPES: Record<DocumentType, DocumentMeta> = {
     accept: "application/pdf",
     hint: "PDF only · max 10 MB",
   },
-  EXPORT_CERTIFICATE: {
-    label: "Export Certificate",
-    required: false,
-    accept: "application/pdf,image/jpeg,image/png,image/webp",
-    hint: "PDF or image · max 10 MB",
+  CUSTOMS_DECLARATION: {
+    label: "Customs Declaration",
+    required: true,
+    accept: "application/pdf",
+    hint: "PDF only · max 10 MB",
   },
-  INSURANCE_CERTIFICATE: {
-    label: "Insurance Certificate",
+  CERTIFICATE_OF_ORIGIN: {
+    label: "Certificate of Origin",
+    required: false,
+    accept: "application/pdf",
+    hint: "PDF only · max 10 MB",
+  },
+  CONTAINER_PHOTO: {
+    label: "Container Photo",
+    required: false,
+    accept: "image/jpeg,image/png,image/webp",
+    hint: "Images only · max 10 MB",
+  },
+  OTHER: {
+    label: "Other",
     required: false,
     accept: "application/pdf,image/jpeg,image/png,image/webp",
     hint: "PDF or image · max 10 MB",

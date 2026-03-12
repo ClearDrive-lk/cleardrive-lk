@@ -69,18 +69,15 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     """Return labels of required document types not yet uploaded."""
     uploaded = {doc.document_type for doc in shipment.documents}
 
-    # BILL_OF_LADING and BILL_OF_LANDING are the same document - accept either.
-    bol_present = (
-        DocumentType.BILL_OF_LADING in uploaded or DocumentType.BILL_OF_LANDING in uploaded
-    )
-
     missing: list[str] = []
-    if not bol_present:
+    if DocumentType.BILL_OF_LADING not in uploaded:
         missing.append("BILL_OF_LADING")
     if DocumentType.COMMERCIAL_INVOICE not in uploaded:
         missing.append("COMMERCIAL_INVOICE")
     if DocumentType.PACKING_LIST not in uploaded:
         missing.append("PACKING_LIST")
+    if DocumentType.CUSTOMS_DECLARATION not in uploaded:
+        missing.append("CUSTOMS_DECLARATION")
     return missing
 
 
@@ -157,11 +154,13 @@ async def upload_shipping_document(
     **Story**: CD-72.1
 
     **Document Types** (CD-72.2):
-    - BILL_OF_LADING / BILL_OF_LANDING (Required)
+    - BILL_OF_LADING (Required)
     - COMMERCIAL_INVOICE (Required)
     - PACKING_LIST (Required)
-    - EXPORT_CERTIFICATE (Optional)
-    - INSURANCE_CERTIFICATE (Optional)
+    - CUSTOMS_DECLARATION (Required)
+    - CERTIFICATE_OF_ORIGIN (Optional)
+    - CONTAINER_PHOTO (Optional)
+    - OTHER (Optional)
 
     **Validations** (CD-72.3):
     - MIME type: PDF or images only
@@ -365,15 +364,21 @@ async def check_required_documents(
     **Story**: CD-72.5
 
     Required:
-    - BILL_OF_LADING (or BILL_OF_LANDING)
+    - BILL_OF_LADING
     - COMMERCIAL_INVOICE
     - PACKING_LIST
+    - CUSTOMS_DECLARATION
     """
     shipment = _get_shipment_for_exporter(order_id, current_user, db)
 
     uploaded_types = [doc.document_type.value for doc in shipment.documents]
     missing = _missing_required_docs(shipment)
-    required_labels = ["BILL_OF_LADING", "COMMERCIAL_INVOICE", "PACKING_LIST"]
+    required_labels = [
+        "BILL_OF_LADING",
+        "COMMERCIAL_INVOICE",
+        "PACKING_LIST",
+        "CUSTOMS_DECLARATION",
+    ]
     total_required = len(required_labels)
     total_uploaded = total_required - len(missing)
     pct = int((total_uploaded / total_required) * 100) if total_required else 100
