@@ -11,6 +11,7 @@ from app.modules.auth.models import Role, User
 from app.modules.orders.models import Order, OrderStatus, OrderStatusHistory
 from app.modules.shipping.models import ShipmentDetails, ShipmentStatus
 from app.modules.shipping.schemas import ShippingDetailsResponse, ShippingDetailsSubmit
+from app.services.notification_service import notification_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -95,4 +96,24 @@ async def submit_shipping_details(
 
     db.commit()
     db.refresh(shipment)
+    db.refresh(order)
+
+    # Notify customer about shipment details
+    if order.user:
+        try:
+            await notification_service.send_shipment_notification(
+                email=order.user.email,
+                user_name=order.user.name or "Customer",
+                order_id=str(order.id),
+                vessel_name=shipment.vessel_name,
+                tracking_number=shipment.tracking_number or "Pending",
+                estimated_arrival=(
+                    shipment.estimated_arrival_date.strftime("%Y-%m-%d")
+                    if shipment.estimated_arrival_date
+                    else "TBD"
+                ),
+            )
+        except Exception:
+            pass
+
     return shipment

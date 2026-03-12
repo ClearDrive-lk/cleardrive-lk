@@ -3,10 +3,12 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Git
 
 ### Setup (5 minutes)
+
 ```bash
 # Clone repository
 git clone https://github.com/cleardrive-lk/cleardrive.git
@@ -27,6 +29,7 @@ docker-compose exec backend python scripts/init_db.py
 ## 📚 API Documentation
 
 ### Base URL
+
 ```
 Development: http://localhost:8000/api/v1
 ```
@@ -34,6 +37,7 @@ Development: http://localhost:8000/api/v1
 ### Authentication Flow
 
 #### 1. Google OAuth Login
+
 ```http
 POST /auth/google
 Content-Type: application/json
@@ -52,6 +56,7 @@ Response: 200 OK
 ```
 
 #### 2. Verify OTP
+
 ```http
 POST /auth/verify-otp
 Content-Type: application/json
@@ -78,12 +83,14 @@ Response: 200 OK
 ```
 
 #### 3. Use Access Token
+
 ```http
 GET /vehicles
 Authorization: Bearer eyJhbGc...
 ```
 
 #### 4. Refresh Token
+
 ```http
 POST /auth/refresh
 Content-Type: application/json
@@ -103,6 +110,7 @@ Response: 200 OK
 ### Vehicle Endpoints
 
 #### List Vehicles (Public)
+
 ```http
 GET /vehicles?search=Toyota&fuel_type=HYBRID&page=1&limit=20
 
@@ -130,6 +138,7 @@ Response: 200 OK
 ```
 
 **Query Parameters:**
+
 - `search` - Search in make/model
 - `make` - Filter by manufacturer
 - `model` - Filter by model
@@ -145,6 +154,7 @@ Response: 200 OK
 - `sort_order` - asc, desc
 
 #### Get Vehicle Details (Public)
+
 ```http
 GET /vehicles/{vehicle_id}
 
@@ -160,6 +170,7 @@ Response: 200 OK
 ```
 
 #### Calculate Import Cost (Public)
+
 ```http
 GET /vehicles/{vehicle_id}/cost?exchange_rate=2.25
 
@@ -186,6 +197,7 @@ Response: 200 OK
 ### Session Management
 
 #### Get All Sessions (Authenticated)
+
 ```http
 GET /auth/sessions
 Authorization: Bearer {access_token}
@@ -210,6 +222,7 @@ Response: 200 OK
 ```
 
 #### Revoke Session (Authenticated)
+
 ```http
 DELETE /auth/sessions/{session_id}
 Authorization: Bearer {access_token}
@@ -221,6 +234,7 @@ Response: 200 OK
 ```
 
 #### Logout (Authenticated)
+
 ```http
 POST /auth/logout
 Authorization: Bearer {access_token}
@@ -234,6 +248,7 @@ Response: 200 OK
 ## 🔐 User Roles & Permissions
 
 ### CUSTOMER
+
 - Browse vehicles
 - Create orders
 - Submit KYC
@@ -241,6 +256,7 @@ Response: 200 OK
 - Request finance/insurance
 
 ### ADMIN
+
 - All permissions
 - Manage users
 - Approve KYC
@@ -248,27 +264,33 @@ Response: 200 OK
 - View audit logs
 
 ### EXPORTER
+
 - View assigned orders
 - Upload shipping documents
 - Update shipping details
 
 ### CLEARING_AGENT
+
 - Manage customs clearance
 - Upload customs documents
 
 ### FINANCE_PARTNER
+
 - View finance requests
 - Approve/reject finance applications
 
 ## 🧪 Testing
 
 ### Test Credentials (Development)
+
 ```
 Admin: malith@cleardrive.lk (auto-created on first run)
 ```
 
 ### Sample Vehicles
+
 20 vehicles auto-created on initialization:
+
 - Toyota Prius, Aqua, Vitz, Corolla Axio
 - Honda Fit, Vezel, Grace
 - Nissan Leaf, Note, Serena
@@ -276,6 +298,7 @@ Admin: malith@cleardrive.lk (auto-created on first run)
 - And more...
 
 ## 📁 Project Structure
+
 ```
 cleardrive/
 ├── backend/              # FastAPI backend
@@ -296,6 +319,7 @@ cleardrive/
 ## 🔧 Development
 
 ### Backend
+
 ```bash
 # Watch logs
 docker-compose logs -f backend
@@ -314,6 +338,7 @@ docker-compose exec backend python
 ```
 
 ### Database
+
 ```bash
 # Access PostgreSQL
 docker-compose exec postgres psql -U postgres -d cleardrive
@@ -325,6 +350,7 @@ docker-compose exec postgres psql -U postgres -d cleardrive
 ```
 
 ### Redis
+
 ```bash
 # Access Redis CLI
 docker-compose exec redis redis-cli
@@ -346,6 +372,7 @@ TTL key          # Time to live
 ## 📝 Environment Variables
 
 See `.env.example` files in:
+
 - `backend/.env.example` - Backend configuration
 - `apps/web/.env.local.example` - Frontend configuration (TODO)
 
@@ -354,6 +381,7 @@ See `.env.example` files in:
 Use this when NIC extraction runs on a development laptop instead of a VPS.
 
 1. Start Ollama and ensure a vision model is available:
+
 ```bash
 ollama list
 # expected model for laptop flow:
@@ -361,17 +389,20 @@ ollama list
 ```
 
 2. Run the extractor service:
+
 ```bash
 cd backend/vps_nic_extractor
 python -m uvicorn main:app --host 0.0.0.0 --port 8001
 ```
 
 3. Expose port `8001` with ngrok:
+
 ```bash
 ngrok http 8001
 ```
 
 4. Set Render backend environment variables using the ngrok URL:
+
 ```bash
 VPS_URL=https://<your-ngrok-subdomain>.ngrok-free.app
 VPS_SECRET=<same-value-as-INTERNAL_SECRET>
@@ -380,6 +411,7 @@ KYC_VPS_MAX_RETRIES=1
 ```
 
 5. Health check:
+
 ```bash
 curl -H "X-Internal-Secret: <same-secret>" https://<your-ngrok-subdomain>.ngrok-free.app/health
 ```
@@ -393,6 +425,7 @@ curl -H "X-Internal-Secret: <same-secret>" https://<your-ngrok-subdomain>.ngrok-
 5. Create Pull Request
 
 ### Commit Convention
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation
