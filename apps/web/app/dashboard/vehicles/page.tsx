@@ -123,21 +123,10 @@ function VehicleCatalog() {
     ],
   );
 
-  useEffect(() => {
-    if (!sheetOpen) {
-      setPriceRange([currentMinPrice, currentMaxPrice]);
-    }
-  }, [sheetOpen, currentMinPrice, currentMaxPrice, currentCurrency]);
-
   const lkrToCurrent = (value: number) =>
     currentCurrency === "LKR"
       ? value
       : Math.round(value / exchangeRate);
-
-  const currentToLkr = (value: number) =>
-    currentCurrency === "LKR"
-      ? value
-      : Math.round(value * exchangeRate);
 
   const quickFilters = [
     { label: "Toyota", params: { search: "Toyota" } },
@@ -282,15 +271,6 @@ function VehicleCatalog() {
   const clearFilters = () => {
     setSearchTerm("");
     router.push(`/dashboard/vehicles?currency=${currentCurrency}`);
-  };
-
-  const formatPrice = (val: number) => {
-    const locale = currentCurrency === "LKR" ? "en-LK" : "ja-JP";
-    return new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: currentCurrency,
-      maximumFractionDigits: 0,
-    }).format(val);
   };
 
   const formatCompact = (val: number) => {
