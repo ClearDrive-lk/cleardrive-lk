@@ -8,6 +8,7 @@ import logging
 from collections.abc import Generator
 from typing import Callable, cast
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import (
     UserTier,
@@ -44,6 +45,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     }
 
     async def dispatch(self, request: Request, call_next):
+        if settings.ENVIRONMENT != "production":
+            return await call_next(request)
+
         path = request.url.path
         if path.startswith("/api/v1/chat/"):
             return await call_next(request)

@@ -67,6 +67,8 @@
         - page.tsx
         - profile
           - page.tsx
+        - shipping
+          - page.tsx
         - vehicles
           - page.tsx
           - [id]
@@ -189,7 +191,8 @@
       - 13e4f8c8fc37_add_kyc_documents_table.py
       - 2b75160c0778_add_kyc_documents_and_file_integrity_.py
       - 3247b739293f_add_stock_no_to_vehicles.py
-      - 49cb44740c5d_add_order_status_history_table_cd_180.py
+      - 4166826068e0_add_order_status_history_table_cd_180.py
+      - 4a78cf3e3836_merge_heads_before_cd_33.py
       - 568d2128ae73_payments_bridge_revision.py
       - 611ce2705ddc_add_audit_logs_table.py
       - 64ab3d41d692_add_kyc_documents_table.py
@@ -200,6 +203,7 @@
       - a7837696f581_initial_database_schema.py
       - b1f4c2d9e8aa_align_orderstatus_enum_to_cd31.py
       - b2c3d4e5f6a7_add_tax_rules_table.py
+      - b7c9fdad010d_add_emaillog_model.py
       - c4d7a9e1f3b2_restore_lc_states_in_orderstatus.py
       - c93e2c2314a7_add_indexes_for_analytics_queries.py
       - cd53_add_file_integrity_monitoring_fields.py
@@ -207,7 +211,34 @@
       - cd92_expand_audit_for_rate_limit.py
       - d6f8b2a1c9e4_add_vehicle_search_indexes_cd21.py
       - d9a1f2b7c3e4_add_gallery_images_to_vehicles.py
+      - e22d44f5a757_add_lc_finance_insurance_tables_cd_190.py
       - e4c1a2b3d4f5_add_pending_manual_review_to_kycstatus.py
+      - __pycache__
+        - 03ff73db6c3c_add_shipment_details_table.cpython-311.pyc
+        - 13e4f8c8fc37_add_kyc_documents_table.cpython-311.pyc
+        - 2b75160c0778_add_kyc_documents_and_file_integrity_.cpython-311.pyc
+        - 3247b739293f_add_stock_no_to_vehicles.cpython-311.pyc
+        - 4166826068e0_add_order_status_history_table_cd_180.cpython-311.pyc
+        - 568d2128ae73_payments_bridge_revision.cpython-311.pyc
+        - 611ce2705ddc_add_audit_logs_table.cpython-311.pyc
+        - 64ab3d41d692_add_kyc_documents_table.cpython-311.pyc
+        - 8b7c1d2e3f4a_add_user_provided_data_to_kyc_documents.cpython-311.pyc
+        - 9252d2359f38_your_next_change.cpython-311.pyc
+        - 9f5e2b1c4d77_sync_payments_schema_with_payhere_flow.cpython-311.pyc
+        - a1b2c3d4e5f6_add_gazettes_table.cpython-311.pyc
+        - a7837696f581_initial_database_schema.cpython-311.pyc
+        - b1f4c2d9e8aa_align_orderstatus_enum_to_cd31.cpython-311.pyc
+        - b2c3d4e5f6a7_add_tax_rules_table.cpython-311.pyc
+        - c4d7a9e1f3b2_restore_lc_states_in_orderstatus.cpython-311.pyc
+        - c93e2c2314a7_add_indexes_for_analytics_queries.cpython-311.pyc
+        - cd53_add_file_integrity_monitoring_fields.cpython-311.pyc
+        - cd62_expand_audit_event_types.cpython-311.pyc
+        - cd92_expand_audit_for_rate_limit.cpython-311.pyc
+        - d6f8b2a1c9e4_add_vehicle_search_indexes_cd21.cpython-311.pyc
+        - d9a1f2b7c3e4_add_gallery_images_to_vehicles.cpython-311.pyc
+        - e4c1a2b3d4f5_add_pending_manual_review_to_kycstatus.cpython-311.pyc
+    - __pycache__
+      - env.cpython-311.pyc
   - alembic.ini
   - app
     - alembic
@@ -234,107 +265,230 @@
       - session.py
       - storage.py
       - __init__.py
+      - __pycache__
+        - cache.cpython-311.pyc
+        - config.cpython-311.pyc
+        - database.cpython-311.pyc
+        - dependencies.cpython-311.pyc
+        - models.cpython-311.pyc
+        - otp.cpython-311.pyc
+        - permissions.cpython-311.pyc
+        - rate_limit.cpython-311.pyc
+        - rate_limit_middleware.cpython-311.pyc
+        - redis.cpython-311.pyc
+        - redis_client.cpython-311.pyc
+        - security.cpython-311.pyc
+        - session.cpython-311.pyc
+        - storage.cpython-311.pyc
+        - __init__.cpython-311.pyc
     - main.py
     - middleware
       - security_headers.py
       - __init__.py
+      - __pycache__
+        - security_headers.cpython-311.pyc
+        - __init__.cpython-311.pyc
     - models
       - audit_log.py
       - gazette.py
       - user.py
+      - __pycache__
+        - audit_log.cpython-311.pyc
+        - gazette.cpython-311.pyc
     - modules
       - admin
         - audit_routes.py
         - dashboard.py
         - routes.py
+        - __pycache__
+          - audit_routes.cpython-311.pyc
+          - dashboard.cpython-311.pyc
+          - routes.cpython-311.pyc
       - auth
         - init.py
         - models.py
         - routes.py
         - schemas.py
+        - __pycache__
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - schemas.cpython-311.pyc
       - calculator
         - routes.py
         - __init__.py
+        - __pycache__
+          - routes.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - chat
         - routes.py
+        - __pycache__
+          - routes.cpython-311.pyc
       - finance
         - finance_routes.py
         - insurance_routes.py
         - lc_routes.py
         - models.py
         - schemas.py
+        - __pycache__
+          - finance_routes.cpython-311.pyc
+          - insurance_routes.cpython-311.pyc
+          - lc_routes.cpython-311.pyc
+          - models.cpython-311.pyc
+          - schemas.cpython-311.pyc
       - gazette
         - routes.py
         - __init__.py
+        - __pycache__
+          - routes.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - gdpr
         - init.py
         - models.py
         - routes.py
+        - __pycache__
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
       - kyc
         - admin_routes.py
         - models.py
         - routes.py
         - schemas.py
         - __init__.py
+        - __pycache__
+          - admin_routes.cpython-311.pyc
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - schemas.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - notifications
+        - models.py
+        - routes.py
         - service.py
         - __init__.py
+        - __pycache__
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - service.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - orders
         - init.py
         - models.py
         - routes.py
         - schemas.py
         - state_machine.py
+        - __pycache__
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - schemas.cpython-311.pyc
+          - state_machine.cpython-311.pyc
       - payments
         - models.py
         - routes.py
         - schemas.py
         - __init__.py
+        - __pycache__
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - schemas.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - security
         - init.py
         - models.py
         - routes.py
+        - __pycache__
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
       - shipping
         - admin_routes.py
         - init.py
         - models.py
+        - routes.py
         - schemas.py
+        - __pycache__
+          - admin_routes.cpython-311.pyc
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - schemas.cpython-311.pyc
       - test
         - routes.py
         - __init__.py
+        - __pycache__
+          - routes.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - vehicles
         - cost_calculator.py
         - init.py
         - models.py
         - routes.py
         - schemas.py
+        - __pycache__
+          - cost_calculator.cpython-311.pyc
+          - models.cpython-311.pyc
+          - routes.cpython-311.pyc
+          - schemas.cpython-311.pyc
       - __init__.py
+      - __pycache__
+        - __init__.cpython-311.pyc
     - services
       - document_ai.py
       - email.py
+      - email_queue.py
+      - email_scheduler.py
       - gemini.py
+      - notification_service.py
       - orders
         - status_history.py
+        - __pycache__
+          - status_history.cpython-311.pyc
       - payments
         - idempotency.py
         - payhere_signature.py
         - __init__.py
+        - __pycache__
+          - idempotency.cpython-311.pyc
+          - payhere_signature.cpython-311.pyc
+          - __init__.cpython-311.pyc
       - payment_notifications.py
       - scraper
         - auction_scraper.py
         - mock_scraper.py
         - scheduler.py
+        - __pycache__
+          - auction_scraper.cpython-311.pyc
+          - mock_scraper.cpython-311.pyc
+          - scheduler.cpython-311.pyc
       - security
         - file_integrity.py
         - integrity_scheduler.py
+        - __pycache__
+          - file_integrity.cpython-311.pyc
+          - integrity_scheduler.cpython-311.pyc
       - tax_calculator.py
       - vps_proxy.py
+      - __pycache__
+        - document_ai.cpython-311.pyc
+        - email.cpython-311.pyc
+        - email_queue.cpython-311.pyc
+        - email_scheduler.cpython-311.pyc
+        - gemini.cpython-311.pyc
+        - notification_service.cpython-311.pyc
+        - payment_notifications.cpython-311.pyc
+        - tax_calculator.cpython-311.pyc
+        - vps_proxy.cpython-311.pyc
     - static
       - cookie-policy.md
       - privacy-policy.md
     - templates
       - email
+        - base.html
+        - kyc_approved.html
+        - kyc_rejected.html
+        - order_confirmation.html
         - otp_email.html
+        - payment_confirmation.html
+        - shipment_notification.html
+        - status_change.html
+        - test_email.html
     - tests
       - conftest.py
       - schemas.py
@@ -344,10 +498,13 @@
       - test_admin_users.py
       - test_auth.py
       - test_chat_routes.py
+      - test_email_service.py
+      - test_finance_routes.py
       - test_gazette_extraction.py
       - test_jwt.py
       - test_kyc_routes.py
       - test_main.py
+      - test_notification_service.py
       - test_order_state_machine.py
       - test_order_timeline.py
       - test_otp.py
@@ -357,6 +514,7 @@
       - test_security_headers.py
       - test_security_routes.py
       - test_shipping_admin_routes.py
+      - test_shipping_details_submission.py
       - test_smoke.py
       - test_tax_calculator.py
       - test_vehicles.py
@@ -364,9 +522,283 @@
       - test_vps_proxy.py
       - __init__.py
     - __init__.py
+    - __pycache__
+      - main.cpython-311.pyc
+      - __init__.cpython-311.pyc
   - data
     - static_vehicles.json
     - vehicles.json
+    - vehicle_images
+      - 68034
+        - image_1.jpeg
+      - 68035
+        - image_1.jpeg
+      - 68036
+        - image_1.jpeg
+      - 70447
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 70639
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 70640
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 70641
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 70643
+        - image_1.jpeg
+        - image_2.jpeg
+      - 71263
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 71264
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 71265
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 71266
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 71267
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 71512
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 71517
+        - image_1.jpeg
+      - 71518
+        - image_1.jpeg
+      - 71519
+        - image_1.jpeg
+      - 71520
+        - image_1.jpeg
+      - 71521
+        - image_1.jpeg
+      - 72456
+        - image_1.jpeg
+      - 72457
+        - image_1.jpeg
+      - 72458
+        - image_1.jpeg
+      - 72459
+        - image_1.jpeg
+      - 72460
+        - image_1.jpeg
+      - 73411
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 73682
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 73793
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 73854
+        - image_1.jpeg
+      - 73855
+        - image_1.jpeg
+      - 73856
+        - image_1.jpeg
+      - 73857
+        - image_1.jpeg
+      - 73858
+        - image_1.jpeg
+      - 73859
+        - image_1.jpeg
+      - 73860
+        - image_1.jpeg
+      - 73861
+        - image_1.jpeg
+      - 73862
+        - image_1.jpeg
+      - 73863
+        - image_1.jpeg
+      - 73968
+        - image_1.jpeg
+      - 73969
+        - image_1.jpeg
+      - 73970
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74025
+        - image_1.jpg
+      - 74026
+        - image_1.jpg
+      - 74423
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74477
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74478
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74523
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74531
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74571
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74598
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74623
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74636
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74640
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74642
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74645
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74647
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74648
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74650
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74651
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74652
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74656
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74659
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74666
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74679
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74688
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74689
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74695
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74696
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74698
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74710
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74712
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74713
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74716
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74718
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74719
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74720
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74722
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74725
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74738
+        - image_1.jpeg
+        - image_2.jpeg
+        - image_3.jpeg
+      - 74742
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74744
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74745
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74747
+        - image_1.jpeg
+        - image_2.png
+      - 74748
+        - image_1.jpeg
+        - image_2.png
+      - 74751
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74752
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74762
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74767
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74768
+        - image_1.jpeg
+        - image_2.jpeg
+      - 74775
+        - image_1.jpeg
+        - image_2.jpeg
     - vehicle_image_upload_map.json
   - Dockerfile
   - pyproject.toml
@@ -393,6 +825,7 @@
     - test_sessions.py
     - test_vehicles.py
     - upload_vehicle_images.py
+  - test_transactional_emails.py
   - vps_nic_extractor
     - main.py
     - nic-extractor.service
@@ -414,6 +847,7 @@
     - package.json
     - tsconfig.json
 - pip_install_log.txt
+- project_structure.text
 - pytest.ini
 - railway.json
 - README.md
