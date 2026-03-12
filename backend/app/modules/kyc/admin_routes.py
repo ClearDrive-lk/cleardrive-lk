@@ -17,7 +17,7 @@ from app.modules.kyc.schemas import (
     KYCManualExtractionRequest,
     KYCRejectRequest,
 )
-from app.services.email import send_email
+from app.services.notification_service import notification_service
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -167,40 +167,22 @@ def _serialize_detail(kyc: KYCDocument) -> KYCAdminDetailResponse:
 async def _send_kyc_review_email(
     *,
     user_email: str,
+    user_name: str,
     approved: bool,
     admin_email: str,
     reason: str | None = None,
 ) -> None:
     if approved:
-        subject = "KYC Approved - ClearDrive.lk"
-        html_content = (
-            "<h2>KYC Approved</h2>"
-            "<p>Your KYC documents have been approved.</p>"
-            f"<p>Reviewed by: <strong>{admin_email}</strong></p>"
-        )
-        text_content = (
-            "KYC Approved\n\n"
-            "Your KYC documents have been approved.\n"
-            f"Reviewed by: {admin_email}"
+        sent_id = await notification_service.send_kyc_approved(
+            email=user_email, user_name=user_name
         )
     else:
-        subject = "KYC Rejected - ClearDrive.lk"
-        html_content = (
-            "<h2>KYC Rejected</h2>"
-            "<p>Your KYC documents have been rejected.</p>"
-            f"<p>Reviewed by: <strong>{admin_email}</strong></p>"
-            f"<p>Reason: {reason or 'No reason provided'}</p>"
-        )
-        text_content = (
-            "KYC Rejected\n\n"
-            "Your KYC documents have been rejected.\n"
-            f"Reviewed by: {admin_email}\n"
-            f"Reason: {reason or 'No reason provided'}"
+        sent_id = await notification_service.send_kyc_rejected(
+            email=user_email, user_name=user_name, rejection_reason=reason or "No reason provided"
         )
 
-    sent = await send_email(user_email, subject, html_content, text_content)
-    if not sent:
-        logger.warning("Failed to send KYC review email to %s", user_email)
+    if not sent_id:
+        logger.warning("Failed to enqueue KYC review email to %s", user_email)
 
 
 def _get_kyc_or_404(db: Session, kyc_id: str) -> KYCDocument:
@@ -335,6 +317,7 @@ async def approve_kyc(
     try:
         await _send_kyc_review_email(
             user_email=kyc.user.email,
+            user_name=kyc.user.name or kyc.user.email,
             approved=True,
             admin_email=current_user.email,
         )
@@ -386,6 +369,7 @@ async def reject_kyc(
     try:
         await _send_kyc_review_email(
             user_email=kyc.user.email,
+            user_name=kyc.user.name or kyc.user.email,
             approved=False,
             admin_email=current_user.email,
             reason=reason,

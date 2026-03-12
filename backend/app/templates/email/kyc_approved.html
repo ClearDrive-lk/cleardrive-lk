@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>KYC Verification Approved</h2>
+<p>Dear {{ user_name }},</p>
+<p>Great news! Your KYC (Know Your Customer) documents have been successfully verified and approved.</p>
+<div style="text-align: center; margin: 20px 0;">
+    <span style="background-color: #48bb78; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold;">Status: Approved</span>
+</div>
+<p>Your account limit has been upgraded, and you can now proceed with your vehicle purchases without any restrictions.</p>
+<div style="text-align: center;">
+    <a href="{{ frontend_url }}/dashboard" class="button">Go to Dashboard</a>
+</div>
+<p>Thank you for your cooperation in making ClearDrive a secure platform for everyone.</p>
+<p>Best regards,<br>The ClearDrive.lk Team</p>
+{% endblock %}
