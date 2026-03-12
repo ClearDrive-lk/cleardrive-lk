@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, TrendingUp, AlertCircle } from "lucide-react";
+import { Calculator, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/lib/api-client";
 
@@ -157,7 +157,6 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
         {/* Taxes */}
         <div className="p-3 bg-[#1A1A1A] rounded-lg space-y-2 border border-white/5">
           <div className="flex items-center gap-2 text-[#FE7743] text-xs mb-2">
-            <AlertCircle className="w-3 h-3" />
             <span>Government Levies (Est.)</span>
           </div>
           <div className="flex justify-between text-gray-400 text-xs">

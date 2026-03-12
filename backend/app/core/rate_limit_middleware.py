@@ -45,7 +45,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     }
 
     async def dispatch(self, request: Request, call_next):
-        if settings.ENVIRONMENT != "production":
+        if settings.ENVIRONMENT not in ("production", "test"):
             return await call_next(request)
 
         path = request.url.path

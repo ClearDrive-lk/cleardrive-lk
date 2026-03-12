@@ -76,16 +76,12 @@ def _canonical_fuel_key(value: str) -> str:
 def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
     if not db.bind or db.bind.dialect.name != "postgresql":
         return requested
-    rows = db.execute(
-        text(
-            """
+    rows = db.execute(text("""
             SELECT e.enumlabel
             FROM pg_enum e
             JOIN pg_type t ON e.enumtypid = t.oid
             WHERE t.typname = 'fueltype'
-            """
-        )
-    ).fetchall()
+            """)).fetchall()
     labels = [str(r[0]) for r in rows]
     if not labels:
         return requested
@@ -178,16 +174,12 @@ def _resolve_vehicle_type_enum(requested: str) -> VehicleType | None:
 def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
     if not db.bind or db.bind.dialect.name != "postgresql":
         return requested
-    rows = db.execute(
-        text(
-            """
+    rows = db.execute(text("""
             SELECT e.enumlabel
             FROM pg_enum e
             JOIN pg_type t ON e.enumtypid = t.oid
             WHERE t.typname = 'transmission'
-            """
-        )
-    ).fetchall()
+            """)).fetchall()
     labels = [str(r[0]) for r in rows]
     if not labels:
         return requested
@@ -690,7 +682,7 @@ async def calculate_cost(
             engine_cc=engine_cc,
             cif_value=float(cif_value),
         )
-    except NoTaxRuleError as e:
+    except NoTaxRuleError:
         fallback = calculate_total_cost(vehicle, exchange_rate=rate)
         fallback["pal_lkr"] = Decimal("0")
         return CostBreakdown(**fallback)  # type: ignore[arg-type]

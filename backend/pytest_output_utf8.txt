@@ -1,0 +1,340 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-8.2.0, pluggy-1.6.0 -- C:\Users\lehan\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\lehan\Downloads\SDGP-ClearDrive\cleardrive-lk\backend
+configfile: pytest.ini
+testpaths: app/tests
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-4.1.0, mock-3.15.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 188 items
+
+app/tests/test_admin_audit_routes.py::test_get_audit_logs_supports_filters_and_pagination PASSED [  0%]
+app/tests/test_admin_audit_routes.py::test_get_audit_event_types_lists_new_cd62_values PASSED [  1%]
+app/tests/test_admin_audit_routes.py::test_export_audit_logs_csv_returns_filtered_rows PASSED [  1%]
+app/tests/test_admin_dashboard.py::TestDashboardStats::test_get_stats PASSED [  2%]
+app/tests/test_admin_dashboard.py::TestUserAnalytics::test_get_user_analytics PASSED [  2%]
+app/tests/test_admin_dashboard.py::TestUserAnalytics::test_invalid_days_parameter PASSED [  3%]
+app/tests/test_admin_dashboard.py::TestOrderAnalytics::test_get_order_analytics PASSED [  3%]
+app/tests/test_admin_dashboard.py::TestRevenueAnalytics::test_get_revenue_analytics PASSED [  4%]
+app/tests/test_admin_dashboard.py::TestPermissions::test_customer_cannot_access_dashboard PASSED [  4%]
+app/tests/test_admin_kyc_routes.py::test_get_pending_kyc_documents_returns_review_queue PASSED [  5%]
+app/tests/test_admin_kyc_routes.py::test_get_kyc_detail_includes_comparison_rows PASSED [  5%]
+app/tests/test_admin_kyc_routes.py::test_extract_manual_kyc_data_updates_payload_and_status PASSED [  6%]
+app/tests/test_admin_kyc_routes.py::test_approve_kyc_updates_status_creates_audit_and_sends_email PASSED [  6%]
+app/tests/test_admin_kyc_routes.py::test_reject_kyc_requires_reason_and_sends_email PASSED [  7%]
+app/tests/test_admin_users.py::TestGetUsers::test_get_users_as_admin PASSED [  7%]
+app/tests/test_admin_users.py::TestGetUsers::test_get_users_with_search PASSED [  8%]
+app/tests/test_admin_users.py::TestGetUsers::test_get_users_filter_by_role PASSED [  9%]
+app/tests/test_admin_users.py::TestGetUsers::test_get_users_pagination PASSED [  9%]
+app/tests/test_admin_users.py::TestGetUsers::test_get_users_as_customer_fails PASSED [ 10%]
+app/tests/test_admin_users.py::TestChangeUserRole::test_change_user_role PASSED [ 10%]
+app/tests/test_admin_users.py::TestChangeUserRole::test_cannot_change_own_role PASSED [ 11%]
+app/tests/test_admin_users.py::TestChangeUserRole::test_invalid_role PASSED [ 11%]
+app/tests/test_admin_users.py::TestChangeUserRole::test_insufficient_reason PASSED [ 12%]
+app/tests/test_admin_users.py::TestChangeUserRole::test_customer_cannot_change_roles PASSED [ 12%]
+app/tests/test_admin_users.py::TestRoleChangeSideEffects::test_role_change_persists_updated_role PASSED [ 13%]
+app/tests/test_auth.py::test_access_token_expiry_minutes PASSED          [ 13%]
+app/tests/test_auth.py::test_refresh_token_expiry_days PASSED            [ 14%]
+app/tests/test_auth.py::test_verify_otp_creates_session_and_tokens PASSED [ 14%]
+app/tests/test_auth.py::test_refresh_token_rotation_and_reuse_detection PASSED [ 15%]
+app/tests/test_chat_routes.py::test_chat_message_returns_ai_response_with_vehicle_ids PASSED [ 15%]
+app/tests/test_chat_routes.py::test_chat_message_injects_top_five_vehicle_results PASSED [ 16%]
+app/tests/test_chat_routes.py::test_chat_message_sets_tax_calculator_action PASSED [ 17%]
+app/tests/test_chat_routes.py::test_chat_message_rate_limits_after_ten_requests PASSED [ 17%]
+app/tests/test_chat_routes.py::test_chat_message_falls_back_when_gemini_fails PASSED [ 18%]
+app/tests/test_email_service.py::test_send_email_smtp PASSED             [ 18%]
+app/tests/test_email_service.py::test_email_queue_enqueue PASSED         [ 19%]
+app/tests/test_email_service.py::test_send_email_resend PASSED           [ 19%]
+app/tests/test_finance_routes.py::test_lc_request_and_admin_approval_flow PASSED [ 20%]
+app/tests/test_finance_routes.py::test_finance_apply_and_approve_flow PASSED [ 20%]
+app/tests/test_finance_routes.py::test_insurance_quote_and_admin_approval_flow PASSED [ 21%]
+app/tests/test_finance_routes.py::test_admin_pending_endpoints_return_only_pending_items PASSED [ 21%]
+app/tests/test_gazette_extraction.py::test_upload_gazette_success PASSED [ 22%]
+app/tests/test_gazette_extraction.py::test_upload_gazette_requires_admin PASSED [ 22%]
+app/tests/test_gazette_extraction.py::test_upload_gazette_rejects_non_pdf PASSED [ 23%]
+app/tests/test_gazette_extraction.py::test_upload_gazette_size_limit PASSED [ 23%]
+app/tests/test_gazette_extraction.py::test_upload_gazette_fallback_manual_review PASSED [ 24%]
+app/tests/test_gazette_extraction.py::test_upload_gazette_creates_uploaded_audit_log PASSED [ 25%]
+app/tests/test_gazette_extraction.py::test_approve_gazette_creates_audit_logs PASSED [ 25%]
+app/tests/test_gazette_extraction.py::test_reject_gazette_creates_audit_log PASSED [ 26%]
+app/tests/test_jwt.py::TestTokenGeneration::test_create_access_token PASSED [ 26%]
+app/tests/test_jwt.py::TestTokenGeneration::test_access_token_payload PASSED [ 27%]
+app/tests/test_jwt.py::TestTokenGeneration::test_create_refresh_token PASSED [ 27%]
+app/tests/test_jwt.py::TestTokenGeneration::test_refresh_token_payload PASSED [ 28%]
+app/tests/test_jwt.py::TestTokenValidation::test_decode_valid_access_token PASSED [ 28%]
+app/tests/test_jwt.py::TestTokenValidation::test_decode_expired_access_token PASSED [ 29%]
+app/tests/test_jwt.py::TestTokenValidation::test_decode_invalid_token PASSED [ 29%]
+app/tests/test_jwt.py::TestTokenValidation::test_decode_wrong_token_type PASSED [ 30%]
+app/tests/test_jwt.py::TestTokenBlacklist::test_blacklist_token PASSED   [ 30%]
+app/tests/test_jwt.py::TestTokenBlacklist::test_non_blacklisted_token PASSED [ 31%]
+app/tests/test_jwt.py::TestRefreshTokenStorage::test_store_and_get_refresh_token PASSED [ 31%]
+app/tests/test_jwt.py::TestRefreshTokenStorage::test_delete_refresh_token PASSED [ 32%]
+app/tests/test_jwt.py::TestAuthEndpoints::test_protected_route_with_valid_token PASSED [ 32%]
+app/tests/test_jwt.py::TestAuthEndpoints::test_protected_route_without_token PASSED [ 33%]
+app/tests/test_jwt.py::TestAuthEndpoints::test_protected_route_with_invalid_token PASSED [ 34%]
+app/tests/test_jwt.py::TestAuthEndpoints::test_token_refresh PASSED      [ 34%]
+app/tests/test_jwt.py::TestAuthEndpoints::test_logout PASSED             [ 35%]
+app/tests/test_kyc_routes.py::test_upload_kyc_persists_user_provided_payload PASSED [ 35%]
+app/tests/test_main.py::test_root_endpoint PASSED                        [ 36%]
+app/tests/test_main.py::test_health_endpoint PASSED                      [ 36%]
+app/tests/test_notification_service.py::test_send_otp_email PASSED       [ 37%]
+app/tests/test_notification_service.py::test_send_order_confirmation PASSED [ 37%]
+app/tests/test_notification_service.py::test_send_payment_confirmation PASSED [ 38%]
+app/tests/test_notification_service.py::test_send_kyc_approved PASSED    [ 38%]
+app/tests/test_notification_service.py::test_send_kyc_rejected PASSED    [ 39%]
+app/tests/test_notification_service.py::test_send_shipment_notification PASSED [ 39%]
+app/tests/test_notification_service.py::test_send_status_change PASSED   [ 40%]
+app/tests/test_order_state_machine.py::test_lc_states_are_exposed_after_payment_confirmed PASSED [ 40%]
+app/tests/test_order_state_machine.py::test_payment_confirmed_to_assigned_to_exporter_is_allowed_directly PASSED [ 41%]
+app/tests/test_order_state_machine.py::test_lc_requested_transition_requires_completed_payment PASSED [ 42%]
+app/tests/test_order_state_machine.py::test_lc_review_retry_flow_is_allowed PASSED [ 42%]
+app/tests/test_order_timeline.py::test_timeline_returns_initial_created_event_for_owner PASSED [ 43%]
+app/tests/test_order_timeline.py::test_customer_cannot_view_another_customers_timeline PASSED [ 43%]
+app/tests/test_order_timeline.py::test_staff_role_can_view_customer_timeline PASSED [ 44%]
+app/tests/test_order_timeline.py::test_list_orders_returns_only_customer_orders_for_customer PASSED [ 44%]
+app/tests/test_order_timeline.py::test_timeline_returns_system_fallback_for_system_generated_history PASSED [ 45%]
+app/tests/test_order_timeline.py::test_status_update_appends_to_timeline PASSED [ 45%]
+app/tests/test_order_timeline.py::test_multiple_status_changes_tracked PASSED [ 46%]
+app/tests/test_otp.py::TestOTPGeneration::test_generate_otp_length PASSED [ 46%]
+app/tests/test_otp.py::TestOTPGeneration::test_generate_otp_digits_only PASSED [ 47%]
+app/tests/test_otp.py::TestOTPGeneration::test_generate_otp_uniqueness PASSED [ 47%]
+app/tests/test_otp.py::TestOTPVerification::test_verify_otp_valid PASSED [ 48%]
+app/tests/test_otp.py::TestOTPVerification::test_verify_otp_invalid PASSED [ 48%]
+app/tests/test_otp.py::TestOTPVerification::test_verify_otp_constant_time PASSED [ 49%]
+app/tests/test_otp.py::TestOTPExpiry::test_otp_not_expired PASSED        [ 50%]
+app/tests/test_otp.py::TestOTPExpiry::test_otp_expired PASSED            [ 50%]
+app/tests/test_otp.py::TestOTPRedis::test_store_and_get_otp PASSED       [ 51%]
+app/tests/test_otp.py::TestOTPRedis::test_delete_otp PASSED              [ 51%]
+app/tests/test_otp.py::TestOTPRedis::test_increment_attempts PASSED      [ 52%]
+app/tests/test_otp.py::TestOTPEndpoints::test_request_otp_sends_email PASSED [ 52%]
+app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_success PASSED  [ 53%]
+app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_invalid PASSED  [ 53%]
+app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_expired PASSED  [ 54%]
+app/tests/test_otp.py::TestOTPEndpoints::test_verify_otp_max_attempts PASSED [ 54%]
+app/tests/test_payments_idempotency.py::test_initiate_requires_idempotency_header PASSED [ 55%]
+app/tests/test_payments_idempotency.py::test_initiate_returns_cached_response_for_same_key PASSED [ 55%]
+app/tests/test_payments_idempotency.py::test_initiate_returns_409_when_lock_not_acquired PASSED [ 56%]
+app/tests/test_payments_idempotency.py::test_webhook_dedup_returns_already_processed PASSED [ 56%]
+app/tests/test_payments_idempotency.py::test_webhook_rejects_invalid_signature PASSED [ 57%]
+app/tests/test_payments_idempotency.py::test_webhook_success_updates_payment_order_and_sends_email PASSED [ 57%]
+app/tests/test_payments_idempotency.py::test_webhook_failure_marks_payment_failed_and_sends_failure_email PASSED [ 58%]
+app/tests/test_payments_idempotency.py::test_payment_model_has_uniqueness_constraints PASSED [ 59%]
+app/tests/test_rate_limit_tiers.py::test_determine_user_tier_returns_trusted_for_old_kyc_verified_user PASSED [ 59%]
+app/tests/test_rate_limit_tiers.py::test_failed_login_threshold_downgrades_user_to_suspicious PASSED [ 60%]
+app/tests/test_rate_limit_tiers.py::test_rate_limit_middleware_applies_to_authenticated_endpoints FAILED [ 60%]
+app/tests/test_rbac.py::TestPermissionDefinitions::test_all_permissions_defined PASSED [ 61%]
+app/tests/test_rbac.py::TestPermissionDefinitions::test_permission_naming_convention PASSED [ 61%]
+app/tests/test_rbac.py::TestRolePermissions::test_customer_permissions PASSED [ 62%]
+app/tests/test_rbac.py::TestRolePermissions::test_admin_has_all_permissions PASSED [ 62%]
+app/tests/test_rbac.py::TestRolePermissions::test_exporter_permissions PASSED [ 63%]
+app/tests/test_rbac.py::TestRolePermissions::test_clearing_agent_permissions PASSED [ 63%]
+app/tests/test_rbac.py::TestRolePermissions::test_finance_partner_permissions PASSED [ 64%]
+app/tests/test_rbac.py::TestPermissionChecking::test_has_permission_customer PASSED [ 64%]
+app/tests/test_rbac.py::TestPermissionChecking::test_has_permission_admin PASSED [ 65%]
+app/tests/test_rbac.py::TestResourceOwnership::test_owner_can_access_own_resource PASSED [ 65%]
+app/tests/test_rbac.py::TestResourceOwnership::test_user_cannot_access_others_resource PASSED [ 66%]
+app/tests/test_rbac.py::TestResourceOwnership::test_admin_can_access_any_resource PASSED [ 67%]
+app/tests/test_rbac.py::TestPermissionDecorators::test_endpoint_with_permission PASSED [ 67%]
+app/tests/test_rbac.py::TestPermissionDecorators::test_endpoint_without_permission PASSED [ 68%]
+app/tests/test_rbac.py::TestPermissionMatrix::test_permission_matrix PASSED [ 68%]
+app/tests/test_security_headers.py::test_csp_header_includes_nonce_and_no_unsafe_inline PASSED [ 69%]
+app/tests/test_security_headers.py::test_docs_skip_csp_header PASSED     [ 69%]
+app/tests/test_security_routes.py::test_verify_file_integrity_endpoint_marks_verified PASSED [ 70%]
+app/tests/test_security_routes.py::test_verify_file_integrity_endpoint_detects_tampering PASSED [ 70%]
+app/tests/test_security_routes.py::test_verify_all_files_returns_statistics PASSED [ 71%]
+app/tests/test_security_routes.py::test_get_tampering_alerts_returns_detected_records PASSED [ 71%]
+app/tests/test_shipping_admin_routes.py::test_assign_exporter_creates_shipment_updates_order_and_history PASSED [ 72%]
+app/tests/test_shipping_admin_routes.py::test_assign_exporter_requires_payment_confirmed_status PASSED [ 72%]
+app/tests/test_shipping_admin_routes.py::test_list_assignable_orders_returns_only_paid_unassigned_orders PASSED [ 73%]
+app/tests/test_shipping_details_submission.py::test_submit_shipping_details_updates_shipment_and_order PASSED [ 73%]
+app/tests/test_shipping_details_submission.py::test_submit_shipping_details_rejects_non_owner_exporter PASSED [ 74%]
+app/tests/test_shipping_details_submission.py::test_submit_shipping_details_validates_arrival_after_departure PASSED [ 75%]
+app/tests/test_smoke.py::test_pytest_runs PASSED                         [ 75%]
+app/tests/test_tax_calculator.py::test_calculate_basic PASSED            [ 76%]
+app/tests/test_tax_calculator.py::test_no_matching_rule PASSED           [ 76%]
+app/tests/test_tax_calculator.py::test_apply_on_customs_only PASSED      [ 77%]
+app/tests/test_tax_calculator.py::test_invalid_vehicle_type PASSED       [ 77%]
+app/tests/test_tax_calculator.py::test_calculate_tax_endpoint PASSED     [ 78%]
+app/tests/test_tax_calculator.py::test_no_rule_found_404 PASSED          [ 78%]
+app/tests/test_tax_calculator.py::test_invalid_parameters_400 PASSED     [ 79%]
+app/tests/test_vehicles.py::test_get_vehicles_empty PASSED               [ 79%]
+app/tests/test_vehicles.py::test_get_vehicles_with_data PASSED           [ 80%]
+app/tests/test_vehicles.py::test_search_vehicles_by_make PASSED          [ 80%]
+app/tests/test_vehicles.py::test_filter_vehicles_by_make PASSED          [ 81%]
+app/tests/test_vehicles.py::test_filter_vehicles_by_year_range PASSED    [ 81%]
+app/tests/test_vehicles.py::test_recent_only_defaults_to_last_3_years_when_enabled PASSED [ 82%]
+app/tests/test_vehicles.py::test_filter_vehicles_by_price_range PASSED   [ 82%]
+app/tests/test_vehicles.py::test_filter_vehicles_by_fuel_type PASSED     [ 83%]
+app/tests/test_vehicles.py::test_pagination PASSED                       [ 84%]
+app/tests/test_vehicles.py::test_sorting_by_price PASSED                 [ 84%]
+app/tests/test_vehicles.py::test_list_makes PASSED                       [ 85%]
+app/tests/test_vehicles.py::test_list_models PASSED                      [ 85%]
+app/tests/test_vehicles.py::test_list_models_filtered_by_make PASSED     [ 86%]
+app/tests/test_vehicles.py::test_get_vehicle_by_id PASSED                [ 86%]
+app/tests/test_vehicles.py::test_get_vehicle_not_found PASSED            [ 87%]
+app/tests/test_vehicles.py::test_calculate_cost PASSED                   [ 87%]
+app/tests/test_vehicles.py::test_calculate_cost_custom_exchange_rate PASSED [ 88%]
+app/tests/test_vehicles.py::test_create_vehicle_unauthenticated PASSED   [ 88%]
+app/tests/test_vehicles.py::test_scrape_now_admin_endpoint PASSED        [ 89%]
+app/tests/test_vehicles.py::test_scheduler_change_detection_thresholds PASSED [ 89%]
+app/tests/test_vehicles.py::test_scheduler_scrape_mode_mock PASSED       [ 90%]
+app/tests/test_vehicles.py::test_scheduler_scrape_mode_hybrid_falls_back_to_mock PASSED [ 90%]
+app/tests/test_vehicles.py::test_scheduler_resolve_scrape_count_supports_all_keyword PASSED [ 91%]
+app/tests/test_vehicles.py::test_scheduler_resolve_scrape_count_defaults_on_invalid_value PASSED [ 92%]
+app/tests/test_vehicles.py::test_scheduler_normalize_row_enums_drops_invalid_enum_values PASSED [ 92%]
+app/tests/test_vehicles.py::test_create_vehicle_authenticated PASSED     [ 93%]
+app/tests/test_vehicles.py::test_create_vehicle_duplicate_stock_no PASSED [ 93%]
+app/tests/test_vehicles.py::test_update_vehicle PASSED                   [ 94%]
+app/tests/test_vehicles.py::test_delete_vehicle PASSED                   [ 94%]
+app/tests/test_vehicles.py::test_delete_vehicle_unauthenticated PASSED   [ 95%]
+app/tests/test_vps_nic_extractor.py::test_extract_nic_requires_internal_secret PASSED [ 95%]
+app/tests/test_vps_nic_extractor.py::test_extract_nic_smoke_success_schema PASSED [ 96%]
+app/tests/test_vps_nic_extractor.py::test_extract_nic_schema_failure_returns_500 PASSED [ 96%]
+app/tests/test_vps_proxy.py::test_extract_nic_from_vps_success PASSED    [ 97%]
+app/tests/test_vps_proxy.py::test_extract_nic_from_vps_non_200_raises PASSED [ 97%]
+app/tests/test_vps_proxy.py::test_extract_nic_from_vps_timeout_raises PASSED [ 98%]
+app/tests/test_vps_proxy.py::test_extract_nic_from_vps_invalid_json_raises PASSED [ 98%]
+app/tests/test_vps_proxy.py::test_extract_nic_with_retry_retries_then_succeeds PASSED [ 99%]
+app/tests/test_vps_proxy.py::test_extract_nic_with_retry_returns_none_after_failures PASSED [100%]
+
+================================== FAILURES ===================================
+________ test_rate_limit_middleware_applies_to_authenticated_endpoints ________
+app\tests\test_rate_limit_tiers.py:55: in test_rate_limit_middleware_applies_to_authenticated_endpoints
+    assert response.headers["X-RateLimit-Tier"] == UserTier.STANDARD.value
+..\..\..\..\AppData\Local\Programs\Python\Python312\Lib\site-packages\httpx\_models.py:226: in __getitem__
+    raise KeyError(key)
+E   KeyError: 'X-RateLimit-Tier'
+----------------------------- Captured log setup ------------------------------
+WARNING  app.main:main.py:95 CD-120 email scheduler failed to start: Event loop is closed
+---------------------------- Captured log teardown ----------------------------
+WARNING  app.main:main.py:116 CD-120 email scheduler failed to stop cleanly: Event loop is closed
+
+---------- coverage: platform win32, python 3.12.10-final-0 ----------
+Name                                            Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------
+app\__init__.py                                     0      0   100%
+app\core\__init__.py                                0      0   100%
+app\core\cache.py                                  35      2    94%   38, 59
+app\core\config.py                                109     15    86%   145-157, 164, 166
+app\core\database.py                               19      6    68%   18, 22, 53-57
+app\core\dependencies.py                           55      9    84%   69, 80, 84, 91, 97, 101, 130, 137, 170
+app\core\integrity.py                               0      0   100%
+app\core\models.py                                 39      3    92%   28, 44, 61
+app\core\otp.py                                    31      8    74%   30, 57, 118, 141-149
+app\core\permissions.py                           169     50    70%   229, 243, 258-259, 315-323, 347-355, 391, 403-412, 443-477, 500, 519, 586-610, 628-650
+app\core\rate_limit.py                            249     58    77%   93, 101, 107-115, 123, 142, 155, 158-163, 179, 187, 195-196, 205-206, 211, 292-294, 355, 387, 397, 406, 425, 458-466, 514-517, 539-569, 587
+app\core\rate_limit_middleware.py                  70     46    34%   51-90, 93-110, 113-117, 120-123
+app\core\redis.py                                 156     33    79%   40-41, 44-45, 70-72, 77, 170, 276, 441-444, 458-461, 511, 527-563
+app\core\redis_client.py                           54      7    87%   114, 145-154
+app\core\security.py                               90     28    69%   27-30, 48, 62-65, 145, 177-185, 242, 246-247, 265, 310-318, 332, 337
+app\core\session.py                                99     62    37%   65, 67, 69, 71, 76, 78, 138-181, 241-243, 296-374
+app\core\storage.py                                53     39    26%   29-55, 77-91, 95-99, 103-106, 110-114
+app\main.py                                       151     32    79%   22-24, 31-35, 76-77, 84-85, 89-90, 105-106, 110-111, 130-131, 138, 232-236, 252, 256-265
+app\middleware\__init__.py                          0      0   100%
+app\middleware\security_headers.py                 35      2    94%   79, 91
+app\models\audit_log.py                            40      0   100%
+app\models\gazette.py                              72      0   100%
+app\modules\__init__.py                             8      0   100%
+app\modules\admin\audit_routes.py                 112      9    92%   49-50, 58-59, 81-83, 94, 120
+app\modules\admin\dashboard.py                    249     50    80%   60-67, 73, 151-155, 349-353, 490-494, 536, 647-651, 679, 753, 831-901
+app\modules\admin\routes.py                       122     29    76%   137-139, 147-158, 165-169, 175-179, 190, 197, 201, 205, 226, 315, 336
+app\modules\auth\models.py                         49      2    96%   88, 118
+app\modules\auth\routes.py                        420    242    42%   49-50, 55-57, 108-195, 205-216, 221-234, 275-281, 296-298, 334-335, 357, 380, 443, 472-480, 518-519, 528-529, 555-579, 589-643, 658-706, 720-749, 766-795, 832, 842, 880-881, 895-898, 958-960, 999-1012, 1073-1122, 1156-1193, 1261, 1263
+app\modules\auth\schemas.py                       109      0   100%
+app\modules\calculator\__init__.py                  0      0   100%
+app\modules\calculator\routes.py                   34      0   100%
+app\modules\chat\routes.py                         88     12    86%   50-53, 67, 91-92, 136, 151-154, 175
+app\modules\finance\finance_routes.py              74     18    76%   54, 60, 104, 107, 124, 159-177
+app\modules\finance\insurance_routes.py            67     17    75%   47, 55, 95, 98, 133-151
+app\modules\finance\lc_routes.py                   69     19    72%   55, 63, 103, 106, 145-166, 190-192
+app\modules\finance\models.py                     111      3    97%   132, 202, 278
+app\modules\finance\schemas.py                     90      1    99%   80
+app\modules\gazette\__init__.py                     0      0   100%
+app\modules\gazette\routes.py                     137     18    87%   53, 56, 59-60, 65, 72-73, 80, 84, 94-95, 146, 153-154, 258, 260, 311, 315
+app\modules\gdpr\models.py                         30      1    97%   65
+app\modules\gdpr\routes.py                         25     16    36%   37-241, 265-430
+app\modules\kyc\__init__.py                         2      0   100%
+app\modules\kyc\admin_routes.py                   154     17    89%   101, 109-111, 185, 191, 208, 210, 219, 249, 295, 324-325, 340, 347, 377-378
+app\modules\kyc\models.py                          38      1    97%   96
+app\modules\kyc\routes.py                         130     39    70%   54, 60, 68, 73-77, 81, 85-104, 137, 158, 165-166, 195-197, 263-295, 322-334, 350-353
+app\modules\kyc\schemas.py                         86      0   100%
+app\modules\notifications\__init__.py               0      0   100%
+app\modules\notifications\models.py                37      1    97%   81
+app\modules\notifications\routes.py                24     12    50%   31-46, 56-70
+app\modules\notifications\service.py               22      4    82%   64-65, 77-78
+app\modules\orders\models.py                       65      2    97%   106, 155
+app\modules\orders\routes.py                      207     98    53%   52-57, 75-178, 208-220, 235, 292, 305, 313-318, 332-333, 339, 354-360, 417-418, 478, 535-577, 604-634
+app\modules\orders\schemas.py                      61      0   100%
+app\modules\orders\state_machine.py                70     33    53%   96, 108, 111, 120, 126-136, 142-174, 180-190, 258-261
+app\modules\payments\__init__.py                    0      0   100%
+app\modules\payments\models.py                     46      2    96%   90, 125
+app\modules\payments\routes.py                    190     51    73%   95, 148-151, 198, 228-243, 251-252, 258-259, 265-266, 279-280, 305-319, 407, 413, 435, 439, 442-444, 479-481, 495-497, 517-530
+app\modules\payments\schemas.py                    38      0   100%
+app\modules\security\models.py                     89      4    96%   97, 125, 164, 187
+app\modules\security\routes.py                     26      1    96%   22
+app\modules\shipping\admin_routes.py               83     26    69%   51-57, 100, 116-121, 128, 134, 167-168, 181-197, 213-219
+app\modules\shipping\models.py                     74      2    97%   112, 151
+app\modules\shipping\routes.py                     55      7    87%   31-32, 39, 52, 61, 116-117
+app\modules\shipping\schemas.py                   134      4    97%   61, 69, 77, 85
+app\modules\test\__init__.py                        2      0   100%
+app\modules\test\routes.py                         10      1    90%   39
+app\modules\vehicles\cost_calculator.py            73     51    30%   53, 86-105, 128-145, 163, 185-190, 249-299
+app\modules\vehicles\models.py                     98      9    91%   23-27, 147, 150, 153-154
+app\modules\vehicles\routes.py                    403    223    45%   56, 58, 67-73, 77-120, 138-145, 149-162, 166-175, 179-209, 213-219, 223-301, 328-334, 422, 445, 448-452, 470, 477-478, 481, 518-548, 671, 693-698, 719, 810-874, 905, 945
+app\modules\vehicles\schemas.py                   156     10    94%   26, 34, 87-90, 170-173
+app\services\document_ai.py                        86     66    23%   28-43, 55-80, 83-104, 107-117, 120-130
+app\services\email.py                              79     32    59%   29, 43, 48-52, 60, 78-113, 165-171, 186-210
+app\services\email_queue.py                        53     33    38%   85-158
+app\services\email_scheduler.py                    29      6    79%   27-30, 36-37
+app\services\gemini.py                            109     86    21%   37-47, 56-76, 79, 93-101, 108-124, 133-173, 185-195, 204-215, 218-233, 236-247, 252-258
+app\services\notification_service.py               40      4    90%   23, 57-59
+app\services\orders\status_history.py              20      0   100%
+app\services\payment_notifications.py              31     21    32%   18-42, 53-77
+app\services\payments\__init__.py                   0      0   100%
+app\services\payments\idempotency.py               13      0   100%
+app\services\payments\payhere_signature.py         24      2    92%   16, 40
+app\services\scraper\auction_scraper.py           385    320    17%   101-157, 162-183, 186-207, 210-225, 228-283, 286-438, 441-454, 458-462, 466-470, 474-479, 484-490, 494-497, 501-504, 508-513, 517-522, 526-531, 535-540, 544-550, 554-564
+app\services\scraper\mock_scraper.py               33     21    36%   186-199, 202-215
+app\services\scraper\scheduler.py                 400    246    38%   41, 45-50, 54-61, 77, 82, 84, 86, 89-91, 96, 101, 103, 105, 111, 130, 133, 135, 137, 139, 145, 148, 150, 187-214, 269-271, 278-287, 290-298, 334-353, 362, 366, 384-391, 395-396, 399-531, 534-611, 615-616, 618, 639
+app\services\security\file_integrity.py           131     29    78%   29-30, 46, 64, 70-77, 113-116, 137-141, 175-177, 185-187, 231-237
+app\services\tax_calculator.py                     59      4    93%   66, 69, 72, 111
+app\services\vps_proxy.py                          64     13    80%   27, 33, 65, 67, 73, 75, 115, 120-128
+app\tests\__init__.py                               0      0   100%
+app\tests\conftest.py                             153     12    92%   65-67, 166-171, 322-323, 340, 344
+app\tests\schemas.py                               14     14     0%   1-26
+app\tests\test_admin_audit_routes.py               49      0   100%
+app\tests\test_admin_dashboard.py                  71      0   100%
+app\tests\test_admin_kyc_routes.py                 80      0   100%
+app\tests\test_admin_users.py                      87      0   100%
+app\tests\test_auth.py                             81      0   100%
+app\tests\test_chat_routes.py                      92      7    92%   136-141, 144
+app\tests\test_email_service.py                    31      0   100%
+app\tests\test_finance_routes.py                   91      0   100%
+app\tests\test_gazette_extraction.py               71      0   100%
+app\tests\test_jwt.py                             116      0   100%
+app\tests\test_kyc_routes.py                       25      0   100%
+app\tests\test_main.py                             14      0   100%
+app\tests\test_notification_service.py             74      0   100%
+app\tests\test_order_state_machine.py              19      0   100%
+app\tests\test_order_timeline.py                  120      0   100%
+app\tests\test_otp.py                             165      3    98%   120-123
+app\tests\test_payments_idempotency.py            143      2    99%   23, 77
+app\tests\test_rate_limit_tiers.py                 38      6    84%   51-52, 57-60
+app\tests\test_rbac.py                            106      0   100%
+app\tests\test_security_headers.py                 11      0   100%
+app\tests\test_security_routes.py                  76      0   100%
+app\tests\test_shipping_admin_routes.py            72      1    99%   106
+app\tests\test_shipping_details_submission.py      67      0   100%
+app\tests\test_smoke.py                             2      0   100%
+app\tests\test_tax_calculator.py                   57      0   100%
+app\tests\test_vehicles.py                        327      0   100%
+app\tests\test_vps_nic_extractor.py                32      0   100%
+app\tests\test_vps_proxy.py                        77      0   100%
+-----------------------------------------------------------------------------
+TOTAL                                            9610   2363    75%
+Coverage HTML written to dir htmlcov
+Coverage XML written to file coverage.xml
+
+=========================== short test summary info ===========================
+FAILED app/tests/test_rate_limit_tiers.py::test_rate_limit_middleware_applies_to_authenticated_endpoints
+======================= 1 failed, 187 passed in 12.31s ========================

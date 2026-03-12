@@ -11,7 +11,7 @@ import {
   Search,
   X,
   SlidersHorizontal,
-} from "lucide-react"; // Removed Filter
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -195,7 +195,7 @@ function VehicleCatalog() {
   // -- SYNC DEBOUNCE WITH URL --
   useEffect(() => {
     if (debouncedSearch !== currentSearch) {
-      updateFilters({ search: debouncedSearch });
+      void updateFilters({ search: debouncedSearch });
     }
   }, [debouncedSearch, currentSearch, updateFilters]);
 
