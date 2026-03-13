@@ -93,6 +93,9 @@ export default function OrdersPage() {
 
   const selectedOrder =
     orders.find((order) => order.id === selectedOrderId) ?? null;
+  const canPaySelected =
+    selectedOrder?.status === "CREATED" &&
+    selectedOrder.payment_status === "PENDING";
 
   return (
     <AuthGuard>
@@ -304,6 +307,9 @@ export default function OrdersPage() {
                   <div className="space-y-3">
                     {orders.map((order) => {
                       const selected = order.id === selectedOrderId;
+                      const needsPayment =
+                        order.status === "CREATED" &&
+                        order.payment_status === "PENDING";
                       return (
                         <button
                           key={order.id}
@@ -332,6 +338,11 @@ export default function OrdersPage() {
                             >
                               {order.status.replace(/_/g, " ")}
                             </Badge>
+                            {needsPayment && (
+                              <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-200">
+                                Payment Required
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center justify-between text-sm text-gray-400">
                             <span>
@@ -362,22 +373,73 @@ export default function OrdersPage() {
                               {selectedOrder.id}
                             </p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <Badge
-                              className={
-                                statusTone[selectedOrder.status] ??
-                                "border-white/10 bg-white/5 text-white"
-                              }
-                            >
-                              {selectedOrder.status.replace(/_/g, " ")}
-                            </Badge>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Badge
+                            className={
+                              statusTone[selectedOrder.status] ??
+                              "border-white/10 bg-white/5 text-white"
+                            }
+                          >
+                            {selectedOrder.status.replace(/_/g, " ")}
+                          </Badge>
                             <Badge
                               variant="outline"
                               className="border-white/10 text-gray-300"
                             >
                               Payment {selectedOrder.payment_status}
                             </Badge>
+                            <Button
+                              asChild
+                              variant="outline"
+                              className="border-white/10 text-white hover:bg-white/5"
+                            >
+                              <Link
+                                href={`/dashboard/orders/${selectedOrder.id}`}
+                              >
+                                View Details
+                              </Link>
+                            </Button>
                           </div>
+                        </div>
+                      </div>
+                      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">
+                        <h3 className="text-sm font-semibold text-white">
+                          Quick Actions
+                        </h3>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Continue payment or jump to full tracking.
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          {canPaySelected ? (
+                            <Button
+                              asChild
+                              className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                            >
+                              <Link
+                                href={`/payment?orderId=${selectedOrder.id}`}
+                              >
+                                Proceed to Payment
+                              </Link>
+                            </Button>
+                          ) : (
+                            <Button
+                              disabled
+                              className="bg-white/5 text-gray-400 border border-white/10"
+                            >
+                              Payment Unavailable
+                            </Button>
+                          )}
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="border-white/10 text-white hover:bg-white/5"
+                          >
+                            <Link
+                              href={`/dashboard/orders/${selectedOrder.id}`}
+                            >
+                              Open Tracking
+                            </Link>
+                          </Button>
                         </div>
                       </div>
                       <OrderTimeline

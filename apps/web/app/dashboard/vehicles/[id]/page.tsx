@@ -26,6 +26,7 @@ import { Vehicle } from "@/types/vehicle";
 import { useQuery } from "@tanstack/react-query";
 import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
 import { CostCalculator } from "@/components/vehicles/CostCalculator";
+import OrderCreateForm from "@/components/orders/OrderCreateForm";
 
 // Fetch single vehicle helper
 const useVehicle = (id: string) => {
@@ -304,6 +305,13 @@ function VehicleDetail() {
               <CostCalculator
                 vehicleId={vehicle.id}
                 priceJPY={vehicle.priceJPY}
+              />
+            </div>
+
+            <div id="order-create" className="scroll-mt-24">
+              <OrderCreateForm
+                vehicleId={vehicle.id}
+                estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
               />
             </div>
 

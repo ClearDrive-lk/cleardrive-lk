@@ -52,19 +52,29 @@ function PaymentCancelContent() {
             >
               Try Again
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard")}
-              className="w-full"
-            >
-              View My Orders
-            </Button>
+            {orderId ? (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/dashboard/orders/${orderId}`)}
+                className="w-full"
+              >
+                View Order Tracking
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/orders")}
+                className="w-full"
+              >
+                View My Orders
+              </Button>
+            )}
             <Button
               variant="ghost"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/dashboard/orders")}
               className="w-full"
             >
-              Return to Home
+              Go to Orders Dashboard
             </Button>
           </div>
         </CardContent>

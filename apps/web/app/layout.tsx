@@ -4,6 +4,8 @@ import FloatingChatbot from "@/components/chat/FloatingChatbot";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
 import CookieBanner from "@/components/cookie/cookieBanner";
+import { Toaster } from "@/components/ui/toaster";
+import { ToastStateProvider } from "@/lib/hooks/use-toast";
 
 // Define the font
 const inter = Inter({
@@ -26,8 +28,11 @@ export default function RootLayout({
       {/* Apply the font variable */}
       <body className={`${inter.variable} font-sans antialiased bg-[#050505]`}>
         <StoreProvider>
-          {children}
-          <FloatingChatbot />
+          <ToastStateProvider>
+            {children}
+            <FloatingChatbot />
+            <Toaster />
+          </ToastStateProvider>
         </StoreProvider>
         <CookieBanner />
       </body>
