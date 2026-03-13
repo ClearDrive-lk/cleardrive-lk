@@ -107,23 +107,32 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Price Section */}
         <div className="space-y-1">
-          <div className="flex justify-between items-end">
-            <span className="text-xs text-gray-500">Current Bid (JPY)</span>
-            <span className="text-sm font-medium text-gray-300">
-              {hasPrice ? formatJPY(vehicle.priceJPY) : "N/A"}
-            </span>
-          </div>
-          <div className="flex justify-between items-end">
-            <span className="text-xs text-[#FE7743]">Est. Landed (LKR)</span>
-            <span className="text-lg font-bold text-white">
-              {hasPrice ? formatLKR(vehicle.estimatedLandedCostLKR) : "N/A"}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-[10px] text-gray-500">
-              Est. Duty: {hasPrice ? formatLKR(estDuty) : "N/A"}
-            </span>
-          </div>
+          {hasPrice ? (
+            <>
+              <div className="flex justify-between items-end">
+                <span className="text-xs text-gray-500">Current Bid (JPY)</span>
+                <span className="text-sm font-medium text-gray-300">
+                  {formatJPY(vehicle.priceJPY)}
+                </span>
+              </div>
+              <div className="flex justify-between items-end">
+                <span className="text-xs text-[#FE7743]">Est. Landed (LKR)</span>
+                <span className="text-lg font-bold text-white">
+                  {formatLKR(vehicle.estimatedLandedCostLKR)}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-gray-500">
+                  Est. Duty: {formatLKR(estDuty)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Price</span>
+              <span className="text-gray-400">Pending</span>
+            </div>
+          )}
         </div>
       </CardContent>
 
