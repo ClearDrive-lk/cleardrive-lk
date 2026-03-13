@@ -17,13 +17,13 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 class DocumentType(str, Enum):
     """Shipping document types."""
 
-    # Keep both spellings for backward compatibility across modules/old code paths.
-    BILL_OF_LADING = "BILL_OF_LANDING"
-    BILL_OF_LANDING = "BILL_OF_LANDING"
-    PACKING_LIST = "PACKING_LIST"
-    EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
+    BILL_OF_LADING = "BILL_OF_LADING"
     COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
-    INSURANCE_CERTIFICATE = "INSURANCE_CERTIFICATE"
+    PACKING_LIST = "PACKING_LIST"
+    CUSTOMS_DECLARATION = "CUSTOMS_DECLARATION"
+    CERTIFICATE_OF_ORIGIN = "CERTIFICATE_OF_ORIGIN"
+    CONTAINER_PHOTO = "CONTAINER_PHOTO"
+    OTHER = "OTHER"
 
 
 # ============== SHIPMENT SCHEMAS ==============

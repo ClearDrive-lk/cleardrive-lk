@@ -4,15 +4,14 @@ Author: Parindra Gallage
 Story: CD-33.3, CD-33.4
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
-from decimal import Decimal
 from datetime import datetime, timezone
+from decimal import Decimal
+from typing import List
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_admin
-from app.modules.finance.models import VehicleFinance, FinanceStatus
+from app.core.dependencies import get_current_admin, get_current_user
+from app.modules.auth.models import User
+from app.modules.finance.models import FinanceStatus, VehicleFinance
 from app.modules.finance.schemas import (
     FinanceApplicationRequest,
     FinanceApproveRequest,
@@ -20,7 +19,8 @@ from app.modules.finance.schemas import (
     FinanceResponse,
 )
 from app.modules.orders.models import Order
-from app.modules.auth.models import User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/finance", tags=["vehicle-finance"])
 

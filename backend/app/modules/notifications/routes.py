@@ -4,14 +4,13 @@ Author: Parindra Gallage
 Story: CD-550
 """
 
-from fastapi import APIRouter, Depends, BackgroundTasks
-from sqlalchemy.orm import Session
-
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
 from app.modules.auth.models import User
 from app.services.email import send_email
 from app.services.email_queue import email_queue
+from fastapi import APIRouter, BackgroundTasks, Depends
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
