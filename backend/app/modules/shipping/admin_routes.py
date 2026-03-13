@@ -309,6 +309,44 @@ async def approve_shipment(
 
     db.commit()
     db.refresh(shipment)
+
+    try:
+        await send_status_change_notification(order, old_status, OrderStatus.SHIPPED)
+    except Exception:
+        logger.exception(
+            "Failed to send customer shipment notification for order_id=%s",
+            order.id,
+        )
+
+    exporter = getattr(shipment, "exporter", None)
+    exporter_email = getattr(exporter, "email", None)
+    if exporter_email:
+        eta_label = (
+            shipment.estimated_arrival_date.strftime("%Y-%m-%d")
+            if shipment.estimated_arrival_date
+            else "TBD"
+        )
+        try:
+            await notification_service._enqueue_template(
+                to_email=exporter_email,
+                subject=f"Shipment Approved for Order #{order.id}",
+                template_name="status_change.html",
+                context={
+                    "user_name": exporter.name or "Exporter",
+                    "order_id": str(order.id),
+                    "new_status": "Shipment Approved",
+                    "status_message": (
+                        "Shipment approved by admin. "
+                        f"Vessel: {shipment.vessel_name or 'TBD'}, ETA: {eta_label}."
+                    ),
+                },
+                priority=4,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to send exporter shipment approval for order_id=%s",
+                order.id,
+            )
     return shipment
 
 
