@@ -5,7 +5,9 @@ Story: CD-72 - Shipping Document Upload
 """
 
 import logging
+from typing import cast
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.core.storage import storage
@@ -88,7 +90,7 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
 async def submit_shipping_details(
     order_id: str,
     payload: ShippingDetailsSubmit,
-    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    current_user: User = Depends(require_permission(Permission.UPDATE_SHIPPING_DETAILS)),
     db: Session = Depends(get_db),
 ):
     """
@@ -106,10 +108,8 @@ async def submit_shipping_details(
     shipment.seal_number = payload.seal_number
     shipment.tracking_number = payload.tracking_number
 
-    import datetime as dt
-
-    shipment.estimated_departure_date = dt.date.fromisoformat(payload.departure_date)
-    shipment.estimated_arrival_date = dt.date.fromisoformat(payload.estimated_arrival_date)
+    shipment.estimated_departure_date = payload.departure_date
+    shipment.estimated_arrival_date = payload.estimated_arrival_date
 
     db.commit()
     db.refresh(shipment)
@@ -125,7 +125,7 @@ async def submit_shipping_details(
 @router.get("/{order_id}/details", response_model=ShippingDetailsResponse)
 async def get_shipping_details(
     order_id: str,
-    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    current_user: User = Depends(require_permission(Permission.UPDATE_SHIPPING_DETAILS)),
     db: Session = Depends(get_db),
 ):
     """Get shipping details for an order (Exporter only)."""
@@ -145,7 +145,7 @@ async def upload_shipping_document(
     order_id: str,
     document_type: str = Form(...),
     file: UploadFile = File(...),
-    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    current_user: User = Depends(require_permission(Permission.UPLOAD_SHIPMENT_DOCUMENTS)),
     db: Session = Depends(get_db),
 ):
     """
@@ -218,11 +218,13 @@ async def upload_shipping_document(
     # 7. Upload to Supabase storage
     storage_path = f"shipping/{order_id}/{doc_type.value}/{file.filename}"
     try:
-        file_url = await storage.upload(
-            path=storage_path,
-            content=content,
+        upload_result = await storage.upload_file(
+            bucket=settings.SUPABASE_STORAGE_SHIPPING_BUCKET,
+            file_path=storage_path,
+            file_content=content,
             content_type=mime_type,
         )
+        file_url = cast(str, upload_result["url"])
     except Exception as exc:
         logger.exception("Storage upload failed order_id=%s doc_type=%s", order_id, doc_type)
         raise HTTPException(
@@ -321,7 +323,7 @@ async def upload_shipping_document(
 @router.get("/{order_id}/documents", response_model=list[DocumentListItem])
 async def list_shipping_documents(
     order_id: str,
-    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    current_user: User = Depends(require_permission(Permission.UPLOAD_SHIPMENT_DOCUMENTS)),
     db: Session = Depends(get_db),
 ):
     """
@@ -355,7 +357,7 @@ async def list_shipping_documents(
 @router.get("/{order_id}/documents/check", response_model=RequiredDocumentsCheck)
 async def check_required_documents(
     order_id: str,
-    current_user: User = Depends(require_permission(Permission.UPLOAD_DOCUMENTS)),
+    current_user: User = Depends(require_permission(Permission.UPLOAD_SHIPMENT_DOCUMENTS)),
     db: Session = Depends(get_db),
 ):
     """
