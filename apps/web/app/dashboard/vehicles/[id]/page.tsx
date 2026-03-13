@@ -117,7 +117,8 @@ function VehicleDetail() {
       ? [vehicle.imageUrl]
       : [];
 
-  const estDuty = vehicle.estimatedLandedCostLKR * 0.3;
+  const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
+  const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
 
   const contactAgent = () => {
     const subject = encodeURIComponent(
@@ -267,12 +268,19 @@ function VehicleDetail() {
                     Estimated Landed Cost
                   </span>
                   <span className="text-3xl font-bold text-white">
-                    {formatLKR(vehicle.estimatedLandedCostLKR)}
+                    {hasPrice
+                      ? formatLKR(vehicle.estimatedLandedCostLKR)
+                      : "N/A"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm text-gray-500 font-mono mb-6">
-                  <span>Current Bid: {formatJPY(vehicle.priceJPY)}</span>
-                  <span>Est. Duty: {formatLKR(estDuty)}</span>
+                  <span>
+                    Current Bid:{" "}
+                    {hasPrice ? formatJPY(vehicle.priceJPY) : "N/A"}
+                  </span>
+                  <span>
+                    Est. Duty: {hasPrice ? formatLKR(estDuty) : "N/A"}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

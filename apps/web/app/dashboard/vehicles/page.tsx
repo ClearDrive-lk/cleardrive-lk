@@ -55,7 +55,7 @@ function VehicleCatalog() {
   const currentSearch = searchParams.get("search") || "";
   const currentFuel = searchParams.get("fuel") || "All";
   const currentStatus = searchParams.get("status") || "All";
-  const currentSort = searchParams.get("sort") || "newest";
+  const currentSort = searchParams.get("sort") || "year_desc";
   const currentType = searchParams.get("type") || "All";
   const currentCurrency =
     (searchParams.get("currency") as "LKR" | "JPY" | null) || "LKR";

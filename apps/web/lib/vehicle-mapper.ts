@@ -85,8 +85,18 @@ function mapStatus(status: BackendVehicle["status"]): Vehicle["status"] {
 
 export function mapBackendVehicle(v: BackendVehicle): Vehicle {
   const yearNow = new Date().getFullYear();
-  const priceJPY =
-    typeof v.price_jpy === "string" ? Number(v.price_jpy) : v.price_jpy;
+  const priceJPY = (() => {
+    if (typeof v.price_jpy === "number") {
+      return Number.isFinite(v.price_jpy) ? v.price_jpy : 0;
+    }
+    if (typeof v.price_jpy === "string") {
+      const cleaned = v.price_jpy.replace(/[^\d.]/g, "");
+      if (!cleaned) return 0;
+      const parsed = Number(cleaned);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  })();
 
   return {
     id: v.id,
