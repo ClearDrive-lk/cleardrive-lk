@@ -6,6 +6,7 @@ Story: CD-70 - Exporter Assignment
 
 import logging
 from datetime import datetime
+from uuid import UUID
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
@@ -205,22 +206,6 @@ async def get_all_shipments(
     }
 
 
-@router.get("/{shipment_id}", response_model=ShippingDetailsResponse)
-async def get_shipment_details(
-    shipment_id: str,
-    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
-    db: Session = Depends(get_db),
-):
-    """Get detailed shipment information."""
-    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
-    if not shipment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Shipment {shipment_id} not found",
-        )
-    return shipment
-
-
 @router.get("/pending", response_model=list[ShippingDetailsResponse])
 async def get_pending_shipments(
     current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
@@ -242,7 +227,7 @@ async def get_pending_shipments(
 
 @router.post("/{shipment_id}/approve", response_model=ShippingDetailsResponse)
 async def approve_shipment(
-    shipment_id: str,
+    shipment_id: UUID,
     request: Request,
     current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
     db: Session = Depends(get_db),
@@ -360,3 +345,19 @@ def _get_missing_required_documents(shipment: ShipmentDetails) -> list[str]:
     uploaded_types = {doc.document_type for doc in shipment.documents}
     missing = required_types - uploaded_types
     return [doc_type.value for doc_type in sorted(missing, key=lambda item: item.value)]
+
+
+@router.get("/{shipment_id}", response_model=ShippingDetailsResponse)
+async def get_shipment_details(
+    shipment_id: UUID,
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Get detailed shipment information."""
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment {shipment_id} not found",
+        )
+    return shipment
