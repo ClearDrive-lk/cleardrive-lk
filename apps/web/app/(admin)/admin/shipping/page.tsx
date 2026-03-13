@@ -48,7 +48,9 @@ export default function AdminShippingPage() {
   const [exporters, setExporters] = useState<Exporter[]>([]);
   const [selectedExporter, setSelectedExporter] = useState("");
   const [summary, setSummary] = useState<ShipmentSummaryResponse | null>(null);
-  const [pendingShipments, setPendingShipments] = useState<PendingShipment[]>([]);
+  const [pendingShipments, setPendingShipments] = useState<PendingShipment[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [pendingLoading, setPendingLoading] = useState(true);
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -102,7 +104,11 @@ export default function AdminShippingPage() {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([loadExporters(), loadShipments(), loadPendingShipments()]);
+      await Promise.all([
+        loadExporters(),
+        loadShipments(),
+        loadPendingShipments(),
+      ]);
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         const detail =
@@ -153,7 +159,9 @@ export default function AdminShippingPage() {
   };
 
   const approveShipment = async (shipmentId: string) => {
-    if (!window.confirm("Approve this shipment and mark the order as shipped?")) {
+    if (
+      !window.confirm("Approve this shipment and mark the order as shipped?")
+    ) {
       return;
     }
 
@@ -237,18 +245,23 @@ export default function AdminShippingPage() {
         <div>
           <h2 className="text-lg font-semibold">Pending Approvals</h2>
           <p className="text-sm text-gray-600">
-            Approve shipments that have submitted details and uploaded documents.
+            Approve shipments that have submitted details and uploaded
+            documents.
           </p>
         </div>
 
         {pendingLoading ? (
-          <div className="p-4 text-center text-gray-500">Loading pending shipments...</div>
+          <div className="p-4 text-center text-gray-500">
+            Loading pending shipments...
+          </div>
         ) : pendingError ? (
           <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">
             {pendingError}
           </div>
         ) : pendingShipments.length === 0 ? (
-          <div className="text-sm text-gray-600">No shipments awaiting approval.</div>
+          <div className="text-sm text-gray-600">
+            No shipments awaiting approval.
+          </div>
         ) : (
           <div className="space-y-3">
             {pendingShipments.map((shipment) => (
@@ -269,7 +282,9 @@ export default function AdminShippingPage() {
                   <p className="text-sm text-gray-600">
                     ETA:{" "}
                     {shipment.estimated_arrival_date
-                      ? new Date(shipment.estimated_arrival_date).toLocaleDateString()
+                      ? new Date(
+                          shipment.estimated_arrival_date,
+                        ).toLocaleDateString()
                       : "TBD"}
                   </p>
                   <p className="text-xs text-gray-500">

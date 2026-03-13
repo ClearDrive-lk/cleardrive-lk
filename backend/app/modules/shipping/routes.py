@@ -75,10 +75,7 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     uploaded = {doc.document_type for doc in shipment.documents}
 
     missing: list[str] = []
-    if (
-        DocumentType.BILL_OF_LADING not in uploaded
-        and DocumentType.BILL_OF_LANDING not in uploaded
-    ):
+    if DocumentType.BILL_OF_LADING not in uploaded and DocumentType.BILL_OF_LANDING not in uploaded:
         missing.append("BILL_OF_LADING")
     if DocumentType.COMMERCIAL_INVOICE not in uploaded:
         missing.append("COMMERCIAL_INVOICE")
