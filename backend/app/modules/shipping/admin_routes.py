@@ -343,6 +343,8 @@ def _get_missing_required_documents(shipment: ShipmentDetails) -> list[str]:
         DocumentType.EXPORT_CERTIFICATE,
     }
     uploaded_types = {doc.document_type for doc in shipment.documents}
+    if DocumentType.BILL_OF_LANDING in uploaded_types:
+        uploaded_types.add(DocumentType.BILL_OF_LADING)
     missing = required_types - uploaded_types
     return [doc_type.value for doc_type in sorted(missing, key=lambda item: item.value)]
 

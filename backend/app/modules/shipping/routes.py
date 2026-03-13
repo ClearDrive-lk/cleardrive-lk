@@ -75,14 +75,17 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     uploaded = {doc.document_type for doc in shipment.documents}
 
     missing: list[str] = []
-    if DocumentType.BILL_OF_LADING not in uploaded:
+    if (
+        DocumentType.BILL_OF_LADING not in uploaded
+        and DocumentType.BILL_OF_LANDING not in uploaded
+    ):
         missing.append("BILL_OF_LADING")
     if DocumentType.COMMERCIAL_INVOICE not in uploaded:
         missing.append("COMMERCIAL_INVOICE")
     if DocumentType.PACKING_LIST not in uploaded:
         missing.append("PACKING_LIST")
-    if DocumentType.CUSTOMS_DECLARATION not in uploaded:
-        missing.append("CUSTOMS_DECLARATION")
+    if DocumentType.EXPORT_CERTIFICATE not in uploaded:
+        missing.append("EXPORT_CERTIFICATE")
     return missing
 
 
@@ -188,7 +191,7 @@ async def upload_shipping_document(
     - BILL_OF_LADING (Required)
     - COMMERCIAL_INVOICE (Required)
     - PACKING_LIST (Required)
-    - CUSTOMS_DECLARATION (Required)
+    - EXPORT_CERTIFICATE (Required)
     - CERTIFICATE_OF_ORIGIN (Optional)
     - CONTAINER_PHOTO (Optional)
     - OTHER (Optional)
@@ -400,7 +403,7 @@ async def check_required_documents(
     - BILL_OF_LADING
     - COMMERCIAL_INVOICE
     - PACKING_LIST
-    - CUSTOMS_DECLARATION
+    - EXPORT_CERTIFICATE
     """
     shipment = _get_shipment_for_exporter(order_id, current_user, db)
 
@@ -410,7 +413,7 @@ async def check_required_documents(
         "BILL_OF_LADING",
         "COMMERCIAL_INVOICE",
         "PACKING_LIST",
-        "CUSTOMS_DECLARATION",
+        "EXPORT_CERTIFICATE",
     ]
     total_required = len(required_labels)
     total_uploaded = total_required - len(missing)

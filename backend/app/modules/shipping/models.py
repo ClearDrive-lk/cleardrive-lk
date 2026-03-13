@@ -32,9 +32,11 @@ class DocumentType(str, enum.Enum):
     """Shipping document types."""
 
     BILL_OF_LADING = "BILL_OF_LADING"  # Required
+    BILL_OF_LANDING = "BILL_OF_LANDING"  # Legacy support
     COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"  # Required
     PACKING_LIST = "PACKING_LIST"  # Required
-    CUSTOMS_DECLARATION = "CUSTOMS_DECLARATION"  # Required
+    EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"  # Required
+    INSURANCE_CERTIFICATE = "INSURANCE_CERTIFICATE"  # Optional
     CERTIFICATE_OF_ORIGIN = "CERTIFICATE_OF_ORIGIN"  # Optional
     CONTAINER_PHOTO = "CONTAINER_PHOTO"  # Optional (multiple)
     OTHER = "OTHER"  # Optional
