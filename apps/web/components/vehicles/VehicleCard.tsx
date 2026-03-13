@@ -116,7 +116,9 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 </span>
               </div>
               <div className="flex justify-between items-end">
-                <span className="text-xs text-[#FE7743]">Est. Landed (LKR)</span>
+                <span className="text-xs text-[#FE7743]">
+                  Est. Landed (LKR)
+                </span>
                 <span className="text-lg font-bold text-white">
                   {formatLKR(vehicle.estimatedLandedCostLKR)}
                 </span>
