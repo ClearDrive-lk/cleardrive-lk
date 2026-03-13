@@ -4,16 +4,16 @@ Author: Parindra gallage
 Story: CD-120.5
 """
 
-from typing import Optional
-from sqlalchemy import String, DateTime, Text, Integer, Enum as SQLEnum, JSON
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
-import uuid
 import enum
+import uuid
+from datetime import datetime
+from typing import Optional
 
 from app.core.database import Base
-
-
+from sqlalchemy import JSON, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 

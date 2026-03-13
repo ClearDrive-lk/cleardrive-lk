@@ -4,22 +4,22 @@ Author: Parindra Gallage
 Story: CD-33.5, CD-33.6
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
 from datetime import datetime, timezone
+from typing import List
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_admin
-from app.modules.finance.models import VehicleInsurance, InsuranceStatus
+from app.core.dependencies import get_current_admin, get_current_user
+from app.modules.auth.models import User
+from app.modules.finance.models import InsuranceStatus, VehicleInsurance
 from app.modules.finance.schemas import (
-    InsuranceQuoteRequest,
     InsuranceApproveRequest,
+    InsuranceQuoteRequest,
     InsuranceRejectRequest,
     InsuranceResponse,
 )
 from app.modules.orders.models import Order
-from app.modules.auth.models import User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/insurance", tags=["vehicle-insurance"])
 

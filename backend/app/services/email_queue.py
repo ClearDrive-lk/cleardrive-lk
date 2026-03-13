@@ -8,13 +8,13 @@ Story: CD-120.3
 
 import json
 import uuid
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
 from app.core.database import SessionLocal
-from app.services.email import send_email
-from app.modules.notifications.models import EmailLog, EmailStatus
 from app.core.redis_client import get_redis
+from app.modules.notifications.models import EmailLog, EmailStatus
+from app.services.email import send_email
 
 
 class EmailQueue:

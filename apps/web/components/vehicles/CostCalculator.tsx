@@ -31,6 +31,7 @@ type CostBreakdown = {
 };
 
 export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
+  const hasPrice = Number.isFinite(priceJPY) && priceJPY > 0;
   const { data, isLoading, isError } = useQuery<CostBreakdown>({
     queryKey: ["vehicle-cost", vehicleId],
     queryFn: async () => {
@@ -141,7 +142,9 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
         {/* Base Cost */}
         <div className="space-y-2">
           <div className="flex justify-between text-gray-400">
-            <span>Auction Price ({formatJPY(priceJPY)})</span>
+            <span>
+              Auction Price ({hasPrice ? formatJPY(priceJPY) : "N/A"})
+            </span>
             <span>{formatLKR(toNumber(data.vehicle_price_lkr))}</span>
           </div>
           <div className="flex justify-between text-gray-400">
@@ -215,7 +218,7 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
               <div className="flex items-center gap-1 text-xs text-green-500">
                 <TrendingUp className="w-3 h-3" />
                 <span>
-                  Taxes {Number(data.taxes_percentage).toFixed(1)}% · Fees{" "}
+                  Taxes {Number(data.taxes_percentage).toFixed(1)}% - Fees{" "}
                   {Number(data.fees_percentage).toFixed(1)}%
                 </span>
               </div>

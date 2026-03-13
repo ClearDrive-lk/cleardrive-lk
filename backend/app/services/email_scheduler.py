@@ -4,10 +4,9 @@ Author: Kalidu
 Story: CD-120.4 - Async email sending
 """
 
+from app.services.email_queue import email_queue
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-
-from app.services.email_queue import email_queue
 
 
 class EmailScheduler:
@@ -48,10 +47,10 @@ class EmailScheduler:
         self.scheduler.start()
         self.is_running = True
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("✅ EMAIL SCHEDULER STARTED")
         print("   Interval: Every 60 seconds")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
     def stop(self):
         """Stop the scheduler."""

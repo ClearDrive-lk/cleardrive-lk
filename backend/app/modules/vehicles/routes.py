@@ -26,7 +26,7 @@ from app.modules.vehicles.schemas import (
 )
 from app.services.tax_calculator import NoTaxRuleError, calculate_tax
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import asc, desc, or_, text
+from sqlalchemy import asc, case, desc, or_, text
 from sqlalchemy.orm import Session
 
 try:
@@ -36,11 +36,11 @@ except Exception:  # pragma: no cover - optional dependency
 
 from .cost_calculator import (
     DEFAULT_JPY_TO_LKR,
-    calculate_total_cost,
     calculate_clearance_fee,
     calculate_documentation_fee,
     calculate_port_charges,
     calculate_shipping_cost,
+    calculate_total_cost,
 )
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
@@ -477,7 +477,13 @@ async def get_vehicles(
 
     # Apply sorting
     sort_column = getattr(Vehicle, sort_by)
-    if sort_order == "desc":
+    if sort_by == "price_jpy":
+        zero_last = case((Vehicle.price_jpy == 0, 1), else_=0)
+        if sort_order == "desc":
+            query = query.order_by(asc(zero_last), desc(sort_column))
+        else:
+            query = query.order_by(asc(zero_last), asc(sort_column))
+    elif sort_order == "desc":
         query = query.order_by(desc(sort_column))
     else:
         query = query.order_by(asc(sort_column))

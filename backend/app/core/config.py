@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str | None = None
     SUPABASE_STORAGE_VEHICLE_BUCKET: str = "Photos"
     SUPABASE_STORAGE_KYC_BUCKET: str = "kyc-documents"
+    SUPABASE_STORAGE_SHIPPING_BUCKET: str = "shipping-documents"
 
     # KYC VPS Proxy (CD-50.8/9/10)
     VPS_URL: str | None = None
