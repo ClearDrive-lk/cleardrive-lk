@@ -238,3 +238,87 @@ async def get_pending_shipments(
         .all()
     )
     return shipments
+
+
+@router.post("/{shipment_id}/approve", response_model=ShippingDetailsResponse)
+async def approve_shipment(
+    shipment_id: str,
+    request: Request,
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Approve shipment and update order status (CD-73.2 - CD-73.4)."""
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment {shipment_id} not found",
+        )
+
+    if shipment.approved:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipment already approved",
+        )
+
+    if shipment.submitted_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipping details have not been submitted",
+        )
+
+    if not shipment.documents_uploaded:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipping documents have not been uploaded",
+        )
+
+    missing_docs = _get_missing_required_documents(shipment)
+    if missing_docs:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Missing required documents: {', '.join(missing_docs)}",
+        )
+
+    order = shipment.order
+    if order is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order for shipment {shipment_id} not found",
+        )
+
+    shipment.approved = True
+    shipment.admin_approved_at = datetime.utcnow()
+    shipment.admin_approved_by = current_user.id
+    shipment.status = ShipmentStatus.CONFIRMED_SHIPPED
+    shipment.updated_at = datetime.utcnow()
+
+    old_status = order.status
+    order.status = OrderStatus.SHIPPED
+
+    status_history_service.create_history_entry(
+        db=db,
+        order=order,
+        from_status=old_status,
+        to_status=OrderStatus.SHIPPED,
+        changed_by=current_user,
+        notes="Shipment approved by admin",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    db.commit()
+    db.refresh(shipment)
+    return shipment
+
+
+def _get_missing_required_documents(shipment: ShipmentDetails) -> list[str]:
+    required_types = {
+        DocumentType.BILL_OF_LADING,
+        DocumentType.COMMERCIAL_INVOICE,
+        DocumentType.PACKING_LIST,
+        DocumentType.EXPORT_CERTIFICATE,
+    }
+    uploaded_types = {doc.document_type for doc in shipment.documents}
+    missing = required_types - uploaded_types
+    return [doc_type.value for doc_type in sorted(missing, key=lambda item: item.value)]
