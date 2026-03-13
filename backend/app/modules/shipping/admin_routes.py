@@ -5,19 +5,21 @@ Story: CD-70 - Exporter Assignment
 """
 
 import logging
+from datetime import datetime
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
 from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import Order, OrderStatus
-from app.modules.shipping.models import ShipmentDetails
+from app.modules.shipping.models import DocumentType, ShipmentDetails, ShipmentStatus
 from app.modules.shipping.schemas import (
     AssignableOrderItem,
     ExporterAssignment,
     ShippingDetailsResponse,
 )
 from app.modules.vehicles.models import Vehicle
+from app.services.notification_service import notification_service
 from app.services.orders.status_history import status_history_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -217,3 +219,22 @@ async def get_shipment_details(
             detail=f"Shipment {shipment_id} not found",
         )
     return shipment
+
+
+@router.get("/pending", response_model=list[ShippingDetailsResponse])
+async def get_pending_shipments(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Get shipments that are ready for admin approval (CD-73.1)."""
+    _ = current_user
+    shipments = (
+        db.query(ShipmentDetails)
+        .filter(ShipmentDetails.submitted_at.isnot(None))
+        .filter(ShipmentDetails.documents_uploaded.is_(True))
+        .filter(ShipmentDetails.approved.is_(False))
+        .filter(ShipmentDetails.status == ShipmentStatus.AWAITING_ADMIN_APPROVAL)
+        .order_by(ShipmentDetails.submitted_at.asc())
+        .all()
+    )
+    return shipments
