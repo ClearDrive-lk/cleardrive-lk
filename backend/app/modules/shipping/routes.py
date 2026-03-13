@@ -12,6 +12,8 @@ from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.core.storage import storage
 from app.modules.auth.models import User
+from app.modules.orders.models import Order, OrderStatus
+from app.modules.orders.state_machine import validate_state_transition
 from app.modules.shipping.models import (
     DocumentType,
     ShipmentDetails,
@@ -25,6 +27,7 @@ from app.modules.shipping.schemas import (
     ShippingDetailsResponse,
     ShippingDetailsSubmit,
 )
+from app.services.orders.status_history import status_history_service
 from app.services.security.file_integrity import file_integrity_service
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -110,6 +113,34 @@ async def submit_shipping_details(
 
     shipment.estimated_departure_date = payload.departure_date
     shipment.estimated_arrival_date = payload.estimated_arrival_date
+
+    # Update shipment status to reflect submitted details
+    if shipment.status == ShipmentStatus.PENDING_SHIPMENT:
+        shipment.status = ShipmentStatus.AWAITING_ADMIN_APPROVAL
+
+    # Update order status to awaiting shipment confirmation
+    order = db.query(Order).filter(Order.id == shipment.order_id).first()
+    if order is not None and order.status != OrderStatus.AWAITING_SHIPMENT_CONFIRMATION:
+        is_valid, error_message = validate_state_transition(
+            order=order,
+            new_status=OrderStatus.AWAITING_SHIPMENT_CONFIRMATION,
+            db=db,
+        )
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_message,
+            )
+        old_status = order.status
+        order.status = OrderStatus.AWAITING_SHIPMENT_CONFIRMATION
+        status_history_service.create_history_entry(
+            db=db,
+            order=order,
+            from_status=old_status,
+            to_status=OrderStatus.AWAITING_SHIPMENT_CONFIRMATION,
+            changed_by=current_user,
+            notes="Shipping details submitted by exporter",
+        )
 
     db.commit()
     db.refresh(shipment)
