@@ -5,6 +5,7 @@ Story: CD-72 - Shipping Document Upload
 """
 
 import logging
+import uuid
 from typing import cast
 
 from app.core.config import settings
@@ -31,6 +32,11 @@ from app.services.orders.status_history import status_history_service
 from app.services.security.file_integrity import file_integrity_service
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
+
+try:
+    import magic
+except ImportError:
+    magic = None  # type: ignore[assignment]
 
 router = APIRouter(prefix="/shipping", tags=["shipping"])
 logger = logging.getLogger(__name__)
@@ -84,6 +90,22 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     if DocumentType.CUSTOMS_DECLARATION not in uploaded:
         missing.append("CUSTOMS_DECLARATION")
     return missing
+
+
+def _detect_mime_type(file_content: bytes, declared_content_type: str | None) -> str:
+    """Detect MIME type from file bytes with a declared-content fallback."""
+    if magic is not None:
+        return str(magic.from_buffer(file_content, mime=True))
+
+    if file_content.startswith(b"%PDF-"):
+        return "application/pdf"
+    if file_content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if file_content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if len(file_content) >= 12 and file_content[:4] == b"RIFF" and file_content[8:12] == b"WEBP":
+        return "image/webp"
+    return declared_content_type or "application/octet-stream"
 
 
 # CD-71: Submit shipping details
@@ -228,7 +250,7 @@ async def upload_shipping_document(
     content = await file.read()
 
     # 4. Validate MIME type (CD-72.3)
-    mime_type = file.content_type or "application/octet-stream"
+    mime_type = _detect_mime_type(content, file.content_type)
     if mime_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -247,7 +269,9 @@ async def upload_shipping_document(
     logger.debug("SHA-256 computed hash_prefix=%s", sha256_hash[:16])
 
     # 7. Upload to Supabase storage
-    storage_path = f"shipping/{order_id}/{doc_type.value}/{file.filename}"
+    original_name = file.filename or f"{doc_type.value}.bin"
+    safe_name = original_name.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
+    storage_path = f"shipping/{order_id}/{doc_type.value}/{uuid.uuid4()}-{safe_name}"
     try:
         upload_result = await storage.upload_file(
             bucket=settings.SUPABASE_STORAGE_SHIPPING_BUCKET,
@@ -264,23 +288,24 @@ async def upload_shipping_document(
         ) from exc
 
     # 8. Remove previous upload of same type (replace semantics)
-    existing = (
-        db.query(ShippingDocument)
-        .filter(
-            ShippingDocument.shipment_id == shipment.id,
-            ShippingDocument.document_type == doc_type,
+    if doc_type != DocumentType.CONTAINER_PHOTO:
+        existing = (
+            db.query(ShippingDocument)
+            .filter(
+                ShippingDocument.shipment_id == shipment.id,
+                ShippingDocument.document_type == doc_type,
+            )
+            .first()
         )
-        .first()
-    )
-    if existing:
-        db.delete(existing)
-        db.flush()
+        if existing:
+            db.delete(existing)
+            db.flush()
 
     # 9. Persist document record with sha256_hash (CD-72.4)
     doc = ShippingDocument(
         shipment_id=shipment.id,
         document_type=doc_type,
-        file_name=file.filename or f"{doc_type.value}.bin",
+        file_name=original_name,
         file_url=file_url,
         file_size=len(content),
         mime_type=mime_type,
@@ -294,7 +319,7 @@ async def upload_shipping_document(
         file_integrity_service.create_integrity_record(
             db=db,
             file_url=file_url,
-            file_name=file.filename or f"{doc_type.value}.bin",
+            file_name=original_name,
             file_bytes=content,
             mime_type=mime_type,
             uploaded_by_id=str(current_user.id),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { isAxiosError } from "axios";
 import { apiClient } from "@/lib/api-client";
 
@@ -157,7 +157,7 @@ function ProgressBar({ pct }: { pct: number }) {
 interface UploadRowProps {
   docType: DocumentType;
   meta: DocumentMeta;
-  existing: UploadedDocument | undefined;
+  existingDocs: UploadedDocument[];
   orderId: string;
   onUploaded: (doc: UploadedDocument) => void;
 }
@@ -165,7 +165,7 @@ interface UploadRowProps {
 function UploadRow({
   docType,
   meta,
-  existing,
+  existingDocs,
   orderId,
   onUploaded,
 }: UploadRowProps) {
@@ -173,33 +173,38 @@ function UploadRow({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const supportsMultiple = docType === "CONTAINER_PHOTO";
+  const primaryDoc = existingDocs[0];
 
   const upload = useCallback(
-    async (file: File) => {
+    async (files: File[]) => {
       setError("");
 
-      // Client-side validation
-      if (!ALLOWED_MIME.has(file.type)) {
-        setError("Invalid file type. Allowed: PDF, JPEG, PNG, WebP");
-        return;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        setError("File too large. Maximum size: 10 MB");
-        return;
+      for (const file of files) {
+        if (!ALLOWED_MIME.has(file.type)) {
+          setError("Invalid file type. Allowed: PDF, JPEG, PNG, WebP");
+          return;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          setError("File too large. Maximum size: 10 MB");
+          return;
+        }
       }
 
       setUploading(true);
       try {
-        const form = new FormData();
-        form.append("document_type", docType);
-        form.append("file", file);
+        for (const file of files) {
+          const form = new FormData();
+          form.append("document_type", docType);
+          form.append("file", file);
 
-        const res = await apiClient.post<UploadedDocument>(
-          `/shipping/${orderId}/documents`,
-          form,
-          { headers: { "Content-Type": "multipart/form-data" } },
-        );
-        onUploaded(res.data);
+          const res = await apiClient.post<UploadedDocument>(
+            `/shipping/${orderId}/documents`,
+            form,
+            { headers: { "Content-Type": "multipart/form-data" } },
+          );
+          onUploaded(res.data);
+        }
       } catch (err: unknown) {
         if (isAxiosError(err)) {
           setError(
@@ -217,8 +222,8 @@ function UploadRow({
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) void upload(file);
+    const files = Array.from(e.target.files ?? []);
+    if (files.length > 0) void upload(files);
     // reset so same file can be re-uploaded
     e.target.value = "";
   };
@@ -226,8 +231,10 @@ function UploadRow({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) void upload(file);
+    const files = Array.from(e.dataTransfer.files ?? []);
+    if (files.length > 0) {
+      void upload(supportsMultiple ? files : [files[0]]);
+    }
   };
 
   return (
@@ -253,8 +260,8 @@ function UploadRow({
         </div>
 
         {/* Status / upload button */}
-        {existing ? (
-          <StatusBadge verified={existing.verified} />
+        {primaryDoc ? (
+          <StatusBadge verified={primaryDoc.verified} />
         ) : (
           <button
             type="button"
@@ -262,78 +269,100 @@ function UploadRow({
             disabled={uploading}
             className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {uploading ? "Uploading…" : "Upload"}
+            {uploading
+              ? "Uploading..."
+              : supportsMultiple
+                ? "Add Files"
+                : "Upload"}
           </button>
         )}
       </div>
 
       {/* Existing file info */}
-      {existing && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {/* PDF / image icon */}
-            <span className="text-slate-400">
-              {existing.mime_type === "application/pdf" ? (
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                  />
-                </svg>
-              )}
-            </span>
-            <span className="truncate text-xs font-medium text-slate-700">
-              {existing.file_name}
-            </span>
-            <span className="shrink-0 text-xs text-slate-400">
-              {formatBytes(existing.file_size)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href={existing.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-200 transition hover:bg-blue-50"
+      {existingDocs.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {existingDocs.map((existing) => (
+            <div
+              key={existing.id}
+              className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
             >
-              Preview
-            </a>
-            {/* Re-upload option */}
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-slate-400">
+                  {existing.mime_type === "application/pdf" ? (
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                      />
+                    </svg>
+                  )}
+                </span>
+                <span className="truncate text-xs font-medium text-slate-700">
+                  {existing.file_name}
+                </span>
+                <span className="shrink-0 text-xs text-slate-400">
+                  {formatBytes(existing.file_size)}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={existing.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-200 transition hover:bg-blue-50"
+                >
+                  Preview
+                </a>
+                {supportsMultiple ? null : (
+                  <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={uploading}
+                    className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    Replace
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {supportsMultiple && (
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:opacity-50"
+              className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
             >
-              Replace
+              {uploading ? "Uploading..." : "Add More Photos"}
             </button>
-          </div>
+          )}
         </div>
       )}
 
       {/* Drop zone (shown when no existing doc) */}
-      {!existing && (
+      {existingDocs.length === 0 && (
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -372,7 +401,7 @@ function UploadRow({
                   d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
                 />
               </svg>
-              Uploading…
+              Uploading...
             </div>
           ) : (
             <p className="text-xs text-slate-400">
@@ -395,6 +424,7 @@ function UploadRow({
         ref={inputRef}
         type="file"
         accept={meta.accept}
+        multiple={supportsMultiple}
         className="hidden"
         onChange={handleFileChange}
       />
@@ -409,6 +439,7 @@ export function ShippingDocumentUpload({
   onAllUploaded,
 }: ShippingDocumentUploadProps) {
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [check, setCheck] = useState<RequiredDocumentsCheck | null>(null);
   const [loadingCheck, setLoadingCheck] = useState(false);
   const [checkError, setCheckError] = useState("");
@@ -437,10 +468,39 @@ export function ShippingDocumentUpload({
     }
   }, [orderId, onAllUploaded]);
 
+  const refreshDocuments = useCallback(async () => {
+    setLoadingDocuments(true);
+    try {
+      const res = await apiClient.get<UploadedDocument[]>(
+        `/shipping/${orderId}/documents`,
+      );
+      setDocuments(res.data);
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        setCheckError(
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+            "Failed to load uploaded documents.",
+        );
+      } else {
+        setCheckError("Failed to load uploaded documents.");
+      }
+    } finally {
+      setLoadingDocuments(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    void refreshDocuments();
+    void refreshCheck();
+  }, [refreshCheck, refreshDocuments]);
+
   // Called when a single doc finishes uploading
   const handleUploaded = useCallback(
     (doc: UploadedDocument) => {
       setDocuments((prev) => {
+        if (doc.document_type === "CONTAINER_PHOTO") {
+          return [...prev.filter((d) => d.id !== doc.id), doc];
+        }
         const filtered = prev.filter(
           (d) => d.document_type !== doc.document_type,
         );
@@ -452,8 +512,8 @@ export function ShippingDocumentUpload({
   );
 
   // Find uploaded doc for a given type
-  const findDoc = (type: DocumentType) =>
-    documents.find((d) => {
+  const findDocs = (type: DocumentType) =>
+    documents.filter((d) => {
       const mapped = docTypeFromUploaded(d.document_type);
       return mapped === type;
     });
@@ -525,6 +585,12 @@ export function ShippingDocumentUpload({
         </div>
       )}
 
+      {loadingDocuments && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          Loading uploaded documents...
+        </div>
+      )}
+
       {/* Required documents */}
       <div>
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -536,7 +602,7 @@ export function ShippingDocumentUpload({
               key={type}
               docType={type}
               meta={meta}
-              existing={findDoc(type)}
+              existingDocs={findDocs(type)}
               orderId={orderId}
               onUploaded={handleUploaded}
             />
@@ -555,7 +621,7 @@ export function ShippingDocumentUpload({
               key={type}
               docType={type}
               meta={meta}
-              existing={findDoc(type)}
+              existingDocs={findDocs(type)}
               orderId={orderId}
               onUploaded={handleUploaded}
             />
@@ -570,7 +636,7 @@ export function ShippingDocumentUpload({
         disabled={loadingCheck}
         className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loadingCheck ? "Checking…" : "Check Upload Status"}
+        {loadingCheck ? "Checking..." : "Check Upload Status"}
       </button>
     </div>
   );
