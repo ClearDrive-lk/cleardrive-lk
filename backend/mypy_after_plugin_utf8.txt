@@ -1,22 +1,22 @@
-﻿mypy : 
-pyproject.toml:1: 
-error: Error importing 
+﻿mypy :
+pyproject.toml:1:
+error: Error importing
 plugin "sqlalchemy.ext.
-mypy.plugin": The 
-SQLAlchemy mypy plugin 
-in SQLAlchemy 2.0 does 
-not work with 
-sqlalchemy-stubs or 
-sqlalchemy2-stubs 
-installed, as well as 
-with any other third 
-party SQLAlchemy 
-stubs.  Please 
-uninstall all 
-SQLAlchemy stubs 
+mypy.plugin": The
+SQLAlchemy mypy plugin
+in SQLAlchemy 2.0 does
+not work with
+sqlalchemy-stubs or
+sqlalchemy2-stubs
+installed, as well as
+with any other third
+party SQLAlchemy
+stubs.  Please
+uninstall all
+SQLAlchemy stubs
 packages.  [misc]
 At line:1 char:13
-+ cd backend; mypy app 
++ cd backend; mypy app
 --explicit-package-base
 s --ignore-missing-impo
 rt ...
@@ -24,14 +24,14 @@ rt ...
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~
 ~~
-    + CategoryInfo     
-         : NotSpecifi  
-  ed: (pyproject.tom   
- l:...ckages.  [mis    
-c]:String) [], Rem    
+    + CategoryInfo
+         : NotSpecifi
+  ed: (pyproject.tom
+ l:...ckages.  [mis
+c]:String) [], Rem
 oteException
-    + FullyQualifiedEr 
-   rorId : NativeComm  
+    + FullyQualifiedEr
+   rorId : NativeComm
   andError
- 
+
 Found 1 error in 1 file (errors prevented further checking)

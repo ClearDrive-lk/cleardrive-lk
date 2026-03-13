@@ -40,7 +40,11 @@ from app.modules.admin.routes import router as admin_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.calculator.routes import router as calculator_router
 from app.modules.chat.routes import router as chat_router
+from app.modules.finance.finance_routes import router as finance_router
+from app.modules.finance.insurance_routes import router as insurance_router
+from app.modules.finance.lc_routes import router as lc_router
 from app.modules.gazette.routes import router as gazette_router
+from app.modules.notifications.routes import router as notifications_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
 from app.modules.security.routes import router as security_router
@@ -48,12 +52,8 @@ from app.modules.shipping.admin_routes import router as shipping_admin_router
 from app.modules.shipping.routes import router as shipping_router
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
-from app.modules.notifications.routes import router as notifications_router
-from app.services.scraper.scheduler import scraper_scheduler
 from app.services.email_scheduler import email_scheduler
-from app.modules.finance.lc_routes import router as lc_router
-from app.modules.finance.finance_routes import router as finance_router
-from app.modules.finance.insurance_routes import router as insurance_router
+from app.services.scraper.scheduler import scraper_scheduler
 
 logger = logging.getLogger(__name__)
 

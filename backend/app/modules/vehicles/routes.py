@@ -36,11 +36,11 @@ except Exception:  # pragma: no cover - optional dependency
 
 from .cost_calculator import (
     DEFAULT_JPY_TO_LKR,
-    calculate_total_cost,
     calculate_clearance_fee,
     calculate_documentation_fee,
     calculate_port_charges,
     calculate_shipping_cost,
+    calculate_total_cost,
 )
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
