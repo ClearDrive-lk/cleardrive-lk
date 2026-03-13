@@ -4,8 +4,14 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
-from app.modules.finance.models import FinanceStatus, InsuranceStatus, LCStatus
-from app.modules.finance.models import LetterOfCredit, VehicleFinance, VehicleInsurance
+from app.modules.finance.models import (
+    FinanceStatus,
+    InsuranceStatus,
+    LCStatus,
+    LetterOfCredit,
+    VehicleFinance,
+    VehicleInsurance,
+)
 from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.vehicles.models import Vehicle, VehicleStatus
