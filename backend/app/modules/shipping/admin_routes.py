@@ -305,6 +305,7 @@ async def approve_shipment(
 
     exporter = getattr(shipment, "exporter", None)
     exporter_email = getattr(exporter, "email", None)
+    exporter_name = exporter.name if exporter and exporter.name else "Exporter"
     if exporter_email:
         eta_label = (
             shipment.estimated_arrival_date.strftime("%Y-%m-%d")
@@ -317,7 +318,7 @@ async def approve_shipment(
                 subject=f"Shipment Approved for Order #{order.id}",
                 template_name="status_change.html",
                 context={
-                    "user_name": exporter.name or "Exporter",
+                    "user_name": exporter_name,
                     "order_id": str(order.id),
                     "new_status": "Shipment Approved",
                     "status_message": (
