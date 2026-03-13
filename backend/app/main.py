@@ -48,8 +48,8 @@ from app.modules.notifications.routes import router as notifications_router
 from app.modules.orders.routes import router as orders_router
 from app.modules.payments.routes import router as payments_router
 from app.modules.security.routes import router as security_router
-from app.modules.shipping.admin_routes import router as shipping_admin_router
-from app.modules.shipping.routes import router as shipping_router
+from app.modules.shipping.admin_routes import router as admin_shipping_router
+from app.modules.shipping.routes import router as shipping_router  # CD-72
 from app.modules.test.routes import router as test_router
 from app.modules.vehicles.routes import router as vehicles_router
 from app.services.email_scheduler import email_scheduler
@@ -165,6 +165,8 @@ app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_audit_logs_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_shipping_router, prefix=settings.API_V1_PREFIX)
+app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)  # CD-72
 app.include_router(admin_kyc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(test_router, prefix=settings.API_V1_PREFIX)
 app.include_router(kyc_router, prefix=settings.API_V1_PREFIX)
@@ -173,12 +175,12 @@ app.include_router(gazette_router, prefix=settings.API_V1_PREFIX)
 app.include_router(lc_router, prefix=settings.API_V1_PREFIX)
 app.include_router(finance_router, prefix=settings.API_V1_PREFIX)
 app.include_router(insurance_router, prefix=settings.API_V1_PREFIX)
-app.include_router(shipping_admin_router, prefix=settings.API_V1_PREFIX)
-app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(security_router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications_router, prefix=settings.API_V1_PREFIX)
 logger.info(
     "Routers registered: /auth, /vehicles, /calculate, /chat, /orders, /admin, "
+    "/admin/dashboard, /admin/audit-logs, /admin/shipping, /shipping, /admin/kyc, "
+    "/security, /test, /kyc, /gdpr, /gazette"
     "/shipping, /admin, "
     "/admin/dashboard, /admin/audit-logs, /admin/shipping, /admin/kyc, "
     "/security, /test, /kyc, /gdpr, /gazette, /lc, /finance, /insurance, /notifications"
