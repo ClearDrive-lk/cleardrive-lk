@@ -77,7 +77,8 @@ export default function OrderCreateForm({
       setCreatedOrder(data);
       toast({
         title: "Order created",
-        description: "Your order has been saved. Proceed to payment when ready.",
+        description:
+          "Your order has been saved. Proceed to payment when ready.",
         variant: "success",
       });
     } catch (err) {
@@ -165,7 +166,9 @@ export default function OrderCreateForm({
                 variant="outline"
                 className="border-white/10 text-white hover:bg-white/5"
               >
-                <Link href={`/dashboard/orders/${createdOrder.id}/confirmation`}>
+                <Link
+                  href={`/dashboard/orders/${createdOrder.id}/confirmation`}
+                >
                   View Confirmation
                 </Link>
               </Button>

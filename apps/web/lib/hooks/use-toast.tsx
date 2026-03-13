@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  ReactNode,
+} from "react";
 import { ToastActionElement } from "@/components/ui/toast";
 
 type ToastVariant = "default" | "success" | "destructive";
@@ -30,7 +36,9 @@ interface ToastStateProviderProps {
   children: ReactNode;
 }
 
-export const ToastStateProvider: React.FC<ToastStateProviderProps> = ({ children }) => {
+export const ToastStateProvider: React.FC<ToastStateProviderProps> = ({
+  children,
+}) => {
   const [toasts, setToasts] = useState<ToastState>([]);
 
   const dismiss = useCallback((toastId?: string) => {

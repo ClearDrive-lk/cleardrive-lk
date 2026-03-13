@@ -90,7 +90,9 @@ function PaymentForm() {
     } catch (err) {
       console.error("Payment error:", err);
       const message =
-        err instanceof Error ? err.message : "Payment failed. Please try again.";
+        err instanceof Error
+          ? err.message
+          : "Payment failed. Please try again.";
       setError(message);
       toast({
         title: "Payment failed",

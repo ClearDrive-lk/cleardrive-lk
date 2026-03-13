@@ -373,15 +373,15 @@ export default function OrdersPage() {
                               {selectedOrder.id}
                             </p>
                           </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Badge
-                            className={
-                              statusTone[selectedOrder.status] ??
-                              "border-white/10 bg-white/5 text-white"
-                            }
-                          >
-                            {selectedOrder.status.replace(/_/g, " ")}
-                          </Badge>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Badge
+                              className={
+                                statusTone[selectedOrder.status] ??
+                                "border-white/10 bg-white/5 text-white"
+                              }
+                            >
+                              {selectedOrder.status.replace(/_/g, " ")}
+                            </Badge>
                             <Badge
                               variant="outline"
                               className="border-white/10 text-gray-300"

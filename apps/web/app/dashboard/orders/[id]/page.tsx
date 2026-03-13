@@ -36,7 +36,8 @@ interface OrderDetail {
 const statusTone: Record<string, string> = {
   CREATED: "border-sky-500/20 bg-sky-500/10 text-sky-200",
   PAYMENT_CONFIRMED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  ASSIGNED_TO_EXPORTER: "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
+  ASSIGNED_TO_EXPORTER:
+    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
   SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
   IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
   ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
@@ -96,7 +97,9 @@ export default function OrderDetailPage() {
         setVehicle(mapBackendVehicle(data));
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Failed to load vehicle details.";
+          err instanceof Error
+            ? err.message
+            : "Failed to load vehicle details.";
         setVehicleError(message);
       } finally {
         setVehicleLoading(false);
@@ -112,8 +115,10 @@ export default function OrderDetailPage() {
     return Number.isFinite(numeric) ? numeric : null;
   }, [order]);
 
-  const canPay = order?.status === "CREATED" && order.payment_status === "PENDING";
-  const canCancel = order?.status === "CREATED" && order.payment_status === "PENDING";
+  const canPay =
+    order?.status === "CREATED" && order.payment_status === "PENDING";
+  const canCancel =
+    order?.status === "CREATED" && order.payment_status === "PENDING";
   const paymentStatus = order?.payment_status ?? "PENDING";
 
   const formatLkr = (value: number | string | null | undefined) => {
@@ -328,7 +333,8 @@ export default function OrderDetailPage() {
                         </span>
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
-                        Payment status: {order.payment_status.replace(/_/g, " ")}
+                        Payment status:{" "}
+                        {order.payment_status.replace(/_/g, " ")}
                       </div>
                     </div>
 
@@ -388,7 +394,8 @@ export default function OrderDetailPage() {
                             Lot #{vehicle.lotNumber} · {vehicle.mileage} km
                           </p>
                           <p className="text-xs text-gray-500">
-                            Est. Landed: {formatLkr(vehicle.estimatedLandedCostLKR)}
+                            Est. Landed:{" "}
+                            {formatLkr(vehicle.estimatedLandedCostLKR)}
                           </p>
                           <Button
                             asChild
@@ -447,9 +454,7 @@ export default function OrderDetailPage() {
                         <Button
                           variant="outline"
                           className="border-red-500/40 text-red-100 hover:bg-red-500/10"
-                          onClick={() =>
-                            setShowCancelConfirm((prev) => !prev)
-                          }
+                          onClick={() => setShowCancelConfirm((prev) => !prev)}
                         >
                           {showCancelConfirm
                             ? "Hide Confirmation"
@@ -458,16 +463,16 @@ export default function OrderDetailPage() {
                       </div>
                       {showCancelConfirm && (
                         <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-100">
-                          <p>
-                            Are you sure? This action cannot be undone.
-                          </p>
+                          <p>Are you sure? This action cannot be undone.</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <Button
                               onClick={handleCancelOrder}
                               disabled={cancelLoading}
                               className="bg-red-500 text-white hover:bg-red-400"
                             >
-                              {cancelLoading ? "Cancelling..." : "Confirm Cancel"}
+                              {cancelLoading
+                                ? "Cancelling..."
+                                : "Confirm Cancel"}
                             </Button>
                             <Button
                               variant="outline"

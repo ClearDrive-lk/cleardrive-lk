@@ -193,7 +193,9 @@ export default function OrderConfirmationPage() {
                     asChild
                     className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
                   >
-                    <Link href={`/payment?orderId=${id}`}>Proceed to Payment</Link>
+                    <Link href={`/payment?orderId=${id}`}>
+                      Proceed to Payment
+                    </Link>
                   </Button>
                   {order?.vehicle_id && (
                     <Button

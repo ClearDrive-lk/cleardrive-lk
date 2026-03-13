@@ -117,10 +117,13 @@ function OTPForm() {
 
       setSuccess(true);
       setPersistAccessPreference(keepSignedIn);
-      saveTokens({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      }, { persistAccess: keepSignedIn });
+      saveTokens(
+        {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        },
+        { persistAccess: keepSignedIn },
+      );
 
       dispatch(
         setCredentials({

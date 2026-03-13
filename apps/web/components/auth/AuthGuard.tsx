@@ -60,7 +60,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                   email: data.user.email,
                   name: data.user.name || "User",
                   role:
-                    data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
+                    data.user.role?.toLowerCase() === "admin"
+                      ? "admin"
+                      : "user",
                 },
                 token: accessToken,
               }),
@@ -110,7 +112,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
               id: data.user.id,
               email: data.user.email,
               name: data.user.name || "User",
-              role: data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
+              role:
+                data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
             },
             token: data.access_token,
           }),

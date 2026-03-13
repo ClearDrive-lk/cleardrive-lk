@@ -18,10 +18,13 @@ const buildRefreshCookie = (token: string) => {
   return base;
 };
 
-export const saveTokens = (tokens: {
-  access_token: string;
-  refresh_token?: string;
-}, options?: { persistAccess?: boolean }) => {
+export const saveTokens = (
+  tokens: {
+    access_token: string;
+    refresh_token?: string;
+  },
+  options?: { persistAccess?: boolean },
+) => {
   if (typeof window !== "undefined") {
     const persistAccess =
       options?.persistAccess ??
@@ -51,8 +54,7 @@ export const getAccessToken = () => {
 export const getRefreshToken = () => {
   if (typeof window === "undefined") return null;
   return (
-    localStorage.getItem(REFRESH_TOKEN_KEY) ||
-    getCookieValue(REFRESH_TOKEN_KEY)
+    localStorage.getItem(REFRESH_TOKEN_KEY) || getCookieValue(REFRESH_TOKEN_KEY)
   );
 };
 
