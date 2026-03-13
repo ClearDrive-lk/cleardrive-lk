@@ -1,0 +1,41 @@
+{% extends "base.html" %} {% block content %}
+<h2>Shipment Update: Your Vehicle is in Transit</h2>
+<p>Dear {{ user_name }},</p>
+<p>
+  Good news! Your vehicle for order <strong>#{{ order_id }}</strong> has been
+  shipped and is currently in transit.
+</p>
+<div
+  style="
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+  "
+>
+  <h3 style="margin-top: 0">Shipping Details</h3>
+  <table style="width: 100%; border-collapse: collapse">
+    <tr>
+      <td style="padding: 5px 0"><strong>Vessel Name:</strong></td>
+      <td style="text-align: right">{{ vessel_name }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0"><strong>Tracking Number:</strong></td>
+      <td style="text-align: right">{{ tracking_number }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0"><strong>Estimated Arrival:</strong></td>
+      <td style="text-align: right; font-weight: bold; color: #667eea">
+        {{ estimated_arrival }}
+      </td>
+    </tr>
+  </table>
+</div>
+<p>You can track the live status of your shipment from your dashboard.</p>
+<div style="text-align: center">
+  <a href="{{ frontend_url }}/dashboard/orders/{{ order_id }}" class="button"
+    >Track Shipment</a
+  >
+</div>
+<p>Best regards,<br />The ClearDrive.lk Team</p>
+{% endblock %}

@@ -1,6 +1,6 @@
 """Exporter shipping endpoints.
 
-Author: Kalidu
+Author: Pavara
 Story: CD-72 - Shipping Document Upload
 """
 

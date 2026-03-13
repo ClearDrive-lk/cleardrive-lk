@@ -4,10 +4,12 @@ markdown# Frontend Setup Guide - For Lehan
 ## 🎯 Your Tasks (Sprint 1)
 
 ### Week 1-2:
+
 - [ ] CD-80: Next.js 14 Project Setup
 - [ ] CD-81: Authentication UI (Login, OTP, Protected Routes)
 
 ### Week 3-4:
+
 - [ ] CD-82: Vehicle Browse & Search UI
 - [ ] CD-90: Nonce-Based CSP Implementation (collaborate with Malith)
 
@@ -19,6 +21,7 @@ markdown# Frontend Setup Guide - For Lehan
    - Swagger docs: `http://localhost:8000/api/v1/docs`
 
 2. **Install Node.js**
+
 ```bash
    # Install Node.js 18+ (LTS)
    # Download from: https://nodejs.org/
@@ -31,6 +34,7 @@ markdown# Frontend Setup Guide - For Lehan
 ## 🚀 Step 1: Setup Next.js Project (CD-80)
 
 ### Create Next.js App
+
 ```bash
 # Navigate to apps directory
 cd apps
@@ -75,6 +79,7 @@ npx shadcn-ui@latest add toast
 ### Create Environment File
 
 **apps/web/.env.local**
+
 ```bash
 # API Configuration
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
@@ -90,17 +95,18 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ### Update next.config.js
 
 **apps/web/next.config.js**
+
 ```javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost', 'your-supabase-project.supabase.co'],
+    domains: ["localhost", "your-supabase-project.supabase.co"],
   },
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: 'http://localhost:8000/api/v1/:path*',
+        source: "/api/:path*",
+        destination: "http://localhost:8000/api/v1/:path*",
       },
     ];
   },
@@ -110,6 +116,7 @@ module.exports = nextConfig;
 ```
 
 ### Test the Setup
+
 ```bash
 # Start development server
 npm run dev
@@ -123,6 +130,7 @@ npm run dev
 ## 🔐 Step 2: Authentication UI (CD-81)
 
 ### File Structure to Create
+
 ```
 apps/web/
 ├── app/
@@ -154,28 +162,30 @@ apps/web/
 ### Create API Client
 
 **apps/web/lib/api.ts**
-```typescript
-import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+```typescript
+import axios from "axios";
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Request interceptor - add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - handle token refresh
@@ -189,11 +199,11 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
+        const refreshToken = localStorage.getItem("refresh_token");
 
         if (!refreshToken) {
           // No refresh token, redirect to login
-          window.location.href = '/login';
+          window.location.href = "/login";
           return Promise.reject(error);
         }
 
@@ -203,8 +213,8 @@ apiClient.interceptors.response.use(
         });
 
         // Save new tokens
-        localStorage.setItem('access_token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
 
         // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
@@ -212,13 +222,13 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed, redirect to login
         localStorage.clear();
-        window.location.href = '/login';
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;
@@ -227,9 +237,10 @@ export default apiClient;
 ### Create Auth Store
 
 **apps/web/lib/store.ts**
+
 ```typescript
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface User {
   id: string;
@@ -256,14 +267,14 @@ export const useAuthStore = create()(
 
       setAuth: (user, accessToken, refreshToken) => {
         set({ user, accessToken, refreshToken });
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
+        localStorage.setItem("access_token", accessToken);
+        localStorage.setItem("refresh_token", refreshToken);
       },
 
       clearAuth: () => {
         set({ user: null, accessToken: null, refreshToken: null });
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
       },
 
       isAuthenticated: () => {
@@ -272,15 +283,16 @@ export const useAuthStore = create()(
       },
     }),
     {
-      name: 'auth-storage',
-    }
-  )
+      name: "auth-storage",
+    },
+  ),
 );
 ```
 
 ### Create Google Login Button Component
 
 **apps/web/components/auth/GoogleLoginButton.tsx**
+
 ```typescript
 'use client';
 
@@ -332,6 +344,7 @@ export function GoogleLoginButton() {
 ### Create Login Page
 
 **apps/web/app/(auth)/login/page.tsx**
+
 ```typescript
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -363,6 +376,7 @@ export default function LoginPage() {
 ## 📚 API Endpoints You'll Use
 
 ### Authentication
+
 ```typescript
 // Google Login
 POST /auth/google
@@ -382,6 +396,7 @@ Headers: { Authorization: Bearer {token} }
 ```
 
 ### Vehicles
+
 ```typescript
 // List Vehicles
 GET /vehicles?search=Toyota&page=1&limit=20
@@ -398,11 +413,13 @@ GET /vehicles/{id}/cost?exchange_rate=2.25
 ### Manual Testing Steps
 
 1. **Start backend** (should already be running)
+
 ```bash
    docker-compose up -d
 ```
 
 2. **Start frontend**
+
 ```bash
    cd apps/web
    npm run dev
@@ -418,17 +435,18 @@ GET /vehicles/{id}/cost?exchange_rate=2.25
 ### Test API Connection
 
 **Test script: `apps/web/test-api.js`**
+
 ```javascript
-const axios = require('axios');
+const axios = require("axios");
 
 async function testAPI() {
   try {
     // Test 1: Get vehicles
-    const response = await axios.get('http://localhost:8000/api/v1/vehicles');
-    console.log('✅ API Connected');
+    const response = await axios.get("http://localhost:8000/api/v1/vehicles");
+    console.log("✅ API Connected");
     console.log(`Found ${response.data.total} vehicles`);
   } catch (error) {
-    console.error('❌ API Connection Failed:', error.message);
+    console.error("❌ API Connection Failed:", error.message);
   }
 }
 
@@ -440,6 +458,7 @@ Run: `node test-api.js`
 ## 🎨 Design System
 
 ### Colors (Tailwind)
+
 ```
 - Primary: Blue (slate-700)
 - Success: Green
@@ -450,6 +469,7 @@ Run: `node test-api.js`
 ```
 
 ### Typography
+
 ```
 - Headings: font-bold
 - Body: font-normal
@@ -457,7 +477,9 @@ Run: `node test-api.js`
 ```
 
 ### Components (shadcn/ui)
+
 Already installed:
+
 - Button
 - Card
 - Dialog
@@ -468,12 +490,14 @@ Already installed:
 ## 📞 Need Help?
 
 ### Contact Malith:
+
 - Backend API issues
 - Authentication problems
 - CORS issues
 - Database/Redis questions
 
 ### Resources:
+
 - Backend API: http://localhost:8000/api/v1/docs
 - Next.js Docs: https://nextjs.org/docs
 - shadcn/ui: https://ui.shadcn.com
@@ -490,6 +514,7 @@ Already installed:
 ## 🚀 Let's Go!
 
 Once you complete CD-80 and CD-81, we'll have:
+
 - ✅ Working authentication flow
 - ✅ Protected routes
 - ✅ User session management

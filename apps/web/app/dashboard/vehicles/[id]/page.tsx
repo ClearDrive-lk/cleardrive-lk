@@ -25,6 +25,7 @@ import { apiClient } from "@/lib/api-client";
 import { Vehicle } from "@/types/vehicle";
 import { useQuery } from "@tanstack/react-query";
 import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
+import { CostCalculator } from "@/components/vehicles/CostCalculator";
 
 // Fetch single vehicle helper
 const useVehicle = (id: string) => {
@@ -290,6 +291,13 @@ function VehicleDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            <div id="cost-calculator" className="scroll-mt-24">
+              <CostCalculator
+                vehicleId={vehicle.id}
+                priceJPY={vehicle.priceJPY}
+              />
+            </div>
 
             {/* Specs Table */}
             <div>

@@ -15,7 +15,7 @@ from app.core.cache import cache
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
 from app.models.gazette import TaxFuelType, TaxVehicleType
-from app.modules.vehicles.models import Vehicle, VehicleStatus
+from app.modules.vehicles.models import Vehicle, VehicleStatus, VehicleType
 from app.modules.vehicles.schemas import (
     CostBreakdown,
     PaginationInfo,
@@ -40,9 +40,14 @@ from .cost_calculator import (
     calculate_documentation_fee,
     calculate_port_charges,
     calculate_shipping_cost,
+    calculate_total_cost,
 )
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
+
+FX_PROVIDER = "frankfurter"
+FX_ENDPOINT = "https://api.frankfurter.dev/v1/latest"
+FX_CACHE_TTL_SECONDS = 6 * 60 * 60
 
 
 def _canonical_fuel_key(value: str) -> str:
@@ -111,6 +116,20 @@ def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
     return candidates[0]
 
 
+def _fuel_filter_values(requested: str) -> list[str]:
+    key = _canonical_fuel_key(requested)
+    mapping = {
+        "petrol": ["Gasoline"],
+        "gasoline": ["Gasoline"],
+        "hybrid": ["Gasoline/hybrid"],
+        "plugin_hybrid": ["Gasoline/hybrid", "Plugin Hybrid"],
+        "diesel": ["Diesel"],
+        "electric": ["Electric"],
+        "cng": ["CNG"],
+    }
+    return mapping.get(key, [requested])
+
+
 def _canonical_transmission_key(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
     if normalized in {"automatic", "auto", "at"}:
@@ -120,6 +139,36 @@ def _canonical_transmission_key(value: str) -> str:
     if normalized in {"cvt"}:
         return "cvt"
     return normalized
+
+
+def _canonical_vehicle_type_key(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
+    if normalized in {"suv"}:
+        return "suv"
+    if normalized in {"sedan"}:
+        return "sedan"
+    if normalized in {"hatchback"}:
+        return "hatchback"
+    if normalized in {"van", "minivan", "van minivan"}:
+        return "van_minivan"
+    if normalized in {"wagon"}:
+        return "wagon"
+    if normalized in {"pickup", "pick up", "pickup truck"}:
+        return "pickup"
+    return normalized
+
+
+def _resolve_vehicle_type_enum(requested: str) -> VehicleType | None:
+    key = _canonical_vehicle_type_key(requested)
+    mapping = {
+        "sedan": VehicleType.SEDAN,
+        "suv": VehicleType.SUV,
+        "hatchback": VehicleType.HATCHBACK,
+        "van_minivan": VehicleType.VAN_MINIVAN,
+        "wagon": VehicleType.WAGON,
+        "pickup": VehicleType.PICKUP,
+    }
+    return mapping.get(key)
 
 
 def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
@@ -150,6 +199,16 @@ def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
         if value in candidates:
             return value
     return candidates[0]
+
+
+def _transmission_filter_values(requested: str) -> list[str]:
+    key = _canonical_transmission_key(requested)
+    mapping = {
+        "automatic": ["Automatic"],
+        "manual": ["Manual"],
+        "cvt": ["CVT"],
+    }
+    return mapping.get(key, [requested])
 
 
 def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
@@ -278,6 +337,7 @@ async def get_vehicles(
     search: Optional[str] = Query(None, description="Search in make/model"),
     make: Optional[str] = Query(None, description="Filter by manufacturer"),
     model: Optional[str] = Query(None, description="Filter by model"),
+    vehicle_type: Optional[str] = Query(None, description="Filter by vehicle type"),
     year_min: Optional[int] = Query(None, ge=1990, description="Minimum year"),
     year_max: Optional[int] = Query(None, le=2026, description="Maximum year"),
     recent_only: bool = Query(
@@ -289,7 +349,7 @@ async def get_vehicles(
     mileage_max: Optional[int] = Query(None, ge=0, description="Maximum mileage (km)"),
     fuel_type: Optional[str] = Query(None, description="Filter by fuel type"),
     transmission: Optional[str] = Query(None, description="Filter by transmission"),
-    status: VehicleStatus = Query(VehicleStatus.AVAILABLE, description="Filter by status"),
+    status: Optional[VehicleStatus] = Query(None, description="Filter by status"),
     # Pagination
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -310,6 +370,7 @@ async def get_vehicles(
     - `search`: Search text for make/model
     - `make`: Filter by manufacturer (e.g., "Toyota")
     - `model`: Filter by model (e.g., "Prius")
+    - `vehicle_type`: Filter by vehicle type (e.g., "SUV", "Sedan")
     - `year_min`, `year_max`: Year range filter
     - `recent_only`: Restrict to last 3 years when `year_min` is omitted
     - `price_min`, `price_max`: Price range in JPY
@@ -333,6 +394,7 @@ async def get_vehicles(
         search=search,
         make=make,
         model=model,
+        vehicle_type=vehicle_type,
         year_min=year_min,
         year_max=year_max,
         recent_only=recent_only,
@@ -374,6 +436,13 @@ async def get_vehicles(
     if model:
         query = query.filter(Vehicle.model.ilike(f"%{model}%"))
 
+    if vehicle_type:
+        resolved_type = _resolve_vehicle_type_enum(vehicle_type)
+        if resolved_type is not None:
+            query = query.filter(Vehicle.vehicle_type == resolved_type)
+        else:
+            query = query.filter(Vehicle.vehicle_type == vehicle_type)
+
     if recent_only and year_min is None:
         year_min = datetime.utcnow().year - 2
 
@@ -393,18 +462,12 @@ async def get_vehicles(
         query = query.filter(Vehicle.mileage_km <= mileage_max)
 
     if fuel_type:
-        resolved_fuel = _resolve_fuel_enum_label(db, fuel_type)
-        if resolved_fuel is None:
-            query = query.filter(text("1=0"))
-        else:
-            query = query.filter(Vehicle.fuel_type == resolved_fuel)
+        candidates = _fuel_filter_values(fuel_type)
+        query = query.filter(or_(*[Vehicle.fuel_type.ilike(val) for val in candidates]))
 
     if transmission:
-        resolved_transmission = _resolve_transmission_enum_label(db, transmission)
-        if resolved_transmission is None:
-            query = query.filter(text("1=0"))
-        else:
-            query = query.filter(Vehicle.transmission == resolved_transmission)
+        candidates = _transmission_filter_values(transmission)
+        query = query.filter(or_(*[Vehicle.transmission.ilike(val) for val in candidates]))
 
     if status:
         query = query.filter(Vehicle.status == status)
@@ -432,6 +495,57 @@ async def get_vehicles(
     )
     await cache.set(cache_key, response.model_dump(mode="json"), ttl=300)
     return response
+
+
+@router.get("/exchange-rate")
+async def get_exchange_rate(
+    base: str = Query("JPY", description="Base currency"),
+    symbols: str = Query("LKR", description="Target currency"),
+):
+    """
+    Get latest exchange rate (daily) for currency conversion.
+
+    Uses Frankfurter (ECB reference rates), cached for a few hours.
+    """
+    cache_key = cache.generate_key("fx_rate", base=base, symbols=symbols, provider=FX_PROVIDER)
+    cached_response = await cache.get(cache_key)
+    if cached_response:
+        return cached_response
+
+    try:
+        response = requests.get(
+            FX_ENDPOINT,
+            params={"base": base, "symbols": symbols},
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        rate = data.get("rates", {}).get(symbols)
+        payload = {
+            "base": data.get("base", base),
+            "target": symbols,
+            "rate": float(rate) if rate is not None else None,
+            "date": data.get("date"),
+            "provider": FX_PROVIDER,
+            "fetched_at": datetime.utcnow().isoformat(),
+        }
+        await cache.set(cache_key, payload, ttl=FX_CACHE_TTL_SECONDS)
+        return payload
+    except Exception as exc:
+        fallback_rate = (
+            float(DEFAULT_JPY_TO_LKR)
+            if base.upper() == "JPY" and symbols.upper() == "LKR"
+            else None
+        )
+        return {
+            "base": base,
+            "target": symbols,
+            "rate": fallback_rate,
+            "date": None,
+            "provider": "fallback",
+            "fetched_at": datetime.utcnow().isoformat(),
+            "error": str(exc),
+        }
 
 
 @router.get("/makes/list")
@@ -568,8 +682,10 @@ async def calculate_cost(
             engine_cc=engine_cc,
             cif_value=float(cif_value),
         )
-    except NoTaxRuleError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except NoTaxRuleError:
+        fallback = calculate_total_cost(vehicle, exchange_rate=rate)
+        fallback["pal_lkr"] = Decimal("0")
+        return CostBreakdown(**fallback)  # type: ignore[arg-type]
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
