@@ -5,19 +5,22 @@ Story: CD-70 - Exporter Assignment
 """
 
 import logging
+from datetime import datetime
+from uuid import UUID
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
 from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import Order, OrderStatus
-from app.modules.shipping.models import ShipmentDetails
+from app.modules.shipping.models import DocumentType, ShipmentDetails, ShipmentStatus
 from app.modules.shipping.schemas import (
     AssignableOrderItem,
     ExporterAssignment,
     ShippingDetailsResponse,
 )
 from app.modules.vehicles.models import Vehicle
+from app.services.notification_service import notification_service
 from app.services.orders.status_history import status_history_service
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -203,9 +206,153 @@ async def get_all_shipments(
     }
 
 
+@router.get("/pending", response_model=list[ShippingDetailsResponse])
+async def get_pending_shipments(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Get shipments that are ready for admin approval (CD-73.1)."""
+    _ = current_user
+    shipments = (
+        db.query(ShipmentDetails)
+        .filter(ShipmentDetails.submitted_at.isnot(None))
+        .filter(ShipmentDetails.documents_uploaded.is_(True))
+        .filter(ShipmentDetails.approved.is_(False))
+        .filter(ShipmentDetails.status == ShipmentStatus.AWAITING_ADMIN_APPROVAL)
+        .order_by(ShipmentDetails.submitted_at.asc())
+        .all()
+    )
+    return shipments
+
+
+@router.post("/{shipment_id}/approve", response_model=ShippingDetailsResponse)
+async def approve_shipment(
+    shipment_id: UUID,
+    request: Request,
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Approve shipment and update order status (CD-73.2 - CD-73.4)."""
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment {shipment_id} not found",
+        )
+
+    if shipment.approved:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipment already approved",
+        )
+
+    if shipment.submitted_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipping details have not been submitted",
+        )
+
+    if not shipment.documents_uploaded:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipping documents have not been uploaded",
+        )
+
+    missing_docs = _get_missing_required_documents(shipment)
+    if missing_docs:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Missing required documents: {', '.join(missing_docs)}",
+        )
+
+    order = shipment.order
+    if order is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order for shipment {shipment_id} not found",
+        )
+
+    shipment.approved = True
+    shipment.admin_approved_at = datetime.utcnow()
+    shipment.admin_approved_by = current_user.id
+    shipment.status = ShipmentStatus.CONFIRMED_SHIPPED
+    shipment.updated_at = datetime.utcnow()
+
+    old_status = order.status
+    order.status = OrderStatus.SHIPPED
+
+    status_history_service.create_history_entry(
+        db=db,
+        order=order,
+        from_status=old_status,
+        to_status=OrderStatus.SHIPPED,
+        changed_by=current_user,
+        notes="Shipment approved by admin",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    db.commit()
+    db.refresh(shipment)
+
+    try:
+        await send_status_change_notification(order, old_status, OrderStatus.SHIPPED)
+    except Exception:
+        logger.exception(
+            "Failed to send customer shipment notification for order_id=%s",
+            order.id,
+        )
+
+    exporter = getattr(shipment, "exporter", None)
+    exporter_email = getattr(exporter, "email", None)
+    exporter_name = exporter.name if exporter and exporter.name else "Exporter"
+    if exporter_email:
+        eta_label = (
+            shipment.estimated_arrival_date.strftime("%Y-%m-%d")
+            if shipment.estimated_arrival_date
+            else "TBD"
+        )
+        try:
+            await notification_service._enqueue_template(
+                to_email=exporter_email,
+                subject=f"Shipment Approved for Order #{order.id}",
+                template_name="status_change.html",
+                context={
+                    "user_name": exporter_name,
+                    "order_id": str(order.id),
+                    "new_status": "Shipment Approved",
+                    "status_message": (
+                        "Shipment approved by admin. "
+                        f"Vessel: {shipment.vessel_name or 'TBD'}, ETA: {eta_label}."
+                    ),
+                },
+                priority=4,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to send exporter shipment approval for order_id=%s",
+                order.id,
+            )
+    return shipment
+
+
+def _get_missing_required_documents(shipment: ShipmentDetails) -> list[str]:
+    required_types = {
+        DocumentType.BILL_OF_LADING,
+        DocumentType.COMMERCIAL_INVOICE,
+        DocumentType.PACKING_LIST,
+        DocumentType.EXPORT_CERTIFICATE,
+    }
+    uploaded_types = {doc.document_type for doc in shipment.documents}
+    if DocumentType.BILL_OF_LANDING in uploaded_types:
+        uploaded_types.add(DocumentType.BILL_OF_LADING)
+    missing = required_types - uploaded_types
+    return [doc_type.value for doc_type in sorted(missing, key=lambda item: item.value)]
+
+
 @router.get("/{shipment_id}", response_model=ShippingDetailsResponse)
 async def get_shipment_details(
-    shipment_id: str,
+    shipment_id: UUID,
     current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
     db: Session = Depends(get_db),
 ):
