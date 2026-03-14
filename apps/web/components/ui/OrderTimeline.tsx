@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
+import { getAccessToken } from "@/lib/auth";
 import { AlertCircle, CheckCircle2, Clock3, PackageCheck } from "lucide-react";
 
 interface TimelineEvent {
@@ -68,15 +69,20 @@ export function OrderTimeline({
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastSnapshotRef = useRef<string | null>(null);
+  const initialEventSkippedRef = useRef(false);
 
   useEffect(() => {
     void fetchTimeline();
   }, [orderId]);
 
   useEffect(() => {
-    const accessToken = sessionStorage.getItem("access_token");
+    const accessToken = getAccessToken();
     const streamUrl = `${apiClient.defaults.baseURL}/orders/${orderId}/timeline/stream`;
     const controller = new AbortController();
+
+    lastSnapshotRef.current = null;
+    initialEventSkippedRef.current = false;
 
     if (!accessToken) {
       return () => controller.abort();
@@ -114,6 +120,25 @@ export function OrderTimeline({
             if (!eventBlock.includes("event: timeline")) {
               continue;
             }
+            const dataLine = eventBlock
+              .split("\n")
+              .find((line) => line.startsWith("data: "));
+            const payload = dataLine?.replace("data: ", "").trim();
+
+            if (payload) {
+              if (!initialEventSkippedRef.current) {
+                initialEventSkippedRef.current = true;
+                lastSnapshotRef.current = payload;
+                continue;
+              }
+
+              if (payload === lastSnapshotRef.current) {
+                continue;
+              }
+
+              lastSnapshotRef.current = payload;
+            }
+
             void fetchTimeline({ silent: true });
             onTimelineUpdate?.();
           }

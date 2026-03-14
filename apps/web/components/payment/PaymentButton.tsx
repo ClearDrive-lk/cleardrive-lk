@@ -7,6 +7,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { getAccessToken } from "@/lib/auth";
+import apiClient from "@/lib/api-client";
+import { useToast } from "@/lib/hooks/use-toast";
 
 interface PaymentButtonProps {
   orderId: string;
@@ -27,6 +29,7 @@ export default function PaymentButton({
 }: PaymentButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Prevent double-clicks (idempotency layer 1)
   const [paymentInitiated, setPaymentInitiated] = useState(false);
@@ -60,34 +63,40 @@ export default function PaymentButton({
       const idempotencyKey = getPaymentIdempotencyKey(orderId);
 
       // Step 1: Initiate payment
-      const initiateResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/initiate`,
+      const { data } = await apiClient.post(
+        "/payments/initiate",
         {
-          method: "POST",
+          order_id: orderId,
+          idempotency_key: idempotencyKey,
+        },
+        {
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
             "Idempotency-Key": idempotencyKey,
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            order_id: orderId,
-            idempotency_key: idempotencyKey,
-          }),
         },
       );
 
-      if (!initiateResponse.ok) {
-        const errorData = await initiateResponse.json();
-        throw new Error(errorData.detail || "Payment initiation failed");
-      }
-
-      const { payment_url, payhere_params } = await initiateResponse.json();
+      const { payment_url, payhere_params } = data as {
+        payment_url: string;
+        payhere_params: Record<string, string>;
+      };
 
       // Step 2: Redirect to PayHere
+      toast({
+        title: "Redirecting to PayHere",
+        description: "Complete payment to continue your order.",
+      });
       redirectToPayHere(payment_url, payhere_params);
     } catch (err) {
       console.error("Payment error:", err);
-      setError(err instanceof Error ? err.message : "Payment failed");
+      const message = err instanceof Error ? err.message : "Payment failed";
+      setError(message);
+      toast({
+        title: "Payment failed",
+        description: message,
+        variant: "destructive",
+      });
       setPaymentInitiated(false);
       setLoading(false);
     }

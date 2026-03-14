@@ -431,6 +431,74 @@ async def update_order_status(
 
 
 # ===================================================================
+# ENDPOINT: CANCEL ORDER (CUSTOMER)
+# ===================================================================
+
+
+@router.patch("/{order_id}/cancel")
+@require_permission_decorator(Permission.CANCEL_OWN_ORDER)
+async def cancel_order(
+    request: Request,
+    order_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Cancel an order before payment is completed.
+
+    Rules:
+    - Only order owner can cancel
+    - Only if status is CREATED and payment_status is PENDING
+    """
+    order = db.query(Order).filter(Order.id == order_id).first()
+
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    if _customer_must_own_order(order, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    if order.status != OrderStatus.CREATED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only orders in CREATED status can be cancelled",
+        )
+
+    if order.payment_status != PaymentStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order cannot be cancelled after payment has started",
+        )
+
+    old_status = order.status
+    order.status = OrderStatus.CANCELLED
+    order.payment_status = PaymentStatus.FAILED
+
+    status_history_service.create_history_entry(
+        db=db,
+        order=order,
+        from_status=old_status,
+        to_status=OrderStatus.CANCELLED,
+        changed_by=current_user,
+        notes="Order cancelled by customer",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    db.commit()
+    db.refresh(order)
+
+    # Release vehicle back to AVAILABLE
+    db.execute(
+        text("UPDATE vehicles SET status = :status WHERE id = :vehicle_id"),
+        {"status": "AVAILABLE", "vehicle_id": str(order.vehicle_id)},
+    )
+    db.commit()
+
+    return {"message": "Order cancelled", "order_id": str(order.id)}
+
+
+# ===================================================================
 # ENDPOINT: GET TIMELINE
 # ===================================================================
 

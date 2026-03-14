@@ -1,0 +1,506 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Copy,
+  RefreshCcw,
+  Terminal,
+} from "lucide-react";
+
+import AuthGuard from "@/components/auth/AuthGuard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { OrderTimeline } from "@/components/ui/OrderTimeline";
+import PaymentButton from "@/components/payment/PaymentButton";
+import apiClient from "@/lib/api-client";
+import { mapBackendVehicle } from "@/lib/vehicle-mapper";
+import type { Vehicle } from "@/types/vehicle";
+import { useToast } from "@/lib/hooks/use-toast";
+
+interface OrderDetail {
+  id: string;
+  status: string;
+  payment_status: string;
+  total_cost_lkr: number | string | null;
+  created_at: string;
+  vehicle_id?: string;
+  phone?: string;
+}
+
+const statusTone: Record<string, string> = {
+  CREATED: "border-sky-500/20 bg-sky-500/10 text-sky-200",
+  PAYMENT_CONFIRMED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
+  ASSIGNED_TO_EXPORTER:
+    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
+  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
+  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
+  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
+  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
+  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
+  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
+};
+
+export default function OrderDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [vehicleLoading, setVehicleLoading] = useState(false);
+  const [vehicleError, setVehicleError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const { toast } = useToast();
+
+  const loadOrder = async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!id) return;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
+
+    try {
+      const { data } = await apiClient.get<OrderDetail>(`/orders/${id}`);
+      setOrder(data);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load order details.";
+      setError(message);
+    } finally {
+      if (!silent) {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    void loadOrder();
+  }, [id]);
+
+  useEffect(() => {
+    const loadVehicle = async () => {
+      if (!order?.vehicle_id) {
+        setVehicle(null);
+        return;
+      }
+      setVehicleLoading(true);
+      setVehicleError(null);
+      try {
+        const { data } = await apiClient.get(`/vehicles/${order.vehicle_id}`);
+        setVehicle(mapBackendVehicle(data));
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to load vehicle details.";
+        setVehicleError(message);
+      } finally {
+        setVehicleLoading(false);
+      }
+    };
+
+    void loadVehicle();
+  }, [order?.vehicle_id]);
+
+  const totalAmount = useMemo(() => {
+    if (!order?.total_cost_lkr) return null;
+    const numeric = Number(order.total_cost_lkr);
+    return Number.isFinite(numeric) ? numeric : null;
+  }, [order]);
+
+  const canPay =
+    order?.status === "CREATED" && order.payment_status === "PENDING";
+  const canCancel =
+    order?.status === "CREATED" && order.payment_status === "PENDING";
+  const paymentStatus = order?.payment_status ?? "PENDING";
+
+  const formatLkr = (value: number | string | null | undefined) => {
+    if (value === null || value === undefined) return "N/A";
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return "N/A";
+    return new Intl.NumberFormat("en-LK", {
+      style: "currency",
+      currency: "LKR",
+      maximumSignificantDigits: 3,
+    }).format(numeric);
+  };
+
+  const handleCopyOrderId = async () => {
+    if (!order?.id || typeof navigator === "undefined") return;
+    try {
+      await navigator.clipboard.writeText(order.id);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order?.id) return;
+    setCancelLoading(true);
+    try {
+      await apiClient.patch(`/orders/${order.id}/cancel`);
+      toast({
+        title: "Order cancelled",
+        description: "Your order has been cancelled successfully.",
+        variant: "success",
+      });
+      setShowCancelConfirm(false);
+      void loadOrder({ silent: true });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to cancel order.";
+      toast({
+        title: "Cancellation failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  return (
+    <AuthGuard>
+      <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
+        <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <Link
+              href="/"
+              className="font-bold text-xl tracking-tighter flex items-center gap-2"
+            >
+              <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
+                <Terminal className="w-4 h-4 text-[#FE7743]" />
+              </div>
+              ClearDrive<span className="text-[#FE7743]">.lk</span>
+            </Link>
+            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+              <Link
+                href="/dashboard"
+                className="hover:text-white transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/orders"
+                className="text-white transition-colors flex items-center gap-2"
+              >
+                Orders
+                <Badge
+                  variant="outline"
+                  className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
+                >
+                  ACTIVE
+                </Badge>
+              </Link>
+              <Link
+                href="/dashboard/vehicles"
+                className="hover:text-white transition-colors"
+              >
+                Vehicles
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#FE7743]/5 rounded-[100%] blur-[120px] pointer-events-none" />
+
+        <main className="relative z-10 flex-1 px-6 py-12">
+          <div className="max-w-6xl mx-auto space-y-8">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <Link
+                  href="/dashboard/orders"
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gray-500 hover:text-white"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back to Orders
+                </Link>
+                <h1 className="mt-3 text-3xl md:text-4xl font-bold text-white">
+                  Order Tracking
+                </h1>
+                <p className="text-sm text-gray-400">
+                  Review payment status and shipment milestones in one place.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void loadOrder()}
+                className="border-white/10 text-white hover:bg-white/5"
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
+              </Button>
+            </div>
+
+            {order && (
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                {paymentStatus === "COMPLETED" ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-emerald-300 text-sm">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Payment confirmed. Shipment processing is underway.
+                    </div>
+                    <Badge className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
+                      Paid
+                    </Badge>
+                  </div>
+                ) : paymentStatus === "FAILED" ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm text-red-200">
+                      Payment failed. Please retry to continue processing.
+                    </div>
+                    <Button
+                      asChild
+                      className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                    >
+                      <Link href={`/payment?orderId=${order.id}`}>
+                        Retry Payment
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-sm text-amber-200">
+                      Payment required to move this order forward.
+                    </div>
+                    <Button
+                      asChild
+                      className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                    >
+                      <Link href="#payment-action">Complete Payment</Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {loading ? (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center text-gray-400">
+                Loading order...
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+                {error}
+              </div>
+            ) : order ? (
+              <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
+                <div className="space-y-4">
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.25em] text-gray-500">
+                          Order ID
+                        </p>
+                        <p className="mt-2 font-mono text-sm text-white">
+                          {order.id}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleCopyOrderId}
+                          className="mt-2 inline-flex items-center gap-2 text-xs text-gray-400 hover:text-white"
+                        >
+                          <Copy className="h-3 w-3" />
+                          {copied ? "Copied" : "Copy ID"}
+                        </button>
+                      </div>
+                      <Badge
+                        className={
+                          statusTone[order.status] ??
+                          "border-white/10 bg-white/5 text-white"
+                        }
+                      >
+                        {order.status.replace(/_/g, " ")}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      Created {new Date(order.created_at).toLocaleString()}
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="flex items-center justify-between text-sm text-gray-300">
+                        <span>Total Cost</span>
+                        <span className="font-semibold text-white">
+                          {formatLkr(order.total_cost_lkr)}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Payment status:{" "}
+                        {order.payment_status.replace(/_/g, " ")}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 text-xs text-gray-500">
+                      Shipping address is stored securely and encrypted.
+                    </div>
+                  </div>
+
+                  <div id="payment-action">
+                    {canPay && totalAmount ? (
+                      <PaymentButton
+                        orderId={order.id}
+                        amount={totalAmount}
+                        className="w-full bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                      />
+                    ) : (
+                      <Button
+                        disabled
+                        className="w-full bg-white/5 text-gray-400 border border-white/10"
+                      >
+                        Payment unavailable for this status
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                    <h3 className="text-sm font-semibold text-white">
+                      Vehicle Summary
+                    </h3>
+                    {vehicleLoading ? (
+                      <div className="mt-3 text-xs text-gray-500">
+                        Loading vehicle details...
+                      </div>
+                    ) : vehicleError ? (
+                      <div className="mt-3 text-xs text-red-200">
+                        {vehicleError}
+                      </div>
+                    ) : vehicle ? (
+                      <div className="mt-3 flex gap-4">
+                        <div className="relative h-20 w-28 overflow-hidden rounded-lg border border-white/10 bg-[#0D0D0D]">
+                          {vehicle.imageUrl ? (
+                            <Image
+                              src={vehicle.imageUrl}
+                              alt={`${vehicle.make} ${vehicle.model}`}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-white/5" />
+                          )}
+                        </div>
+                        <div className="flex-1 text-sm text-gray-300">
+                          <p className="text-white font-semibold">
+                            {vehicle.year} {vehicle.make} {vehicle.model}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Lot #{vehicle.lotNumber} · {vehicle.mileage} km
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Est. Landed:{" "}
+                            {formatLkr(vehicle.estimatedLandedCostLKR)}
+                          </p>
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 border-white/10 text-white hover:bg-white/5"
+                          >
+                            <Link href={`/dashboard/vehicles/${vehicle.id}`}>
+                              View Vehicle
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 text-xs text-gray-500">
+                        Vehicle details unavailable.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 text-xs text-gray-400">
+                    Vehicle ID: {order.vehicle_id ?? "N/A"}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="border-white/10 text-white hover:bg-white/5"
+                    >
+                      <Link href={`/payment?orderId=${order.id}`}>
+                        Open Payment Page
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="border-white/10 text-white hover:bg-white/5"
+                    >
+                      <Link href={`/dashboard/orders/${order.id}/confirmation`}>
+                        Order Confirmation
+                      </Link>
+                    </Button>
+                  </div>
+
+                  {canCancel && (
+                    <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-xs text-red-200">
+                      <p className="text-sm font-semibold text-red-100">
+                        Cancel this order?
+                      </p>
+                      <p className="mt-1 text-xs text-red-200/80">
+                        You can cancel before payment is completed. This will
+                        release the vehicle back to inventory.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        <Button
+                          variant="outline"
+                          className="border-red-500/40 text-red-100 hover:bg-red-500/10"
+                          onClick={() => setShowCancelConfirm((prev) => !prev)}
+                        >
+                          {showCancelConfirm
+                            ? "Hide Confirmation"
+                            : "Cancel Order"}
+                        </Button>
+                      </div>
+                      {showCancelConfirm && (
+                        <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-100">
+                          <p>Are you sure? This action cannot be undone.</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <Button
+                              onClick={handleCancelOrder}
+                              disabled={cancelLoading}
+                              className="bg-red-500 text-white hover:bg-red-400"
+                            >
+                              {cancelLoading
+                                ? "Cancelling..."
+                                : "Confirm Cancel"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="border-white/10 text-white hover:bg-white/5"
+                              onClick={() => setShowCancelConfirm(false)}
+                            >
+                              Keep Order
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <OrderTimeline
+                    orderId={order.id}
+                    onTimelineUpdate={() => {
+                      void loadOrder({ silent: true });
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </main>
+      </div>
+    </AuthGuard>
+  );
+}

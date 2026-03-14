@@ -18,7 +18,11 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useAppDispatch } from "@/lib/store/store";
 import { setCredentials } from "@/lib/store/features/auth/authSlice";
-import { saveTokens } from "@/lib/auth";
+import {
+  getPersistAccessPreference,
+  saveTokens,
+  setPersistAccessPreference,
+} from "@/lib/auth";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
 function OTPForm() {
@@ -29,6 +33,9 @@ function OTPForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [keepSignedIn, setKeepSignedIn] = useState(
+    getPersistAccessPreference(),
+  );
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -109,10 +116,14 @@ function OTPForm() {
       });
 
       setSuccess(true);
-      saveTokens({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      });
+      setPersistAccessPreference(keepSignedIn);
+      saveTokens(
+        {
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        },
+        { persistAccess: keepSignedIn },
+      );
 
       dispatch(
         setCredentials({
@@ -289,6 +300,16 @@ function OTPForm() {
                 "Verify & Access Terminal"
               )}
             </Button>
+
+            <label className="flex items-center justify-center gap-2 text-xs text-gray-400 font-mono">
+              <input
+                type="checkbox"
+                checked={keepSignedIn}
+                onChange={(e) => setKeepSignedIn(e.target.checked)}
+                className="h-4 w-4 accent-[#FE7743]"
+              />
+              Keep me signed in on this device
+            </label>
 
             <div className="text-center text-xs text-gray-500 font-mono">
               Didn&apos;t receive code?{" "}

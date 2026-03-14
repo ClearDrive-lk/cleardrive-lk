@@ -61,6 +61,7 @@ from .models import Session as UserSession
 from .models import User
 from .schemas import (
     AllSessionsRevokeResponse,
+    AuthStatusResponse,
     DevEnsureUserRequest,
     ForgotPasswordRequest,
     GoogleAuthRequest,
@@ -1246,6 +1247,20 @@ async def logout(
         "message": "Logged out successfully",
         "sessions_cleared": deleted_redis_sessions + db_sessions_updated,
     }
+
+
+# ========================================================================
+# AUTH STATUS
+# ========================================================================
+
+
+@router.get("/status", response_model=AuthStatusResponse)
+async def auth_status(current_user: User = Depends(get_current_active_user)):
+    """Return current authentication status and user profile."""
+    return AuthStatusResponse(
+        authenticated=True,
+        user=UserResponse.model_validate(current_user),
+    )
 
 
 # ============================================================================

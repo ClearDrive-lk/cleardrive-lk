@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { getAccessToken } from "@/lib/auth";
+import apiClient from "@/lib/api-client";
+import { useToast } from "@/lib/hooks/use-toast";
 
 // We move the logic into a inner component
 function PaymentForm() {
@@ -19,6 +21,7 @@ function PaymentForm() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const orderId = searchParams.get("orderId");
 
@@ -48,30 +51,30 @@ function PaymentForm() {
       }
       const idempotencyKey = getPaymentIdempotencyKey(orderId);
 
-      const initiateResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/initiate`,
+      const { data } = await apiClient.post(
+        "/payments/initiate",
         {
-          method: "POST",
+          order_id: orderId,
+          idempotency_key: idempotencyKey,
+        },
+        {
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
             "Idempotency-Key": idempotencyKey,
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            order_id: orderId,
-            idempotency_key: idempotencyKey,
-          }),
         },
       );
 
-      if (!initiateResponse.ok) {
-        const errorData = await initiateResponse.json();
-        throw new Error(errorData.detail || "Failed to initiate payment");
-      }
-
-      const { payment_url, payhere_params } = await initiateResponse.json();
+      const { payment_url, payhere_params } = data as {
+        payment_url: string;
+        payhere_params: Record<string, string>;
+      };
 
       // Redirect to PayHere
+      toast({
+        title: "Redirecting to PayHere",
+        description: "Complete payment to continue your order.",
+      });
       const form = document.createElement("form");
       form.method = "POST";
       form.action = payment_url;
@@ -86,11 +89,16 @@ function PaymentForm() {
       form.submit();
     } catch (err) {
       console.error("Payment error:", err);
-      setError(
+      const message =
         err instanceof Error
           ? err.message
-          : "Payment failed. Please try again.",
-      );
+          : "Payment failed. Please try again.";
+      setError(message);
+      toast({
+        title: "Payment failed",
+        description: message,
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
