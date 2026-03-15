@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 from uuid import UUID as PyUUID
 
 from app.modules.auth.models import User
@@ -68,14 +68,17 @@ def mark_security_event_resolved(
     db: Session,
     event: SecurityEvent,
     *,
-    resolved_by: str | None,
+    resolved_by: str | PyUUID | None,
     resolution_note: str | None = None,
 ) -> SecurityEvent:
     """
     Resolve a security event and optionally append a resolution note.
     """
     event.resolved = True
-    event.resolved_by = resolved_by
+    resolved_by_id: PyUUID | None = None
+    if resolved_by is not None:
+        resolved_by_id = PyUUID(str(resolved_by))
+    event.resolved_by = cast(Any, resolved_by_id)
     event.resolved_at = datetime.now(UTC)
 
     if resolution_note:
