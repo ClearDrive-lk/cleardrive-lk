@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID as PyUUID
 
 from app.modules.auth.models import User
 from app.modules.security.models import SecurityEvent, SecurityEventType, Severity
@@ -35,7 +36,13 @@ def log_security_event(
     """
     Persist a security event with optional request/user context.
     """
-    resolved_user_id = user.id if user is not None else user_id
+    resolved_user_id: PyUUID | None
+    if user is not None:
+        resolved_user_id = user.id
+    elif user_id is not None:
+        resolved_user_id = PyUUID(str(user_id))
+    else:
+        resolved_user_id = None
 
     payload: dict[str, Any] = details.copy() if details else {}
     if user is not None:
