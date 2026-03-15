@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { apiClient } from "@/lib/api-client";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type DocumentType =
   | "BILL_OF_LADING"
   | "COMMERCIAL_INVOICE"
   | "PACKING_LIST"
-  | "CUSTOMS_DECLARATION"
+  | "EXPORT_CERTIFICATE"
+  | "INSURANCE_CERTIFICATE"
   | "CERTIFICATE_OF_ORIGIN"
   | "CONTAINER_PHOTO"
   | "OTHER";
@@ -51,54 +50,58 @@ interface ShippingDocumentUploadProps {
   onAllUploaded?: () => void;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 const DOCUMENT_TYPES: Record<DocumentType, DocumentMeta> = {
   BILL_OF_LADING: {
     label: "Bill of Lading",
     required: true,
     accept: "application/pdf",
-    hint: "PDF only · max 10 MB",
+    hint: "PDF only - max 10 MB",
   },
   COMMERCIAL_INVOICE: {
     label: "Commercial Invoice",
     required: true,
     accept: "application/pdf",
-    hint: "PDF only · max 10 MB",
+    hint: "PDF only - max 10 MB",
   },
   PACKING_LIST: {
     label: "Packing List",
     required: true,
     accept: "application/pdf",
-    hint: "PDF only · max 10 MB",
+    hint: "PDF only - max 10 MB",
   },
-  CUSTOMS_DECLARATION: {
-    label: "Customs Declaration",
+  EXPORT_CERTIFICATE: {
+    label: "Export Certificate",
     required: true,
     accept: "application/pdf",
-    hint: "PDF only · max 10 MB",
+    hint: "PDF only - max 10 MB",
+  },
+  INSURANCE_CERTIFICATE: {
+    label: "Insurance Certificate",
+    required: false,
+    accept: "application/pdf",
+    hint: "PDF only - max 10 MB",
   },
   CERTIFICATE_OF_ORIGIN: {
     label: "Certificate of Origin",
     required: false,
     accept: "application/pdf",
-    hint: "PDF only · max 10 MB",
+    hint: "PDF only - max 10 MB",
   },
   CONTAINER_PHOTO: {
     label: "Container Photo",
     required: false,
     accept: "image/jpeg,image/png,image/webp",
-    hint: "Images only · max 10 MB",
+    hint: "Images only - max 10 MB",
   },
   OTHER: {
     label: "Other",
     required: false,
     accept: "application/pdf,image/jpeg,image/png,image/webp",
-    hint: "PDF or image · max 10 MB",
+    hint: "PDF or image - max 10 MB",
   },
 };
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const ALLOWED_MIME = new Set([
   "application/pdf",
@@ -106,8 +109,6 @@ const ALLOWED_MIME = new Set([
   "image/png",
   "image/webp",
 ]);
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -117,12 +118,11 @@ function formatBytes(bytes: number): string {
 
 function docTypeFromUploaded(raw: string): DocumentType | null {
   return (
-    (Object.keys(DOCUMENT_TYPES) as DocumentType[]).find((k) => k === raw) ??
-    null
+    (Object.keys(DOCUMENT_TYPES) as DocumentType[]).find(
+      (key) => key === raw,
+    ) ?? null
   );
 }
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusBadge({ verified }: { verified: boolean }) {
   if (verified) {
@@ -133,6 +133,7 @@ function StatusBadge({ verified }: { verified: boolean }) {
       </span>
     );
   }
+
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
       <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -152,7 +153,72 @@ function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
-// ─── Upload Row ───────────────────────────────────────────────────────────────
+function InlinePreview({
+  document,
+  onClose,
+}: {
+  document: UploadedDocument | null;
+  onClose: () => void;
+}) {
+  if (!document) return null;
+
+  const isPdf = document.mime_type === "application/pdf";
+  const isImage = document.mime_type.startsWith("image/");
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-slate-900">
+              {document.file_name}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {document.document_type} - {formatBytes(document.file_size)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={document.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-blue-600 ring-1 ring-blue-200 transition hover:bg-blue-50"
+            >
+              Open in new tab
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md px-3 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[75vh] overflow-auto bg-slate-100 p-4">
+          {isPdf ? (
+            <iframe
+              src={document.file_url}
+              title={document.file_name}
+              className="h-[70vh] w-full rounded-lg border border-slate-200 bg-white"
+            />
+          ) : isImage ? (
+            <img
+              src={document.file_url}
+              alt={document.file_name}
+              className="mx-auto max-h-[70vh] rounded-lg border border-slate-200 bg-white object-contain"
+            />
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+              This file type cannot be previewed inline. Use "Open in new tab".
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface UploadRowProps {
   docType: DocumentType;
@@ -160,6 +226,7 @@ interface UploadRowProps {
   existing: UploadedDocument | undefined;
   orderId: string;
   onUploaded: (doc: UploadedDocument) => void;
+  onPreview: (doc: UploadedDocument) => void;
 }
 
 function UploadRow({
@@ -168,6 +235,7 @@ function UploadRow({
   existing,
   orderId,
   onUploaded,
+  onPreview,
 }: UploadRowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -178,7 +246,6 @@ function UploadRow({
     async (file: File) => {
       setError("");
 
-      // Client-side validation
       if (!ALLOWED_MIME.has(file.type)) {
         setError("Invalid file type. Allowed: PDF, JPEG, PNG, WebP");
         return;
@@ -216,23 +283,21 @@ function UploadRow({
     [docType, orderId, onUploaded],
   );
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) void upload(file);
-    // reset so same file can be re-uploaded
-    e.target.value = "";
+    event.target.value = "";
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
+    const file = event.dataTransfer.files?.[0];
     if (file) void upload(file);
   };
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
-      {/* Header row */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -252,7 +317,6 @@ function UploadRow({
           <p className="mt-0.5 text-xs text-slate-400">{meta.hint}</p>
         </div>
 
-        {/* Status / upload button */}
         {existing ? (
           <StatusBadge verified={existing.verified} />
         ) : (
@@ -262,16 +326,14 @@ function UploadRow({
             disabled={uploading}
             className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {uploading ? "Uploading…" : "Upload"}
+            {uploading ? "Uploading..." : "Upload"}
           </button>
         )}
       </div>
 
-      {/* Existing file info */}
       {existing && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-          <div className="flex items-center gap-2 min-w-0">
-            {/* PDF / image icon */}
+          <div className="flex min-w-0 items-center gap-2">
             <span className="text-slate-400">
               {existing.mime_type === "application/pdf" ? (
                 <svg
@@ -310,16 +372,14 @@ function UploadRow({
               {formatBytes(existing.file_size)}
             </span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <a
-              href={existing.file_url}
-              target="_blank"
-              rel="noopener noreferrer"
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onPreview(existing)}
               className="rounded-md px-2 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-200 transition hover:bg-blue-50"
             >
               Preview
-            </a>
-            {/* Re-upload option */}
+            </button>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
@@ -332,24 +392,20 @@ function UploadRow({
         </div>
       )}
 
-      {/* Drop zone (shown when no existing doc) */}
       {!existing && (
         <div
-          onDragOver={(e) => {
-            e.preventDefault();
+          onDragOver={(event) => {
+            event.preventDefault();
             setDragOver(true);
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`mt-3 cursor-pointer rounded-lg border-2 border-dashed px-4 py-5 text-center transition
-            ${
-              dragOver
-                ? "border-blue-400 bg-blue-50"
-                : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/50"
-            }
-            ${uploading ? "pointer-events-none opacity-60" : ""}
-          `}
+          className={`mt-3 cursor-pointer rounded-lg border-2 border-dashed px-4 py-5 text-center transition ${
+            dragOver
+              ? "border-blue-400 bg-blue-50"
+              : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/50"
+          } ${uploading ? "pointer-events-none opacity-60" : ""}`}
         >
           {uploading ? (
             <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
@@ -372,7 +428,7 @@ function UploadRow({
                   d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
                 />
               </svg>
-              Uploading…
+              Uploading...
             </div>
           ) : (
             <p className="text-xs text-slate-400">
@@ -383,14 +439,12 @@ function UploadRow({
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs text-red-700">
           {error}
         </p>
       )}
 
-      {/* Hidden file input */}
       <input
         ref={inputRef}
         type="file"
@@ -402,18 +456,36 @@ function UploadRow({
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
 export function ShippingDocumentUpload({
   orderId,
   onAllUploaded,
 }: ShippingDocumentUploadProps) {
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
+  const [documentsError, setDocumentsError] = useState("");
   const [check, setCheck] = useState<RequiredDocumentsCheck | null>(null);
   const [loadingCheck, setLoadingCheck] = useState(false);
   const [checkError, setCheckError] = useState("");
+  const [previewDoc, setPreviewDoc] = useState<UploadedDocument | null>(null);
 
-  // Fetch latest completion status
+  const refreshDocuments = useCallback(async () => {
+    setDocumentsError("");
+    try {
+      const res = await apiClient.get<UploadedDocument[]>(
+        `/shipping/${orderId}/documents`,
+      );
+      setDocuments(res.data);
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        setDocumentsError(
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+            "Failed to load uploaded documents.",
+        );
+      } else {
+        setDocumentsError("Failed to load uploaded documents.");
+      }
+    }
+  }, [orderId]);
+
   const refreshCheck = useCallback(async () => {
     setLoadingCheck(true);
     setCheckError("");
@@ -437,12 +509,11 @@ export function ShippingDocumentUpload({
     }
   }, [orderId, onAllUploaded]);
 
-  // Called when a single doc finishes uploading
   const handleUploaded = useCallback(
     (doc: UploadedDocument) => {
-      setDocuments((prev) => {
-        const filtered = prev.filter(
-          (d) => d.document_type !== doc.document_type,
+      setDocuments((current) => {
+        const filtered = current.filter(
+          (item) => item.document_type !== doc.document_type,
         );
         return [...filtered, doc];
       });
@@ -451,23 +522,27 @@ export function ShippingDocumentUpload({
     [refreshCheck],
   );
 
-  // Find uploaded doc for a given type
+  useEffect(() => {
+    void refreshDocuments();
+    void refreshCheck();
+  }, [refreshDocuments, refreshCheck]);
+
   const findDoc = (type: DocumentType) =>
-    documents.find((d) => {
-      const mapped = docTypeFromUploaded(d.document_type);
+    documents.find((document) => {
+      const mapped = docTypeFromUploaded(document.document_type);
       return mapped === type;
     });
 
   const requiredTypes = (
     Object.entries(DOCUMENT_TYPES) as [DocumentType, DocumentMeta][]
-  ).filter(([, m]) => m.required);
+  ).filter(([, meta]) => meta.required);
+
   const optionalTypes = (
     Object.entries(DOCUMENT_TYPES) as [DocumentType, DocumentMeta][]
-  ).filter(([, m]) => !m.required);
+  ).filter(([, meta]) => !meta.required);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-semibold text-slate-900">
           Shipping Documents
@@ -478,7 +553,6 @@ export function ShippingDocumentUpload({
         </p>
       </div>
 
-      {/* Progress card */}
       {check && (
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
@@ -506,7 +580,7 @@ export function ShippingDocumentUpload({
                   d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                 />
               </svg>
-              All required documents uploaded — ready for admin review.
+              All required documents uploaded - ready for admin review.
             </p>
           ) : (
             <p className="mt-2 text-xs text-slate-500">
@@ -525,7 +599,12 @@ export function ShippingDocumentUpload({
         </div>
       )}
 
-      {/* Required documents */}
+      {documentsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {documentsError}
+        </div>
+      )}
+
       <div>
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Required Documents
@@ -539,12 +618,12 @@ export function ShippingDocumentUpload({
               existing={findDoc(type)}
               orderId={orderId}
               onUploaded={handleUploaded}
+              onPreview={setPreviewDoc}
             />
           ))}
         </div>
       </div>
 
-      {/* Optional documents */}
       <div>
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Optional Documents
@@ -558,20 +637,28 @@ export function ShippingDocumentUpload({
               existing={findDoc(type)}
               orderId={orderId}
               onUploaded={handleUploaded}
+              onPreview={setPreviewDoc}
             />
           ))}
         </div>
       </div>
 
-      {/* Check status button */}
       <button
         type="button"
-        onClick={() => void refreshCheck()}
+        onClick={() => {
+          void refreshDocuments();
+          void refreshCheck();
+        }}
         disabled={loadingCheck}
         className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loadingCheck ? "Checking…" : "Check Upload Status"}
+        {loadingCheck ? "Checking..." : "Check Upload Status"}
       </button>
+
+      <InlinePreview
+        document={previewDoc}
+        onClose={() => setPreviewDoc(null)}
+      />
     </div>
   );
 }

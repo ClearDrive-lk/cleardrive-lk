@@ -9,8 +9,9 @@ Story: CD-120.3
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.redis_client import get_redis
 from app.modules.notifications.models import EmailLog, EmailStatus
@@ -37,6 +38,8 @@ class EmailQueue:
         html_body: str,
         text_body: Optional[str] = None,
         priority: int = 5,
+        template_name: Optional[str] = None,
+        template_data: Optional[dict[str, Any]] = None,
     ) -> str:
         """
         Add email to queue.
@@ -64,6 +67,8 @@ class EmailQueue:
             "priority": priority,
             "retry_count": 0,
             "max_retries": 3,
+            "template_name": template_name,
+            "template_data": template_data,
             "created_at": datetime.utcnow().isoformat(),
         }
 
@@ -100,8 +105,10 @@ class EmailQueue:
                 # Create detailed log entry
                 email_log = EmailLog(
                     to_email=email_data["to_email"],
-                    from_email="noreply@cleardrive.lk",  # configured sender
+                    from_email=settings.SMTP_FROM_EMAIL,
                     subject=email_data["subject"],
+                    template_name=email_data.get("template_name"),
+                    template_data=email_data.get("template_data"),
                     html_body=email_data["html_body"],
                     text_body=email_data.get("text_body"),
                     status=EmailStatus.SENDING,

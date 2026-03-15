@@ -17,67 +17,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create a new enum with the CD-72 document types.
-    op.execute(
-        """
-        DO $$
-        BEGIN
-            IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'documenttype_new') THEN
-                DROP TYPE documenttype_new;
-            END IF;
-        END
-        $$;
-        """
-    )
-    op.execute(
-        """
-        CREATE TYPE documenttype_new AS ENUM (
-            'BILL_OF_LADING',
-            'COMMERCIAL_INVOICE',
-            'PACKING_LIST',
-            'CUSTOMS_DECLARATION',
-            'CERTIFICATE_OF_ORIGIN',
-            'CONTAINER_PHOTO',
-            'OTHER'
-        );
-        """
-    )
-
-    # Map old values to new types before altering the column.
+    # Current application models still use EXPORT_CERTIFICATE and
+    # INSURANCE_CERTIFICATE, so this revision only normalizes the legacy
+    # BILL_OF_LANDING value to BILL_OF_LADING.
     op.execute(
         """
         UPDATE shipping_documents
-        SET document_type = CASE document_type::text
-            WHEN 'BILL_OF_LANDING' THEN 'BILL_OF_LADING'
-            WHEN 'EXPORT_CERTIFICATE' THEN 'CERTIFICATE_OF_ORIGIN'
-            WHEN 'INSURANCE_CERTIFICATE' THEN 'OTHER'
-            ELSE document_type::text
-        END
-        WHERE document_type::text IN (
-            'BILL_OF_LANDING',
-            'EXPORT_CERTIFICATE',
-            'INSURANCE_CERTIFICATE'
-        );
+        SET document_type = 'BILL_OF_LADING'::documenttype
+        WHERE document_type::text = 'BILL_OF_LANDING';
         """
     )
-
-    op.execute(
-        """
-        ALTER TABLE shipping_documents
-        ALTER COLUMN document_type TYPE documenttype_new
-        USING (
-            CASE document_type::text
-                WHEN 'BILL_OF_LANDING' THEN 'BILL_OF_LADING'
-                WHEN 'EXPORT_CERTIFICATE' THEN 'CERTIFICATE_OF_ORIGIN'
-                WHEN 'INSURANCE_CERTIFICATE' THEN 'OTHER'
-                ELSE document_type::text
-            END
-        )::documenttype_new;
-        """
-    )
-
-    op.execute("DROP TYPE documenttype;")
-    op.execute("ALTER TYPE documenttype_new RENAME TO documenttype;")
 
 
 def downgrade() -> None:

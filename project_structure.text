@@ -191,7 +191,7 @@
       - 13e4f8c8fc37_add_kyc_documents_table.py
       - 2b75160c0778_add_kyc_documents_and_file_integrity_.py
       - 3247b739293f_add_stock_no_to_vehicles.py
-      - 4166826068e0_add_order_status_history_table_cd_180.py
+      - 4166826068e0_add_order_status_history_metadata_columns_cd_180.py
       - 4a78cf3e3836_merge_heads_before_cd_33.py
       - 568d2128ae73_payments_bridge_revision.py
       - 611ce2705ddc_add_audit_logs_table.py
@@ -218,7 +218,7 @@
         - 13e4f8c8fc37_add_kyc_documents_table.cpython-311.pyc
         - 2b75160c0778_add_kyc_documents_and_file_integrity_.cpython-311.pyc
         - 3247b739293f_add_stock_no_to_vehicles.cpython-311.pyc
-        - 4166826068e0_add_order_status_history_table_cd_180.cpython-311.pyc
+        - 4166826068e0_add_order_status_history_metadata_columns_cd_180.cpython-311.pyc
         - 568d2128ae73_payments_bridge_revision.cpython-311.pyc
         - 611ce2705ddc_add_audit_logs_table.cpython-311.pyc
         - 64ab3d41d692_add_kyc_documents_table.cpython-311.pyc
@@ -2348,7 +2348,7 @@
       - 13e4f8c8fc37_add_kyc_documents_table.py
       - 2b75160c0778_add_kyc_documents_and_file_integrity_.py
       - 3247b739293f_add_stock_no_to_vehicles.py
-      - 49cb44740c5d_add_order_status_history_table_cd_180.py
+      - 4166826068e0_add_order_status_history_metadata_columns_cd_180.py
       - 568d2128ae73_payments_bridge_revision.py
       - 611ce2705ddc_add_audit_logs_table.py
       - 64ab3d41d692_add_kyc_documents_table.py

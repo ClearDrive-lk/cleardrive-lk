@@ -1,3 +1,4 @@
+import json
 from unittest.mock import AsyncMock
 
 import pytest
@@ -28,11 +29,19 @@ async def test_email_queue_enqueue(mocker):
     mocker.patch("app.services.email_queue.get_redis", return_value=mock_redis)
 
     email_id = await email_queue.enqueue(
-        to_email="test@example.com", subject="Queued Subject", html_body="<p>Queued</p>", priority=1
+        to_email="test@example.com",
+        subject="Queued Subject",
+        html_body="<p>Queued</p>",
+        priority=1,
+        template_name="status_change.html",
+        template_data={"order_id": "123"},
     )
 
     assert isinstance(email_id, str)
     mock_redis.zadd.assert_called_once()
+    queued_payload = json.loads(mock_redis.zadd.call_args.args[1].popitem()[0])
+    assert queued_payload["template_name"] == "status_change.html"
+    assert queued_payload["template_data"] == {"order_id": "123"}
 
 
 @pytest.mark.asyncio

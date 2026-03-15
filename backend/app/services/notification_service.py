@@ -51,6 +51,8 @@ class NotificationService:
                 html_body=html_content,
                 text_body=text_content,
                 priority=priority,
+                template_name=template_name,
+                template_data=context,
             )
             logger.info(f"Successfully enqueued {template_name} to {to_email} with ID {email_id}")
             return email_id
