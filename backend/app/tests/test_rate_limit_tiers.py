@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from app.core.rate_limit import UserTier, determine_user_tier, record_failed_login
 from app.modules.kyc.models import KYCDocument, KYCStatus
-from app.modules.security.models import UserReputation
+from app.modules.security.models import SecurityEvent, SecurityEventType, UserReputation
 from app.modules.security.models import UserTier as ReputationTier
 
 
@@ -41,7 +41,7 @@ async def test_failed_login_threshold_downgrades_user_to_suspicious(db, test_use
     assert await mock_redis.get(f"user_tier:{test_user.id}") == UserTier.SUSPICIOUS.value
 
 
-def test_rate_limit_middleware_applies_to_authenticated_endpoints(client, auth_headers):
+def test_rate_limit_middleware_applies_to_authenticated_endpoints(client, auth_headers, db):
     limited = None
     successful_requests = 0
 
@@ -61,3 +61,10 @@ def test_rate_limit_middleware_applies_to_authenticated_endpoints(client, auth_h
         UserTier.STANDARD.value,
         UserTier.SUSPICIOUS.value,
     }
+
+    event = (
+        db.query(SecurityEvent)
+        .filter(SecurityEvent.event_type == SecurityEventType.RATE_LIMIT_EXCEEDED)
+        .first()
+    )
+    assert event is not None
