@@ -6,7 +6,19 @@ const { chromium } = require("playwright");
 async function testSRI() {
   console.log("Testing SRI implementation...\n");
 
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("Executable doesn't exist")) {
+      console.warn(
+        "Playwright browsers not installed. Skipping SRI test. Run `npx playwright install` to enable.",
+      );
+      return;
+    }
+    throw err;
+  }
   const page = await browser.newPage();
 
   const consoleMessages = [];
