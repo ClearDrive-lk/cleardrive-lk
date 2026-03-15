@@ -390,6 +390,18 @@ async def verify_otp(
                     "details": suspicious.get("details"),
                 },
             )
+            if "impossible_travel" in suspicious.get("reasons", []):
+                log_security_event(
+                    db,
+                    event_type=SecurityEventType.IMPOSSIBLE_TRAVEL,
+                    severity=Severity.HIGH,
+                    user=user,
+                    request=request,
+                    details={
+                        "reason": "impossible_travel",
+                        "details": suspicious.get("details", {}),
+                    },
+                )
             # Optional: await send_security_alert_email(...)
             # Optional: raise HTTPException(403, "Suspicious activity detected.")
 
