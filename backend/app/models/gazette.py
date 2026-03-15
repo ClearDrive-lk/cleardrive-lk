@@ -11,6 +11,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from app.core.database import Base
+from app.core.models import GUID
 from sqlalchemy import (
     JSON,
     TIMESTAMP,
@@ -26,7 +27,6 @@ from sqlalchemy import (
     desc,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -84,7 +84,7 @@ class Gazette(Base):
         Index("idx_gazettes_created_at", desc("created_at")),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
     gazette_no: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     # Use generic JSON at ORM layer for sqlite test compatibility.
@@ -93,10 +93,10 @@ class Gazette(Base):
         String(20), nullable=False, default=GazetteStatus.PENDING.value
     )
     uploaded_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     approved_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False, default=datetime.utcnow)
@@ -155,9 +155,9 @@ class TaxRule(Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
     gazette_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("gazettes.id", ondelete="CASCADE"), nullable=False
+        GUID(), ForeignKey("gazettes.id", ondelete="CASCADE"), nullable=False
     )
     vehicle_type: Mapped[str] = mapped_column(String(50), nullable=False)
     fuel_type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -171,7 +171,7 @@ class TaxRule(Base):
     apply_on: Mapped[str] = mapped_column(String(30), nullable=False, default=ApplyOn.CIF.value)
     effective_date: Mapped[date] = mapped_column(Date, nullable=False)
     approved_by_admin: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
