@@ -31,7 +31,7 @@ google-cloud-documentai==2.24.0
 google-generativeai==0.3.2
 # Email
 aiosmtplib==3.0.1  # Async SMTP client
-email-validator==2.1.0  # Email validation
+email-validator==2.3.0  # Email validation
 jinja2>=3.1.5  # Email templates
 # User agent parsing
 user-agents==2.2.0
