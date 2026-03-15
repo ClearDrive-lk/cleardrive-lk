@@ -1,5 +1,7 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import type { Configuration } from "webpack";
+import { SubresourceIntegrityPlugin } from "webpack-subresource-integrity";
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +29,26 @@ const nextConfig = {
     ];
   },
 
+  webpack: (
+    config: Configuration,
+    { dev, isServer }: { dev: boolean; isServer: boolean },
+  ) => {
+    if (!dev && !isServer) {
+      config.output = {
+        ...(config.output ?? {}),
+        crossOriginLoading: "anonymous",
+      };
+      config.plugins = config.plugins ?? [];
+      config.plugins.push(
+        new SubresourceIntegrityPlugin({
+          hashFuncNames: ["sha384"],
+          enabled: true,
+        }),
+      );
+    }
+    return config;
+  },
+
   // ⭐ REQUIRED FOR FEDCM
   async headers() {
     return [
@@ -36,6 +58,10 @@ const nextConfig = {
           {
             key: "Permissions-Policy",
             value: "identity-credentials-get=(self)",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "require-sri-for script style;",
           },
         ],
       },
