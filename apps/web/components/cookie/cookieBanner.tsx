@@ -18,6 +18,7 @@ import {
   getStoredConsent,
 } from "@/lib/cookies/utils";
 import { CookieConsent } from "@/lib/cookies/types";
+import { getSriAttributes } from "@/lib/sri";
 
 interface CookieBannerProps {
   onConsentChange?: (consent: CookieConsent) => void;
@@ -114,6 +115,11 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     const script = document.createElement("script");
     script.id = "ga-script";
     script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    const { integrity, crossOrigin } = getSriAttributes(script.src);
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = crossOrigin ?? "anonymous";
+    }
     script.async = true;
     document.head.appendChild(script);
   };
