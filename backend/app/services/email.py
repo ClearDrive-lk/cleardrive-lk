@@ -7,6 +7,7 @@ import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import parseaddr
+from pathlib import Path
 from typing import Optional
 
 import aiosmtplib
@@ -17,8 +18,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 logger = logging.getLogger(__name__)
 
 # Jinja2 template environment
+TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates" / "email"
 template_env = Environment(
-    loader=FileSystemLoader("app/templates/email"),
+    loader=FileSystemLoader(str(TEMPLATE_DIR)),
     autoescape=select_autoescape(["html", "xml"]),
 )
 

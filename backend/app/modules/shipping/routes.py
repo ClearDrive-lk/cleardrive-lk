@@ -5,6 +5,7 @@ Story: CD-72 - Shipping Document Upload
 """
 
 import logging
+from datetime import datetime
 from typing import cast
 
 from app.core.config import settings
@@ -86,6 +87,30 @@ def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
     return missing
 
 
+def _mark_submitted_if_ready(shipment: ShipmentDetails) -> None:
+    """Stamp submission time once shipment details and required docs are both present."""
+    has_details = all(
+        [
+            shipment.vessel_name,
+            shipment.vessel_registration,
+            shipment.voyage_number,
+            shipment.departure_port,
+            shipment.arrival_port,
+            shipment.departure_date,
+            shipment.estimated_arrival_date,
+            shipment.container_number,
+            shipment.bill_of_landing_number,
+            shipment.seal_number,
+            shipment.tracking_number,
+        ]
+    )
+
+    if has_details and shipment.documents_uploaded:
+        if shipment.submitted_at is None:
+            shipment.submitted_at = datetime.utcnow()
+        shipment.status = ShipmentStatus.AWAITING_ADMIN_APPROVAL
+
+
 # CD-71: Submit shipping details
 
 
@@ -104,19 +129,23 @@ async def submit_shipping_details(
     shipment = _get_shipment_for_exporter(order_id, current_user, db)
 
     shipment.vessel_name = payload.vessel_name
+    shipment.vessel_registration = payload.vessel_registration
     shipment.voyage_number = payload.voyage_number
     shipment.departure_port = payload.departure_port
     shipment.arrival_port = payload.arrival_port
+    shipment.departure_date = payload.departure_date
     shipment.container_number = payload.container_number
+    shipment.bill_of_landing_number = payload.bill_of_landing_number
     shipment.seal_number = payload.seal_number
     shipment.tracking_number = payload.tracking_number
 
-    shipment.estimated_departure_date = payload.departure_date
     shipment.estimated_arrival_date = payload.estimated_arrival_date
 
     # Update shipment status to reflect submitted details
     if shipment.status == ShipmentStatus.PENDING_SHIPMENT:
         shipment.status = ShipmentStatus.AWAITING_ADMIN_APPROVAL
+
+    _mark_submitted_if_ready(shipment)
 
     # Update order status to awaiting shipment confirmation
     order = db.query(Order).filter(Order.id == shipment.order_id).first()
@@ -314,7 +343,7 @@ async def upload_shipping_document(
     missing = _missing_required_docs(shipment)
     if not missing:
         shipment.documents_uploaded = True
-        shipment.status = ShipmentStatus.AWAITING_ADMIN_APPROVAL
+        _mark_submitted_if_ready(shipment)
         logger.info(
             "All required documents uploaded - order_id=%s awaiting admin approval",
             order_id,

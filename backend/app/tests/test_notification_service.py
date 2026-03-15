@@ -45,6 +45,8 @@ async def test_send_order_confirmation(mock_enqueue):
     assert kwargs["to_email"] == "test@example.com"
     assert "Order Confirmation #123" in kwargs["subject"]
     assert "Toyota Prius 2020" in kwargs["html_body"]
+    assert kwargs["template_name"] == "order_confirmation.html"
+    assert kwargs["template_data"]["order_id"] == "123"
     assert kwargs["priority"] == 2
 
 
