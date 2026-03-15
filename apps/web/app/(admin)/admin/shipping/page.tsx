@@ -29,14 +29,34 @@ interface ShipmentSummaryResponse {
   shipments: ShipmentItem[];
 }
 
+interface PendingShipment {
+  id: string;
+  order_id: string;
+  exporter_id?: string;
+  assigned_exporter_id?: string;
+  vessel_name?: string;
+  departure_port?: string;
+  arrival_port?: string;
+  estimated_arrival_date?: string;
+  documents_uploaded: boolean;
+  approved: boolean;
+  created_at: string;
+}
+
 export default function AdminShippingPage() {
   const [orderId, setOrderId] = useState("");
   const [exporters, setExporters] = useState<Exporter[]>([]);
   const [selectedExporter, setSelectedExporter] = useState("");
   const [summary, setSummary] = useState<ShipmentSummaryResponse | null>(null);
+  const [pendingShipments, setPendingShipments] = useState<PendingShipment[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
+  const [pendingLoading, setPendingLoading] = useState(true);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingError, setPendingError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const loadExporters = async () => {
@@ -58,11 +78,37 @@ export default function AdminShippingPage() {
     setSummary(response.data);
   };
 
+  const loadPendingShipments = async () => {
+    setPendingLoading(true);
+    setPendingError(null);
+    try {
+      const response = await apiClient.get<PendingShipment[]>(
+        "/admin/shipping/pending",
+      );
+      setPendingShipments(response.data);
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        const detail =
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+          err.message;
+        setPendingError(detail);
+      } else {
+        setPendingError("Failed to load pending approvals.");
+      }
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([loadExporters(), loadShipments()]);
+      await Promise.all([
+        loadExporters(),
+        loadShipments(),
+        loadPendingShipments(),
+      ]);
     } catch (err: unknown) {
       if (isAxiosError(err)) {
         const detail =
@@ -109,6 +155,34 @@ export default function AdminShippingPage() {
       }
     } finally {
       setAssigning(false);
+    }
+  };
+
+  const approveShipment = async (shipmentId: string) => {
+    if (
+      !window.confirm("Approve this shipment and mark the order as shipped?")
+    ) {
+      return;
+    }
+
+    setApprovingId(shipmentId);
+    setPendingError(null);
+    setSuccess(null);
+    try {
+      await apiClient.post(`/admin/shipping/${shipmentId}/approve`);
+      setSuccess("Shipment approved successfully.");
+      await Promise.all([loadShipments(), loadPendingShipments()]);
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        const detail =
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+          err.message;
+        setPendingError(detail);
+      } else {
+        setPendingError("Failed to approve shipment.");
+      }
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -163,6 +237,72 @@ export default function AdminShippingPage() {
         {success && (
           <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded p-2">
             {success}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white border rounded-lg p-4 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Pending Approvals</h2>
+          <p className="text-sm text-gray-600">
+            Approve shipments that have submitted details and uploaded
+            documents.
+          </p>
+        </div>
+
+        {pendingLoading ? (
+          <div className="p-4 text-center text-gray-500">
+            Loading pending shipments...
+          </div>
+        ) : pendingError ? (
+          <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">
+            {pendingError}
+          </div>
+        ) : pendingShipments.length === 0 ? (
+          <div className="text-sm text-gray-600">
+            No shipments awaiting approval.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pendingShipments.map((shipment) => (
+              <div
+                key={shipment.id}
+                className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+              >
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-500">Order ID</p>
+                  <p className="text-sm font-medium">{shipment.order_id}</p>
+                  <p className="text-sm text-gray-600">
+                    Vessel: {shipment.vessel_name || "TBD"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Route: {shipment.departure_port || "TBD"} →{" "}
+                    {shipment.arrival_port || "TBD"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    ETA:{" "}
+                    {shipment.estimated_arrival_date
+                      ? new Date(
+                          shipment.estimated_arrival_date,
+                        ).toLocaleDateString()
+                      : "TBD"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Docs Uploaded: {shipment.documents_uploaded ? "Yes" : "No"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => approveShipment(shipment.id)}
+                    disabled={approvingId === shipment.id}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60"
+                  >
+                    {approvingId === shipment.id ? "Approving..." : "Approve"}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

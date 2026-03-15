@@ -60,6 +60,52 @@
   body {
     @apply bg-background text-foreground;
   }
+  .admin-theme {
+    @apply bg-[#050505] text-foreground;
+  }
+  .admin-theme .bg-white {
+    @apply bg-white/5;
+  }
+  .admin-theme .bg-white\/90,
+  .admin-theme .bg-white\/80,
+  .admin-theme .bg-white\/70,
+  .admin-theme .bg-white\/60 {
+    @apply bg-white/5;
+  }
+  .admin-theme .bg-slate-50,
+  .admin-theme .bg-gray-50 {
+    @apply bg-white/5;
+  }
+  .admin-theme .bg-slate-100,
+  .admin-theme .bg-gray-100 {
+    @apply bg-white/10;
+  }
+  .admin-theme .border-slate-200,
+  .admin-theme .border-gray-200,
+  .admin-theme .border-slate-300,
+  .admin-theme .border-gray-300 {
+    @apply border-white/10;
+  }
+  .admin-theme .text-slate-900,
+  .admin-theme .text-gray-900 {
+    @apply text-white;
+  }
+  .admin-theme .text-slate-700,
+  .admin-theme .text-gray-700 {
+    @apply text-gray-300;
+  }
+  .admin-theme .text-slate-600,
+  .admin-theme .text-gray-600 {
+    @apply text-gray-400;
+  }
+  .admin-theme .text-slate-500,
+  .admin-theme .text-gray-500 {
+    @apply text-gray-500;
+  }
+  .admin-theme .text-slate-400,
+  .admin-theme .text-gray-400 {
+    @apply text-gray-400;
+  }
 }
 
 @keyframes marquee {

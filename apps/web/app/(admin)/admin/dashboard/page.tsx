@@ -102,6 +102,14 @@ interface RevenueAnalytics {
 const CHART_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 const REFRESH_INTERVAL_MS = 30_000; // 30 seconds
 const CUSTOM_RANGE = "custom";
+const TOOLTIP_STYLE = {
+  backgroundColor: "rgba(15, 23, 42, 0.9)",
+  border: "1px solid rgba(255, 255, 255, 0.1)",
+  borderRadius: "8px",
+  color: "#E5E7EB",
+};
+const TOOLTIP_LABEL_STYLE = { color: "#F9FAFB" };
+const TOOLTIP_ITEM_STYLE = { color: "#E5E7EB" };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
@@ -123,11 +131,11 @@ function KpiCard({
   iconColor = "text-blue-600",
 }: KpiCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-500 text-sm">{title}</p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
+          <p className="text-gray-400 text-sm">{title}</p>
+          <p className="text-3xl font-bold mt-1 text-white">{value}</p>
           <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
         </div>
         <div className={`text-4xl ${iconColor}`}>{icon}</div>
@@ -147,11 +155,11 @@ function MetricCard({
   title,
   value,
   subtitle,
-  valueColor = "text-gray-800",
+  valueColor = "text-white",
 }: MetricCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+      <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
       <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
       <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
     </div>
@@ -333,10 +341,10 @@ export default function AdminDashboard() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen text-white">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <p className="text-xl text-gray-600">Loading dashboard…</p>
+          <p className="text-xl text-gray-400">Loading dashboard…</p>
         </div>
       </div>
     );
@@ -344,13 +352,13 @@ export default function AdminDashboard() {
 
   if (error || !stats) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen text-white">
         <div className="text-center">
           <div className="text-4xl mb-4">⚠️</div>
-          <p className="text-xl text-red-600">{error ?? "Unknown error"}</p>
+          <p className="text-xl text-red-400">{error ?? "Unknown error"}</p>
           <button
             onClick={loadDashboardData}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 px-6 py-2 bg-[#FE7743] text-black rounded hover:bg-[#FE7743]/90"
           >
             Retry
           </button>
@@ -363,7 +371,7 @@ export default function AdminDashboard() {
   // Render
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-white">
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -377,13 +385,13 @@ export default function AdminDashboard() {
 
           <button
             onClick={exportCsv}
-            className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+            className="px-3 py-2 text-sm rounded-md border border-white/10 text-gray-200 hover:bg-white/10"
           >
             Export CSV
           </button>
           <button
             onClick={exportPdf}
-            className="px-3 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+            className="px-3 py-2 text-sm rounded-md border border-white/10 text-gray-200 hover:bg-white/10"
           >
             Export PDF
           </button>
@@ -398,7 +406,7 @@ export default function AdminDashboard() {
                 setDays(Number(next));
               }
             }}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FE7743]"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -409,18 +417,18 @@ export default function AdminDashboard() {
         </div>
       </div>
       {selectedRange === CUSTOM_RANGE && (
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row gap-3 items-center">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
           <input
             type="date"
             value={customStartDate}
             onChange={(e) => setCustomStartDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200"
           />
           <input
             type="date"
             value={customEndDate}
             onChange={(e) => setCustomEndDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200"
           />
           <span className="text-xs text-gray-500">
             Applies to analytics charts and tables.
@@ -466,17 +474,19 @@ export default function AdminDashboard() {
           {
             label: "KYC Pending",
             value: stats.kyc_pending,
-            color: "bg-yellow-100 text-yellow-800",
+            color:
+              "bg-yellow-500/10 text-yellow-300 border border-yellow-500/20",
           },
           {
             label: "KYC Approved",
             value: stats.kyc_approved,
-            color: "bg-green-100 text-green-800",
+            color:
+              "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
           },
           {
             label: "KYC Rejected",
             value: stats.kyc_rejected,
-            color: "bg-red-100 text-red-800",
+            color: "bg-rose-500/10 text-rose-300 border border-rose-500/20",
           },
         ].map(({ label, value, color }) => (
           <div
@@ -492,7 +502,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 1 ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth – Line Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">User Growth</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={userAnalytics?.daily_registrations ?? []}>
@@ -500,13 +510,16 @@ export default function AdminDashboard() {
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => format(new Date(d), "MMM d")}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} />
               <Tooltip
                 labelFormatter={(d) => format(new Date(d), "MMM d, yyyy")}
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
               />
-              <Legend />
+              <Legend wrapperStyle={{ color: "#E5E7EB" }} />
               <Line
                 type="monotone"
                 dataKey="count"
@@ -520,7 +533,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Order Status – Pie Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Order Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -542,7 +555,11 @@ export default function AdminDashboard() {
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -551,7 +568,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 2 ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Revenue – Bar Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Daily Revenue</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={revenueAnalytics?.daily_revenue ?? []}>
@@ -559,17 +576,20 @@ export default function AdminDashboard() {
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => format(new Date(d), "MMM d")}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "#9CA3AF" }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} />
               <Tooltip
                 labelFormatter={(d) => format(new Date(d), "MMM d, yyyy")}
                 formatter={(v) => [
                   `$${Number(v ?? 0).toLocaleString()}`,
                   "Revenue",
                 ]}
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
               />
-              <Legend />
+              <Legend wrapperStyle={{ color: "#E5E7EB" }} />
               <Bar
                 dataKey="amount"
                 fill={CHART_COLORS[1]}
@@ -581,7 +601,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* User Roles – Pie Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">User Role Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -603,7 +623,11 @@ export default function AdminDashboard() {
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -612,7 +636,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 3 – KYC & Payment breakdown ────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* KYC Status – Pie Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">KYC Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -634,26 +658,33 @@ export default function AdminDashboard() {
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Payment Methods – Bar Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Revenue by Payment Method</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={paymentChartData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9CA3AF" }} />
+              <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} />
               <Tooltip
                 formatter={(v) => [
                   `$${Number(v ?? 0).toLocaleString()}`,
                   "Amount",
                 ]}
+                contentStyle={TOOLTIP_STYLE}
+                labelStyle={TOOLTIP_LABEL_STYLE}
+                itemStyle={TOOLTIP_ITEM_STYLE}
               />
-              <Legend />
+              <Legend wrapperStyle={{ color: "#E5E7EB" }} />
               <Bar
                 dataKey="amount"
                 fill={CHART_COLORS[4]}
@@ -692,7 +723,7 @@ export default function AdminDashboard() {
 
       {/* ── Top Revenue Sources Table ──────────────────────────────────────── */}
       {revenueAnalytics && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Top Revenue Sources</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -715,7 +746,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                        <div className="w-24 bg-white/10 rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${src.percentage}%` }}

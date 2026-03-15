@@ -5,7 +5,7 @@ Gazette upload and extraction endpoints.
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -27,7 +27,7 @@ from app.services.document_ai import document_ai_service
 from app.services.gemini import gemini_service
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 router = APIRouter(prefix="/gazette", tags=["Gazette"])
 logger = logging.getLogger(__name__)
@@ -46,6 +46,39 @@ class GazetteUploadResponse(BaseModel):
 
 class GazetteDecisionRequest(BaseModel):
     reason: str | None = None
+
+
+class GazetteHistoryItem(BaseModel):
+    id: str
+    gazette_no: str
+    effective_date: str | None
+    status: str
+    rules_count: int
+    created_at: datetime
+    uploaded_by: str | None
+    approved_by: str | None
+    rejection_reason: str | None
+
+
+class GazetteHistoryResponse(BaseModel):
+    items: list[GazetteHistoryItem]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+
+
+class GazetteDetailResponse(BaseModel):
+    gazette_id: str
+    gazette_no: str
+    effective_date: str | None
+    rules_count: int
+    status: str
+    preview: dict[str, Any]
+    rejection_reason: str | None
+    uploaded_by: str | None
+    approved_by: str | None
+    created_at: datetime
 
 
 def _parse_effective_date(raw_value: Any) -> date | None:
@@ -244,6 +277,100 @@ async def upload_gazette(
             preview=fallback_payload,
             message="Automatic extraction failed. Manual review required.",
         )
+
+
+@router.get("/history", response_model=GazetteHistoryResponse)
+async def list_gazette_history(
+    status: str | None = None,
+    page: int = 1,
+    limit: int = 12,
+    current_user: User = Depends(require_permission(Permission.MANAGE_TAX_RULES)),
+    db: Session = Depends(get_db),
+):
+    _ = current_user
+    safe_page = max(page, 1)
+    safe_limit = min(max(limit, 1), 100)
+
+    query = (
+        db.query(Gazette)
+        .options(joinedload(Gazette.uploader), joinedload(Gazette.approver))
+        .order_by(Gazette.created_at.desc())
+    )
+    if status:
+        query = query.filter(Gazette.status == status)
+
+    total = query.count()
+    records = query.offset((safe_page - 1) * safe_limit).limit(safe_limit).all()
+
+    items: list[GazetteHistoryItem] = []
+    for record in records:
+        payload = record.raw_extracted or {}
+        raw_rules = payload.get("rules")
+        rules_count = len(raw_rules) if isinstance(raw_rules, list) else 0
+        items.append(
+            GazetteHistoryItem(
+                id=str(record.id),
+                gazette_no=record.gazette_no,
+                effective_date=(
+                    record.effective_date.isoformat() if record.effective_date else None
+                ),
+                status=record.status,
+                rules_count=rules_count,
+                created_at=record.created_at,
+                uploaded_by=record.uploader.email if record.uploader else None,
+                approved_by=record.approver.email if record.approver else None,
+                rejection_reason=record.rejection_reason,
+            )
+        )
+
+    total_pages = max(1, (total + safe_limit - 1) // safe_limit)
+    return GazetteHistoryResponse(
+        items=items,
+        total=total,
+        page=safe_page,
+        limit=safe_limit,
+        total_pages=total_pages,
+    )
+
+
+@router.get("/{gazette_id}", response_model=GazetteDetailResponse)
+async def get_gazette_detail(
+    gazette_id: str,
+    current_user: User = Depends(require_permission(Permission.MANAGE_TAX_RULES)),
+    db: Session = Depends(get_db),
+):
+    _ = current_user
+    parsed_gazette_id = _parse_gazette_id(gazette_id)
+    gazette = (
+        db.query(Gazette)
+        .options(joinedload(Gazette.uploader), joinedload(Gazette.approver))
+        .filter(Gazette.id == parsed_gazette_id)
+        .first()
+    )
+    if gazette is None:
+        raise HTTPException(status_code=404, detail="Gazette not found")
+
+    payload = gazette.raw_extracted or {}
+    raw_rules = payload.get("rules")
+    rules_count = len(raw_rules) if isinstance(raw_rules, list) else 0
+    effective_date = (
+        gazette.effective_date.isoformat()
+        if gazette.effective_date
+        else (str(payload.get("effective_date")) if payload.get("effective_date") else None)
+    )
+
+    return GazetteDetailResponse(
+        gazette_id=str(gazette.id),
+        gazette_no=gazette.gazette_no,
+        effective_date=effective_date,
+        rules_count=rules_count,
+        status=gazette.status,
+        preview=payload,
+        rejection_reason=gazette.rejection_reason,
+        uploaded_by=gazette.uploader.email if gazette.uploader else None,
+        approved_by=gazette.approver.email if gazette.approver else None,
+        created_at=gazette.created_at,
+    )
 
 
 @router.post("/{gazette_id}/approve")

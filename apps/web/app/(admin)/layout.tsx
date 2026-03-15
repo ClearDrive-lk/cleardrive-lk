@@ -1,67 +1,38 @@
 import { ReactNode } from "react";
+import { AdminMobileNav, AdminSidebar } from "@/components/admin/AdminNav";
+import AdminAccessGate from "@/components/admin/AdminAccessGate";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white">
-        <nav className="p-4">
-          <h2 className="text-xl font-bold mb-4">Admin Panel</h2>
-          <ul className="space-y-2">
-            <li>
-              <a
-                href="/admin/dashboard"
-                className="block p-2 hover:bg-gray-800 rounded"
-              >
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a
-                href="/admin/users"
-                className="block p-2 hover:bg-gray-800 rounded"
-              >
-                User Management
-              </a>
-            </li>
-            <li>
-              <a
-                href="/admin/orders"
-                className="block p-2 hover:bg-gray-800 rounded"
-              >
-                Orders
-              </a>
-            </li>
-            <li>
-              <a
-                href="/admin/shipping"
-                className="block p-2 hover:bg-gray-800 rounded"
-              >
-                Shipping
-              </a>
-            </li>
-            <li>
-              <a
-                href="/admin/kyc"
-                className="block p-2 hover:bg-gray-800 rounded"
-              >
-                KYC Review
-              </a>
-            </li>
-            <li>
-              <a
-                href="/admin/audit-logs"
-                className="block p-2 hover:bg-gray-800 rounded"
-              >
-                Audit Logs
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+    <AdminAccessGate>
+      <div className="admin-theme min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans relative">
+        <div className="relative flex min-h-screen">
+          <AdminSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
-    </div>
+          <div className="flex flex-1 flex-col">
+            <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#050505]/80 px-4 py-3 backdrop-blur lg:hidden">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FE7743]/10 border border-[#FE7743]/30 text-sm font-semibold text-[#FE7743] shadow-lg shadow-orange-500/30">
+                  CD
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-gray-500">
+                    Admin
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    Control Room
+                  </p>
+                </div>
+              </div>
+              <AdminMobileNav />
+            </header>
+
+            <main className="relative flex-1 overflow-y-auto">
+              <div className="relative">{children}</div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </AdminAccessGate>
   );
 }
