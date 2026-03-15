@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
+import { getSriAttributes } from "@/lib/sri";
 declare global {
   interface Window {
     google?: {
@@ -33,6 +34,11 @@ function loadScript(src: string): Promise<void> {
     }
     const script = document.createElement("script");
     script.src = src;
+    const { integrity, crossOrigin } = getSriAttributes(src);
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = crossOrigin ?? "anonymous";
+    }
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("Failed to load Google script"));
