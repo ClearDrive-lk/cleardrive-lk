@@ -15,6 +15,7 @@ from app.core.security import create_access_token, create_refresh_token, hash_to
 from app.modules.auth.models import Role
 from app.modules.auth.models import Session as UserSession
 from app.modules.auth.models import User
+from app.modules.security.models import SecurityEvent, SecurityEventType
 from jose import jwt
 
 
@@ -138,5 +139,15 @@ async def test_refresh_token_rotation_and_reuse_detection(async_client, db, mock
         sessions = db.query(UserSession).filter(UserSession.user_id == user.id).all()
         assert sessions, "Expected at least one session to exist"
         assert all(not s.is_active for s in sessions)
+
+        event = (
+            db.query(SecurityEvent)
+            .filter(
+                SecurityEvent.user_id == user.id,
+                SecurityEvent.event_type == SecurityEventType.TOKEN_REUSE,
+            )
+            .first()
+        )
+        assert event is not None
     finally:
         await delete_otp(email)
