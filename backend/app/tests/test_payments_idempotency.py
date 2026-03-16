@@ -135,6 +135,34 @@ def test_initiate_returns_409_when_lock_not_acquired(
     assert "already in progress" in response.json()["detail"]
 
 
+def test_initiate_rejects_amount_above_payhere_limit(
+    client, auth_headers, db, test_user, monkeypatch
+):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-103A")
+    order.total_cost_lkr = Decimal("17201470.00")
+    db.commit()
+    fake_redis = _FakeRedis()
+
+    async def _get_redis():
+        return fake_redis
+
+    monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    monkeypatch.setattr(
+        "app.modules.payments.routes.settings.PAYHERE_MAX_PAYMENT_AMOUNT_LKR",
+        Decimal("10000000.00"),
+    )
+
+    headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-446655440002"}
+    response = client.post(
+        "/api/v1/payments/initiate", headers=headers, json={"order_id": str(order.id)}
+    )
+
+    assert response.status_code == 400
+    assert "configured PayHere merchant limit" in response.json()["detail"]
+    assert "17,201,470.00" in response.json()["detail"]
+    assert db.query(Payment).filter(Payment.order_id == order.id).count() == 0
+
+
 def test_webhook_dedup_returns_already_processed(client, db, test_user):
     order = _create_order_for_user(db, test_user, stock_no="STOCK-104")
     existing = Payment(
