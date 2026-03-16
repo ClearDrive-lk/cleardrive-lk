@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import date, datetime
+from enum import Enum
 from decimal import Decimal
 from typing import Any
 
@@ -22,16 +23,18 @@ from sqlalchemy.orm import Session as OrmSession
 logger = logging.getLogger(__name__)
 
 
-def _dt(value: Any) -> str | None:
+def _dt(value: datetime | date | None) -> str | None:
     if value is None:
         return None
     return value.isoformat()
 
 
-def _enum(value: Any) -> str | None:
+def _enum(value: Enum | str | None) -> str | None:
     if value is None:
         return None
-    return getattr(value, "value", value)
+    if isinstance(value, Enum):
+        return str(value.value)
+    return value
 
 
 def _decimal(value: Decimal | None) -> float | None:
