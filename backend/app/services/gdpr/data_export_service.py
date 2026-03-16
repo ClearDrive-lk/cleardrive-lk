@@ -8,8 +8,8 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, datetime
-from enum import Enum
 from decimal import Decimal
+from enum import Enum
 from typing import Any
 
 from app.modules.auth.models import Session, User
