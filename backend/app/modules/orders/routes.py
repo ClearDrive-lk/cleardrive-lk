@@ -15,7 +15,7 @@ from app.core.permissions import (
     require_permission_decorator,
     verify_resource_ownership,
 )
-from app.core.security import encrypt_field
+from app.core.security import decrypt_field, encrypt_field
 from app.modules.auth.models import Role, User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.notifications.service import send_status_change_notification
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 def _get_vehicle_for_order(db: Session, vehicle_id: str):
     """Fetch only required vehicle fields in a DB-schema-compatible way."""
     query = text("""
-        SELECT id, price_jpy, status
+        SELECT id, price_jpy, status, make, model, year, chassis, stock_no
         FROM vehicles
         WHERE id = :vehicle_id
         """)
@@ -154,12 +154,22 @@ async def create_order(
     db.commit()
 
     # 7. Send confirmation email (CD-30.7)
-    vehicle_name = (
-        f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})"
-        if "make" in vehicle
-        else "Selected Vehicle"
+    stock_no = vehicle.get("stock_no", "N/A")
+    chassis_no = vehicle.get("chassis", "N/A")
+    if vehicle.get("make") and vehicle.get("model") and vehicle.get("year"):
+        vehicle_name = f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})"
+    elif stock_no and stock_no != "N/A":
+        vehicle_name = f"Stock {stock_no}"
+    else:
+        vehicle_name = "Selected Vehicle"
+    decrypted_address = decrypt_field(new_order.shipping_address) or "N/A"
+    customer_address = decrypted_address.strip() if decrypted_address else "N/A"
+    shipment_details = new_order.shipment_details
+    tracking_number = (
+        shipment_details.tracking_number
+        if shipment_details and shipment_details.tracking_number
+        else "Pending"
     )
-    chassis_no = vehicle.get("chassis_no", "N/A")
 
     email_sent_id = await notification_service.send_order_confirmation(
         email=current_user.email,
@@ -167,6 +177,9 @@ async def create_order(
         order_id=str(new_order.id),
         vehicle_name=vehicle_name,
         chassis_no=chassis_no,
+        stock_no=stock_no,
+        address=customer_address,
+        tracking_number=tracking_number,
         total_price=f"LKR {new_order.total_cost_lkr:,.2f}" if new_order.total_cost_lkr else "N/A",
     )
 

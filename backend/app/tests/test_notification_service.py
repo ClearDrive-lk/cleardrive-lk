@@ -37,6 +37,9 @@ async def test_send_order_confirmation(mock_enqueue):
         order_id="123",
         vehicle_name="Toyota Prius 2020",
         chassis_no="ZVW50-XXXXXXX",
+        stock_no="STK-0001",
+        address="No.1, Galle Road, Colombo 03",
+        tracking_number="TRK-12345",
         total_price="LKR 8,000,000",
     )
     assert email_id == "mock_email_id"
@@ -45,6 +48,9 @@ async def test_send_order_confirmation(mock_enqueue):
     assert kwargs["to_email"] == "test@example.com"
     assert "Order Confirmation #123" in kwargs["subject"]
     assert "Toyota Prius 2020" in kwargs["html_body"]
+    assert "STK-0001" in kwargs["html_body"]
+    assert "Galle Road" in kwargs["html_body"]
+    assert "TRK-12345" in kwargs["html_body"]
     assert kwargs["template_name"] == "order_confirmation.html"
     assert kwargs["template_data"]["order_id"] == "123"
     assert kwargs["priority"] == 2
