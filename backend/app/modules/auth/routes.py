@@ -37,7 +37,9 @@ from app.core.security import (
     hash_token,
     verify_password,
 )
+from app.modules.security.models import SecurityEventType, Severity
 from app.services.email import send_otp_email
+from app.services.security.event_logger import log_security_event
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -388,6 +390,18 @@ async def verify_otp(
                     "details": suspicious.get("details"),
                 },
             )
+            if "impossible_travel" in suspicious.get("reasons", []):
+                log_security_event(
+                    db,
+                    event_type=SecurityEventType.IMPOSSIBLE_TRAVEL,
+                    severity=Severity.HIGH,
+                    user=user,
+                    request=request,
+                    details={
+                        "reason": "impossible_travel",
+                        "details": suspicious.get("details", {}),
+                    },
+                )
             # Optional: await send_security_alert_email(...)
             # Optional: raise HTTPException(403, "Suspicious activity detected.")
 
@@ -855,6 +869,14 @@ async def refresh_token(
                     "ip": request.client.host if request.client else "unknown",
                     "security_event": "token_reuse",
                 },
+            )
+            log_security_event(
+                db,
+                event_type=SecurityEventType.TOKEN_REUSE,
+                severity=Severity.HIGH,
+                user_id=str(user_id),
+                request=request,
+                details={"token_jti": token_jti, "reason": "refresh_token_reuse"},
             )
 
             revoked_count = await delete_all_user_sessions(user_id)

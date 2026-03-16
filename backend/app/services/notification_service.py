@@ -67,6 +67,9 @@ class NotificationService:
         order_id: str,
         vehicle_name: str,
         chassis_no: str,
+        stock_no: str,
+        address: str,
+        tracking_number: str,
         total_price: str,
     ) -> str:
         """CD-121.2 - Send Order Confirmation."""
@@ -79,6 +82,9 @@ class NotificationService:
                 "order_id": order_id,
                 "vehicle_name": vehicle_name,
                 "chassis_no": chassis_no,
+                "stock_no": stock_no,
+                "address": address,
+                "tracking_number": tracking_number,
                 "total_price": total_price,
             },
             priority=2,  # Higher priority for order confirmation

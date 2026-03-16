@@ -1,6 +1,5 @@
-# backend/app/core/config.py
-
 import json
+from decimal import Decimal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -43,6 +42,7 @@ class Settings(BaseSettings):
     PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
     PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
     PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
+    PAYHERE_MAX_PAYMENT_AMOUNT_LKR: Decimal | None = None
 
     # Claude API
     ANTHROPIC_API_KEY: str

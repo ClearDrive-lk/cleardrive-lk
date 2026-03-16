@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense, useEffect, useCallback } from "react";
-import AuthGuard from "@/components/auth/AuthGuard";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -42,11 +41,15 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
 import { VehicleGridSkeleton } from "@/components/vehicles/VehicleCardSkeleton";
 import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
+import { useAppSelector } from "@/lib/store/store";
+import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 // --- CONSTANTS ---
 
 function VehicleCatalog() {
   const { logout, isLoading: isLogoutLoading } = useLogout();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const hasSession = Boolean(getAccessToken() || getRefreshToken());
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -299,7 +302,7 @@ function VehicleCatalog() {
       <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
-            href="/"
+            href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
             <Terminal className="w-5 h-5 text-[#FE7743]" />
@@ -343,13 +346,31 @@ function VehicleCatalog() {
               Profile
             </Link>
           </div>
-          <Button
-            onClick={logout}
-            disabled={isLogoutLoading}
-            className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-9"
-          >
-            {isLogoutLoading ? "..." : "Sign Out"}
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              onClick={logout}
+              disabled={isLogoutLoading}
+              className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-9"
+            >
+              {isLogoutLoading ? "..." : "Sign Out"}
+            </Button>
+          ) : (
+            <div className="flex gap-3">
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="text-gray-400 hover:text-white hover:bg-white/5 font-mono h-9"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-9">
+                  Get Access
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -829,9 +850,7 @@ export default function VehiclesPage() {
         </div>
       }
     >
-      <AuthGuard>
-        <VehicleCatalog />
-      </AuthGuard>
+      <VehicleCatalog />
     </Suspense>
   );
 }

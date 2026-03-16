@@ -11,6 +11,7 @@ import hashlib
 import json
 import secrets
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Mapping
 from urllib.parse import urlencode
 
@@ -141,6 +142,34 @@ def build_payhere_checkout_response(payment: Payment, order: Order, current_user
         "currency": payment.currency,
         "order_id": str(order.id),
     }
+
+
+def _format_lkr_amount(amount: Decimal) -> str:
+    return f"{amount:,.2f}"
+
+
+def _validate_payhere_payment_amount(order: Order) -> None:
+    if order.total_cost_lkr is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order total is missing, payment cannot be initiated",
+        )
+
+    max_amount = settings.PAYHERE_MAX_PAYMENT_AMOUNT_LKR
+    if max_amount is None:
+        return
+
+    order_amount = Decimal(str(order.total_cost_lkr))
+    if order_amount > max_amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Payment amount exceeds the configured PayHere merchant limit. "
+                f"Order amount: LKR {_format_lkr_amount(order_amount)}. "
+                f"Current limit: LKR {_format_lkr_amount(max_amount)}. "
+                "Please contact support to complete this payment."
+            ),
+        )
 
 
 def _form_value_str(form_data: Mapping[str, Any], key: str) -> str | None:
@@ -280,6 +309,7 @@ async def initiate_payment(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
 
     print(f"Order verified: {order.id}")
+    _validate_payhere_payment_amount(order)
 
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD

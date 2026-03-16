@@ -10,10 +10,10 @@ from datetime import datetime
 from typing import Optional
 
 from app.core.database import Base
+from app.core.models import GUID
 from sqlalchemy import JSON, DateTime
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -39,7 +39,7 @@ class EmailLog(Base):
     __tablename__ = "email_logs"
 
     # Primary Key
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
 
     # Email Details
     to_email: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -68,8 +68,8 @@ class EmailLog(Base):
     next_retry_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Metadata
-    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
-    order_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(GUID(), nullable=True)
+    order_id: Mapped[Optional[uuid.UUID]] = mapped_column(GUID(), nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

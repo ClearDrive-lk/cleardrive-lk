@@ -7,6 +7,7 @@ import { Terminal, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLogout } from "@/lib/hooks/useLogout";
+import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 /**
  * Header Component - Matching homepage design
@@ -15,6 +16,7 @@ export default function Header() {
   const pathname = usePathname();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const { logout, isLoading } = useLogout();
+  const hasSession = Boolean(getAccessToken() || getRefreshToken());
 
   const isActive = (path: string) => pathname === path;
 
@@ -23,7 +25,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
-          href="/"
+          href={isAuthenticated || hasSession ? "/dashboard" : "/"}
           className="font-bold text-xl tracking-tighter flex items-center gap-2"
         >
           <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
@@ -41,6 +43,17 @@ export default function Header() {
             }`}
           >
             Home
+          </Link>
+
+          <Link
+            href="/dashboard/vehicles"
+            className={`transition-colors ${
+              isActive("/dashboard/vehicles")
+                ? "text-white"
+                : "hover:text-white"
+            }`}
+          >
+            Vehicles
           </Link>
 
           {isAuthenticated && (
@@ -70,16 +83,6 @@ export default function Header() {
                 }`}
               >
                 Orders
-              </Link>
-              <Link
-                href="/dashboard/vehicles"
-                className={`transition-colors ${
-                  isActive("/dashboard/vehicles")
-                    ? "text-white"
-                    : "hover:text-white"
-                }`}
-              >
-                Vehicles
               </Link>
               <Link
                 href="/dashboard/kyc"

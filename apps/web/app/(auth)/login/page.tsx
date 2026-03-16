@@ -17,7 +17,6 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { removeTokens } from "@/lib/auth";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
 
@@ -29,11 +28,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  // --- AUTO-CLEANUP: Log out user when they visit Login Page ---
-  useEffect(() => {
-    // This ensures we start with a clean state every time
-    removeTokens();
-  }, []);
+  // Do not auto-clear tokens on login page.
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();

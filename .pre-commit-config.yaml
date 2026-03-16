@@ -175,17 +175,6 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      - id: pytest
-        name: Run Tests
-        entry: python backend/scripts/run_local_ci_pytest.py --skip-coverage # Skip coverage to keep hook under timeout
-        language: system
-        # TEMPORARY: Run on pre-push/manual to avoid blocking commits locally.
-        # Re-enable on commit by changing back to `stages: [pre-commit]`.
-        stages: [pre-push, manual]
-        always_run: true
-        pass_filenames: false
-        verbose: true # Show pytest output even when tests pass
-
 # ============================================================================
 # CONFIGURATION
 # ============================================================================

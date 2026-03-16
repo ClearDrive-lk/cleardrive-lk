@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import AuthGuard from "@/components/auth/AuthGuard";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -27,6 +26,8 @@ import { useQuery } from "@tanstack/react-query";
 import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
 import { CostCalculator } from "@/components/vehicles/CostCalculator";
 import OrderCreateForm from "@/components/orders/OrderCreateForm";
+import { useAppSelector } from "@/lib/store/store";
+import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 // Fetch single vehicle helper
 const useVehicle = (id: string) => {
@@ -59,6 +60,8 @@ const useVehicleImages = (id: string) => {
 function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const hasSession = Boolean(getAccessToken() || getRefreshToken());
   // Removed unused logout, isLogoutLoading
   const { data: vehicle, isLoading, isError } = useVehicle(id);
   const { data: galleryImages } = useVehicleImages(id);
@@ -137,7 +140,7 @@ function VehicleDetail() {
       <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
-            href="/"
+            href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
             <Terminal className="w-5 h-5 text-[#FE7743]" />
@@ -309,10 +312,36 @@ function VehicleDetail() {
             </div>
 
             <div id="order-create" className="scroll-mt-24">
-              <OrderCreateForm
-                vehicleId={vehicle.id}
-                estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
-              />
+              {isAuthenticated ? (
+                <OrderCreateForm
+                  vehicleId={vehicle.id}
+                  estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
+                />
+              ) : (
+                <Card className="border-white/10 bg-[#0F0F0F]">
+                  <CardContent className="p-6 space-y-3">
+                    <h3 className="text-lg font-bold text-white">
+                      Sign in to reserve this vehicle
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      You can browse inventory without an account, but you need
+                      to sign in to create an order.
+                    </p>
+                    <div className="flex gap-3">
+                      <Button asChild className="bg-[#FE7743] text-black">
+                        <Link href="/login">Sign In</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="border-white/10 text-white hover:bg-white/5"
+                      >
+                        <Link href="/register">Create Account</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Specs Table */}
@@ -485,9 +514,7 @@ export default function VehicleDetailPage() {
         </div>
       }
     >
-      <AuthGuard>
-        <VehicleDetail />
-      </AuthGuard>
+      <VehicleDetail />
     </Suspense>
   );
 }
