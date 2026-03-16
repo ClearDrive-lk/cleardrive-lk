@@ -3,6 +3,7 @@
 
 "use client";
 
+import { isAxiosError } from "axios";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -90,7 +91,22 @@ export default function PaymentButton({
       redirectToPayHere(payment_url, payhere_params);
     } catch (err) {
       console.error("Payment error:", err);
-      const message = err instanceof Error ? err.message : "Payment failed";
+      const message = isAxiosError(err)
+        ? (
+            err.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.detail ||
+          (
+            err.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.message ||
+          err.message ||
+          "Payment failed"
+        : err instanceof Error
+          ? err.message
+          : "Payment failed";
       setError(message);
       toast({
         title: "Payment failed",

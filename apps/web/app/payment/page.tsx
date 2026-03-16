@@ -1,5 +1,6 @@
 "use client";
 
+import { isAxiosError } from "axios";
 import { useState, Suspense } from "react"; // Added Suspense
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -89,8 +90,20 @@ function PaymentForm() {
       form.submit();
     } catch (err) {
       console.error("Payment error:", err);
-      const message =
-        err instanceof Error
+      const message = isAxiosError(err)
+        ? (
+            err.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.detail ||
+          (
+            err.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.message ||
+          err.message ||
+          "Payment failed. Please try again."
+        : err instanceof Error
           ? err.message
           : "Payment failed. Please try again.";
       setError(message);
