@@ -56,7 +56,8 @@ export function RoleChangeModal({
         (err as { response?: { data?: { detail?: string } } }).response?.data
           ?.detail;
       const message =
-        detail || (err instanceof Error ? err.message : "Failed to change role");
+        detail ||
+        (err instanceof Error ? err.message : "Failed to change role");
       setError(message);
     } finally {
       setLoading(false);
