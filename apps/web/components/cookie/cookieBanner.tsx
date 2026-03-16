@@ -28,6 +28,41 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
   const [visible, setVisible] = useState(false);
 
   // ===============================================================
+  // LOAD ANALYTICS IF ACCEPTED (CD-101.4)
+  // ===============================================================
+  const loadAnalytics = () => {
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+    if (typeof window === "undefined" || !gaId) return;
+
+    // Prevent duplicate script injection on repeated renders/navigation.
+    if (document.getElementById("ga-script")) {
+      window.gtag?.("config", gaId);
+      return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      ((...args: unknown[]) => {
+        window.dataLayer?.push(args);
+      });
+
+    window.gtag("js", new Date());
+    window.gtag("config", gaId);
+
+    const script = document.createElement("script");
+    script.id = "ga-script";
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    const { integrity, crossOrigin } = getSriAttributes(script.src);
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = crossOrigin ?? "anonymous";
+    }
+    script.async = true;
+    document.head.appendChild(script);
+  };
+
+  // ===============================================================
   // SHOW BANNER ONLY IF USER HASN'T CONSENTED YET
   // ===============================================================
   useEffect(() => {
@@ -87,41 +122,6 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     if (consent && onConsentChange) {
       onConsentChange(consent);
     }
-  };
-
-  // ===============================================================
-  // LOAD ANALYTICS IF ACCEPTED (CD-101.4)
-  // ===============================================================
-  const loadAnalytics = () => {
-    const gaId = process.env.NEXT_PUBLIC_GA_ID;
-    if (typeof window === "undefined" || !gaId) return;
-
-    // Prevent duplicate script injection on repeated renders/navigation.
-    if (document.getElementById("ga-script")) {
-      window.gtag?.("config", gaId);
-      return;
-    }
-
-    window.dataLayer = window.dataLayer || [];
-    window.gtag =
-      window.gtag ||
-      ((...args: unknown[]) => {
-        window.dataLayer?.push(args);
-      });
-
-    window.gtag("js", new Date());
-    window.gtag("config", gaId);
-
-    const script = document.createElement("script");
-    script.id = "ga-script";
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-    const { integrity, crossOrigin } = getSriAttributes(script.src);
-    if (integrity) {
-      script.integrity = integrity;
-      script.crossOrigin = crossOrigin ?? "anonymous";
-    }
-    script.async = true;
-    document.head.appendChild(script);
   };
 
   // Don't render if user already consented

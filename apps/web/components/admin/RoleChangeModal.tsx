@@ -47,8 +47,17 @@ export function RoleChangeModal({
       });
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to change role");
+    } catch (err: unknown) {
+      const detail =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as { response?: unknown }).response === "object" &&
+        (err as { response?: { data?: { detail?: string } } }).response?.data
+          ?.detail;
+      const message =
+        detail || (err instanceof Error ? err.message : "Failed to change role");
+      setError(message);
     } finally {
       setLoading(false);
     }

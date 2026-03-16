@@ -211,7 +211,8 @@ function InlinePreview({
             />
           ) : (
             <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
-              This file type cannot be previewed inline. Use "Open in new tab".
+              This file type cannot be previewed inline. Use &quot;Open in new
+              tab&quot;.
             </div>
           )}
         </div>
