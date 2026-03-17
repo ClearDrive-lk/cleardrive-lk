@@ -58,7 +58,8 @@ async def get_assignable_orders(
 
         if user is None or vehicle is None:
             logger.warning(
-                "Skipping assignable order with missing relations order_id=%s user_id=%s vehicle_id=%s",
+                "Skipping assignable order with missing relations order_id=%s "
+                "user_id=%s vehicle_id=%s",
                 order.id,
                 order.user_id,
                 order.vehicle_id,
@@ -107,7 +108,8 @@ async def get_pending_payment_orders(
 
         if user is None or vehicle is None:
             logger.warning(
-                "Skipping pending payment order with missing relations order_id=%s user_id=%s vehicle_id=%s",
+                "Skipping pending payment order with missing relations order_id=%s "
+                "user_id=%s vehicle_id=%s",
                 order.id,
                 order.user_id,
                 order.vehicle_id,
@@ -317,7 +319,11 @@ async def assign_exporter_to_order(
             ),
         )
 
-    existing_shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
+    existing_shipment = (
+        db.query(ShipmentDetails)
+        .filter(ShipmentDetails.order_id == order_id)
+        .first()
+    )
     if existing_shipment:
         exporter_label = (
             existing_shipment.exporter.email
@@ -439,7 +445,11 @@ async def approve_shipment(
     db: Session = Depends(get_db),
 ):
     """Approve shipment and update order status (CD-73.2 - CD-73.4)."""
-    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
+    shipment = (
+        db.query(ShipmentDetails)
+        .filter(ShipmentDetails.id == shipment_id)
+        .first()
+    )
     if not shipment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
