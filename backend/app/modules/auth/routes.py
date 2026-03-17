@@ -136,6 +136,8 @@ async def google_auth(
             detail="Invalid Google token payload",
         )
 
+    email = email.strip().lower()
+
     if not email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -152,12 +154,10 @@ async def google_auth(
             role=Role.CUSTOMER,
         )
 
-        admin_emails = [e.strip() for e in settings.ADMIN_EMAILS.split(",")]
+        admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
         if email in admin_emails:
-            existing_admin = db.query(User).filter(User.role == Role.ADMIN).first()
-            if not existing_admin:
-                user.role = Role.ADMIN
-                logger.info(f"Auto-promoted first admin: {email}")
+            user.role = Role.ADMIN
+            logger.info("Auto-promoted admin by ADMIN_EMAILS allowlist: %s", email)
 
         db.add(user)
         db.commit()
@@ -166,7 +166,11 @@ async def google_auth(
     else:
         if not user.google_id:
             user.google_id = google_id
-            db.commit()
+        admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
+        if email in admin_emails and user.role != Role.ADMIN:
+            user.role = Role.ADMIN
+            logger.info("Promoted existing user to admin by ADMIN_EMAILS allowlist: %s", email)
+        db.commit()
         logger.info(f"Existing user logged in: {email}")
 
     otp = generate_otp()
@@ -336,6 +340,13 @@ async def verify_otp(
     if not user:
         logger.error(f"User not found after OTP verification: {verify_request.email}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
+    if user.email.lower() in admin_emails and user.role != Role.ADMIN:
+        user.role = Role.ADMIN
+        db.commit()
+        db.refresh(user)
+        logger.info("Promoted user to admin by ADMIN_EMAILS allowlist: %s", user.email)
 
     await clear_failed_login_state(user, db)
 

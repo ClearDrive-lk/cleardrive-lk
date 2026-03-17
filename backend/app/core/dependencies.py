@@ -2,6 +2,7 @@
 
 from typing import cast
 
+from app.core.config import settings
 from app.core.redis import is_token_blacklisted
 from app.modules.auth.models import Role, User
 from fastapi import Depends, HTTPException, Request, status
@@ -102,6 +103,12 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account has been deleted",
         )
+
+    admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
+    if user.email.lower() in admin_emails and user.role != Role.ADMIN:
+        user.role = Role.ADMIN
+        db.commit()
+        db.refresh(user)
 
     # Store token JTI in request state for logout
     if token_jti:

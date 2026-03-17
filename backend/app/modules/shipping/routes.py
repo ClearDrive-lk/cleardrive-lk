@@ -5,7 +5,7 @@ Story: CD-72 - Shipping Document Upload
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import cast
 
 from app.core.config import settings
@@ -140,6 +140,7 @@ async def submit_shipping_details(
     shipment.tracking_number = payload.tracking_number
 
     shipment.estimated_arrival_date = payload.estimated_arrival_date
+    shipment.submitted_at = datetime.now(timezone.utc)
 
     # Update shipment status to reflect submitted details
     if shipment.status == ShipmentStatus.PENDING_SHIPMENT:

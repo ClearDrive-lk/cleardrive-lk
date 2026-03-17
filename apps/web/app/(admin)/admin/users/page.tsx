@@ -106,18 +106,22 @@ export default function AdminUsersPage() {
       header: "Role",
       cell: ({ row }) => {
         const roleColors: Record<string, string> = {
-          CUSTOMER: "bg-blue-100 text-blue-800",
-          ADMIN: "bg-red-100 text-red-800",
-          EXPORTER: "bg-green-100 text-green-800",
-          CLEARING_AGENT: "bg-yellow-100 text-yellow-800",
-          FINANCE_PARTNER: "bg-purple-100 text-purple-800",
+          CUSTOMER: "bg-blue-500/10 text-blue-200 border border-blue-500/20",
+          ADMIN: "bg-red-500/10 text-red-200 border border-red-500/20",
+          EXPORTER:
+            "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
+          CLEARING_AGENT:
+            "bg-amber-500/10 text-amber-200 border border-amber-500/20",
+          FINANCE_PARTNER:
+            "bg-purple-500/10 text-purple-200 border border-purple-500/20",
         };
 
         const role = row.original.role;
         return (
           <span
             className={`px-2 py-1 rounded text-xs font-semibold ${
-              roleColors[role] || "bg-gray-100 text-gray-800"
+              roleColors[role] ||
+              "bg-white/10 text-gray-200 border border-white/10"
             }`}
           >
             {role}
@@ -136,9 +140,10 @@ export default function AdminUsersPage() {
         }
 
         const statusColors: Record<string, string> = {
-          PENDING: "bg-yellow-100 text-yellow-800",
-          APPROVED: "bg-green-100 text-green-800",
-          REJECTED: "bg-red-100 text-red-800",
+          PENDING: "bg-amber-500/10 text-amber-200 border border-amber-500/20",
+          APPROVED:
+            "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
+          REJECTED: "bg-red-500/10 text-red-200 border border-red-500/20",
         };
 
         return (
@@ -168,7 +173,7 @@ export default function AdminUsersPage() {
             onClick={() =>
               setRoleChangeModal({ open: true, user: row.original })
             }
-            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+            className="px-3 py-1 rounded text-sm bg-[#FE7743] text-black hover:bg-[#FE7743]/90"
           >
             Change Role
           </button>
@@ -176,7 +181,7 @@ export default function AdminUsersPage() {
             onClick={() =>
               (window.location.href = `/admin/users/${row.original.id}`)
             }
-            className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200"
+            className="px-3 py-1 rounded text-sm border border-white/10 text-gray-200 hover:bg-white/10"
           >
             View
           </button>
@@ -198,11 +203,11 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-white">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">User Management</h1>
-        <p className="text-gray-600">Manage user accounts and permissions</p>
+        <p className="text-gray-400">Manage user accounts and permissions</p>
       </div>
 
       {/* Filters */}
@@ -216,7 +221,7 @@ export default function AdminUsersPage() {
             setSearch(e.target.value);
             setPage(1); // Reset to first page
           }}
-          className="flex-1 px-4 py-2 border rounded"
+          className="flex-1 rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-gray-200 placeholder:text-gray-500"
         />
 
         {/* Role Filter */}
@@ -226,7 +231,7 @@ export default function AdminUsersPage() {
             setRoleFilter(e.target.value);
             setPage(1);
           }}
-          className="px-4 py-2 border rounded"
+          className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-gray-200"
         >
           <option value="">All Roles</option>
           <option value="CUSTOMER">Customer</option>
@@ -243,7 +248,7 @@ export default function AdminUsersPage() {
             setKycFilter(e.target.value);
             setPage(1);
           }}
-          className="px-4 py-2 border rounded"
+          className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-gray-200"
         >
           <option value="">All KYC Status</option>
           <option value="NONE">Not Submitted</option>
@@ -254,24 +259,24 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-gray-400">
         Showing {users.length} of {total} users
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12">Loading...</div>
+        <div className="text-center py-12 text-gray-400">Loading...</div>
       ) : (
         <>
-          <div className="border rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+            <table className="min-w-full divide-y divide-white/10">
+              <thead className="bg-white/5">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-white/5"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <div className="flex items-center gap-2">
@@ -282,8 +287,8 @@ export default function AdminUsersPage() {
                           {header.column.getIsSorted() && (
                             <span>
                               {header.column.getIsSorted() === "desc"
-                                ? "↓"
-                                : "↑"}
+                                ? "v"
+                                : "^"}
                             </span>
                           )}
                         </div>
@@ -292,9 +297,9 @@ export default function AdminUsersPage() {
                   </tr>
                 ))}
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-white/10">
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50">
+                  <tr key={row.id} className="hover:bg-white/5">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
                         {flexRender(
@@ -311,21 +316,21 @@ export default function AdminUsersPage() {
 
           {/* Pagination */}
           <div className="mt-4 flex justify-between items-center">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-400">
               Page {page} of {totalPages}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="px-4 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-white/10 text-gray-200 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
-                className="px-4 py-2 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-white/10 text-gray-200 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

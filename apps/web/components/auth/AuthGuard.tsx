@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/store/store";
 import { setCredentials } from "@/lib/store/features/auth/authSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   getAccessToken,
   getPersistAccessPreference,
@@ -20,6 +20,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
@@ -53,20 +54,23 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
               user: { id: string; email: string; name: string; role: string };
             };
 
+            const isAdmin = data.user.role?.toLowerCase() === "admin";
             dispatch(
               setCredentials({
                 user: {
                   id: data.user.id,
                   email: data.user.email,
                   name: data.user.name || "User",
-                  role:
-                    data.user.role?.toLowerCase() === "admin"
-                      ? "admin"
-                      : "user",
+                  role: isAdmin ? "admin" : "user",
                 },
                 token: accessToken,
               }),
             );
+
+            if (isAdmin && pathname.startsWith("/dashboard")) {
+              router.replace("/admin/dashboard");
+              return;
+            }
 
             if (!isCancelled) {
               setIsChecking(false);
@@ -106,18 +110,23 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           { persistAccess: getPersistAccessPreference() },
         );
 
+        const isAdmin = data.user.role?.toLowerCase() === "admin";
         dispatch(
           setCredentials({
             user: {
               id: data.user.id,
               email: data.user.email,
               name: data.user.name || "User",
-              role:
-                data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
+              role: isAdmin ? "admin" : "user",
             },
             token: data.access_token,
           }),
         );
+
+        if (isAdmin && pathname.startsWith("/dashboard")) {
+          router.replace("/admin/dashboard");
+          return;
+        }
       } catch {
         removeTokens();
         router.push("/login");
@@ -133,7 +142,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => {
       isCancelled = true;
     };
-  }, [isAuthenticated, dispatch, router]);
+  }, [isAuthenticated, dispatch, router, pathname]);
 
   // Don't render anything while checking to avoid flash
   if (isChecking) {

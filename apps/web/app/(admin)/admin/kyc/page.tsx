@@ -20,18 +20,19 @@ function extractionBadge(item: PendingKycItem) {
   if (item.needs_manual_extraction) {
     return {
       label: "Manual Review Required",
-      className: "bg-amber-100 text-amber-800",
+      className: "bg-amber-500/10 text-amber-200 border border-amber-500/20",
     };
   }
   if (item.extraction_method === "manual") {
     return {
       label: "Manually Extracted",
-      className: "bg-sky-100 text-sky-800",
+      className: "bg-sky-500/10 text-sky-200 border border-sky-500/20",
     };
   }
   return {
     label: `Auto Extracted (${item.extraction_method})`,
-    className: "bg-emerald-100 text-emerald-800",
+    className:
+      "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
   };
 }
 
@@ -66,125 +67,123 @@ export default function AdminKycPage() {
   }, [loadItems]);
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className="min-h-screen p-6 text-white">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-600">
+        <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#FE7743]">
             CD-52 KYC Admin Review
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+          <h1 className="mt-2 text-3xl font-semibold text-white">
             Pending KYC Reviews
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-gray-400">
             Review pending KYC submissions, compare extracted fields, and
             approve or reject with a reason when needed.
           </p>
         </header>
 
         <section className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Queue Size</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Queue Size</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
               {items.length}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Auto Extracted</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Auto Extracted</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
               {items.filter((item) => item.auto_extracted).length}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Manual Review Needed</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Manual Review Needed</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
               {items.filter((item) => item.needs_manual_extraction).length}
             </p>
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <section className="rounded-3xl border border-white/10 bg-white/5 shadow-sm">
+          <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">
-                Review Queue
-              </h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-xl font-semibold text-white">Review Queue</h2>
+              <p className="text-sm text-gray-400">
                 Oldest submissions are shown first.
               </p>
             </div>
             <button
               type="button"
               onClick={() => void loadItems()}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-white/10"
             >
               Refresh
             </button>
           </div>
 
           {loading ? (
-            <div className="px-6 py-16 text-center text-slate-500">
+            <div className="px-6 py-16 text-center text-gray-400">
               Loading KYC queue...
             </div>
           ) : error ? (
-            <div className="px-6 py-16 text-center text-red-600">{error}</div>
+            <div className="px-6 py-16 text-center text-red-300">{error}</div>
           ) : items.length === 0 ? (
-            <div className="px-6 py-16 text-center text-slate-500">
+            <div className="px-6 py-16 text-center text-gray-400">
               No KYC submissions are waiting for review.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50">
+              <table className="min-w-full divide-y divide-white/10 text-sm">
+                <thead className="bg-white/5">
                   <tr>
-                    <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                       Extraction
                     </th>
-                    <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                       Submitted
                     </th>
-                    <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                       Action
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-white/10">
                   {items.map((item) => {
                     const badge = extractionBadge(item);
                     return (
-                      <tr key={item.id} className="hover:bg-slate-50/80">
+                      <tr key={item.id} className="hover:bg-white/5">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-slate-900">
+                          <div className="font-medium text-white">
                             {item.user_name}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-gray-500">
                             {item.user_email}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                          <span className="inline-flex rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
                             {item.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">
+                        <td className="px-6 py-4 text-gray-300">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badge.className}`}
                           >
                             {badge.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">
+                        <td className="px-6 py-4 text-gray-300">
                           {new Date(item.created_at).toLocaleString()}
                         </td>
                         <td className="px-6 py-4">
                           <a
                             href={`/admin/kyc/${item.id}`}
-                            className="inline-flex rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+                            className="inline-flex rounded-xl bg-[#FE7743] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#FE7743]/90"
                           >
                             Review
                           </a>

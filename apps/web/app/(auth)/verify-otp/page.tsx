@@ -125,13 +125,14 @@ function OTPForm() {
         { persistAccess: keepSignedIn },
       );
 
+      const isAdmin = data.user.role?.toLowerCase() === "admin";
       dispatch(
         setCredentials({
           user: {
             id: data.user.id,
             email: data.user.email,
             name: data.user.name || "User",
-            role: data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
+            role: isAdmin ? "admin" : "user",
           },
           token: data.access_token,
         }),
@@ -141,7 +142,9 @@ function OTPForm() {
         sessionStorage.removeItem("otp_email");
       }
 
-      setTimeout(() => router.push("/dashboard"), 800);
+      setTimeout(() => {
+        router.push(isAdmin ? "/admin/dashboard" : "/dashboard");
+      }, 800);
     } catch (err: unknown) {
       const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;
       setError(
