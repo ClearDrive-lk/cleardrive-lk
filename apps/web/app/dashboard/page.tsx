@@ -12,10 +12,12 @@ import {
   TrendingUp,
   CheckCircle2,
   Terminal,
+  Ship,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLogout } from "@/lib/hooks/useLogout";
+import { normalizeRole } from "@/lib/roles";
 
 /**
  * Dashboard Page - Exact homepage template
@@ -23,6 +25,8 @@ import { useLogout } from "@/lib/hooks/useLogout";
 export default function DashboardPage() {
   const { user } = useAppSelector((state) => state.auth);
   const { logout, isLoading } = useLogout();
+  const role = normalizeRole(user?.role);
+  const showExporterEntry = role === "EXPORTER" || role === "ADMIN";
 
   return (
     <AuthGuard>
@@ -119,6 +123,26 @@ export default function DashboardPage() {
               Your personal import terminal dashboard. Monitor clearances, track
               shipments, and manage orders in real-time.
             </p>
+
+            {showExporterEntry && (
+              <div className="mb-10 flex flex-wrap items-center gap-4">
+                <Button
+                  asChild
+                  className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold gap-2"
+                >
+                  <Link href="/exporter">
+                    <Ship className="w-4 h-4" />
+                    Open Exporter Terminal
+                  </Link>
+                </Button>
+                <Badge
+                  variant="outline"
+                  className="border-[#FE7743]/30 text-[#FE7743] font-mono"
+                >
+                  EXPORTER ACCESS
+                </Badge>
+              </div>
+            )}
 
             {/* Quick Links Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">

@@ -11,6 +11,7 @@ import {
   removeTokens,
   saveTokens,
 } from "@/lib/auth";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
 
 /**
  * AuthGuard Component
@@ -54,24 +55,34 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
               user: { id: string; email: string; name: string; role: string };
             };
 
-            const isAdmin = data.user.role?.toLowerCase() === "admin";
+            const role = normalizeRole(data.user.role);
             dispatch(
               setCredentials({
                 user: {
                   id: data.user.id,
                   email: data.user.email,
                   name: data.user.name || "User",
-                  role: isAdmin ? "admin" : "user",
+                  role,
                 },
                 token: accessToken,
               }),
             );
 
-            if (isAdmin && pathname.startsWith("/dashboard")) {
-              router.replace("/admin/dashboard");
+            if (pathname.startsWith("/dashboard")) {
+              const destination = roleHomePath(role);
+              if (destination !== "/dashboard") {
+                router.replace(destination);
+                return;
+              }
+            }
+            if (
+              pathname.startsWith("/exporter") &&
+              role !== "EXPORTER" &&
+              role !== "ADMIN"
+            ) {
+              router.replace(roleHomePath(role));
               return;
             }
-
             if (!isCancelled) {
               setIsChecking(false);
             }
@@ -110,21 +121,32 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           { persistAccess: getPersistAccessPreference() },
         );
 
-        const isAdmin = data.user.role?.toLowerCase() === "admin";
+        const role = normalizeRole(data.user.role);
         dispatch(
           setCredentials({
             user: {
               id: data.user.id,
               email: data.user.email,
               name: data.user.name || "User",
-              role: isAdmin ? "admin" : "user",
+              role,
             },
             token: data.access_token,
           }),
         );
 
-        if (isAdmin && pathname.startsWith("/dashboard")) {
-          router.replace("/admin/dashboard");
+        if (pathname.startsWith("/dashboard")) {
+          const destination = roleHomePath(role);
+          if (destination !== "/dashboard") {
+            router.replace(destination);
+            return;
+          }
+        }
+        if (
+          pathname.startsWith("/exporter") &&
+          role !== "EXPORTER" &&
+          role !== "ADMIN"
+        ) {
+          router.replace(roleHomePath(role));
           return;
         }
       } catch {

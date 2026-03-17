@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { setCredentials } from "@/lib/store/features/auth/authSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/store/store";
 import { getAccessToken, getRefreshToken, saveTokens } from "@/lib/auth";
+import { normalizeRole } from "@/lib/roles";
 
 export default function AuthBootstrap() {
   const dispatch = useAppDispatch();
@@ -40,10 +41,7 @@ export default function AuthBootstrap() {
                   id: data.user.id,
                   email: data.user.email,
                   name: data.user.name || "User",
-                  role:
-                    data.user.role?.toLowerCase() === "admin"
-                      ? "admin"
-                      : "user",
+                  role: normalizeRole(data.user.role),
                 },
                 token: accessToken,
               }),
@@ -82,8 +80,7 @@ export default function AuthBootstrap() {
                 id: data.user.id,
                 email: data.user.email,
                 name: data.user.name || "User",
-                role:
-                  data.user.role?.toLowerCase() === "admin" ? "admin" : "user",
+                role: normalizeRole(data.user.role),
               },
               token: data.access_token,
             }),

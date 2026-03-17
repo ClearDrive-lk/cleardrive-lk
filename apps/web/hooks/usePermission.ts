@@ -24,6 +24,13 @@ export enum Permission {
   // Admin
   MANAGE_USERS = "manage_users",
 
+  // Exporter / Shipping
+  VIEW_ASSIGNED_ORDERS = "view_assigned_orders",
+  UPDATE_SHIPPING_DETAILS = "update_shipping_details",
+  UPLOAD_SHIPMENT_DOCUMENTS = "upload_shipment_documents",
+  VIEW_EXPORT_TASKS = "view_export_tasks",
+  VIEW_EXPORT_HISTORY = "view_export_history",
+
   // ... add all other permissions
 }
 
@@ -39,7 +46,11 @@ const ROLE_PERMISSIONS: Record<string, Set<Permission>> = {
   ADMIN: new Set(Object.values(Permission)), // All permissions
 
   EXPORTER: new Set([
-    // ... exporter permissions
+    Permission.VIEW_ASSIGNED_ORDERS,
+    Permission.UPDATE_SHIPPING_DETAILS,
+    Permission.UPLOAD_SHIPMENT_DOCUMENTS,
+    Permission.VIEW_EXPORT_TASKS,
+    Permission.VIEW_EXPORT_HISTORY,
   ]),
 
   // ... other roles
