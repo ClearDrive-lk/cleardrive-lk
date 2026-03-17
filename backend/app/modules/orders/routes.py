@@ -61,9 +61,7 @@ def _customer_must_own_order(order: Order, current_user: User) -> bool:
     return current_user.role == Role.CUSTOMER and order.user_id != current_user.id
 
 
-def _exporter_must_be_assigned(
-    order_id: str, current_user: User, db: Session
-) -> bool:
+def _exporter_must_be_assigned(order_id: str, current_user: User, db: Session) -> bool:
     if current_user.role != Role.EXPORTER:
         return False
 
@@ -226,8 +224,9 @@ async def list_orders(
     elif current_user.role == Role.EXPORTER:
         from app.modules.shipping.models import ShipmentDetails
 
-        query = query.join(ShipmentDetails, ShipmentDetails.order_id == Order.id).filter(
-            ShipmentDetails.exporter_id == current_user.id
+        query = (
+            query.join(ShipmentDetails, ShipmentDetails.order_id == Order.id)
+            .filter(ShipmentDetails.exporter_id == current_user.id)
         )
 
     return query.order_by(Order.created_at.desc()).all()

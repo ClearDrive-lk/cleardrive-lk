@@ -12,7 +12,11 @@ from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
 from app.modules.notifications.service import send_status_change_notification
-from app.modules.orders.models import Order, OrderStatus, PaymentStatus as OrderPaymentStatus
+from app.modules.orders.models import (
+    Order,
+    OrderStatus,
+    PaymentStatus as OrderPaymentStatus,
+)
 from app.modules.shipping.models import DocumentType, ShipmentDetails, ShipmentStatus
 from app.modules.shipping.schemas import (
     AssignableOrderItem,
@@ -155,11 +159,15 @@ async def confirm_payment_for_order(
     if order.status not in {OrderStatus.CREATED, OrderStatus.PAYMENT_CONFIRMED}:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order status must be CREATED or PAYMENT_CONFIRMED. Current: {order.status}",
+            detail=(
+                "Order status must be CREATED or PAYMENT_CONFIRMED. "
+                f"Current: {order.status}"
+            ),
         )
 
-    if order.payment_status == OrderPaymentStatus.COMPLETED and (
-        order.status == OrderStatus.PAYMENT_CONFIRMED
+    if (
+        order.payment_status == OrderPaymentStatus.COMPLETED
+        and order.status == OrderStatus.PAYMENT_CONFIRMED
     ):
         user = db.query(User).filter(User.id == order.user_id).first()
         vehicle = db.query(Vehicle).filter(Vehicle.id == order.vehicle_id).first()
@@ -303,12 +311,13 @@ async def assign_exporter_to_order(
     if order.status != OrderStatus.PAYMENT_CONFIRMED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order must be in PAYMENT_CONFIRMED status. Current: {order.status}",
+            detail=(
+                "Order must be in PAYMENT_CONFIRMED status. "
+                f"Current: {order.status}"
+            ),
         )
 
-    existing_shipment = (
-        db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
-    )
+    existing_shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
     if existing_shipment:
         exporter_label = (
             existing_shipment.exporter.email
@@ -330,7 +339,10 @@ async def assign_exporter_to_order(
     if exporter.role != Role.EXPORTER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"User {exporter.email} is not an exporter. Role: {exporter.role}",
+            detail=(
+                f"User {exporter.email} is not an exporter. "
+                f"Role: {exporter.role}"
+            ),
         )
 
     shipment = ShipmentDetails(order_id=order.id, assigned_exporter_id=exporter.id)
