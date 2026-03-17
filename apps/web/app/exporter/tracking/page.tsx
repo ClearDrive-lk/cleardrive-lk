@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Radar, RefreshCcw, PackageCheck, ArrowRight } from "lucide-react";
@@ -27,19 +27,9 @@ export default function ExporterTrackingPage() {
   const searchParams = useSearchParams();
   const orderParam = searchParams.get("orderId");
   const { orders, loading, error, reload } = useAssignedOrders();
-  const [selectedOrderId, setSelectedOrderId] = useState(orderParam ?? "");
+  const [manualOrderId, setManualOrderId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!selectedOrderId && orders.length > 0) {
-      setSelectedOrderId(orders[0].id);
-    }
-  }, [orders, selectedOrderId]);
-
-  useEffect(() => {
-    if (orderParam) {
-      setSelectedOrderId(orderParam);
-    }
-  }, [orderParam]);
+  const selectedOrderId = manualOrderId ?? orderParam ?? orders[0]?.id ?? "";
 
   const selectedOrder =
     orders.find((order) => order.id === selectedOrderId) ?? null;
@@ -118,7 +108,7 @@ export default function ExporterTrackingPage() {
                     <button
                       key={order.id}
                       type="button"
-                      onClick={() => setSelectedOrderId(order.id)}
+                      onClick={() => setManualOrderId(order.id)}
                       className={`w-full rounded-2xl border p-4 text-left transition-colors ${
                         selected
                           ? "border-[#FE7743]/40 bg-[#FE7743]/10"

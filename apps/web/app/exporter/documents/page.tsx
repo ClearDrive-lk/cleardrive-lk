@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FileText, RefreshCcw } from "lucide-react";
 
@@ -13,24 +13,15 @@ export default function ExporterDocumentsPage() {
   const searchParams = useSearchParams();
   const orderParam = searchParams.get("orderId");
   const { orders, loading, error, reload } = useAssignedOrders();
-  const [selectedOrderId, setSelectedOrderId] = useState(orderParam ?? "");
-  const [allUploaded, setAllUploaded] = useState(false);
+  const [manualOrderId, setManualOrderId] = useState<string | null>(null);
+  const [uploadState, setUploadState] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    if (!selectedOrderId && orders.length > 0) {
-      setSelectedOrderId(orders[0].id);
-    }
-  }, [orders, selectedOrderId]);
+  const selectedOrderId = manualOrderId ?? orderParam ?? orders[0]?.id ?? "";
 
-  useEffect(() => {
-    if (orderParam) {
-      setSelectedOrderId(orderParam);
-    }
-  }, [orderParam]);
-
-  useEffect(() => {
-    setAllUploaded(false);
-  }, [selectedOrderId]);
+  const allUploaded = useMemo(() => {
+    if (!selectedOrderId) return false;
+    return uploadState[selectedOrderId] ?? false;
+  }, [selectedOrderId, uploadState]);
 
   return (
     <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
@@ -95,7 +86,10 @@ export default function ExporterDocumentsPage() {
           <select
             className="h-11 w-full rounded-xl bg-black/60 border border-white/10 px-3 text-sm text-white"
             value={selectedOrderId}
-            onChange={(e) => setSelectedOrderId(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setManualOrderId(next ? next : null);
+            }}
             disabled={loading && !orders.length}
           >
             <option value="">Select an order</option>
@@ -118,7 +112,13 @@ export default function ExporterDocumentsPage() {
           <div className="rounded-[24px] border border-white/10 bg-white p-6">
             <ShippingDocumentUpload
               orderId={selectedOrderId}
-              onAllUploaded={() => setAllUploaded(true)}
+              onAllUploaded={() => {
+                if (!selectedOrderId) return;
+                setUploadState((prev) => ({
+                  ...prev,
+                  [selectedOrderId]: true,
+                }));
+              }}
             />
           </div>
         )}

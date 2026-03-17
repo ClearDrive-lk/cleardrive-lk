@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -59,30 +59,33 @@ export default function OrderDetailPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const { toast } = useToast();
 
-  const loadOrder = async ({ silent = false }: { silent?: boolean } = {}) => {
-    if (!id) return;
-    if (!silent) {
-      setLoading(true);
-      setError(null);
-    }
-
-    try {
-      const { data } = await apiClient.get<OrderDetail>(`/orders/${id}`);
-      setOrder(data);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load order details.";
-      setError(message);
-    } finally {
+  const loadOrder = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!id) return;
       if (!silent) {
-        setLoading(false);
+        setLoading(true);
+        setError(null);
       }
-    }
-  };
+
+      try {
+        const { data } = await apiClient.get<OrderDetail>(`/orders/${id}`);
+        setOrder(data);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load order details.";
+        setError(message);
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [id],
+  );
 
   useEffect(() => {
     void loadOrder();
-  }, [id]);
+  }, [loadOrder]);
 
   useEffect(() => {
     const loadVehicle = async () => {
