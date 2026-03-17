@@ -162,8 +162,7 @@ async def confirm_payment_for_order(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                "Order status must be CREATED or PAYMENT_CONFIRMED. "
-                f"Current: {order.status}"
+                "Order status must be CREATED or PAYMENT_CONFIRMED. " f"Current: {order.status}"
             ),
         )
 
@@ -276,9 +275,7 @@ async def confirm_payment_for_order(
         vehicle_label=f"{vehicle.make} {vehicle.model} ({vehicle.year})",
         status=order.status.value,
         payment_status=order.payment_status.value,
-        total_cost_lkr=(
-            float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
-        ),
+        total_cost_lkr=(float(order.total_cost_lkr) if order.total_cost_lkr is not None else None),
         created_at=order.created_at,
     )
 
@@ -313,16 +310,11 @@ async def assign_exporter_to_order(
     if order.status != OrderStatus.PAYMENT_CONFIRMED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Order must be in PAYMENT_CONFIRMED status. "
-                f"Current: {order.status}"
-            ),
+            detail=("Order must be in PAYMENT_CONFIRMED status. " f"Current: {order.status}"),
         )
 
     existing_shipment = (
-        db.query(ShipmentDetails)
-        .filter(ShipmentDetails.order_id == order_id)
-        .first()
+        db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
     )
     if existing_shipment:
         exporter_label = (
@@ -345,10 +337,7 @@ async def assign_exporter_to_order(
     if exporter.role != Role.EXPORTER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"User {exporter.email} is not an exporter. "
-                f"Role: {exporter.role}"
-            ),
+            detail=(f"User {exporter.email} is not an exporter. " f"Role: {exporter.role}"),
         )
 
     shipment = ShipmentDetails(order_id=order.id, assigned_exporter_id=exporter.id)
@@ -445,11 +434,7 @@ async def approve_shipment(
     db: Session = Depends(get_db),
 ):
     """Approve shipment and update order status (CD-73.2 - CD-73.4)."""
-    shipment = (
-        db.query(ShipmentDetails)
-        .filter(ShipmentDetails.id == shipment_id)
-        .first()
-    )
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
     if not shipment:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

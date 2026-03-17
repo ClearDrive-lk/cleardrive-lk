@@ -222,9 +222,8 @@ async def list_orders(
     elif current_user.role == Role.EXPORTER:
         from app.modules.shipping.models import ShipmentDetails
 
-        query = (
-            query.join(ShipmentDetails, ShipmentDetails.order_id == Order.id)
-            .filter(ShipmentDetails.exporter_id == current_user.id)
+        query = query.join(ShipmentDetails, ShipmentDetails.order_id == Order.id).filter(
+            ShipmentDetails.exporter_id == current_user.id
         )
 
     return query.order_by(Order.created_at.desc()).all()
