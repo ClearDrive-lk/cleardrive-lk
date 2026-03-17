@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, ShieldCheck } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 interface ExportHistoryResponse {
   daily_limit: number;
@@ -18,12 +19,14 @@ export function GDPRDataExport() {
 
   const loadQuota = async () => {
     try {
+      const hasSession = Boolean(getAccessToken() || getRefreshToken());
+      if (!hasSession) return;
       const res = await apiClient.get<ExportHistoryResponse>(
         "/gdpr/export/history",
       );
       setQuota(res.data);
     } catch (err) {
-      console.error("Failed to load GDPR export quota", err);
+      setError("GDPR export service is unavailable right now.");
     }
   };
 
@@ -48,6 +51,11 @@ export function GDPRDataExport() {
     setError(null);
 
     try {
+      const hasSession = Boolean(getAccessToken() || getRefreshToken());
+      if (!hasSession) {
+        setError("Please sign in again to export your data.");
+        return;
+      }
       const response = await apiClient.get("/gdpr/export", {
         responseType: "blob",
       });
@@ -71,7 +79,6 @@ export function GDPRDataExport() {
       await loadQuota();
     } catch (err: unknown) {
       setError("Export failed. Please try again or contact support.");
-      console.error("GDPR export failed", err);
     } finally {
       setLoading(false);
     }
@@ -97,7 +104,7 @@ export function GDPRDataExport() {
 
       {quota && (
         <div className="mt-4 text-xs font-mono text-gray-400">
-          Daily limit: {quota.used_today}/{quota.daily_limit} used ·{" "}
+          Daily limit: {quota.used_today}/{quota.daily_limit} used -{" "}
           {quota.remaining_today} remaining today
         </div>
       )}

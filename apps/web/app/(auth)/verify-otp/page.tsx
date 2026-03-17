@@ -23,6 +23,7 @@ import {
   saveTokens,
   setPersistAccessPreference,
 } from "@/lib/auth";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
 function OTPForm() {
@@ -125,14 +126,14 @@ function OTPForm() {
         { persistAccess: keepSignedIn },
       );
 
-      const isAdmin = data.user.role?.toLowerCase() === "admin";
+      const role = normalizeRole(data.user.role);
       dispatch(
         setCredentials({
           user: {
             id: data.user.id,
             email: data.user.email,
             name: data.user.name || "User",
-            role: isAdmin ? "admin" : "user",
+            role,
           },
           token: data.access_token,
         }),
@@ -143,7 +144,7 @@ function OTPForm() {
       }
 
       setTimeout(() => {
-        router.push(isAdmin ? "/admin/dashboard" : "/dashboard");
+        router.push(roleHomePath(role));
       }, 800);
     } catch (err: unknown) {
       const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;

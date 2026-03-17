@@ -61,6 +61,23 @@ def _customer_must_own_order(order: Order, current_user: User) -> bool:
     return current_user.role == Role.CUSTOMER and order.user_id != current_user.id
 
 
+def _exporter_must_be_assigned(
+    order_id: str, current_user: User, db: Session
+) -> bool:
+    if current_user.role != Role.EXPORTER:
+        return False
+
+    from app.modules.shipping.models import ShipmentDetails
+
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
+    if not shipment or shipment.exporter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only access orders assigned to you",
+        )
+    return True
+
+
 @router.post("", response_model=OrderResponse, status_code=201)
 async def create_order(
     request: Request,
@@ -192,7 +209,11 @@ async def create_order(
 
 
 @router.get("", response_model=list[OrderListItem])
-@require_permission_decorator(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
+@require_permission_decorator(
+    Permission.VIEW_OWN_ORDERS,
+    Permission.VIEW_ALL_ORDERS,
+    Permission.VIEW_ASSIGNED_ORDERS,
+)
 async def list_orders(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -202,13 +223,22 @@ async def list_orders(
 
     if current_user.role == Role.CUSTOMER:
         query = query.filter(Order.user_id == current_user.id)
+    elif current_user.role == Role.EXPORTER:
+        from app.modules.shipping.models import ShipmentDetails
+
+        query = query.join(ShipmentDetails, ShipmentDetails.order_id == Order.id).filter(
+            ShipmentDetails.exporter_id == current_user.id
+        )
 
     return query.order_by(Order.created_at.desc()).all()
 
 
 @router.get("/{order_id}")
-# @require_permission(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
-@require_permission_decorator(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
+@require_permission_decorator(
+    Permission.VIEW_OWN_ORDERS,
+    Permission.VIEW_ALL_ORDERS,
+    Permission.VIEW_ASSIGNED_ORDERS,
+)
 async def get_order(
     order_id: str,
     current_user: User = Depends(get_current_active_user),
@@ -227,7 +257,11 @@ async def get_order(
     if has_permission(current_user, Permission.VIEW_ALL_ORDERS):
         return order
 
-    # Otherwise, verify ownership
+    if current_user.role == Role.EXPORTER:
+        _exporter_must_be_assigned(order_id, current_user, db)
+        return order
+
+    # Otherwise, verify ownership (customer path)
     verify_resource_ownership(current_user, order.user_id)
 
     return order
@@ -558,9 +592,10 @@ async def get_order_timeline(
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
-    # Customers can only see their own orders. Staff roles can view all orders.
+    # Customers can only see their own orders. Exporters can see assigned orders.
     if _customer_must_own_order(order, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    _exporter_must_be_assigned(order_id, current_user, db)
 
     # Get timeline
     history_records = status_history_service.get_order_timeline(db, order_id)
@@ -619,6 +654,7 @@ async def stream_order_timeline(
 
     if _customer_must_own_order(order, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    _exporter_must_be_assigned(order_id, current_user, db)
 
     def snapshot() -> dict[str, str | int]:
         history_count = (
@@ -689,12 +725,13 @@ async def get_order_allowed_transitions(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found"
         )
 
-    # Customers can only inspect their own orders. Staff roles can inspect all.
+    # Customers can only inspect their own orders. Exporters can inspect assigned orders.
     if _customer_must_own_order(order, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to view this order",
         )
+    _exporter_must_be_assigned(order_id, current_user, db)
 
     # Get allowed next states
     allowed_states = get_allowed_next_states(order.status)
