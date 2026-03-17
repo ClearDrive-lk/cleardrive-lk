@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 import { useAssignedOrders } from "@/lib/hooks/useAssignedOrders";
 
 const statusTone: Record<string, string> = {
-  ASSIGNED_TO_EXPORTER: "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
+  ASSIGNED_TO_EXPORTER:
+    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
   AWAITING_SHIPMENT_CONFIRMATION:
     "border-orange-500/20 bg-orange-500/10 text-orange-200",
   SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
@@ -176,9 +177,7 @@ export default function ExporterDashboardPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-400">
-                  <span>
-                    {new Date(order.created_at).toLocaleDateString()}
-                  </span>
+                  <span>{new Date(order.created_at).toLocaleDateString()}</span>
                   <span>
                     {order.total_cost_lkr != null
                       ? `LKR ${order.total_cost_lkr.toLocaleString()}`

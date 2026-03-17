@@ -108,9 +108,7 @@ export default function ExporterNav() {
             <Activity className="h-3 w-3" />
             API {health === "checking" ? "CHECKING" : health.toUpperCase()}
             {lastChecked && (
-              <span className="text-[10px] text-gray-500">
-                {lastChecked}
-              </span>
+              <span className="text-[10px] text-gray-500">{lastChecked}</span>
             )}
           </div>
           <Button

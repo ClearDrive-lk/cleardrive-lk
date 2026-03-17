@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {
-  Radar,
-  RefreshCcw,
-  PackageCheck,
-  ArrowRight,
-} from "lucide-react";
+import { Radar, RefreshCcw, PackageCheck, ArrowRight } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +11,8 @@ import { OrderTimeline } from "@/components/ui/OrderTimeline";
 import { useAssignedOrders } from "@/lib/hooks/useAssignedOrders";
 
 const statusTone: Record<string, string> = {
-  ASSIGNED_TO_EXPORTER: "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
+  ASSIGNED_TO_EXPORTER:
+    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
   AWAITING_SHIPMENT_CONFIRMATION:
     "border-orange-500/20 bg-orange-500/10 text-orange-200",
   SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
@@ -223,8 +219,11 @@ export default function ExporterTrackingPage() {
                         variant="outline"
                         className="border-white/10 text-white hover:bg-white/5"
                       >
-                        <Link href={`/exporter/shipping?orderId=${selectedOrder.id}`}>
-                          Shipping Details <ArrowRight className="ml-1 h-3 w-3" />
+                        <Link
+                          href={`/exporter/shipping?orderId=${selectedOrder.id}`}
+                        >
+                          Shipping Details{" "}
+                          <ArrowRight className="ml-1 h-3 w-3" />
                         </Link>
                       </Button>
                     </div>

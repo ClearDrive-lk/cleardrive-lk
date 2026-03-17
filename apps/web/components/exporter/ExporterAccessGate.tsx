@@ -34,7 +34,10 @@ export default function ExporterAccessGate({
             Your account does not have access to the exporter terminal. If this
             is unexpected, contact an administrator for role approval.
           </p>
-          <Button asChild className="mt-6 bg-[#FE7743] text-black font-semibold">
+          <Button
+            asChild
+            className="mt-6 bg-[#FE7743] text-black font-semibold"
+          >
             <Link href={roleHomePath(role)}>
               Return to your dashboard <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

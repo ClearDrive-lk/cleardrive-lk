@@ -53,10 +53,12 @@ export default function AdminOrdersPage() {
     try {
       const [ordersResponse, exportersResponse, pendingResponse] =
         await Promise.all([
-        apiClient.get<AssignableOrder[]>("/admin/shipping/assignable-orders"),
-        apiClient.get<UserListResponse>("/admin/users?role=EXPORTER&limit=100"),
-        apiClient.get<AssignableOrder[]>("/admin/shipping/pending-payments"),
-      ]);
+          apiClient.get<AssignableOrder[]>("/admin/shipping/assignable-orders"),
+          apiClient.get<UserListResponse>(
+            "/admin/users?role=EXPORTER&limit=100",
+          ),
+          apiClient.get<AssignableOrder[]>("/admin/shipping/pending-payments"),
+        ]);
 
       setOrders(ordersResponse.data);
       setExporters(exportersResponse.data.users);

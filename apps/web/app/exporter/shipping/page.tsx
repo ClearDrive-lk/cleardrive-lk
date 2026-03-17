@@ -113,8 +113,12 @@ function validate(form: FormState): string | null {
 export default function ExporterShippingDetailsPage() {
   const searchParams = useSearchParams();
   const orderParam = searchParams.get("orderId");
-  const { orders, loading: ordersLoading, error: ordersError, reload } =
-    useAssignedOrders();
+  const {
+    orders,
+    loading: ordersLoading,
+    error: ordersError,
+    reload,
+  } = useAssignedOrders();
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [selectedOrderId, setSelectedOrderId] = useState(orderParam ?? "");
@@ -156,7 +160,8 @@ export default function ExporterShippingDetailsPage() {
           ...prev,
           orderId: selectedOrderId,
           vesselName: data.vessel_name ?? prev.vesselName,
-          vesselRegistration: data.vessel_registration ?? prev.vesselRegistration,
+          vesselRegistration:
+            data.vessel_registration ?? prev.vesselRegistration,
           voyageNumber: data.voyage_number ?? prev.voyageNumber,
           departurePort: data.departure_port ?? prev.departurePort,
           arrivalPort: data.arrival_port ?? prev.arrivalPort,
@@ -348,7 +353,9 @@ export default function ExporterShippingDetailsPage() {
               className="px-4 py-3 rounded-xl bg-black/70 border border-white/10 text-sm"
               placeholder="Vessel Registration"
               value={form.vesselRegistration}
-              onChange={(e) => updateField("vesselRegistration", e.target.value)}
+              onChange={(e) =>
+                updateField("vesselRegistration", e.target.value)
+              }
             />
             <input
               className="px-4 py-3 rounded-xl bg-black/70 border border-white/10 text-sm"
@@ -366,7 +373,9 @@ export default function ExporterShippingDetailsPage() {
               className="px-4 py-3 rounded-xl bg-black/70 border border-white/10 text-sm"
               placeholder="Bill of Lading Number"
               value={form.billOfLandingNumber}
-              onChange={(e) => updateField("billOfLandingNumber", e.target.value)}
+              onChange={(e) =>
+                updateField("billOfLandingNumber", e.target.value)
+              }
             />
             <input
               className="px-4 py-3 rounded-xl bg-black/70 border border-white/10 text-sm"
