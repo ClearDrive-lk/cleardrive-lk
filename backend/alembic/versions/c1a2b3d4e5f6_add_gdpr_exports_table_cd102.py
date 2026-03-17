@@ -1,7 +1,7 @@
 """Add GDPR exports table (CD-102).
 
 Revision ID: c1a2b3d4e5f6
-Revises: f17d2c9a5b0e
+Revises: 6c4f0b2d9a1e
 Create Date: 2026-03-16 10:30:00.000000
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "c1a2b3d4e5f6"
-down_revision: Union[str, None] = "f17d2c9a5b0e"
+down_revision: Union[str, None] = "6c4f0b2d9a1e"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
