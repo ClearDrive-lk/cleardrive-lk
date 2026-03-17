@@ -134,18 +134,19 @@ export default function AdminKycReviewDetailPage() {
     if (detail.needs_manual_extraction) {
       return {
         label: "Manual Review Required",
-        className: "bg-amber-100 text-amber-800",
+        className: "bg-amber-500/10 text-amber-200 border border-amber-500/20",
       };
     }
     if (detail.extraction_method === "manual") {
       return {
         label: "Manually Extracted",
-        className: "bg-sky-100 text-sky-800",
+        className: "bg-sky-500/10 text-sky-200 border border-sky-500/20",
       };
     }
     return {
       label: `Auto Extracted (${detail.extraction_method})`,
-      className: "bg-emerald-100 text-emerald-800",
+      className:
+        "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
     };
   }, [detail]);
 
@@ -248,28 +249,28 @@ export default function AdminKycReviewDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-6 text-slate-500">Loading KYC review...</div>;
+    return <div className="p-6 text-gray-400">Loading KYC review...</div>;
   }
 
   if (error && !detail) {
-    return <div className="p-6 text-red-600">{error}</div>;
+    return <div className="p-6 text-red-300">{error}</div>;
   }
 
   if (!detail) {
-    return <div className="p-6 text-slate-500">KYC record not found.</div>;
+    return <div className="p-6 text-gray-400">KYC record not found.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className="min-h-screen p-6 text-white">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-600">
+        <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#FE7743]">
             CD-52 KYC Admin Review
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+          <h1 className="mt-2 text-3xl font-semibold text-white">
             {detail.user_name}
           </h1>
-          <p className="mt-2 text-sm text-slate-600">{detail.user_email}</p>
+          <p className="mt-2 text-sm text-gray-400">{detail.user_email}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span
               className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${extractionBadge.className}`}
@@ -277,7 +278,7 @@ export default function AdminKycReviewDetailPage() {
               {extractionBadge.label}
             </span>
             {detail.manual_extracted_by ? (
-              <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <span className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-gray-200">
                 Saved by {detail.manual_extracted_by}
               </span>
             ) : null}
@@ -285,36 +286,36 @@ export default function AdminKycReviewDetailPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Status</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Status</p>
+            <p className="mt-2 text-lg font-semibold text-white">
               {detail.status}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Extraction</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Extraction</p>
+            <p className="mt-2 text-lg font-semibold text-white">
               {detail.extraction_method}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Discrepancies</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Discrepancies</p>
+            <p className="mt-2 text-lg font-semibold text-white">
               {mismatchCount}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Submitted</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <p className="text-sm text-gray-400">Submitted</p>
+            <p className="mt-2 text-lg font-semibold text-white">
               {new Date(detail.created_at).toLocaleString()}
             </p>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">NIC Front</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-slate-200">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-white">NIC Front</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
               <Image
                 src={detail.nic_front_url}
                 alt="NIC front"
@@ -324,9 +325,9 @@ export default function AdminKycReviewDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">NIC Back</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-slate-200">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-white">NIC Back</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
               <Image
                 src={detail.nic_back_url}
                 alt="NIC back"
@@ -336,9 +337,9 @@ export default function AdminKycReviewDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Selfie</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-slate-200">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-white">Selfie</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
               <Image
                 src={detail.selfie_url}
                 alt="Selfie"
@@ -351,18 +352,18 @@ export default function AdminKycReviewDetailPage() {
         </section>
 
         {detail.needs_manual_extraction ? (
-          <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
+          <section className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-white">
               Manual Extraction Required
             </h2>
-            <p className="mt-2 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-amber-100/80">
               Auto extraction did not complete. Enter the document data from the
               images, save it, then continue with approval or rejection.
             </p>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
                   NIC Number
                 </label>
                 <input
@@ -374,11 +375,11 @@ export default function AdminKycReviewDetailPage() {
                       nic_number: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
                   Full Name
                 </label>
                 <input
@@ -390,11 +391,11 @@ export default function AdminKycReviewDetailPage() {
                       full_name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
                   Date of Birth
                 </label>
                 <input
@@ -406,11 +407,11 @@ export default function AdminKycReviewDetailPage() {
                       date_of_birth: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
                   Gender
                 </label>
                 <input
@@ -422,11 +423,11 @@ export default function AdminKycReviewDetailPage() {
                       gender: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
                   Address
                 </label>
                 <textarea
@@ -438,11 +439,11 @@ export default function AdminKycReviewDetailPage() {
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-gray-300">
                   Issue Date
                 </label>
                 <input
@@ -454,7 +455,7 @@ export default function AdminKycReviewDetailPage() {
                       issue_date: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
             </div>
@@ -464,7 +465,7 @@ export default function AdminKycReviewDetailPage() {
                 type="button"
                 onClick={saveManualExtraction}
                 disabled={submitting}
-                className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-[#FE7743] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#FE7743]/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "Saving..." : "Save Manual Extraction"}
               </button>
@@ -472,54 +473,58 @@ export default function AdminKycReviewDetailPage() {
           </section>
         ) : null}
 
-        <section className="rounded-3xl bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-4">
-            <h2 className="text-xl font-semibold text-slate-900">
+        <section className="rounded-3xl border border-white/10 bg-white/5 shadow-sm">
+          <div className="border-b border-white/10 px-6 py-4">
+            <h2 className="text-xl font-semibold text-white">
               Extracted vs Stored Data
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-gray-400">
               Mismatches are highlighted to support admin review.
             </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-white/10 text-sm">
+              <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                     Field
                   </th>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                     Extracted
                   </th>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                     Stored
                   </th>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
                     Result
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-white/10">
                 {detail.comparison_rows.map((row) => (
                   <tr
                     key={row.label}
-                    className={row.matches ? "bg-white" : "bg-red-50"}
+                    className={
+                      row.matches
+                        ? "hover:bg-white/5"
+                        : "bg-red-500/10 hover:bg-red-500/20"
+                    }
                   >
-                    <td className="px-6 py-4 font-medium text-slate-900">
+                    <td className="px-6 py-4 font-medium text-white">
                       {row.label}
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-6 py-4 text-gray-300">
                       {row.extracted_value || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-6 py-4 text-gray-300">
                       {row.user_value || "N/A"}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                           row.matches
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-red-100 text-red-700"
+                            ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
+                            : "border border-red-500/20 bg-red-500/10 text-red-200"
                         }`}
                       >
                         {row.matches ? "Match" : "Mismatch"}
@@ -532,26 +537,26 @@ export default function AdminKycReviewDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Decision</h2>
-          <p className="mt-2 text-sm text-slate-600">
+        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-white">Decision</h2>
+          <p className="mt-2 text-sm text-gray-400">
             Approval sends a notification to the customer. Rejection requires a
             reason and also sends a notification email.
           </p>
 
-          <label className="mt-5 block text-sm font-medium text-slate-700">
+          <label className="mt-5 block text-sm font-medium text-gray-300">
             Rejection Reason
           </label>
           <textarea
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200 shadow-sm focus:border-[#FE7743]/60 focus:outline-none focus:ring-2 focus:ring-[#FE7743]/60"
             rows={4}
             placeholder="Explain why this KYC submission should be rejected."
           />
 
           {error ? (
-            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {error}
             </div>
           ) : null}
@@ -561,7 +566,7 @@ export default function AdminKycReviewDetailPage() {
               type="button"
               onClick={approveKyc}
               disabled={submitting || detail.needs_manual_extraction}
-              className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Approve KYC"}
             </button>
@@ -569,14 +574,14 @@ export default function AdminKycReviewDetailPage() {
               type="button"
               onClick={rejectKyc}
               disabled={submitting}
-              className="rounded-xl bg-red-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Reject KYC"}
             </button>
             <button
               type="button"
               onClick={() => router.push("/admin/kyc")}
-              className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-gray-200 transition hover:bg-white/10"
             >
               Back to Queue
             </button>

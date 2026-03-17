@@ -71,17 +71,15 @@ export function ExporterAssignmentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b0b0b] p-6 shadow-2xl">
         <div className="mb-5">
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Assign Exporter
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Order <span className="font-medium text-slate-900">{order.id}</span>
+          <h2 className="text-2xl font-semibold text-white">Assign Exporter</h2>
+          <p className="mt-2 text-sm text-gray-400">
+            Order <span className="font-medium text-white">{order.id}</span>
           </p>
-          <p className="text-sm text-slate-600">{order.vehicle_label}</p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-gray-400">{order.vehicle_label}</p>
+          <p className="text-sm text-gray-400">
             Customer: {order.customer_name} ({order.customer_email})
           </p>
         </div>
@@ -90,7 +88,7 @@ export function ExporterAssignmentModal({
           <div>
             <label
               htmlFor="exporter"
-              className="mb-2 block text-sm font-medium text-slate-700"
+              className="mb-2 block text-sm font-medium text-gray-300"
             >
               Exporter
             </label>
@@ -98,7 +96,7 @@ export function ExporterAssignmentModal({
               id="exporter"
               value={selectedExporterId}
               onChange={(event) => setSelectedExporterId(event.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-gray-200 shadow-sm focus:border-[#FE7743]/60 focus:outline-none focus:ring-2 focus:ring-[#FE7743]/60"
             >
               {exporters.map((exporter) => (
                 <option key={exporter.id} value={exporter.id}>
@@ -109,7 +107,7 @@ export function ExporterAssignmentModal({
           </div>
 
           {error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
               {error}
             </div>
           ) : null}
@@ -118,14 +116,14 @@ export function ExporterAssignmentModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="flex-1 rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-white/10"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex-1 rounded-xl bg-[#FE7743] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#FE7743]/90 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={loading}
             >
               {loading ? "Assigning..." : "Assign Exporter"}

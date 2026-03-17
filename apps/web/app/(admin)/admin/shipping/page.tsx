@@ -187,16 +187,16 @@ export default function AdminShippingPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 text-white">
       <div>
         <h1 className="text-2xl font-bold">Shipping Assignment</h1>
-        <p className="text-gray-600">
+        <p className="text-gray-400">
           Assign exporters to eligible orders and track shipment queue.
         </p>
       </div>
 
-      <div className="bg-white border rounded-lg p-4 space-y-4">
-        <h2 className="text-lg font-semibold">Assign Exporter</h2>
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-sm space-y-4">
+        <h2 className="text-lg font-semibold text-white">Assign Exporter</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
@@ -204,13 +204,13 @@ export default function AdminShippingPage() {
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
             placeholder="Order UUID"
-            className="px-3 py-2 border rounded"
+            className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-gray-200 placeholder:text-gray-500"
           />
 
           <select
             value={selectedExporter}
             onChange={(e) => setSelectedExporter(e.target.value)}
-            className="px-3 py-2 border rounded"
+            className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-gray-200"
           >
             {exporters.map((exporter) => (
               <option key={exporter.id} value={exporter.id}>
@@ -223,43 +223,45 @@ export default function AdminShippingPage() {
             type="button"
             onClick={assignExporter}
             disabled={assigning}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-xl bg-[#FE7743] px-4 py-2 text-sm font-semibold text-black hover:bg-[#FE7743]/90 disabled:opacity-60"
           >
             {assigning ? "Assigning..." : "Assign Exporter"}
           </button>
         </div>
 
         {error && (
-          <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-200">
             {error}
           </div>
         )}
         {success && (
-          <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded p-2">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 text-sm text-emerald-200">
             {success}
           </div>
         )}
       </div>
 
-      <div className="bg-white border rounded-lg p-4 space-y-4">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-sm space-y-4">
         <div>
-          <h2 className="text-lg font-semibold">Pending Approvals</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-lg font-semibold text-white">
+            Pending Approvals
+          </h2>
+          <p className="text-sm text-gray-400">
             Approve shipments that have submitted details and uploaded
             documents.
           </p>
         </div>
 
         {pendingLoading ? (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center text-gray-400">
             Loading pending shipments...
           </div>
         ) : pendingError ? (
-          <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-200">
             {pendingError}
           </div>
         ) : pendingShipments.length === 0 ? (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-400">
             No shipments awaiting approval.
           </div>
         ) : (
@@ -267,19 +269,22 @@ export default function AdminShippingPage() {
             {pendingShipments.map((shipment) => (
               <div
                 key={shipment.id}
-                className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <p className="text-sm text-gray-500">Order ID</p>
-                  <p className="text-sm font-medium">{shipment.order_id}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm font-medium text-white">
+                    {shipment.order_id}
+                  </p>
+                  <p className="text-sm text-gray-400">
                     Vessel: {shipment.vessel_name || "TBD"}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    Route: {shipment.departure_port || "TBD"} →{" "}
+                  <p className="text-sm text-gray-400">
+                    Route: {shipment.departure_port || "TBD"}
+                    {" -> "}
                     {shipment.arrival_port || "TBD"}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-400">
                     ETA:{" "}
                     {shipment.estimated_arrival_date
                       ? new Date(
@@ -296,7 +301,7 @@ export default function AdminShippingPage() {
                     type="button"
                     onClick={() => approveShipment(shipment.id)}
                     disabled={approvingId === shipment.id}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60"
+                    className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black hover:bg-emerald-400 disabled:opacity-60"
                   >
                     {approvingId === shipment.id ? "Approving..." : "Approve"}
                   </button>
@@ -308,69 +313,75 @@ export default function AdminShippingPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white border rounded p-4">
-          <p className="text-sm text-gray-500">Total</p>
-          <p className="text-2xl font-bold">{summary?.total ?? 0}</p>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm text-gray-400">Total</p>
+          <p className="text-2xl font-bold text-white">{summary?.total ?? 0}</p>
         </div>
-        <div className="bg-white border rounded p-4">
-          <p className="text-sm text-gray-500">Awaiting Details</p>
-          <p className="text-2xl font-bold">{summary?.awaiting_details ?? 0}</p>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm text-gray-400">Awaiting Details</p>
+          <p className="text-2xl font-bold text-white">
+            {summary?.awaiting_details ?? 0}
+          </p>
         </div>
-        <div className="bg-white border rounded p-4">
-          <p className="text-sm text-gray-500">Awaiting Approval</p>
-          <p className="text-2xl font-bold">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm text-gray-400">Awaiting Approval</p>
+          <p className="text-2xl font-bold text-white">
             {summary?.awaiting_approval ?? 0}
           </p>
         </div>
-        <div className="bg-white border rounded p-4">
-          <p className="text-sm text-gray-500">Approved</p>
-          <p className="text-2xl font-bold">{summary?.approved ?? 0}</p>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm text-gray-400">Approved</p>
+          <p className="text-2xl font-bold text-white">
+            {summary?.approved ?? 0}
+          </p>
         </div>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b">
-          <h2 className="font-semibold">Current Shipments</h2>
+      <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
+        <div className="px-4 py-3 border-b border-white/10">
+          <h2 className="font-semibold text-white">Current Shipments</h2>
         </div>
         {loading ? (
-          <div className="p-6 text-center text-gray-500">Loading...</div>
+          <div className="p-6 text-center text-gray-400">Loading...</div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-white/10 text-sm">
+            <thead className="bg-white/5">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-400">
                   Order
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-400">
                   Exporter
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-400">
                   Status
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-400">
                   Docs
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-400">
                   Approved
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/10">
               {(summary?.shipments ?? []).map((shipment) => (
-                <tr key={shipment.id}>
-                  <td className="px-4 py-2 text-sm">{shipment.order_id}</td>
-                  <td className="px-4 py-2 text-sm">
+                <tr key={shipment.id} className="hover:bg-white/5">
+                  <td className="px-4 py-2 text-sm text-white">
+                    {shipment.order_id}
+                  </td>
+                  <td className="px-4 py-2 text-sm text-gray-300">
                     {shipment.exporter_id ||
                       shipment.assigned_exporter_id ||
                       "-"}
                   </td>
-                  <td className="px-4 py-2 text-sm">
+                  <td className="px-4 py-2 text-sm text-gray-300">
                     {shipment.status || "-"}
                   </td>
-                  <td className="px-4 py-2 text-sm">
+                  <td className="px-4 py-2 text-sm text-gray-300">
                     {shipment.documents_uploaded ? "Yes" : "No"}
                   </td>
-                  <td className="px-4 py-2 text-sm">
+                  <td className="px-4 py-2 text-sm text-gray-300">
                     {shipment.approved ? "Yes" : "No"}
                   </td>
                 </tr>

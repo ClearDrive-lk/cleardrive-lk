@@ -55,27 +55,27 @@ export function RoleChangeModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full">
-        <h2 className="text-xl font-bold mb-4">Change User Role</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0b0b0b] p-6">
+        <h2 className="text-xl font-bold text-white mb-4">Change User Role</h2>
 
         <div className="mb-4">
-          <p className="text-sm text-gray-600">User: {user.email}</p>
-          <p className="text-sm text-gray-600">
-            Current Role: <strong>{user.role}</strong>
+          <p className="text-sm text-gray-400">User: {user.email}</p>
+          <p className="text-sm text-gray-400">
+            Current Role: <strong className="text-white">{user.role}</strong>
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* New Role Select */}
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               New Role <span className="text-red-500">*</span>
             </label>
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full px-3 py-2 border rounded"
+              className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-gray-200"
               required
             >
               <option value="CUSTOMER">Customer</option>
@@ -88,13 +88,13 @@ export function RoleChangeModal({
 
           {/* Reason Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Reason for Change <span className="text-red-500">*</span>
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 border rounded"
+              className="w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-sm text-gray-200"
               rows={3}
               placeholder="Explain why this role change is necessary..."
               required
@@ -107,7 +107,7 @@ export function RoleChangeModal({
 
           {/* Error Display */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
               {error}
             </div>
           )}
@@ -117,14 +117,14 @@ export function RoleChangeModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border rounded hover:bg-gray-50"
+              className="flex-1 rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-white/10"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-[#FE7743] px-4 py-2 text-sm font-semibold text-black hover:bg-[#FE7743]/90 disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Changing..." : "Change Role"}
