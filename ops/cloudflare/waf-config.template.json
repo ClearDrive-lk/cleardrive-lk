@@ -37,9 +37,7 @@
     {
       "name": "Global Rate Limit",
       "expression": "(http.request.uri.path ne \"/api/v1/auth/heartbeat\")",
-      "characteristics": [
-        "ip.src"
-      ],
+      "characteristics": ["ip.src"],
       "period_seconds": 10,
       "requests_per_period": 100,
       "mitigation_timeout_seconds": 60,
@@ -48,9 +46,7 @@
     {
       "name": "Login Rate Limit",
       "expression": "(http.request.uri.path eq \"/api/v1/auth/request-otp\") or (http.request.uri.path eq \"/api/v1/auth/verify-otp\")",
-      "characteristics": [
-        "ip.src"
-      ],
+      "characteristics": ["ip.src"],
       "period_seconds": 60,
       "requests_per_period": 10,
       "mitigation_timeout_seconds": 600,

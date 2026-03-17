@@ -7,7 +7,7 @@
  * Story: CD-101.5 - Cookie Preferences Page
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Label } from "@/components/ui/label";
@@ -59,16 +59,10 @@ const COOKIE_CATEGORIES: CookieCategory[] = [
 ];
 
 export default function CookiePreferences() {
-  const [consent, setConsent] = useState<CookieConsent>(DEFAULT_CONSENT);
+  const [consent, setConsent] = useState<CookieConsent>(
+    () => getStoredConsent() ?? DEFAULT_CONSENT,
+  );
   const [saved, setSaved] = useState(false);
-
-  // Load existing consent on mount
-  useEffect(() => {
-    const stored = getStoredConsent();
-    if (stored) {
-      setConsent(stored);
-    }
-  }, []);
 
   // Handle individual toggle
   const handleToggle = (
