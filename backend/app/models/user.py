@@ -4,11 +4,12 @@ User model.
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from app.core.database import Base
+from app.core.models import GUID
 from app.core.permissions import Role
 from sqlalchemy import Column, DateTime, Enum, Index, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
 
 
 class User(Base):
@@ -21,7 +22,7 @@ class User(Base):
         Index("idx_users_role", "role"),
     )
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Any = Column(GUID(), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255))
     google_id = Column(String(255), unique=True, index=True)

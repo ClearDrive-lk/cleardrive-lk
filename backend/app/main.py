@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.rate_limit_middleware import RateLimitMiddleware
 from app.modules.admin.audit_routes import router as admin_audit_router
 from app.modules.admin.dashboard import router as admin_dashboard_router
+from app.modules.admin.security_events import router as admin_security_router
 from app.modules.gdpr.routes import router as gdpr_router
 from app.modules.kyc.admin_routes import router as admin_kyc_router
 from app.modules.kyc.routes import router as kyc_router
@@ -168,6 +169,7 @@ app.include_router(admin_router, prefix=settings.API_V1_PREFIX)
 app.include_router(payments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_audit_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_dashboard_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_security_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_shipping_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shipping_router, prefix=settings.API_V1_PREFIX)  # CD-72
 app.include_router(admin_kyc_router, prefix=settings.API_V1_PREFIX)

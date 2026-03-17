@@ -99,7 +99,13 @@ def test_submit_shipping_details_updates_shipment_and_order(client, db):
     db.refresh(order)
     db.refresh(shipment)
     assert shipment.vessel_name == "MV Horizon"
+    assert shipment.vessel_registration == "REG-771"
     assert shipment.departure_port == "Yokohama"
+    assert shipment.arrival_port == "Colombo"
+    assert shipment.departure_date == departure
+    assert shipment.estimated_arrival_date == arrival
+    assert shipment.container_number == "ABCU1234567"
+    assert shipment.bill_of_landing_number == "BOL-77889"
     assert shipment.status == ShipmentStatus.AWAITING_ADMIN_APPROVAL
     assert order.status == OrderStatus.AWAITING_SHIPMENT_CONFIRMATION
 

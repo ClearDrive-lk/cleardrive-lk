@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 "use strict";
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 const crypto = require("crypto");
-const https = require("https");
+const fs = require("fs");
 const http = require("http");
+const https = require("https");
+const path = require("path");
+
+const SRI_RESOURCE_PATH = path.resolve(__dirname, "..", "sri-resources.json");
 
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
@@ -29,6 +34,28 @@ function fetchUrl(url) {
     );
     request.on("error", (err) => reject(err));
   });
+}
+
+function parseSriResourceFile() {
+  return JSON.parse(fs.readFileSync(SRI_RESOURCE_PATH, "utf8"));
+}
+
+function writeSriResourceFile(contents) {
+  fs.writeFileSync(SRI_RESOURCE_PATH, `${JSON.stringify(contents, null, 2)}\n`);
+}
+
+function resolveFetchUrl(resource) {
+  if (
+    resource.url === "https://www.googletagmanager.com/gtag/js" &&
+    !resource.url.includes("?id=")
+  ) {
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+    if (!gaId) {
+      return null;
+    }
+    return `${resource.url}?id=${encodeURIComponent(gaId)}`;
+  }
+  return resource.url;
 }
 
 async function generateSRIHash(url) {
@@ -74,14 +101,58 @@ async function generateMultipleSRI(urls) {
     console.log(`   SHA-256: ${result.sha256}`);
     console.log(`   SHA-512: ${result.sha512}`);
     console.log("\n   HTML:");
-    console.log(`   <script src=\"${result.url}\"`);
-    console.log(`           integrity=\"${result.sha384}\"`);
+    console.log(`   <script src="${result.url}"`);
+    console.log(`           integrity="${result.sha384}"`);
     console.log('           crossorigin="anonymous"></script>');
   });
 
   console.log("\n" + "=".repeat(70));
   console.log(`Generated SRI hashes for ${results.length} resource(s).`);
   console.log("=".repeat(70));
+
+  return results;
+}
+
+async function refreshSriResourceFile() {
+  const sriConfig = parseSriResourceFile();
+  const updatedResources = [];
+
+  console.log("Refreshing apps/web/sri-resources.json");
+
+  for (const resource of sriConfig.resources ?? []) {
+    const fetchUrl = resolveFetchUrl(resource);
+
+    if (!fetchUrl) {
+      console.warn(
+        `Skipping ${resource.name}: NEXT_PUBLIC_GA_ID is not set, keeping existing hash.`,
+      );
+      updatedResources.push(resource);
+      continue;
+    }
+
+    try {
+      console.log(`Fetching hash source for ${resource.name}: ${fetchUrl}`);
+      const result = await generateSRIHash(fetchUrl);
+      updatedResources.push({
+        ...resource,
+        integrity: result.sha384,
+      });
+      console.log(`Updated ${resource.name}`);
+    } catch (err) {
+      console.warn(
+        `Failed to refresh ${resource.name}, keeping existing hash: ${err.message}`,
+      );
+      updatedResources.push(resource);
+    }
+  }
+
+  writeSriResourceFile({
+    ...sriConfig,
+    resources: updatedResources,
+  });
+
+  console.log(`Wrote ${SRI_RESOURCE_PATH}`);
+  return updatedResources;
 }
 
 const defaultResources = [
@@ -92,12 +163,22 @@ const defaultResources = [
 if (require.main === module) {
   const urls = process.argv.slice(2);
   if (urls.length === 0) {
-    console.log("Usage: node scripts/generate-sri.js <url1> <url2> ...");
-    console.log("\nExample URLs provided in script will be used.\n");
-    generateMultipleSRI(defaultResources);
+    refreshSriResourceFile().catch((err) => {
+      console.error(`SRI refresh failed: ${err.message}`);
+      process.exit(1);
+    });
   } else {
-    generateMultipleSRI(urls);
+    generateMultipleSRI(urls).catch((err) => {
+      console.error(`SRI generation failed: ${err.message}`);
+      process.exit(1);
+    });
   }
 }
 
-module.exports = { generateSRIHash, generateMultipleSRI };
+module.exports = {
+  defaultResources,
+  generateSRIHash,
+  generateMultipleSRI,
+  refreshSriResourceFile,
+  resolveFetchUrl,
+};

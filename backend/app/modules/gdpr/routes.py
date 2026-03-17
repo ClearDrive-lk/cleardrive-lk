@@ -2,13 +2,24 @@
 GDPR compliance endpoints including policy pages.
 Author: Kalidu
 Story: CD-460 - Privacy & Cookie Policies
+Story: CD-102 - GDPR Data Export
 """
 
+import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import markdown  # type: ignore[import-untyped]
-from fastapi import APIRouter, HTTPException
+from app.core.database import get_db
+from app.core.dependencies import get_current_user
+from app.modules.auth.models import User
+from app.modules.gdpr.models import GDPRExport
+from app.services.gdpr.data_export_service import data_export_service
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/gdpr", tags=["gdpr"])
 
@@ -428,3 +439,129 @@ async def get_cookie_policy():
     """
 
     return full_html
+
+
+# ===================================================================
+# ENDPOINT: GDPR DATA EXPORT (CD-102)
+# ===================================================================
+
+
+@router.get("/export")
+async def export_user_data(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Export all user data (GDPR Article 15).
+
+    **Story**: CD-102.1, CD-102.3, CD-102.4, CD-102.6
+    """
+
+    logger.info(
+        "GDPR export request user=%s ip=%s",
+        current_user.id,
+        request.client.host if request.client else "unknown",
+    )
+
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    recent_exports = (
+        db.query(GDPRExport)
+        .filter(
+            GDPRExport.user_id == current_user.id,
+            GDPRExport.requested_at >= twenty_four_hours_ago,
+        )
+        .count()
+    )
+
+    if recent_exports >= 3:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Maximum 3 data exports per day. Please try again later.",
+        )
+
+    export_record = GDPRExport(
+        user_id=current_user.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(export_record)
+    db.commit()
+    db.refresh(export_record)
+
+    try:
+        user_data = data_export_service.collect_user_data(current_user, db)
+        json_export = data_export_service.generate_json_export(user_data)
+
+        filename = (
+            "cleardrive_data_export_"
+            f"{current_user.id}_{datetime.utcnow().strftime('%Y%m%d')}.json"
+        )
+
+        export_record.export_file_path = filename
+        export_record.file_size_bytes = len(json_export.encode("utf-8"))
+        export_record.completed_at = datetime.utcnow()
+        export_record.downloaded_at = datetime.utcnow()
+        db.commit()
+
+        return Response(
+            content=json_export,
+            media_type="application/json",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/json; charset=utf-8",
+            },
+        )
+    except Exception:
+        logger.exception("GDPR export failed for user=%s", current_user.id)
+        export_record.completed_at = datetime.utcnow()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Data export failed. Please contact support.",
+        )
+
+
+@router.get("/export/history")
+async def get_export_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get user's data export history.
+
+    **Story**: CD-102.6
+    """
+
+    exports = (
+        db.query(GDPRExport)
+        .filter(GDPRExport.user_id == current_user.id)
+        .order_by(GDPRExport.requested_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    recent_count = (
+        db.query(GDPRExport)
+        .filter(
+            GDPRExport.user_id == current_user.id,
+            GDPRExport.requested_at >= twenty_four_hours_ago,
+        )
+        .count()
+    )
+
+    return {
+        "daily_limit": 3,
+        "used_today": recent_count,
+        "remaining_today": max(0, 3 - recent_count),
+        "export_history": [
+            {
+                "id": str(export.id),
+                "requested_at": export.requested_at.isoformat(),
+                "completed_at": export.completed_at.isoformat() if export.completed_at else None,
+                "file_size_bytes": export.file_size_bytes,
+            }
+            for export in exports
+        ],
+    }

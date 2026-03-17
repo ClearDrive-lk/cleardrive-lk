@@ -222,6 +222,29 @@ def admin_user(db: Session):
     return user
 
 
+@pytest.fixture
+def finance_partner_user(db: Session):
+    """
+    Create a finance partner user.
+
+    Args:
+        db: Database session
+
+    Returns:
+        Finance partner User object
+    """
+    user = User(
+        email="finance@example.com",
+        name="Finance Partner",
+        role=Role.FINANCE_PARTNER,
+        google_id="finance_google_id",
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 # ============================================================================
 # AUTH FIXTURES
 # ============================================================================
@@ -265,6 +288,28 @@ def admin_headers(admin_user):
             "sub": str(admin_user.id),
             "email": admin_user.email,
             "role": admin_user.role.value,
+        }
+    )
+
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+def finance_partner_headers(finance_partner_user):
+    """
+    Create authentication headers for finance partner user.
+
+    Args:
+        finance_partner_user: Finance partner user fixture
+
+    Returns:
+        Dict with Authorization header
+    """
+    access_token = create_access_token(
+        data={
+            "sub": str(finance_partner_user.id),
+            "email": finance_partner_user.email,
+            "role": finance_partner_user.role.value,
         }
     )
 

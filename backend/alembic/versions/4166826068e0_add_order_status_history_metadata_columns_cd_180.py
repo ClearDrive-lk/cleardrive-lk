@@ -1,4 +1,4 @@
-"""Add order status history table (CD-180)
+"""Add order status history metadata columns (CD-180)
 
 Revision ID: 4166826068e0
 Revises: cd92_expand_audit

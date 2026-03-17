@@ -26,6 +26,7 @@ from app.modules.security.models import (
     UserReputation,
 )
 from app.modules.security.models import UserTier as ReputationTier
+from app.services.security.event_logger import log_security_event
 from fastapi import HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
@@ -324,6 +325,18 @@ async def record_failed_login(user: User, db: Session, request: Request | None =
     user.failed_auth_attempts = (user.failed_auth_attempts or 0) + 1
     user.last_failed_auth = datetime.now(UTC)
     db.commit()
+
+    log_security_event(
+        db,
+        event_type=SecurityEventType.AUTH_FAILURE,
+        severity=Severity.MEDIUM,
+        user=user,
+        request=request,
+        details={
+            "attempt": user.failed_auth_attempts,
+            "reason": "invalid_password",
+        },
+    )
 
     if user.failed_auth_attempts >= settings.SUSPICIOUS_ACTIVITY_THRESHOLD:
         await flag_user_suspicious(

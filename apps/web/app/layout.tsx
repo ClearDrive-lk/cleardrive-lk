@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import FloatingChatbot from "@/components/chat/FloatingChatbot";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
 import CookieBanner from "@/components/cookie/cookieBanner";
 import { Toaster } from "@/components/ui/toaster";
 import { ToastStateProvider } from "@/lib/hooks/use-toast";
-
-// Define the font
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+import AuthBootstrap from "@/components/auth/AuthBootstrap";
 
 export const metadata: Metadata = {
   title: "ClearDrive.lk",
@@ -25,10 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Apply the font variable */}
-      <body className={`${inter.variable} font-sans antialiased bg-[#050505]`}>
+      <body className="font-sans antialiased bg-[#050505]">
         <StoreProvider>
           <ToastStateProvider>
+            <AuthBootstrap />
             {children}
             <FloatingChatbot />
             <Toaster />

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 "use strict";
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 const { chromium } = require("playwright");
 

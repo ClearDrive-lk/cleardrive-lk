@@ -1,0 +1,61 @@
+{
+  "zone_name": "cleardrive.lk",
+  "managed_rules": {
+    "owasp_core_ruleset": {
+      "enabled": true,
+      "sensitivity": "medium"
+    }
+  },
+  "custom_rules": [
+    {
+      "name": "Block SQL Injection",
+      "action": "block",
+      "expression": "(http.request.uri.query contains \"union select\") or (http.request.uri.query contains \"drop table\") or (http.request.uri.query contains \"insert into\") or (http.request.uri.query contains \"delete from\") or (http.request.uri.query contains \"' or 1=1\") or (http.request.uri.query contains \"' or '1'='1\") or (http.request.uri.query contains \"admin'--\") or (http.request.body contains \"union select\") or (http.request.body contains \"drop table\")"
+    },
+    {
+      "name": "Block XSS Attempts",
+      "action": "block",
+      "expression": "(http.request.uri.query contains \"<script\") or (http.request.uri.query contains \"javascript:\") or (http.request.uri.query contains \"onerror=\") or (http.request.uri.query contains \"onload=\") or (http.request.uri.query contains \"<iframe\") or (http.request.body contains \"<script\") or (http.request.body contains \"javascript:\")"
+    },
+    {
+      "name": "Block Path Traversal",
+      "action": "block",
+      "expression": "(http.request.uri.path contains \"../\") or (http.request.uri.path contains \"..\\\\\") or (http.request.uri.query contains \"../\") or (http.request.uri.query contains \"..\\\\\")"
+    },
+    {
+      "name": "Protect Admin Panel",
+      "action": "managed_challenge",
+      "expression": "(http.request.uri.path contains \"/admin\") and (ip.geoip.country ne \"LK\") and (not cf.bot_management.verified_bot)"
+    },
+    {
+      "name": "Protect API Endpoints",
+      "action": "block",
+      "expression": "(http.request.uri.path contains \"/api/\") and (((http.request.method eq \"POST\") and (not any(lower(http.request.headers.names[*])[*] eq \"content-type\"))) or ((not http.user_agent contains \"Mozilla\") and (not http.user_agent contains \"okhttp\") and (not http.user_agent contains \"axios\")))"
+    }
+  ],
+  "rate_limits": [
+    {
+      "name": "Global Rate Limit",
+      "expression": "(http.request.uri.path ne \"/api/v1/auth/heartbeat\")",
+      "characteristics": ["ip.src"],
+      "period_seconds": 10,
+      "requests_per_period": 100,
+      "mitigation_timeout_seconds": 60,
+      "action": "block"
+    },
+    {
+      "name": "Login Rate Limit",
+      "expression": "(http.request.uri.path eq \"/api/v1/auth/request-otp\") or (http.request.uri.path eq \"/api/v1/auth/verify-otp\")",
+      "characteristics": ["ip.src"],
+      "period_seconds": 60,
+      "requests_per_period": 10,
+      "mitigation_timeout_seconds": 600,
+      "action": "managed_challenge"
+    }
+  ],
+  "bot_management": {
+    "enabled": true,
+    "fight_mode": true,
+    "challenge_suspicious_bots": true
+  }
+}

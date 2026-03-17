@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react"; // Added Suspense
+import { isAxiosError } from "axios";
+import { useEffect, useState, Suspense } from "react"; // Added Suspense
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,17 @@ function PaymentForm() {
   const { toast } = useToast();
 
   const orderId = searchParams.get("orderId");
+
+  useEffect(() => {
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   const getPaymentIdempotencyKey = (currentOrderId: string): string => {
     const storageKey = `payment:idempotency:${currentOrderId}`;
@@ -89,8 +101,20 @@ function PaymentForm() {
       form.submit();
     } catch (err) {
       console.error("Payment error:", err);
-      const message =
-        err instanceof Error
+      const message = isAxiosError(err)
+        ? (
+            err.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.detail ||
+          (
+            err.response?.data as
+              | { detail?: string; message?: string }
+              | undefined
+          )?.message ||
+          err.message ||
+          "Payment failed. Please try again."
+        : err instanceof Error
           ? err.message
           : "Payment failed. Please try again.";
       setError(message);
