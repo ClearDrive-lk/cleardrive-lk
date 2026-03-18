@@ -33,37 +33,37 @@
 
 :root {
   /* Moonlit Mist palette (warm, premium light) */
-  --background: 210 33% 97%; /* #f5f7fa */
-  --foreground: 202.5 11.8% 13.3%; /* #1e2326 */
+  --background: 210 33% 98%; /* #f7f9fc */
+  --foreground: 210 18% 10%; /* #141a1f */
   --card: 0 0% 100%; /* #ffffff */
-  --card-foreground: 202.5 11.8% 13.3%;
+  --card-foreground: 210 18% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 202.5 11.8% 13.3%;
+  --popover-foreground: 210 18% 10%;
   --primary: 188.5 70.5% 41.2%; /* #1f9eb3 */
   --primary-foreground: 240 100% 99.6%;
-  --secondary: 202.7 22.7% 32.0%; /* #3f5664 */
+  --secondary: 210 25% 27%; /* #334754 */
   --secondary-foreground: 240 100% 99.6%;
-  --muted: 210 23% 92%; /* #e6ebf0 */
-  --muted-foreground: 206 18.8% 40.6%;
-  --accent: 210 23% 95%; /* #eef2f6 */
-  --accent-foreground: 202.5 11.8% 13.3%;
+  --muted: 210 28% 92%; /* #e4edf5 */
+  --muted-foreground: 210 15% 34%; /* #4a5a66 */
+  --accent: 210 35% 96%; /* #f1f5f9 */
+  --accent-foreground: 210 18% 10%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 240 100% 99.6%;
-  --border: 204 20% 34.3%; /* #465b69 */
+  --border: 210 22% 78%; /* #c3d0db */
   --input: 0 0% 100%;
   --ring: 188.5 70.5% 41.2%;
   --radius: 0.75rem;
-  --bronze: 27.5 31.9% 36.3%; /* #7a5a3f */
-  --bronze-soft: 27.7 31.2% 49%; /* #a47a56 */
-  --steel: 207.3 12.5% 34.5%; /* #4d5963 */
-  --steel-soft: 207.5 9.9% 52.5%; /* #7a8792 */
+  --bronze: 210 36% 34%; /* #3a5f78 */
+  --bronze-soft: 210 36% 55%; /* #6f93ad */
+  --steel: 210 18% 33%; /* #3a4a57 */
+  --steel-soft: 210 20% 62%; /* #87a0b1 */
   --ink: 202.5 15.4% 10.2%; /* #161b1e */
-  --app-backdrop-main: radial-gradient(1200px 600px at 10% -10%, rgba(31, 158, 179, 0.22), transparent 60%), radial-gradient(900px 520px at 90% 0%, rgba(210, 168, 93, 0.18), transparent 55%), linear-gradient(180deg, #f7f9fc 0%, #eef2f6 55%, #e6ebf0 100%);
-  --app-backdrop-orbits: radial-gradient(circle at 18% 20%, rgba(31, 158, 179, 0.16), transparent 52%), radial-gradient(circle at 82% 25%, rgba(210, 168, 93, 0.12), transparent 58%);
-  --app-backdrop-grid: linear-gradient(to right, rgba(63, 86, 100, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(63, 86, 100, 0.08) 1px, transparent 1px);
-  --app-backdrop-diagonal: repeating-linear-gradient(115deg, rgba(30, 35, 38, 0.05) 0 2px, transparent 2px 28px);
-  --app-backdrop-glow: radial-gradient(circle, rgba(210, 168, 93, 0.22), transparent 70%);
-  --app-backdrop-vignette: radial-gradient(circle at 50% 115%, rgba(0, 0, 0, 0.18), transparent 60%);
+  --app-backdrop-main: radial-gradient(1200px 600px at 10% -10%, rgba(31, 158, 179, 0.2), transparent 60%), radial-gradient(900px 520px at 90% 0%, rgba(88, 136, 176, 0.18), transparent 55%), linear-gradient(180deg, #f7f9fc 0%, #f1f5f9 55%, #e4edf5 100%);
+  --app-backdrop-orbits: radial-gradient(circle at 18% 20%, rgba(31, 158, 179, 0.14), transparent 52%), radial-gradient(circle at 82% 25%, rgba(88, 136, 176, 0.12), transparent 58%);
+  --app-backdrop-grid: linear-gradient(to right, rgba(63, 86, 100, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(63, 86, 100, 0.06) 1px, transparent 1px);
+  --app-backdrop-diagonal: repeating-linear-gradient(115deg, rgba(30, 35, 38, 0.045) 0 2px, transparent 2px 28px);
+  --app-backdrop-glow: radial-gradient(circle, rgba(88, 136, 176, 0.18), transparent 70%);
+  --app-backdrop-vignette: radial-gradient(circle at 50% 115%, rgba(0, 0, 0, 0.16), transparent 60%);
 }
 
 .dark {
