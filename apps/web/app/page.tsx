@@ -88,9 +88,14 @@ export default function Home() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1 flex flex-col justify-center">
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
+      <section className="relative pt-20 pb-24 px-6 overflow-hidden flex-1 flex flex-col justify-center">
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/8 rounded-[100%] blur-[120px] pointer-events-none animate-float-slower" />
+        <div className="absolute -top-24 right-[-160px] w-[420px] h-[420px] rounded-full border border-[#62929e]/25 animate-orbit-slow pointer-events-none" />
+        <div className="absolute -bottom-32 left-[-140px] w-[340px] h-[340px] rounded-full border border-[#62929e]/20 animate-orbit-slow pointer-events-none" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute right-[8%] top-[18%] hidden md:block rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 px-4 py-2 text-[10px] font-mono text-[#546a7b] shadow-[0_12px_30px_rgba(0,0,0,0.12)] backdrop-blur animate-float-slow">
+          LIVE PIPELINE :: TOKYO → HAMBANTOTA
+        </div>
 
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -121,7 +126,9 @@ export default function Home() {
             </span>
           </p>
 
-          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl">
+          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl group">
+            <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[#62929e]/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/2 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.35),transparent)] animate-scanline" />
             <div className="relative flex items-center bg-[#fdfdff] rounded-lg p-1.5">
               <Search className="w-5 h-5 text-[#546a7b] ml-4" />
               <Input
@@ -157,6 +164,49 @@ export default function Home() {
                 Search Vehicles
               </Button>
             </div>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {[
+              {
+                label: "Live Bids",
+                value: "2,148",
+                icon: TrendingUp,
+                tone: "from-[#62929e]/25 to-[#fdfdff]",
+              },
+              {
+                label: "Duty Est.",
+                value: "Auto-calculated",
+                icon: CheckCircle2,
+                tone: "from-[#546a7b]/20 to-[#fdfdff]",
+              },
+              {
+                label: "Port Status",
+                value: "Fast-Track",
+                icon: Anchor,
+                tone: "from-[#c6c5b9]/30 to-[#fdfdff]",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={`group relative overflow-hidden rounded-xl border border-[#546a7b]/50 bg-gradient-to-br ${item.tone} p-4 text-left shadow-[0_12px_28px_rgba(0,0,0,0.12)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.18)]`}
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.45),transparent)] opacity-0 group-hover:opacity-100 animate-shimmer" />
+                <div className="relative flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-[#546a7b]">
+                      {item.label}
+                    </p>
+                    <p className="text-sm font-semibold text-[#393d3f]">
+                      {item.value}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="pt-8 flex flex-wrap justify-center gap-6 text-sm text-[#546a7b] font-mono">
@@ -210,7 +260,7 @@ export default function Home() {
           ].map((stat, i) => (
             <div
               key={i}
-              className="p-8 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors cursor-default"
+              className="p-8 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-all duration-200 cursor-default hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.12)]"
             >
               <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                 <stat.icon className="w-5 h-5" />
@@ -287,9 +337,10 @@ export default function Home() {
             ].map((cat, i) => (
               <div
                 key={i}
-                className={`group relative h-72 rounded-xl border border-[#546a7b]/65 bg-gradient-to-br ${cat.bg} p-6 flex flex-col justify-between overflow-hidden hover:border-[#62929e]/50 transition-all cursor-pointer`}
+                className={`group relative h-72 rounded-xl border border-[#546a7b]/65 bg-gradient-to-br ${cat.bg} p-6 flex flex-col justify-between overflow-hidden hover:border-[#62929e]/50 transition-all duration-200 cursor-pointer hover:-translate-y-1 hover:shadow-[0_22px_45px_rgba(0,0,0,0.14)]`}
               >
-                <div className="absolute inset-0 bg-[#fdfdff]/40 group-hover:bg-transparent transition-colors duration-500" />
+                <div className="absolute inset-0 bg-[#fdfdff]/45 group-hover:bg-transparent transition-colors duration-500" />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.18),transparent_55%)] transition-opacity duration-300" />
 
                 <div className="relative z-10 flex justify-between items-start">
                   <Badge
@@ -354,9 +405,9 @@ export default function Home() {
             ].map((item, i) => (
               <div
                 key={i}
-                className="relative z-10 flex flex-col items-center text-center"
+                className="relative z-10 flex flex-col items-center text-center group"
               >
-                <div className="w-24 h-24 rounded-full bg-[#fdfdff] border border-[#546a7b]/65 flex items-center justify-center mb-6 shadow-2xl relative group">
+                <div className="w-24 h-24 rounded-full bg-[#fdfdff] border border-[#546a7b]/65 flex items-center justify-center mb-6 shadow-2xl relative group-hover:-translate-y-1 transition-transform animate-float-slow">
                   <div className="absolute inset-0 bg-[#62929e]/10 rounded-full blur-xl group-hover:bg-[#62929e]/20 transition-all" />
                   <span className="text-2xl font-bold text-[#393d3f] font-mono">
                     {item.step}
