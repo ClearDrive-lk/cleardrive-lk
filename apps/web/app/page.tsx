@@ -69,7 +69,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="flex gap-3 items-center">
-            <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+            <ThemeToggle />
             <Link href="/login">
               <Button
                 variant="ghost"

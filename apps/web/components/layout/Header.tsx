@@ -109,7 +109,7 @@ export default function Header() {
 
         {/* User Actions */}
         <div className="flex gap-3 items-center">
-          <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+          <ThemeToggle />
           {isAuthenticated ? (
             <>
               <span className="hidden md:block text-sm text-[#546a7b] font-mono">

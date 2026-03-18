@@ -25,7 +25,6 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import ThemeToggle from "@/components/ui/theme-toggle";
 
 type NavItem = {
   label: string;
@@ -115,21 +114,18 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
   return (
     <div className="flex h-full flex-col">
       <div className="px-6 py-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e]/10 border border-[#62929e]/30 text-[#62929e] shadow-lg shadow-[0_0_16px_rgba(98,146,158,0.2)]">
-              <Terminal className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-[#546a7b]">
-                ClearDrive
-              </p>
-              <p className="text-lg font-semibold text-[#393d3f]">
-                Admin Terminal
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e]/10 border border-[#62929e]/30 text-[#62929e] shadow-lg shadow-[0_0_16px_rgba(98,146,158,0.2)]">
+            <Terminal className="h-5 w-5" />
           </div>
-          <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+          <div>
+            <p className="text-xs uppercase tracking-[0.35em] text-[#546a7b]">
+              ClearDrive
+            </p>
+            <p className="text-lg font-semibold text-[#393d3f]">
+              Admin Terminal
+            </p>
+          </div>
         </div>
       </div>
 

@@ -41,10 +41,10 @@
   --popover-foreground: 210 18% 10%;
   --primary: 188.5 70.5% 41.2%; /* #1f9eb3 */
   --primary-foreground: 240 100% 99.6%;
-  --secondary: 210 25% 27%; /* #334754 */
+  --secondary: 210 25% 22%; /* #2a3a45 */
   --secondary-foreground: 240 100% 99.6%;
   --muted: 210 28% 92%; /* #e4edf5 */
-  --muted-foreground: 210 15% 34%; /* #4a5a66 */
+  --muted-foreground: 210 16% 30%; /* #3f4f5a */
   --accent: 210 35% 96%; /* #f1f5f9 */
   --accent-foreground: 210 18% 10%;
   --destructive: 0 62.8% 30.6%;
@@ -119,6 +119,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
+  }
+  a {
+    @apply transition-colors;
+  }
+  a:focus-visible {
+    outline: 2px solid color-mix(in oklab, hsl(var(--primary)) 60%, transparent);
+    outline-offset: 3px;
   }
   h1,
   h2,
@@ -381,6 +389,65 @@
   }
 }
 
+@keyframes float-slow {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-slower {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes orbit-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.6;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
 .app-backdrop__main {
   animation: backdrop-drift 18s ease-in-out infinite;
 }
@@ -391,6 +458,27 @@
 
 .app-backdrop__glow {
   animation: backdrop-glow 22s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+}
+
+.animate-float-slower {
+  animation: float-slower 14s ease-in-out infinite;
+}
+
+.animate-orbit-slow {
+  animation: orbit-slow 28s linear infinite;
+}
+
+.animate-scanline {
+  animation: scanline 5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background-size: 200% 200%;
+  animation: shimmer 8s linear infinite;
 }
 
 .theme-transition,

@@ -106,7 +106,7 @@ export default function OrderConfirmationPage() {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <ThemeToggle />
             </div>
           </div>
         </nav>
