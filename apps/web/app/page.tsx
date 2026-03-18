@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppSelector } from "@/lib/store/store";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -28,11 +28,44 @@ export default function Home() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const hasSession = Boolean(getAccessToken() || getRefreshToken());
   const [searchTerm, setSearchTerm] = useState("");
+  const heroRef = useRef<HTMLElement | null>(null);
+  const heroRafRef = useRef<number | null>(null);
   const handleSearch = () => {
     const trimmed = searchTerm.trim();
     if (!trimmed) return;
     router.push(`/dashboard/vehicles?search=${encodeURIComponent(trimmed)}`);
   };
+
+  const handleHeroMove = (event: React.MouseEvent<HTMLElement>) => {
+    const node = heroRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    if (heroRafRef.current !== null) {
+      cancelAnimationFrame(heroRafRef.current);
+    }
+    heroRafRef.current = requestAnimationFrame(() => {
+      node.style.setProperty("--mx", `${x}%`);
+      node.style.setProperty("--my", `${y}%`);
+    });
+  };
+
+  const resetHeroSpotlight = () => {
+    const node = heroRef.current;
+    if (!node) return;
+    node.style.setProperty("--mx", "50%");
+    node.style.setProperty("--my", "20%");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (heroRafRef.current !== null) {
+        cancelAnimationFrame(heroRafRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
@@ -88,13 +121,19 @@ export default function Home() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-20 pb-24 px-6 overflow-hidden flex-1 flex flex-col justify-center">
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/8 rounded-[100%] blur-[120px] pointer-events-none animate-float-slower" />
-        <div className="absolute -top-24 right-[-160px] w-[420px] h-[420px] rounded-full border border-[#62929e]/25 animate-orbit-slow pointer-events-none" />
-        <div className="absolute -bottom-32 left-[-140px] w-[340px] h-[340px] rounded-full border border-[#62929e]/20 animate-orbit-slow pointer-events-none" />
+      <section
+        ref={heroRef}
+        onMouseMove={handleHeroMove}
+        onMouseLeave={resetHeroSpotlight}
+        className="relative pt-20 pb-24 px-6 overflow-hidden flex-1 flex flex-col justify-center group"
+      >
+        <div className="hero-spotlight absolute inset-0 pointer-events-none" />
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/8 rounded-[100%] blur-[120px] pointer-events-none animate-float-slower transition-transform duration-500 group-hover:scale-[1.02]" />
+        <div className="absolute -top-24 right-[-160px] w-[420px] h-[420px] rounded-full border border-[#62929e]/25 animate-orbit-slow pointer-events-none transition-transform duration-500 group-hover:translate-y-4" />
+        <div className="absolute -bottom-32 left-[-140px] w-[340px] h-[340px] rounded-full border border-[#62929e]/20 animate-orbit-slow pointer-events-none transition-transform duration-500 group-hover:-translate-y-4" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
         <div className="absolute right-[8%] top-[18%] hidden md:block rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 px-4 py-2 text-[10px] font-mono text-[#546a7b] shadow-[0_12px_30px_rgba(0,0,0,0.12)] backdrop-blur animate-float-slow">
-          LIVE PIPELINE :: TOKYO → HAMBANTOTA
+          LIVE PIPELINE :: TOKYO -&gt; HAMBANTOTA
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
@@ -126,7 +165,7 @@ export default function Home() {
             </span>
           </p>
 
-          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl group">
+          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl group hover-glow focus-within:ring-1 focus-within:ring-[#62929e]/40">
             <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[#62929e]/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/2 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.35),transparent)] animate-scanline" />
             <div className="relative flex items-center bg-[#fdfdff] rounded-lg p-1.5">
@@ -260,8 +299,11 @@ export default function Home() {
           ].map((stat, i) => (
             <div
               key={i}
-              className="p-8 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-all duration-200 cursor-default hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.12)]"
+              className="relative p-8 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-all duration-200 cursor-default hover-glow"
             >
+              <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.12),transparent_60%)]" />
+              </div>
               <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                 <stat.icon className="w-5 h-5" />
               </div>
@@ -280,6 +322,38 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* --- LIVE ROUTE --- */}
+      <section className="relative py-12 px-6 bg-[#fdfdff] border-b border-[#546a7b]/40 overflow-hidden group">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(98,146,158,0.12),transparent_55%)] animate-halo" />
+        <div className="max-w-7xl mx-auto relative">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#546a7b]">
+                Live Shipping Lane
+              </p>
+              <h3 className="text-2xl font-bold text-[#393d3f]">
+                Tokyo -&gt; Hambantota
+              </h3>
+              <p className="text-sm text-[#546a7b] mt-2">
+                Real-time route tracking with automated clearance milestones.
+              </p>
+            </div>
+            <div className="relative w-full md:w-[55%] h-14 rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 overflow-hidden transition-shadow duration-200 group-hover:shadow-[0_10px_30px_rgba(15,23,42,0.15)]">
+              <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(98,146,158,0.18)_0_6px,transparent_6px_16px)] opacity-60" />
+              <div className="absolute inset-y-0 left-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.25),transparent)] animate-scanline" />
+              <div className="absolute inset-y-0 left-0 flex w-full items-center gap-3 animate-lane-drive group-hover:[animation-duration:3s]">
+                <div className="h-8 w-8 rounded-full bg-[#62929e] text-[#fdfdff] flex items-center justify-center shadow-[0_12px_24px_rgba(98,146,158,0.4)]">
+                  <Truck className="h-4 w-4" />
+                </div>
+                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#393d3f]">
+                  In Transit
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* --- CATEGORIES --- */}
       <section className="py-24 px-6 bg-[#fdfdff]">
@@ -312,6 +386,10 @@ export default function Home() {
                 icon: Car,
                 bg: "from-[#546a7b]/30 to-[#393d3f]/10",
                 code: "CAT-SDN",
+                tagline: "Comfort-first daily drivers with tight auction spreads.",
+                avgBid: "¥ 1.9M",
+                eta: "Clearance ~4 days",
+                popular: ["Toyota Premio", "Honda Civic", "Nissan Sylphy"],
               },
               {
                 name: "SUVs & 4x4",
@@ -319,6 +397,10 @@ export default function Home() {
                 icon: Anchor,
                 bg: "from-[#62929e]/25 to-[#546a7b]/15",
                 code: "CAT-SUV",
+                tagline: "High-demand imports with strong resale velocity.",
+                avgBid: "¥ 3.1M",
+                eta: "Clearance ~6 days",
+                popular: ["Toyota Harrier", "Honda Vezel", "Nissan X-Trail"],
               },
               {
                 name: "Commercial / Van",
@@ -326,6 +408,10 @@ export default function Home() {
                 icon: Truck,
                 bg: "from-[#393d3f]/20 to-[#546a7b]/20",
                 code: "CAT-COM",
+                tagline: "Business-ready units with low maintenance cost.",
+                avgBid: "¥ 2.4M",
+                eta: "Clearance ~5 days",
+                popular: ["Toyota Hiace", "Nissan NV200", "Mazda Bongo"],
               },
               {
                 name: "Kei & Compact",
@@ -333,36 +419,100 @@ export default function Home() {
                 icon: Zap,
                 bg: "from-[#c6c5b9]/20 to-[#62929e]/15",
                 code: "CAT-KEI",
+                tagline: "Urban-friendly lots with excellent fuel economy.",
+                avgBid: "¥ 980K",
+                eta: "Clearance ~3 days",
+                popular: ["Suzuki Alto", "Daihatsu Mira", "Honda N-Box"],
               },
-            ].map((cat, i) => (
+            ].map((cat, i) => {
+              const accents = [
+                "from-[#62929e] via-[#546a7b] to-[#c6c5b9]",
+                "from-[#c6c5b9] via-[#62929e] to-[#546a7b]",
+                "from-[#546a7b] via-[#62929e] to-[#c6c5b9]",
+                "from-[#62929e] via-[#c6c5b9] to-[#546a7b]",
+              ];
+              return (
               <div
                 key={i}
-                className={`group relative h-72 rounded-xl border border-[#546a7b]/65 bg-gradient-to-br ${cat.bg} p-6 flex flex-col justify-between overflow-hidden hover:border-[#62929e]/50 transition-all duration-200 cursor-pointer hover:-translate-y-1 hover:shadow-[0_22px_45px_rgba(0,0,0,0.14)]`}
+                className={`group relative min-h-[22rem] rounded-2xl border border-[#546a7b]/70 bg-[linear-gradient(140deg,rgba(255,255,255,0.85),rgba(198,197,185,0.35))] dark:bg-[linear-gradient(140deg,rgba(28,38,44,0.92),rgba(15,20,23,0.85))] p-6 flex flex-col justify-between overflow-hidden transition-all duration-200 cursor-pointer hover-tilt shadow-[0_18px_40px_rgba(15,23,42,0.2)] hover:shadow-[0_26px_60px_rgba(15,23,42,0.26)] hover:border-[#62929e]/60`}
               >
-                <div className="absolute inset-0 bg-[#fdfdff]/45 group-hover:bg-transparent transition-colors duration-500" />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.18),transparent_55%)] transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.18),transparent_55%)] opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className={`absolute left-0 top-0 h-1 w-full bg-gradient-to-r ${accents[i % accents.length]}`} />
+                <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#62929e]/15 blur-2xl opacity-70 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-x-4 bottom-4 h-1 rounded-full bg-[#c6c5b9]/40 overflow-hidden">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[#62929e] transition-transform duration-700 group-hover:translate-x-[65%]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#62929e]" />
+                    <Car className="h-4 w-4" />
+                  </div>
+                  <div className="absolute inset-y-0 left-0 w-12 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.55),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.35),transparent)] animate-shimmer" />
+                </div>
 
                 <div className="relative z-10 flex justify-between items-start">
                   <Badge
                     variant="outline"
-                    className="border-[#546a7b]/65 text-[#393d3f]/50 font-mono text-[10px]"
+                    className="border-[#546a7b]/70 text-[#393d3f]/70 font-mono text-[10px] bg-[#fdfdff]/70 backdrop-blur"
                   >
                     {cat.code}
                   </Badge>
-                  <cat.icon className="w-8 h-8 text-[#393d3f]/40 group-hover:text-[#393d3f] transition-colors" />
+                  <div className="h-10 w-10 rounded-xl border border-[#546a7b]/50 bg-[#fdfdff]/70 backdrop-blur flex items-center justify-center shadow-[0_10px_25px_rgba(15,23,42,0.12)] group-hover:border-[#62929e]/60 transition-colors">
+                    <cat.icon className="w-5 h-5 text-[#393d3f]/70 group-hover:text-[#393d3f] transition-colors" />
+                  </div>
                 </div>
 
-                <div className="relative z-10">
+                <div className="relative z-10 pb-8">
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-[#546a7b] font-mono mb-3">
+                    Inventory Class
+                  </p>
                   <h3 className="text-2xl font-bold text-[#393d3f] group-hover:translate-x-1 transition-transform">
                     {cat.name}
                   </h3>
-                  <p className="text-sm text-[#546a7b] mt-1 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#62929e] animate-pulse" />
-                    {cat.count} Live Units
+                  <p className="text-sm text-[#546a7b] mt-2 leading-relaxed">
+                    {cat.tagline}
                   </p>
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#62929e]/30 bg-[#62929e]/10 px-3 py-1 text-xs font-semibold text-[#393d3f] shadow-[0_8px_18px_rgba(15,23,42,0.12)]">
+                    <span className="h-2 w-2 rounded-full bg-[#62929e] animate-pulse" />
+                    {cat.count} Live Units
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-[#546a7b] font-mono">
+                    <div className="rounded-lg border border-[#546a7b]/30 bg-[#fdfdff]/70 px-3 py-2">
+                      <p className="uppercase tracking-[0.2em] text-[9px] text-[#546a7b]">
+                        Avg Bid
+                      </p>
+                      <p className="text-sm font-semibold text-[#393d3f]">
+                        {cat.avgBid}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-[#546a7b]/30 bg-[#fdfdff]/70 px-3 py-2">
+                      <p className="uppercase tracking-[0.2em] text-[9px] text-[#546a7b]">
+                        Clearance
+                      </p>
+                      <p className="text-sm font-semibold text-[#393d3f]">
+                        {cat.eta}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-[10px] uppercase tracking-[0.28em] text-[#546a7b] font-mono">
+                      Top Picks
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {cat.popular.map((item) => (
+                        <span
+                          key={item}
+                          className="rounded-full border border-[#546a7b]/30 bg-[#fdfdff]/70 px-3 py-1 text-[11px] text-[#393d3f]"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </section>
@@ -405,7 +555,7 @@ export default function Home() {
             ].map((item, i) => (
               <div
                 key={i}
-                className="relative z-10 flex flex-col items-center text-center group"
+                className="relative z-10 flex flex-col items-center text-center group hover-glow"
               >
                 <div className="w-24 h-24 rounded-full bg-[#fdfdff] border border-[#546a7b]/65 flex items-center justify-center mb-6 shadow-2xl relative group-hover:-translate-y-1 transition-transform animate-float-slow">
                   <div className="absolute inset-0 bg-[#62929e]/10 rounded-full blur-xl group-hover:bg-[#62929e]/20 transition-all" />
@@ -495,7 +645,7 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
-          <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
+          <p>(c) 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
           <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
         </div>
       </footer>

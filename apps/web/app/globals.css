@@ -448,6 +448,38 @@
   }
 }
 
+@keyframes lane-drive {
+  0% {
+    transform: translateX(-15%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(115%);
+    opacity: 0;
+  }
+}
+
+@keyframes halo-pulse {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(0.96);
+    opacity: 0.45;
+  }
+}
+
 .app-backdrop__main {
   animation: backdrop-drift 18s ease-in-out infinite;
 }
@@ -481,13 +513,71 @@
   animation: shimmer 8s linear infinite;
 }
 
-.theme-transition,
-.theme-transition * {
+.animate-lane-drive {
+  animation: lane-drive 5s linear infinite;
+  will-change: transform;
+}
+
+.animate-halo {
+  animation: halo-pulse 5s ease-in-out infinite;
+}
+
+.hero-spotlight {
+  background: radial-gradient(
+    600px 320px at var(--mx, 50%) var(--my, 20%),
+    color-mix(in oklab, hsl(var(--primary)) 35%, transparent),
+    transparent 65%
+  );
+  transition: background-position 160ms ease;
+}
+
+.hover-tilt {
+  transform-style: preserve-3d;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.hover-tilt:hover {
+  transform: translateY(-6px) rotateX(2deg) rotateY(-2deg);
+}
+
+.hover-glow {
+  transition: box-shadow 220ms ease, transform 220ms ease;
+}
+.hover-glow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.theme-transition body,
+.theme-transition nav,
+.theme-transition header,
+.theme-transition footer,
+.theme-transition main,
+.theme-transition section,
+.theme-transition [data-slot="card"],
+.theme-transition button,
+.theme-transition input,
+.theme-transition textarea,
+.theme-transition select {
   transition:
-    background-color 240ms ease,
-    color 240ms ease,
-    border-color 240ms ease,
-    box-shadow 240ms ease;
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-backdrop__main,
+  .app-backdrop__orbits,
+  .app-backdrop__glow,
+  .animate-float-slow,
+  .animate-float-slower,
+  .animate-orbit-slow,
+  .animate-scanline,
+  .animate-shimmer,
+  .animate-lane-drive,
+  .animate-halo {
+    animation: none !important;
+  }
 }
 
 @layer utilities {

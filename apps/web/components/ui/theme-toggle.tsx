@@ -56,7 +56,7 @@ export default function ThemeToggle({
     root.classList.toggle("dark", next === "dark");
     window.setTimeout(() => {
       root.classList.remove("theme-transition");
-    }, 260);
+    }, 180);
     localStorage.setItem(STORAGE_KEY, next);
   };
 
