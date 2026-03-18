@@ -15,19 +15,20 @@ from app.modules.notifications.service import send_status_change_notification
 from app.modules.orders.models import (
     Order,
     OrderStatus,
-    PaymentStatus as OrderPaymentStatus,
 )
+from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
+from app.modules.payments.models import Payment
+from app.modules.payments.models import PaymentStatus as PaymentStatus
 from app.modules.shipping.models import DocumentType, ShipmentDetails, ShipmentStatus
 from app.modules.shipping.schemas import (
     AssignableOrderItem,
     ExporterAssignment,
     ShippingDetailsResponse,
 )
-from app.modules.payments.models import Payment, PaymentStatus as PaymentStatus
-from app.services.payment_notifications import send_payment_confirmation_email
 from app.modules.vehicles.models import Vehicle
 from app.services.notification_service import notification_service
 from app.services.orders.status_history import status_history_service
+from app.services.payment_notifications import send_payment_confirmation_email
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
