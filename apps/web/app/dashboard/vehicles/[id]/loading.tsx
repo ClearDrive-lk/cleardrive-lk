@@ -16,7 +16,9 @@ function SkeletonLine({
   height?: string;
 }) {
   return (
-    <div className={`${height} ${width} rounded bg-[#c6c5b9]/20 animate-pulse`} />
+    <div
+      className={`${height} ${width} rounded bg-[#c6c5b9]/20 animate-pulse`}
+    />
   );
 }
 
@@ -118,7 +120,9 @@ export default function VehicleDetailLoading() {
 
             <Card className="bg-[#c6c5b9]/20 border-[#546a7b]/65">
               <CardContent className="p-6 space-y-3">
-                <h3 className="text-lg font-bold text-[#393d3f]">Specifications</h3>
+                <h3 className="text-lg font-bold text-[#393d3f]">
+                  Specifications
+                </h3>
                 {Array.from({ length: 8 }).map((_, index) => (
                   <div
                     key={index}

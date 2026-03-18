@@ -62,7 +62,9 @@ export default function Header() {
               <Link
                 href="/dashboard"
                 className={`transition-colors flex items-center gap-2 ${
-                  isActive("/dashboard") ? "text-[#393d3f]" : "hover:text-[#393d3f]"
+                  isActive("/dashboard")
+                    ? "text-[#393d3f]"
+                    : "hover:text-[#393d3f]"
                 }`}
               >
                 Dashboard
@@ -88,7 +90,9 @@ export default function Header() {
               <Link
                 href="/dashboard/kyc"
                 className={`transition-colors ${
-                  isActive("/dashboard/kyc") ? "text-[#393d3f]" : "hover:text-[#393d3f]"
+                  isActive("/dashboard/kyc")
+                    ? "text-[#393d3f]"
+                    : "hover:text-[#393d3f]"
                 }`}
               >
                 KYC
@@ -147,4 +151,3 @@ export default function Header() {
     </nav>
   );
 }
-

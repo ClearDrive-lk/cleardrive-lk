@@ -104,7 +104,9 @@ export default function ForgotPasswordPage() {
           Back to Login
         </Link>
 
-        <h1 className="text-2xl font-bold text-[#393d3f] mb-2">Reset Password</h1>
+        <h1 className="text-2xl font-bold text-[#393d3f] mb-2">
+          Reset Password
+        </h1>
         <p className="text-sm text-[#546a7b] mb-6">
           Request a reset code, then submit the code with your new password.
         </p>
@@ -211,4 +213,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

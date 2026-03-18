@@ -484,7 +484,9 @@ function VehicleDetail() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-[#393d3f]">Other Details</h3>
+              <h3 className="text-lg font-bold text-[#393d3f]">
+                Other Details
+              </h3>
               <div className="rounded-lg border border-[#546a7b]/65 p-4 bg-[#c6c5b9]/20">
                 <p className="text-sm font-semibold text-[#546a7b] mb-2">
                   Options

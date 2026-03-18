@@ -31,7 +31,9 @@ export function AuctionTicker() {
             </span>
             <span className="flex items-center gap-2 mr-12">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-[#546a7b] font-mono text-xs">USS TOKYO</span>
+              <span className="text-[#546a7b] font-mono text-xs">
+                USS TOKYO
+              </span>
               <span className="text-[#393d3f] font-bold text-xs">LIVE</span>
             </span>
             <span className="flex items-center gap-2">
@@ -47,4 +49,3 @@ export function AuctionTicker() {
     </div>
   );
 }
-

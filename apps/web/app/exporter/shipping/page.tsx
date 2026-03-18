@@ -326,7 +326,9 @@ export default function ExporterShippingDetailsPage() {
           </div>
 
           {detailsLoading && (
-            <p className="text-sm text-[#546a7b]">Loading shipment details...</p>
+            <p className="text-sm text-[#546a7b]">
+              Loading shipment details...
+            </p>
           )}
           {detailsError && (
             <p className="text-sm text-red-300">{detailsError}</p>
@@ -435,4 +437,3 @@ export default function ExporterShippingDetailsPage() {
     </section>
   );
 }
-

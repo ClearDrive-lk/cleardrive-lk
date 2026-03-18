@@ -114,7 +114,9 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           {hasPrice ? (
             <>
               <div className="flex justify-between items-end">
-                <span className="text-xs text-[#546a7b]">Current Bid (JPY)</span>
+                <span className="text-xs text-[#546a7b]">
+                  Current Bid (JPY)
+                </span>
                 <span className="text-sm font-medium text-[#546a7b]">
                   {formatJPY(vehicle.priceJPY)}
                 </span>
@@ -152,4 +154,3 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
     </Card>
   );
 }
-

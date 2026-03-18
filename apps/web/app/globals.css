@@ -58,12 +58,47 @@
   --steel: 210 18% 33%; /* #3a4a57 */
   --steel-soft: 210 20% 62%; /* #87a0b1 */
   --ink: 202.5 15.4% 10.2%; /* #161b1e */
-  --app-backdrop-main: radial-gradient(1200px 600px at 10% -10%, rgba(31, 158, 179, 0.2), transparent 60%), radial-gradient(900px 520px at 90% 0%, rgba(88, 136, 176, 0.18), transparent 55%), linear-gradient(180deg, #f7f9fc 0%, #f1f5f9 55%, #e4edf5 100%);
-  --app-backdrop-orbits: radial-gradient(circle at 18% 20%, rgba(31, 158, 179, 0.14), transparent 52%), radial-gradient(circle at 82% 25%, rgba(88, 136, 176, 0.12), transparent 58%);
-  --app-backdrop-grid: linear-gradient(to right, rgba(63, 86, 100, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(63, 86, 100, 0.06) 1px, transparent 1px);
-  --app-backdrop-diagonal: repeating-linear-gradient(115deg, rgba(30, 35, 38, 0.045) 0 2px, transparent 2px 28px);
-  --app-backdrop-glow: radial-gradient(circle, rgba(88, 136, 176, 0.18), transparent 70%);
-  --app-backdrop-vignette: radial-gradient(circle at 50% 115%, rgba(0, 0, 0, 0.16), transparent 60%);
+  --app-backdrop-main:
+    radial-gradient(
+      1200px 600px at 10% -10%,
+      rgba(31, 158, 179, 0.2),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 520px at 90% 0%,
+      rgba(88, 136, 176, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(180deg, #f7f9fc 0%, #f1f5f9 55%, #e4edf5 100%);
+  --app-backdrop-orbits:
+    radial-gradient(
+      circle at 18% 20%,
+      rgba(31, 158, 179, 0.14),
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 82% 25%,
+      rgba(88, 136, 176, 0.12),
+      transparent 58%
+    );
+  --app-backdrop-grid:
+    linear-gradient(to right, rgba(63, 86, 100, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(63, 86, 100, 0.06) 1px, transparent 1px);
+  --app-backdrop-diagonal: repeating-linear-gradient(
+    115deg,
+    rgba(30, 35, 38, 0.045) 0 2px,
+    transparent 2px 28px
+  );
+  --app-backdrop-glow: radial-gradient(
+    circle,
+    rgba(88, 136, 176, 0.18),
+    transparent 70%
+  );
+  --app-backdrop-vignette: radial-gradient(
+    circle at 50% 115%,
+    rgba(0, 0, 0, 0.16),
+    transparent 60%
+  );
 }
 
 .dark {
@@ -91,12 +126,47 @@
   --steel: 205 14.3% 50.6%; /* #6f8493 */
   --steel-soft: 204.7 17.9% 62.7%; /* #8fa3b1 */
   --ink: 28.2 21.5% 84.5%; /* #e0d7cf */
-  --app-backdrop-main: radial-gradient(1200px 600px at 10% -10%, rgba(43, 179, 198, 0.28), transparent 60%), radial-gradient(900px 520px at 90% 0%, rgba(200, 146, 64, 0.22), transparent 55%), linear-gradient(180deg, #0f1417 0%, #141b20 50%, #1c262c 100%);
-  --app-backdrop-orbits: radial-gradient(circle at 18% 20%, rgba(43, 179, 198, 0.18), transparent 52%), radial-gradient(circle at 82% 25%, rgba(200, 146, 64, 0.16), transparent 58%);
-  --app-backdrop-grid: linear-gradient(to right, rgba(236, 231, 225, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(236, 231, 225, 0.06) 1px, transparent 1px);
-  --app-backdrop-diagonal: repeating-linear-gradient(115deg, rgba(236, 231, 225, 0.05) 0 2px, transparent 2px 28px);
-  --app-backdrop-glow: radial-gradient(circle, rgba(200, 146, 64, 0.25), transparent 70%);
-  --app-backdrop-vignette: radial-gradient(circle at 50% 115%, rgba(0, 0, 0, 0.65), transparent 60%);
+  --app-backdrop-main:
+    radial-gradient(
+      1200px 600px at 10% -10%,
+      rgba(43, 179, 198, 0.28),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 520px at 90% 0%,
+      rgba(200, 146, 64, 0.22),
+      transparent 55%
+    ),
+    linear-gradient(180deg, #0f1417 0%, #141b20 50%, #1c262c 100%);
+  --app-backdrop-orbits:
+    radial-gradient(
+      circle at 18% 20%,
+      rgba(43, 179, 198, 0.18),
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 82% 25%,
+      rgba(200, 146, 64, 0.16),
+      transparent 58%
+    );
+  --app-backdrop-grid:
+    linear-gradient(to right, rgba(236, 231, 225, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(236, 231, 225, 0.06) 1px, transparent 1px);
+  --app-backdrop-diagonal: repeating-linear-gradient(
+    115deg,
+    rgba(236, 231, 225, 0.05) 0 2px,
+    transparent 2px 28px
+  );
+  --app-backdrop-glow: radial-gradient(
+    circle,
+    rgba(200, 146, 64, 0.25),
+    transparent 70%
+  );
+  --app-backdrop-vignette: radial-gradient(
+    circle at 50% 115%,
+    rgba(0, 0, 0, 0.65),
+    transparent 60%
+  );
 }
 
 .dark [class~="text-[#546a7b]"],
@@ -196,7 +266,8 @@
   .admin-theme select:focus,
   .admin-theme textarea:focus {
     outline: none;
-    box-shadow: 0 0 0 2px color-mix(in oklab, hsl(var(--primary)) 50%, transparent);
+    box-shadow: 0 0 0 2px
+      color-mix(in oklab, hsl(var(--primary)) 50%, transparent);
     border-color: color-mix(in oklab, hsl(var(--primary)) 70%, transparent);
   }
   .admin-theme select option {
@@ -533,14 +604,18 @@
 
 .hover-tilt {
   transform-style: preserve-3d;
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
 }
 .hover-tilt:hover {
   transform: translateY(-6px) rotateX(2deg) rotateY(-2deg);
 }
 
 .hover-glow {
-  transition: box-shadow 220ms ease, transform 220ms ease;
+  transition:
+    box-shadow 220ms ease,
+    transform 220ms ease;
 }
 .hover-glow:hover {
   transform: translateY(-4px);
@@ -585,28 +660,60 @@
     background-color: hsl(var(--background)) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/90"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 90%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 90%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/80"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 80%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 80%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/70"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 70%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 70%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/60"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 60%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 60%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/40"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 40%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 40%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/30"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 30%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 30%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/20"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 20%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 20%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#fdfdff]/8"] {
-    background-color: color-mix(in oklab, hsl(var(--background)) 8%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--background)) 8%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#62929e]"] {
     background-color: hsl(var(--primary)) !important;
@@ -618,30 +725,58 @@
     background-color: hsl(var(--muted)) !important;
   }
   .theme-override [class~="bg-[#c6c5b9]/40"] {
-    background-color: color-mix(in oklab, hsl(var(--muted)) 40%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--muted)) 40%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#c6c5b9]/30"] {
-    background-color: color-mix(in oklab, hsl(var(--muted)) 30%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--muted)) 30%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#c6c5b9]/20"] {
-    background-color: color-mix(in oklab, hsl(var(--muted)) 20%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--muted)) 20%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#c6c5b9]/15"] {
-    background-color: color-mix(in oklab, hsl(var(--muted)) 15%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--muted)) 15%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="bg-[#c6c5b9]/10"] {
-    background-color: color-mix(in oklab, hsl(var(--muted)) 10%, transparent) !important;
+    background-color: color-mix(
+      in oklab,
+      hsl(var(--muted)) 10%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="border-[#546a7b]"],
   .theme-override [class~="border-[#546a7b]/65"],
   .theme-override [class~="border-[#546a7b]/60"] {
-    border-color: color-mix(in oklab, hsl(var(--secondary)) 60%, transparent) !important;
+    border-color: color-mix(
+      in oklab,
+      hsl(var(--secondary)) 60%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="border-[#62929e]"],
   .theme-override [class~="border-[#62929e]/40"],
   .theme-override [class~="border-[#62929e]/30"],
   .theme-override [class~="border-[#62929e]/20"] {
-    border-color: color-mix(in oklab, hsl(var(--primary)) 30%, transparent) !important;
+    border-color: color-mix(
+      in oklab,
+      hsl(var(--primary)) 30%,
+      transparent
+    ) !important;
   }
   .theme-override [class~="text-[#393d3f]"] {
     color: hsl(var(--foreground)) !important;
@@ -665,4 +800,3 @@
     color: hsl(var(--foreground)) !important;
   }
 }
-

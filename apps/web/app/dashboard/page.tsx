@@ -328,4 +328,3 @@ export default function DashboardPage() {
     </AuthGuard>
   );
 }
-

@@ -119,7 +119,9 @@ export default function OrderCreateForm({
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#62929e]">
           <Shield className="h-4 w-4" /> Secure Checkout
         </div>
-        <CardTitle className="text-xl text-[#393d3f]">Create Your Order</CardTitle>
+        <CardTitle className="text-xl text-[#393d3f]">
+          Create Your Order
+        </CardTitle>
         <p className="text-sm text-[#546a7b]">
           Add your delivery details to reserve this vehicle. Your address is
           encrypted at rest.
@@ -259,4 +261,3 @@ export default function OrderCreateForm({
     </Card>
   );
 }
-

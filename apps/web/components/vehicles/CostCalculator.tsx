@@ -237,4 +237,3 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
     </Card>
   );
 }
-

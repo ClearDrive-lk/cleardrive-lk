@@ -88,7 +88,10 @@ export default function LoginPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#62929e] animate-pulse" />
               SYSTEM ONLINE
             </Badge>
-            <Badge variant="outline" className="border-[#546a7b]/65 text-[#546a7b]">
+            <Badge
+              variant="outline"
+              className="border-[#546a7b]/65 text-[#546a7b]"
+            >
               v2.4.0-stable
             </Badge>
           </div>
@@ -103,7 +106,9 @@ export default function LoginPage() {
             <div className="flex items-start gap-4 p-4 rounded-lg bg-[#c6c5b9]/20 border border-[#546a7b]/65 backdrop-blur-md hover:bg-[#c6c5b9]/30 transition-colors">
               <ShieldCheck className="w-6 h-6 text-[#62929e] mt-1" />
               <div>
-                <h3 className="font-bold text-[#393d3f]">Direct Market Access</h3>
+                <h3 className="font-bold text-[#393d3f]">
+                  Direct Market Access
+                </h3>
                 <p className="text-sm text-[#546a7b] mt-1">
                   Secure gateway to USS Tokyo & JAA live auction data with
                   sub-millisecond latency.
@@ -113,7 +118,9 @@ export default function LoginPage() {
             <div className="flex items-start gap-4 p-4 rounded-lg bg-[#c6c5b9]/20 border border-[#546a7b]/65 backdrop-blur-md hover:bg-[#c6c5b9]/30 transition-colors">
               <Lock className="w-6 h-6 text-[#62929e] mt-1" />
               <div>
-                <h3 className="font-bold text-[#393d3f]">End-to-End Encryption</h3>
+                <h3 className="font-bold text-[#393d3f]">
+                  End-to-End Encryption
+                </h3>
                 <p className="text-sm text-[#546a7b] mt-1">
                   Financial data and bidding instructions are protected by
                   AES-256 GCM encryption.
@@ -261,4 +268,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

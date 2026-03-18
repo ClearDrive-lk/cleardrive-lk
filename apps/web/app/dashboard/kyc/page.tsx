@@ -571,4 +571,3 @@ export default function DashboardKycPage() {
     </AuthGuard>
   );
 }
-

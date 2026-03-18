@@ -191,10 +191,11 @@ function PaymentForm() {
 export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-[#fdfdff] flex items-center justify-center p-4">
-      <Suspense fallback={<div className="text-[#393d3f]">Loading payment...</div>}>
+      <Suspense
+        fallback={<div className="text-[#393d3f]">Loading payment...</div>}
+      >
         <PaymentForm />
       </Suspense>
     </div>
   );
 }
-

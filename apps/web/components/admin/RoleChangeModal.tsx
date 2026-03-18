@@ -67,12 +67,15 @@ export function RoleChangeModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fdfdff]/70">
       <div className="w-full max-w-md rounded-2xl border border-[#546a7b]/65 bg-[#0b0b0b] p-6">
-        <h2 className="text-xl font-bold text-[#393d3f] mb-4">Change User Role</h2>
+        <h2 className="text-xl font-bold text-[#393d3f] mb-4">
+          Change User Role
+        </h2>
 
         <div className="mb-4">
           <p className="text-sm text-[#546a7b]">User: {user.email}</p>
           <p className="text-sm text-[#546a7b]">
-            Current Role: <strong className="text-[#393d3f]">{user.role}</strong>
+            Current Role:{" "}
+            <strong className="text-[#393d3f]">{user.role}</strong>
           </p>
         </div>
 
@@ -145,4 +148,3 @@ export function RoleChangeModal({
     </div>
   );
 }
-

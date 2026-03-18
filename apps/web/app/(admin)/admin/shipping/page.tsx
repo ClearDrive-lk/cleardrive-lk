@@ -196,7 +196,9 @@ export default function AdminShippingPage() {
       </div>
 
       <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold text-[#393d3f]">Assign Exporter</h2>
+        <h2 className="text-lg font-semibold text-[#393d3f]">
+          Assign Exporter
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
@@ -315,7 +317,9 @@ export default function AdminShippingPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
           <p className="text-sm text-[#546a7b]">Total</p>
-          <p className="text-2xl font-bold text-[#393d3f]">{summary?.total ?? 0}</p>
+          <p className="text-2xl font-bold text-[#393d3f]">
+            {summary?.total ?? 0}
+          </p>
         </div>
         <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
           <p className="text-sm text-[#546a7b]">Awaiting Details</p>
@@ -393,4 +397,3 @@ export default function AdminShippingPage() {
     </div>
   );
 }
-

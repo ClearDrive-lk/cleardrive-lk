@@ -204,7 +204,9 @@ export function OrderTimeline({
 
   return (
     <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
-      <h3 className="mb-6 text-xl font-semibold text-[#393d3f]">Order Timeline</h3>
+      <h3 className="mb-6 text-xl font-semibold text-[#393d3f]">
+        Order Timeline
+      </h3>
 
       <div className="relative">
         <div className="absolute bottom-0 left-4 top-0 w-px bg-[#c6c5b9]/30"></div>
@@ -252,9 +254,10 @@ export function OrderTimeline({
       </div>
 
       {timeline.length === 0 && (
-        <p className="py-8 text-center text-[#546a7b]">No timeline events yet</p>
+        <p className="py-8 text-center text-[#546a7b]">
+          No timeline events yet
+        </p>
       )}
     </div>
   );
 }
-

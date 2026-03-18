@@ -106,7 +106,9 @@ export default function AdminKycPage() {
         <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
-              <h2 className="text-xl font-semibold text-[#393d3f]">Review Queue</h2>
+              <h2 className="text-xl font-semibold text-[#393d3f]">
+                Review Queue
+              </h2>
               <p className="text-sm text-[#546a7b]">
                 Oldest submissions are shown first.
               </p>
@@ -200,4 +202,3 @@ export default function AdminKycPage() {
     </div>
   );
 }
-

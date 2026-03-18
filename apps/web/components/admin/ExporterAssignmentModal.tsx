@@ -74,7 +74,9 @@ export function ExporterAssignmentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fdfdff]/70 px-4">
       <div className="w-full max-w-lg rounded-2xl border border-[#546a7b]/65 bg-[#0b0b0b] p-6 shadow-2xl">
         <div className="mb-5">
-          <h2 className="text-2xl font-semibold text-[#393d3f]">Assign Exporter</h2>
+          <h2 className="text-2xl font-semibold text-[#393d3f]">
+            Assign Exporter
+          </h2>
           <p className="mt-2 text-sm text-[#546a7b]">
             Order <span className="font-medium text-[#393d3f]">{order.id}</span>
           </p>
@@ -134,4 +136,3 @@ export function ExporterAssignmentModal({
     </div>
   );
 }
-

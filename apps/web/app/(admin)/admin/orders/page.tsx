@@ -231,7 +231,9 @@ export default function AdminOrdersPage() {
                   {pendingPayments.map((order) => (
                     <tr key={order.id} className="hover:bg-[#c6c5b9]/20">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-[#393d3f]">{order.id}</div>
+                        <div className="font-medium text-[#393d3f]">
+                          {order.id}
+                        </div>
                         <div className="text-xs text-[#546a7b]">
                           Created {new Date(order.created_at).toLocaleString()}
                         </div>
@@ -330,7 +332,9 @@ export default function AdminOrdersPage() {
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-[#c6c5b9]/20">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-[#393d3f]">{order.id}</div>
+                        <div className="font-medium text-[#393d3f]">
+                          {order.id}
+                        </div>
                         <div className="text-xs text-[#546a7b]">
                           Created {new Date(order.created_at).toLocaleString()}
                         </div>
@@ -388,4 +392,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-

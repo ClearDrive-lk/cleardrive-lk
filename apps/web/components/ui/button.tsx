@@ -16,8 +16,7 @@ const buttonVariants = cva(
           "border border-[hsl(var(--steel))] bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
           "border border-[hsl(var(--steel))] bg-[linear-gradient(135deg,hsl(var(--secondary))_0%,hsl(var(--steel))_100%)] text-secondary-foreground hover:opacity-90",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

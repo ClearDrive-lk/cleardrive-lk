@@ -244,7 +244,9 @@ export default function AuditLogsPage() {
           </div>
           <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Page Size</p>
-            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">{limit}</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
+              {limit}
+            </p>
           </div>
           <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Active Event Filter</p>
@@ -283,7 +285,9 @@ export default function AuditLogsPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-[#546a7b]">User ID</span>
+              <span className="text-sm font-medium text-[#546a7b]">
+                User ID
+              </span>
               <input
                 value={draftFilters.userId}
                 onChange={(event) =>
@@ -370,7 +374,9 @@ export default function AuditLogsPage() {
         <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
           <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
-              <h2 className="text-xl font-semibold text-[#393d3f]">Audit Events</h2>
+              <h2 className="text-xl font-semibold text-[#393d3f]">
+                Audit Events
+              </h2>
               <p className="text-sm text-[#546a7b]">
                 Showing newest events first.
               </p>
@@ -419,7 +425,10 @@ export default function AuditLogsPage() {
                   </thead>
                   <tbody className="divide-y divide-white/10">
                     {logsResponse.logs.map((log) => (
-                      <tr key={log.id} className="align-top hover:bg-[#c6c5b9]/20">
+                      <tr
+                        key={log.id}
+                        className="align-top hover:bg-[#c6c5b9]/20"
+                      >
                         <td className="px-6 py-4 text-[#546a7b]">
                           {formatTimestamp(log.created_at)}
                         </td>
@@ -501,4 +510,3 @@ export default function AuditLogsPage() {
     </div>
   );
 }
-
