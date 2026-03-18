@@ -92,16 +92,13 @@
   .admin-theme .text-gray-700 {
     @apply text-[#546a7b];
   }
-  .admin-theme .text-slate-600,
-  .admin-theme .text-[#393d3f] {
+  .admin-theme .text-slate-600 {
     @apply text-[#546a7b];
   }
-  .admin-theme .text-slate-500,
-  .admin-theme .text-[#546a7b] {
+  .admin-theme .text-slate-500 {
     @apply text-[#546a7b];
   }
-  .admin-theme .text-slate-400,
-  .admin-theme .text-[#546a7b] {
+  .admin-theme .text-slate-400 {
     @apply text-[#546a7b];
   }
   .admin-theme input,
