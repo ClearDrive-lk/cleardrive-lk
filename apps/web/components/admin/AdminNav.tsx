@@ -115,14 +115,14 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
     <div className="flex h-full flex-col">
       <div className="px-6 py-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FE7743]/10 border border-[#FE7743]/30 text-[#FE7743] shadow-lg shadow-orange-500/20">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e]/10 border border-[#62929e]/30 text-[#62929e] shadow-lg shadow-[0_0_16px_rgba(98,146,158,0.2)]">
             <Terminal className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-gray-500">
+            <p className="text-xs uppercase tracking-[0.35em] text-[#546a7b]">
               ClearDrive
             </p>
-            <p className="text-lg font-semibold text-white">Admin Terminal</p>
+            <p className="text-lg font-semibold text-[#393d3f]">Admin Terminal</p>
           </div>
         </div>
       </div>
@@ -130,7 +130,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
       <nav className="flex-1 space-y-8 px-4 pb-6">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title}>
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-gray-500">
+            <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-[#546a7b]">
               {section.title}
             </p>
             <div className="mt-3 space-y-1">
@@ -143,16 +143,16 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition",
                       active
-                        ? "bg-white/10 text-white border border-white/10"
-                        : "text-gray-300 hover:bg-white/5 hover:text-white",
+                        ? "bg-[#c6c5b9]/30 text-[#393d3f] border border-[#c6c5b9]/50"
+                        : "text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f]",
                     )}
                   >
                     <item.icon
                       className={cn(
                         "h-4 w-4",
                         active
-                          ? "text-[#FE7743]"
-                          : "text-gray-400 group-hover:text-[#FE7743]",
+                          ? "text-[#62929e]"
+                          : "text-[#546a7b] group-hover:text-[#62929e]",
                       )}
                     />
                     <span>{item.label}</span>
@@ -175,14 +175,14 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
       </nav>
 
       <div className="px-6 pb-6">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-gray-300">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-[#546a7b]">
             System
           </p>
-          <p className="mt-2 text-sm font-semibold text-white">
+          <p className="mt-2 text-sm font-semibold text-[#393d3f]">
             Admin operations are live.
           </p>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-[#546a7b]">
             Monitor audit logs and gazette approvals regularly.
           </p>
         </div>
@@ -193,7 +193,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden w-72 flex-col border-r border-white/10 bg-[#050505] lg:flex">
+    <aside className="hidden w-72 flex-col border-r border-[#c6c5b9]/50 bg-[#fdfdff] lg:flex">
       <AdminNavContent />
     </aside>
   );
@@ -205,7 +205,7 @@ export function AdminMobileNav() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-200 shadow-sm transition hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-200 shadow-sm transition hover:bg-[#c6c5b9]/30"
         >
           <Menu className="h-4 w-4" />
           Menu
@@ -213,10 +213,11 @@ export function AdminMobileNav() {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="border-r border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 p-0 text-white"
+        className="border-r border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 p-0 text-[#393d3f]"
       >
         <AdminNavContent isMobile />
       </SheetContent>
     </Sheet>
   );
 }
+

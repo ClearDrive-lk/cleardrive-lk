@@ -141,20 +141,20 @@ export default function ShippingDetailsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#050505] text-white p-6">
+      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">
                 Shipping Details Submission
               </h1>
-              <p className="text-gray-400 mt-1">
+              <p className="text-[#546a7b] mt-1">
                 Submit vessel and shipment details for your assigned order.
               </p>
             </div>
             <Link
               href="/dashboard/orders"
-              className="text-[#FE7743] hover:underline"
+              className="text-[#62929e] hover:underline"
             >
               Back to Orders
             </Link>
@@ -162,23 +162,23 @@ export default function ShippingDetailsPage() {
 
           <form
             onSubmit={onSubmit}
-            className="space-y-4 bg-[#0A0A0A] border border-white/10 rounded-lg p-6"
+            className="space-y-4 bg-[#fdfdff] border border-[#c6c5b9]/50 rounded-lg p-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Order ID (UUID)"
                 value={form.orderId}
                 onChange={(e) => updateField("orderId", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Vessel Name"
                 value={form.vesselName}
                 onChange={(e) => updateField("vesselName", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Vessel Registration"
                 value={form.vesselRegistration}
                 onChange={(e) =>
@@ -186,45 +186,45 @@ export default function ShippingDetailsPage() {
                 }
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Voyage Number"
                 value={form.voyageNumber}
                 onChange={(e) => updateField("voyageNumber", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Departure Port"
                 value={form.departurePort}
                 onChange={(e) => updateField("departurePort", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Arrival Port"
                 value={form.arrivalPort}
                 onChange={(e) => updateField("arrivalPort", e.target.value)}
               />
               <input
                 type="date"
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 value={form.departureDate}
                 onChange={(e) => updateField("departureDate", e.target.value)}
               />
               <input
                 type="date"
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 value={form.estimatedArrivalDate}
                 onChange={(e) =>
                   updateField("estimatedArrivalDate", e.target.value)
                 }
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Container Number"
                 value={form.containerNumber}
                 onChange={(e) => updateField("containerNumber", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Bill of Landing Number"
                 value={form.billOfLandingNumber}
                 onChange={(e) =>
@@ -232,13 +232,13 @@ export default function ShippingDetailsPage() {
                 }
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Seal Number"
                 value={form.sealNumber}
                 onChange={(e) => updateField("sealNumber", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-black border border-white/15"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
                 placeholder="Tracking Number"
                 value={form.trackingNumber}
                 onChange={(e) => updateField("trackingNumber", e.target.value)}
@@ -251,7 +251,7 @@ export default function ShippingDetailsPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="px-4 py-2 rounded bg-[#FE7743] text-black font-semibold disabled:opacity-60"
+              className="px-4 py-2 rounded bg-[#62929e] text-[#fdfdff] font-semibold disabled:opacity-60"
             >
               {submitting ? "Submitting..." : "Submit Shipping Details"}
             </button>
@@ -261,3 +261,4 @@ export default function ShippingDetailsPage() {
     </AuthGuard>
   );
 }
+

@@ -131,7 +131,7 @@ function PaymentForm() {
     return (
       <Card className="max-w-md mx-auto bg-slate-900 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-white">Payment Error</CardTitle>
+          <CardTitle className="text-[#393d3f]">Payment Error</CardTitle>
           <CardDescription>No order ID provided</CardDescription>
         </CardHeader>
         <CardContent>
@@ -146,7 +146,7 @@ function PaymentForm() {
   return (
     <Card className="max-w-md mx-auto bg-slate-900 border-slate-800 shadow-2xl">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl text-white">
+        <CardTitle className="text-2xl text-[#393d3f]">
           Complete Your Payment
         </CardTitle>
         <CardDescription className="text-slate-400">
@@ -190,10 +190,11 @@ function PaymentForm() {
 // Main page component with Suspense wrapper
 export default function PaymentPage() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <Suspense fallback={<div className="text-white">Loading payment...</div>}>
+    <div className="min-h-screen bg-[#fdfdff] flex items-center justify-center p-4">
+      <Suspense fallback={<div className="text-[#393d3f]">Loading payment...</div>}>
         <PaymentForm />
       </Suspense>
     </div>
   );
 }
+

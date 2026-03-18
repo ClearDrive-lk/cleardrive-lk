@@ -193,52 +193,52 @@ export default function DashboardKycPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
-        <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#FE7743]" />
+              <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
+                <Terminal className="w-4 h-4 text-[#62929e]" />
               </div>
-              ClearDrive<span className="text-[#FE7743]">.lk</span>
+              ClearDrive<span className="text-[#62929e]">.lk</span>
             </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
               <Link
                 href="/dashboard"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Dashboard
               </Link>
               <Link
                 href="/dashboard/orders"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Orders
               </Link>
               <Link
                 href="/dashboard/vehicles"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Vehicles
               </Link>
               <Link
                 href="/dashboard/kyc"
-                className="text-white transition-colors flex items-center gap-2"
+                className="text-[#393d3f] transition-colors flex items-center gap-2"
               >
                 KYC
                 <Badge
                   variant="outline"
-                  className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
+                  className="text-[10px] border-[#62929e]/20 text-[#62929e] h-4 px-1"
                 >
                   ACTIVE
                 </Badge>
               </Link>
               <Link
                 href="/dashboard/profile"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Profile
               </Link>
@@ -246,7 +246,7 @@ export default function DashboardKycPage() {
             <Button
               onClick={logout}
               disabled={logoutLoading}
-              className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+              className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
             >
               {logoutLoading ? "Signing out..." : "Sign Out"}
             </Button>
@@ -254,47 +254,47 @@ export default function DashboardKycPage() {
         </nav>
 
         <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-          <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#FE7743]/5 rounded-[100%] blur-[120px] pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+          <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
 
           <div className="relative z-10 max-w-6xl mx-auto space-y-6">
-            <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#FE7743] mb-6">
+            <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-6">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 KYC SUBMISSION TERMINAL
               </div>
               <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9]">
                 VERIFY YOUR{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FE7743] to-orange-200">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9]">
                   IDENTITY.
                 </span>
               </h1>
-              <p className="mt-4 max-w-2xl text-lg text-gray-400">
+              <p className="mt-4 max-w-2xl text-lg text-[#546a7b]">
                 Submit your NIC and selfie once. Your entered details will be
                 matched against extracted document data during admin review.
               </p>
             </header>
 
             <section className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-gray-400">Current Status</p>
+              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+                <p className="text-sm text-[#546a7b]">Current Status</p>
                 <span
                   className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.className}`}
                 >
                   {statusBadge.label}
                 </span>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-gray-400">Submitted At</p>
-                <p className="mt-3 text-sm font-medium text-white">
+              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+                <p className="text-sm text-[#546a7b]">Submitted At</p>
+                <p className="mt-3 text-sm font-medium text-[#393d3f]">
                   {status?.submitted_at
                     ? new Date(status.submitted_at).toLocaleString()
                     : "Not submitted"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm text-gray-400">Reviewed At</p>
-                <p className="mt-3 text-sm font-medium text-white">
+              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+                <p className="text-sm text-[#546a7b]">Reviewed At</p>
+                <p className="mt-3 text-sm font-medium text-[#393d3f]">
                   {status?.reviewed_at
                     ? new Date(status.reviewed_at).toLocaleString()
                     : "Pending"}
@@ -317,18 +317,18 @@ export default function DashboardKycPage() {
             ) : null}
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <h2 className="text-2xl font-semibold text-white">
+              <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+                <h2 className="text-2xl font-semibold text-[#393d3f]">
                   Submit KYC
                 </h2>
-                <p className="mt-2 text-sm text-gray-400">
+                <p className="mt-2 text-sm text-[#546a7b]">
                   Upload clear images and provide the identity details exactly
                   as they appear on your NIC.
                 </p>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                       NIC Number
                     </label>
                     <input
@@ -339,12 +339,12 @@ export default function DashboardKycPage() {
                           nic_number: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
+                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                       Full Name
                     </label>
                     <input
@@ -355,12 +355,12 @@ export default function DashboardKycPage() {
                           full_name: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
+                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                       Date of Birth
                     </label>
                     <input
@@ -372,12 +372,12 @@ export default function DashboardKycPage() {
                           date_of_birth: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
+                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                       Gender
                     </label>
                     <input
@@ -388,12 +388,12 @@ export default function DashboardKycPage() {
                           gender: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
+                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
+                    <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                       Address
                     </label>
                     <textarea
@@ -405,7 +405,7 @@ export default function DashboardKycPage() {
                           address: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
+                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
@@ -421,16 +421,16 @@ export default function DashboardKycPage() {
                   ).map(([key, label]) => (
                     <label
                       key={key}
-                      className="rounded-2xl border border-dashed border-white/15 bg-black/20 p-4"
+                      className="rounded-2xl border border-dashed border-[#c6c5b9]/35 bg-[#c6c5b9]/40 p-4"
                     >
-                      <div className="flex items-center gap-2 text-sm font-medium text-white">
-                        <FileImage className="h-4 w-4 text-[#FE7743]" />
+                      <div className="flex items-center gap-2 text-sm font-medium text-[#393d3f]">
+                        <FileImage className="h-4 w-4 text-[#62929e]" />
                         {label}
                       </div>
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
-                        className="mt-4 block w-full text-xs text-gray-300"
+                        className="mt-4 block w-full text-xs text-[#546a7b]"
                         disabled={Boolean(status?.has_kyc)}
                         onChange={(event) =>
                           setFiles((current) => ({
@@ -439,7 +439,7 @@ export default function DashboardKycPage() {
                           }))
                         }
                       />
-                      <p className="mt-2 text-xs text-gray-500">
+                      <p className="mt-2 text-xs text-[#546a7b]">
                         {files[key]?.name ?? "No file selected"}
                       </p>
                     </label>
@@ -461,7 +461,7 @@ export default function DashboardKycPage() {
                   <Button
                     onClick={handleUpload}
                     disabled={submitting || Boolean(status?.has_kyc)}
-                    className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                    className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
                   >
                     <Upload className="mr-2 h-4 w-4" />
                     {submitting
@@ -473,24 +473,24 @@ export default function DashboardKycPage() {
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <h2 className="text-2xl font-semibold text-white">
+              <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+                <h2 className="text-2xl font-semibold text-[#393d3f]">
                   Submission Snapshot
                 </h2>
-                <p className="mt-2 text-sm text-gray-400">
+                <p className="mt-2 text-sm text-[#546a7b]">
                   Review the last submitted identity data and uploaded document
                   links.
                 </p>
 
                 {loading ? (
-                  <p className="mt-6 text-sm text-gray-400">
+                  <p className="mt-6 text-sm text-[#546a7b]">
                     Loading KYC data...
                   </p>
                 ) : documents ? (
                   <div className="mt-6 space-y-4">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
-                      <p className="text-gray-400">Submitted Identity</p>
-                      <div className="mt-3 space-y-2 text-white">
+                    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/40 p-4 text-sm">
+                      <p className="text-[#546a7b]">Submitted Identity</p>
+                      <div className="mt-3 space-y-2 text-[#393d3f]">
                         <p>
                           NIC:{" "}
                           {documents.user_provided_data?.nic_number ??
@@ -523,13 +523,13 @@ export default function DashboardKycPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm">
-                      <p className="text-gray-400">Uploaded Files</p>
+                    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/40 p-4 text-sm">
+                      <p className="text-[#546a7b]">Uploaded Files</p>
                       <div className="mt-3 space-y-2">
                         <a
                           href={documents.nic_front_url}
                           target="_blank"
-                          className="block text-[#FE7743] hover:underline"
+                          className="block text-[#62929e] hover:underline"
                           rel="noreferrer"
                         >
                           NIC Front
@@ -537,7 +537,7 @@ export default function DashboardKycPage() {
                         <a
                           href={documents.nic_back_url}
                           target="_blank"
-                          className="block text-[#FE7743] hover:underline"
+                          className="block text-[#62929e] hover:underline"
                           rel="noreferrer"
                         >
                           NIC Back
@@ -545,7 +545,7 @@ export default function DashboardKycPage() {
                         <a
                           href={documents.selfie_url}
                           target="_blank"
-                          className="block text-[#FE7743] hover:underline"
+                          className="block text-[#62929e] hover:underline"
                           rel="noreferrer"
                         >
                           Selfie
@@ -554,7 +554,7 @@ export default function DashboardKycPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-6 text-sm text-gray-400">
+                  <p className="mt-6 text-sm text-[#546a7b]">
                     No KYC submission found yet. Complete the form to start
                     verification.
                   </p>
@@ -567,3 +567,4 @@ export default function DashboardKycPage() {
     </AuthGuard>
   );
 }
+

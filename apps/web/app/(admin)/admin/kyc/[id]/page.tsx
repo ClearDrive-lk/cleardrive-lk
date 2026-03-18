@@ -249,7 +249,7 @@ export default function AdminKycReviewDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-6 text-gray-400">Loading KYC review...</div>;
+    return <div className="p-6 text-[#546a7b]">Loading KYC review...</div>;
   }
 
   if (error && !detail) {
@@ -257,20 +257,20 @@ export default function AdminKycReviewDetailPage() {
   }
 
   if (!detail) {
-    return <div className="p-6 text-gray-400">KYC record not found.</div>;
+    return <div className="p-6 text-[#546a7b]">KYC record not found.</div>;
   }
 
   return (
-    <div className="min-h-screen p-6 text-white">
+    <div className="min-h-screen p-6 text-[#393d3f]">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#FE7743]">
+        <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-52 KYC Admin Review
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-white">
+          <h1 className="mt-2 text-3xl font-semibold text-[#393d3f]">
             {detail.user_name}
           </h1>
-          <p className="mt-2 text-sm text-gray-400">{detail.user_email}</p>
+          <p className="mt-2 text-sm text-[#546a7b]">{detail.user_email}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span
               className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${extractionBadge.className}`}
@@ -278,7 +278,7 @@ export default function AdminKycReviewDetailPage() {
               {extractionBadge.label}
             </span>
             {detail.manual_extracted_by ? (
-              <span className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-gray-200">
+              <span className="inline-flex rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-3 py-1 text-xs font-semibold text-gray-200">
                 Saved by {detail.manual_extracted_by}
               </span>
             ) : null}
@@ -286,36 +286,36 @@ export default function AdminKycReviewDetailPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Status</p>
-            <p className="mt-2 text-lg font-semibold text-white">
+          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Status</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {detail.status}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Extraction</p>
-            <p className="mt-2 text-lg font-semibold text-white">
+          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Extraction</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {detail.extraction_method}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Discrepancies</p>
-            <p className="mt-2 text-lg font-semibold text-white">
+          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Discrepancies</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {mismatchCount}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Submitted</p>
-            <p className="mt-2 text-lg font-semibold text-white">
+          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Submitted</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {new Date(detail.created_at).toLocaleString()}
             </p>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-white">NIC Front</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
+          <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#393d3f]">NIC Front</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#c6c5b9]/50">
               <Image
                 src={detail.nic_front_url}
                 alt="NIC front"
@@ -325,9 +325,9 @@ export default function AdminKycReviewDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-white">NIC Back</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
+          <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#393d3f]">NIC Back</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#c6c5b9]/50">
               <Image
                 src={detail.nic_back_url}
                 alt="NIC back"
@@ -337,9 +337,9 @@ export default function AdminKycReviewDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-white">Selfie</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
+          <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#393d3f]">Selfie</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#c6c5b9]/50">
               <Image
                 src={detail.selfie_url}
                 alt="Selfie"
@@ -353,7 +353,7 @@ export default function AdminKycReviewDetailPage() {
 
         {detail.needs_manual_extraction ? (
           <section className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-[#393d3f]">
               Manual Extraction Required
             </h2>
             <p className="mt-2 text-sm text-amber-100/80">
@@ -363,7 +363,7 @@ export default function AdminKycReviewDetailPage() {
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   NIC Number
                 </label>
                 <input
@@ -375,11 +375,11 @@ export default function AdminKycReviewDetailPage() {
                       nic_number: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Full Name
                 </label>
                 <input
@@ -391,11 +391,11 @@ export default function AdminKycReviewDetailPage() {
                       full_name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Date of Birth
                 </label>
                 <input
@@ -407,11 +407,11 @@ export default function AdminKycReviewDetailPage() {
                       date_of_birth: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Gender
                 </label>
                 <input
@@ -423,11 +423,11 @@ export default function AdminKycReviewDetailPage() {
                       gender: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Address
                 </label>
                 <textarea
@@ -439,11 +439,11 @@ export default function AdminKycReviewDetailPage() {
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-300">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Issue Date
                 </label>
                 <input
@@ -455,7 +455,7 @@ export default function AdminKycReviewDetailPage() {
                       issue_date: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
             </div>
@@ -465,7 +465,7 @@ export default function AdminKycReviewDetailPage() {
                 type="button"
                 onClick={saveManualExtraction}
                 disabled={submitting}
-                className="rounded-xl bg-[#FE7743] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#FE7743]/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-[#62929e] px-5 py-3 text-sm font-semibold text-[#fdfdff] transition hover:bg-[#62929e]/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "Saving..." : "Save Manual Extraction"}
               </button>
@@ -473,29 +473,29 @@ export default function AdminKycReviewDetailPage() {
           </section>
         ) : null}
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 shadow-sm">
-          <div className="border-b border-white/10 px-6 py-4">
-            <h2 className="text-xl font-semibold text-white">
+        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="border-b border-[#c6c5b9]/50 px-6 py-4">
+            <h2 className="text-xl font-semibold text-[#393d3f]">
               Extracted vs Stored Data
             </h2>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#546a7b]">
               Mismatches are highlighted to support admin review.
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-white/10 text-sm">
-              <thead className="bg-white/5">
+              <thead className="bg-[#c6c5b9]/20">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Field
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Extracted
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Stored
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Result
                   </th>
                 </tr>
@@ -506,17 +506,17 @@ export default function AdminKycReviewDetailPage() {
                     key={row.label}
                     className={
                       row.matches
-                        ? "hover:bg-white/5"
+                        ? "hover:bg-[#c6c5b9]/20"
                         : "bg-red-500/10 hover:bg-red-500/20"
                     }
                   >
-                    <td className="px-6 py-4 font-medium text-white">
+                    <td className="px-6 py-4 font-medium text-[#393d3f]">
                       {row.label}
                     </td>
-                    <td className="px-6 py-4 text-gray-300">
+                    <td className="px-6 py-4 text-[#546a7b]">
                       {row.extracted_value || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-gray-300">
+                    <td className="px-6 py-4 text-[#546a7b]">
                       {row.user_value || "N/A"}
                     </td>
                     <td className="px-6 py-4">
@@ -537,20 +537,20 @@ export default function AdminKycReviewDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-white">Decision</h2>
-          <p className="mt-2 text-sm text-gray-400">
+        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-[#393d3f]">Decision</h2>
+          <p className="mt-2 text-sm text-[#546a7b]">
             Approval sends a notification to the customer. Rejection requires a
             reason and also sends a notification email.
           </p>
 
-          <label className="mt-5 block text-sm font-medium text-gray-300">
+          <label className="mt-5 block text-sm font-medium text-[#546a7b]">
             Rejection Reason
           </label>
           <textarea
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-gray-200 shadow-sm focus:border-[#FE7743]/60 focus:outline-none focus:ring-2 focus:ring-[#FE7743]/60"
+            className="mt-2 w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200 shadow-sm focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
             rows={4}
             placeholder="Explain why this KYC submission should be rejected."
           />
@@ -566,7 +566,7 @@ export default function AdminKycReviewDetailPage() {
               type="button"
               onClick={approveKyc}
               disabled={submitting || detail.needs_manual_extraction}
-              className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Approve KYC"}
             </button>
@@ -574,14 +574,14 @@ export default function AdminKycReviewDetailPage() {
               type="button"
               onClick={rejectKyc}
               disabled={submitting}
-              className="rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Reject KYC"}
             </button>
             <button
               type="button"
               onClick={() => router.push("/admin/kyc")}
-              className="rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-gray-200 transition hover:bg-white/10"
+              className="rounded-xl border border-[#c6c5b9]/50 px-5 py-3 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Back to Queue
             </button>

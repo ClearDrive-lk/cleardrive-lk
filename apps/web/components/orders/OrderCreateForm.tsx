@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
@@ -114,13 +114,13 @@ export default function OrderCreateForm({
   }, [createdOrder, router]);
 
   return (
-    <Card className="border-white/10 bg-[#0F0F0F]">
+    <Card className="border-[#c6c5b9]/50 bg-[#fdfdff]">
       <CardHeader className="space-y-2">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#FE7743]">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#62929e]">
           <Shield className="h-4 w-4" /> Secure Checkout
         </div>
-        <CardTitle className="text-xl text-white">Create Your Order</CardTitle>
-        <p className="text-sm text-gray-400">
+        <CardTitle className="text-xl text-[#393d3f]">Create Your Order</CardTitle>
+        <p className="text-sm text-[#546a7b]">
           Add your delivery details to reserve this vehicle. Your address is
           encrypted at rest.
         </p>
@@ -140,14 +140,14 @@ export default function OrderCreateForm({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300">
+            <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
               <div className="flex items-center justify-between">
                 <span>Estimated Total</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#393d3f]">
                   {formatLkr(createdOrder.total_cost_lkr)}
                 </span>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-[#546a7b]">
                 Payment status: {createdOrder.payment_status.replace(/_/g, " ")}
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function OrderCreateForm({
             <div className="flex flex-wrap gap-3">
               <Button
                 asChild
-                className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
               >
                 <Link href={`/payment?orderId=${createdOrder.id}`}>
                   Pay Now
@@ -164,7 +164,7 @@ export default function OrderCreateForm({
               <Button
                 asChild
                 variant="outline"
-                className="border-white/10 text-white hover:bg-white/5"
+                className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
               >
                 <Link
                   href={`/dashboard/orders/${createdOrder.id}/confirmation`}
@@ -173,7 +173,7 @@ export default function OrderCreateForm({
                 </Link>
               </Button>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[#546a7b]">
               Redirecting to confirmation in 2 seconds. You can always track
               progress in the Orders dashboard.
             </p>
@@ -181,16 +181,16 @@ export default function OrderCreateForm({
         ) : (
           <>
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#546a7b]">
                 Shipping Address
               </label>
               <div className="relative">
-                <MapPin className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <MapPin className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-[#546a7b]" />
                 <textarea
                   value={shippingAddress}
                   onChange={(event) => setShippingAddress(event.target.value)}
                   placeholder="House no, street, city, postal code"
-                  className="min-h-[120px] w-full rounded-md border border-white/10 bg-transparent px-10 py-2 text-sm text-white placeholder:text-gray-500 focus:border-[#FE7743] focus:outline-none focus:ring-2 focus:ring-[#FE7743]/30"
+                  className="min-h-[120px] w-full rounded-md border border-[#c6c5b9]/50 bg-transparent px-10 py-2 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e] focus:outline-none focus:ring-2 focus:ring-[#62929e]/30"
                 />
               </div>
               {!isAddressValid && trimmedAddress.length > 0 && (
@@ -201,17 +201,17 @@ export default function OrderCreateForm({
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-[0.2em] text-[#546a7b]">
                 Contact Number
               </label>
               <div className="relative">
-                <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#546a7b]" />
                 <Input
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                   placeholder="07X XXX XXXX"
                   type="tel"
-                  className="pl-10 bg-white/5 border-white/10 text-white focus:border-[#FE7743]"
+                  className="pl-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] focus:border-[#62929e]"
                 />
               </div>
               {!isPhoneValid && trimmedPhone.length > 0 && (
@@ -221,14 +221,14 @@ export default function OrderCreateForm({
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-300">
+            <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
               <div className="flex items-center justify-between">
                 <span>Estimated Total</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#393d3f]">
                   {formatLkr(estimatedTotalLkr)}
                 </span>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-[#546a7b]">
                 Final pricing is confirmed after Customs valuation.
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function OrderCreateForm({
             <Button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="w-full bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-11"
+              className="w-full bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-11"
             >
               {submitting ? (
                 <>
@@ -259,3 +259,4 @@ export default function OrderCreateForm({
     </Card>
   );
 }
+

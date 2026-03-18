@@ -32,7 +32,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
 
   return (
-    <Card className="group relative overflow-hidden border-white/10 bg-[#0A0A0A] hover:border-[#FE7743]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(254,119,67,0.1)]">
+    <Card className="group relative overflow-hidden border-[#c6c5b9]/50 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(98,146,158,0.1)]">
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-900 group-hover:scale-105 transition-transform duration-500">
         {!imageError && vehicle.imageUrl ? (
@@ -52,10 +52,10 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Overlays */}
         <div className="absolute top-2 left-2 flex gap-2">
-          <Badge className="bg-black/60 backdrop-blur text-white border-white/20 font-mono">
+          <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#c6c5b9]/50 font-mono">
             {`Stock #${vehicle.lotNumber || "-"}`}
           </Badge>
-          <Badge className="bg-[#FE7743] text-black font-bold border-0">
+          <Badge className="bg-[#62929e] text-[#fdfdff] font-bold border-0">
             Grade {vehicle.grade}
           </Badge>
           {vehicle.condition === "New" ? (
@@ -63,13 +63,13 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
               NEW
             </Badge>
           ) : (
-            <Badge className="bg-gray-500/20 text-gray-400 font-bold border-gray-500/50">
+            <Badge className="bg-gray-500/20 text-[#546a7b] font-bold border-gray-500/50">
               USED
             </Badge>
           )}
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3">
-          <div className="flex items-center gap-1 text-[#FE7743] text-xs font-mono">
+          <div className="flex items-center gap-1 text-[#62929e] text-xs font-mono">
             <Timer className="w-3 h-3" />
             <span>
               Ends on {new Date(vehicle.endTime).toLocaleDateString()}
@@ -81,26 +81,26 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
       {/* Content Section */}
       <CardContent className="p-4 space-y-3">
         <div>
-          <h3 className="text-lg font-bold text-white truncate">
+          <h3 className="text-lg font-bold text-[#393d3f] truncate">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
-          <p className="text-sm text-gray-400 truncate">
+          <p className="text-sm text-[#546a7b] truncate">
             {vehicle.trim} ({vehicle.chassisCode})
           </p>
         </div>
 
         {/* Specs Grid */}
-        <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 font-mono py-2 border-y border-white/5">
+        <div className="grid grid-cols-3 gap-2 text-xs text-[#546a7b] font-mono py-2 border-y border-[#c6c5b9]/20">
           <div className="flex flex-col items-center gap-1">
-            <Calendar className="w-3 h-3 text-gray-600" />
+            <Calendar className="w-3 h-3 text-[#393d3f]" />
             {vehicle.year}
           </div>
-          <div className="flex flex-col items-center gap-1 border-l border-white/5">
-            <Gauge className="w-3 h-3 text-gray-600" />
+          <div className="flex flex-col items-center gap-1 border-l border-[#c6c5b9]/20">
+            <Gauge className="w-3 h-3 text-[#393d3f]" />
             {formatKm(vehicle.mileage)} km
           </div>
-          <div className="flex flex-col items-center gap-1 border-l border-white/5">
-            <Fuel className="w-3 h-3 text-gray-600" />
+          <div className="flex flex-col items-center gap-1 border-l border-[#c6c5b9]/20">
+            <Fuel className="w-3 h-3 text-[#393d3f]" />
             {vehicle.engineCC}cc
           </div>
         </div>
@@ -110,29 +110,29 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           {hasPrice ? (
             <>
               <div className="flex justify-between items-end">
-                <span className="text-xs text-gray-500">Current Bid (JPY)</span>
-                <span className="text-sm font-medium text-gray-300">
+                <span className="text-xs text-[#546a7b]">Current Bid (JPY)</span>
+                <span className="text-sm font-medium text-[#546a7b]">
                   {formatJPY(vehicle.priceJPY)}
                 </span>
               </div>
               <div className="flex justify-between items-end">
-                <span className="text-xs text-[#FE7743]">
+                <span className="text-xs text-[#62929e]">
                   Est. Landed (LKR)
                 </span>
-                <span className="text-lg font-bold text-white">
+                <span className="text-lg font-bold text-[#393d3f]">
                   {formatLKR(vehicle.estimatedLandedCostLKR)}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-gray-500">
+                <span className="text-[10px] text-[#546a7b]">
                   Est. Duty: {formatLKR(estDuty)}
                 </span>
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center justify-between text-xs text-[#546a7b]">
               <span>Price</span>
-              <span className="text-gray-400">Pending</span>
+              <span className="text-[#546a7b]">Pending</span>
             </div>
           )}
         </div>
@@ -140,7 +140,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
       <CardFooter className="p-4 pt-0">
         <Link href={`/dashboard/vehicles/${vehicle.id}`} className="w-full">
-          <Button className="w-full bg-white/5 hover:bg-[#FE7743] hover:text-black text-white border border-white/10 transition-colors font-mono text-xs h-9">
+          <Button className="w-full bg-[#c6c5b9]/20 hover:bg-[#62929e] hover:text-[#fdfdff] text-[#393d3f] border border-[#c6c5b9]/50 transition-colors font-mono text-xs h-9">
             VIEW DETAILS &gt;
           </Button>
         </Link>
@@ -148,3 +148,4 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
     </Card>
   );
 }
+

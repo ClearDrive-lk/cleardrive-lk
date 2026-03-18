@@ -216,7 +216,7 @@ export function GoogleLoginButton() {
         onClick={handleLogin}
         disabled={loading}
         variant="outline"
-        className="w-full bg-white text-black hover:bg-gray-200 border-0 h-11 font-medium transition-all"
+        className="w-full bg-[#fdfdff] text-[#393d3f] hover:bg-gray-200 border-0 h-11 font-medium transition-all"
       >
         {loading ? (
           <>
@@ -251,3 +251,4 @@ export function GoogleLoginButton() {
     </div>
   );
 }
+

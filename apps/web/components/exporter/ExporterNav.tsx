@@ -57,18 +57,18 @@ export default function ExporterNav() {
   }, [checkHealth]);
 
   return (
-    <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+    <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link
           href="/exporter"
           className="font-bold text-xl tracking-tighter flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
-            <Terminal className="w-4 h-4 text-[#FE7743]" />
+          <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
+            <Terminal className="w-4 h-4 text-[#62929e]" />
           </div>
-          ClearDrive<span className="text-[#FE7743]">.lk</span>
+          ClearDrive<span className="text-[#62929e]">.lk</span>
         </Link>
-        <div className="hidden md:flex gap-6 text-sm font-medium text-gray-400">
+        <div className="hidden md:flex gap-6 text-sm font-medium text-[#546a7b]">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -77,15 +77,15 @@ export default function ExporterNav() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2 transition-colors",
-                  active ? "text-white" : "hover:text-white",
+                  active ? "text-[#393d3f]" : "hover:text-[#393d3f]",
                 )}
               >
-                <item.icon className="w-4 h-4 text-[#FE7743]/80" />
+                <item.icon className="w-4 h-4 text-[#62929e]/80" />
                 {item.label}
                 {active && (
                   <Badge
                     variant="outline"
-                    className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
+                    className="text-[10px] border-[#62929e]/20 text-[#62929e] h-4 px-1"
                   >
                     ACTIVE
                   </Badge>
@@ -108,13 +108,13 @@ export default function ExporterNav() {
             <Activity className="h-3 w-3" />
             API {health === "checking" ? "CHECKING" : health.toUpperCase()}
             {lastChecked && (
-              <span className="text-[10px] text-gray-500">{lastChecked}</span>
+              <span className="text-[10px] text-[#546a7b]">{lastChecked}</span>
             )}
           </div>
           <Button
             onClick={logout}
             disabled={isLoading}
-            className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+            className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
           >
             {isLoading ? "Signing Out..." : "Sign Out"}
           </Button>
@@ -123,3 +123,4 @@ export default function ExporterNav() {
     </nav>
   );
 }
+

@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
       cell: ({ row }) => (
         <div className="flex flex-col">
           <span className="font-medium">{row.original.email}</span>
-          <span className="text-sm text-gray-500">{row.original.name}</span>
+          <span className="text-sm text-[#546a7b]">{row.original.name}</span>
         </div>
       ),
     },
@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
           <span
             className={`px-2 py-1 rounded text-xs font-semibold ${
               roleColors[role] ||
-              "bg-white/10 text-gray-200 border border-white/10"
+              "bg-[#c6c5b9]/30 text-gray-200 border border-[#c6c5b9]/50"
             }`}
           >
             {role}
@@ -136,7 +136,7 @@ export default function AdminUsersPage() {
         const status = row.original.kyc_status;
 
         if (!status) {
-          return <span className="text-gray-400 text-sm">Not Submitted</span>;
+          return <span className="text-[#546a7b] text-sm">Not Submitted</span>;
         }
 
         const statusColors: Record<string, string> = {
@@ -173,7 +173,7 @@ export default function AdminUsersPage() {
             onClick={() =>
               setRoleChangeModal({ open: true, user: row.original })
             }
-            className="px-3 py-1 rounded text-sm bg-[#FE7743] text-black hover:bg-[#FE7743]/90"
+            className="px-3 py-1 rounded text-sm bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90"
           >
             Change Role
           </button>
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
             onClick={() =>
               (window.location.href = `/admin/users/${row.original.id}`)
             }
-            className="px-3 py-1 rounded text-sm border border-white/10 text-gray-200 hover:bg-white/10"
+            className="px-3 py-1 rounded text-sm border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30"
           >
             View
           </button>
@@ -203,11 +203,11 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="p-6 text-white">
+    <div className="p-6 text-[#393d3f]">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">User Management</h1>
-        <p className="text-gray-400">Manage user accounts and permissions</p>
+        <p className="text-[#546a7b]">Manage user accounts and permissions</p>
       </div>
 
       {/* Filters */}
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
             setSearch(e.target.value);
             setPage(1); // Reset to first page
           }}
-          className="flex-1 rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-gray-200 placeholder:text-gray-500"
+          className="flex-1 rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
         />
 
         {/* Role Filter */}
@@ -231,7 +231,7 @@ export default function AdminUsersPage() {
             setRoleFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
         >
           <option value="">All Roles</option>
           <option value="CUSTOMER">Customer</option>
@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
             setKycFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
         >
           <option value="">All KYC Status</option>
           <option value="NONE">Not Submitted</option>
@@ -259,24 +259,24 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="mb-4 text-sm text-gray-400">
+      <div className="mb-4 text-sm text-[#546a7b]">
         Showing {users.length} of {total} users
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading...</div>
+        <div className="text-center py-12 text-[#546a7b]">Loading...</div>
       ) : (
         <>
-          <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 overflow-hidden">
             <table className="min-w-full divide-y divide-white/10">
-              <thead className="bg-white/5">
+              <thead className="bg-[#c6c5b9]/20">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                        className="px-6 py-3 text-left text-xs font-medium text-[#546a7b] uppercase tracking-wider cursor-pointer hover:bg-[#c6c5b9]/20"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         <div className="flex items-center gap-2">
@@ -299,7 +299,7 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-white/5">
+                  <tr key={row.id} className="hover:bg-[#c6c5b9]/20">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
                         {flexRender(
@@ -316,21 +316,21 @@ export default function AdminUsersPage() {
 
           {/* Pagination */}
           <div className="mt-4 flex justify-between items-center">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-[#546a7b]">
               Page {page} of {totalPages}
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="px-4 py-2 rounded border border-white/10 text-gray-200 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded border border-white/10 text-gray-200 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -353,3 +353,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+

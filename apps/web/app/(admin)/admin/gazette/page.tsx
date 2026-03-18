@@ -362,7 +362,7 @@ export default function GazetteManagementPage() {
 
   return (
     <div className="min-h-screen space-y-8 p-6">
-      <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
+      <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">
@@ -388,7 +388,7 @@ export default function GazetteManagementPage() {
       </header>
 
       <section id="upload" className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">
@@ -408,7 +408,7 @@ export default function GazetteManagementPage() {
                 value={gazetteNo}
                 onChange={(event) => setGazetteNo(event.target.value)}
                 placeholder="Example: 2026/03"
-                className="w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-orange-400 focus:outline-none"
+                className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-orange-400 focus:outline-none"
               />
             </label>
 
@@ -429,20 +429,20 @@ export default function GazetteManagementPage() {
                 "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-10 text-center transition",
                 dragOver
                   ? "border-orange-400 bg-orange-500/10"
-                  : "border-white/10 bg-white/5 hover:border-orange-300 hover:bg-orange-500/10",
+                  : "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 hover:border-orange-300 hover:bg-orange-500/10",
               )}
             >
-              <FileText className="h-10 w-10 text-gray-400" />
-              <div className="text-sm text-gray-300">
-                <p className="font-semibold text-white">
+              <FileText className="h-10 w-10 text-[#546a7b]" />
+              <div className="text-sm text-[#546a7b]">
+                <p className="font-semibold text-[#393d3f]">
                   Drop PDF here or click to browse
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#546a7b]">
                   Only gazette PDFs are supported.
                 </p>
               </div>
               {selectedFile && (
-                <div className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white">
+                <div className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-[#393d3f]">
                   {selectedFile.name}
                 </div>
               )}
@@ -469,7 +469,7 @@ export default function GazetteManagementPage() {
               type="button"
               onClick={handleUpload}
               disabled={uploading}
-              className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {uploading ? "Uploading..." : "Upload and Extract Rules"}
             </button>
@@ -482,7 +482,7 @@ export default function GazetteManagementPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-sm">
+        <div className="rounded-3xl border border-[#c6c5b9]/50 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
             Latest Upload
           </p>
@@ -490,25 +490,25 @@ export default function GazetteManagementPage() {
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Gazette</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#393d3f]">
                   {uploadResult.gazette_no}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Effective Date</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#393d3f]">
                   {formatDate(uploadResult.effective_date)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Rules Extracted</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#393d3f]">
                   {uploadResult.rules_count}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-400">Confidence</span>
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-[#393d3f]">
                   {(uploadResult.confidence * 100).toFixed(1)}%
                 </span>
               </div>
@@ -524,7 +524,7 @@ export default function GazetteManagementPage() {
 
       <section
         id="review"
-        className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm"
+        className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -537,7 +537,7 @@ export default function GazetteManagementPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {selectedGazette && (
-              <div className="rounded-2xl border border-white/10 px-3 py-2 text-sm text-gray-300">
+              <div className="rounded-2xl border border-[#c6c5b9]/50 px-3 py-2 text-sm text-[#546a7b]">
                 Gazette{" "}
                 <span className="font-semibold">
                   {selectedGazette.gazette_no}
@@ -566,35 +566,35 @@ export default function GazetteManagementPage() {
         {selectedGazette && (
           <div className="mt-6 space-y-6">
             <div className="grid gap-4 md:grid-cols-4">
-              <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
+              <div className="rounded-2xl bg-[#c6c5b9]/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-[#546a7b]">
                   Effective Date
                 </p>
-                <p className="mt-2 text-sm font-semibold text-white">
+                <p className="mt-2 text-sm font-semibold text-[#393d3f]">
                   {formatDate(selectedGazette.effective_date)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
+              <div className="rounded-2xl bg-[#c6c5b9]/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-[#546a7b]">
                   Rules
                 </p>
-                <p className="mt-2 text-sm font-semibold text-white">
+                <p className="mt-2 text-sm font-semibold text-[#393d3f]">
                   {selectedGazette.rules_count}
                 </p>
               </div>
-              <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
+              <div className="rounded-2xl bg-[#c6c5b9]/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-[#546a7b]">
                   Uploaded
                 </p>
-                <p className="mt-2 text-sm font-semibold text-white">
+                <p className="mt-2 text-sm font-semibold text-[#393d3f]">
                   {formatDateTime(selectedGazette.created_at)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
+              <div className="rounded-2xl bg-[#c6c5b9]/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-[#546a7b]">
                   Uploaded By
                 </p>
-                <p className="mt-2 text-sm font-semibold text-white">
+                <p className="mt-2 text-sm font-semibold text-[#393d3f]">
                   {selectedGazette.uploaded_by ?? "Unknown"}
                 </p>
               </div>
@@ -605,9 +605,9 @@ export default function GazetteManagementPage() {
                 No structured rules were extracted. Manual review is required.
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-white/10">
+              <div className="overflow-x-auto rounded-2xl border border-[#c6c5b9]/50">
                 <table className="min-w-full text-left text-sm">
-                  <thead className="bg-white/5 text-xs uppercase tracking-wide text-gray-400">
+                  <thead className="bg-[#c6c5b9]/20 text-xs uppercase tracking-wide text-[#546a7b]">
                     <tr>
                       <th className="px-4 py-3">Vehicle</th>
                       <th className="px-4 py-3">Fuel</th>
@@ -625,36 +625,36 @@ export default function GazetteManagementPage() {
                     {rules.map((rule, index) => (
                       <tr
                         key={`${rule.vehicle_type}-${index}`}
-                        className="hover:bg-white/5"
+                        className="hover:bg-[#c6c5b9]/20"
                       >
-                        <td className="px-4 py-3 font-medium text-white">
+                        <td className="px-4 py-3 font-medium text-[#393d3f]">
                           {rule.vehicle_type ?? "N/A"}
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.fuel_type ?? "N/A"}
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.engine_min ?? 0} - {rule.engine_max ?? "N/A"}
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.customs_percent ?? 0}%
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.excise_percent ?? 0}%
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.vat_percent ?? 0}%
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.pal_percent ?? 0}%
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.cess_percent ?? 0}%
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.apply_on ?? "N/A"}
                         </td>
-                        <td className="px-4 py-3 text-gray-300">
+                        <td className="px-4 py-3 text-[#546a7b]">
                           {rule.notes ?? "N/A"}
                         </td>
                       </tr>
@@ -665,17 +665,17 @@ export default function GazetteManagementPage() {
             )}
 
             <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-2xl border border-white/10 p-4">
-                <label className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <div className="rounded-2xl border border-[#c6c5b9]/50 p-4">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#546a7b]">
                   Rejection Reason
                 </label>
                 <textarea
                   value={rejectionReason}
                   onChange={(event) => setRejectionReason(event.target.value)}
                   placeholder="Provide a detailed reason if rejecting."
-                  className="mt-2 min-h-[120px] w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-rose-400 focus:outline-none"
+                  className="mt-2 min-h-[120px] w-full rounded-2xl border border-[#c6c5b9]/50 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-rose-400 focus:outline-none"
                 />
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-[#546a7b]">
                   Minimum 10 characters required for rejection.
                 </p>
               </div>
@@ -686,7 +686,7 @@ export default function GazetteManagementPage() {
                   disabled={
                     decisionLoading || selectedGazette.status === "APPROVED"
                   }
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   Approve Gazette
@@ -697,7 +697,7 @@ export default function GazetteManagementPage() {
                   disabled={
                     decisionLoading || selectedGazette.status === "REJECTED"
                   }
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <XCircle className="h-4 w-4" />
                   Reject Gazette
@@ -720,7 +720,7 @@ export default function GazetteManagementPage() {
 
       <section
         id="history"
-        className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm"
+        className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -732,12 +732,12 @@ export default function GazetteManagementPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm text-gray-300">
+            <label className="text-sm text-[#546a7b]">
               Status
               <select
                 value={historyStatus}
                 onChange={(event) => setHistoryStatus(event.target.value)}
-                className="ml-2 rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white"
+                className="ml-2 rounded-xl border border-[#c6c5b9]/50 bg-transparent px-3 py-2 text-sm text-[#393d3f]"
               >
                 <option value="">All</option>
                 <option value="PENDING">PENDING</option>
@@ -763,14 +763,14 @@ export default function GazetteManagementPage() {
             {historyError}
           </div>
         ) : !history || history.items.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 px-6 py-10 text-center text-sm text-gray-500">
+          <div className="mt-6 rounded-2xl border border-dashed border-[#c6c5b9]/50 px-6 py-10 text-center text-sm text-[#546a7b]">
             No gazettes found for the selected filter.
           </div>
         ) : (
           <div className="mt-6 space-y-4">
-            <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <div className="overflow-x-auto rounded-2xl border border-[#c6c5b9]/50">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-white/5 text-xs uppercase tracking-wide text-gray-400">
+                <thead className="bg-[#c6c5b9]/20 text-xs uppercase tracking-wide text-[#546a7b]">
                   <tr>
                     <th className="px-4 py-3">Gazette</th>
                     <th className="px-4 py-3">Effective Date</th>
@@ -782,25 +782,25 @@ export default function GazetteManagementPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {history.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-white/5">
-                      <td className="px-4 py-3 font-medium text-white">
+                    <tr key={item.id} className="hover:bg-[#c6c5b9]/20">
+                      <td className="px-4 py-3 font-medium text-[#393d3f]">
                         {item.gazette_no}
                       </td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-[#546a7b]">
                         {formatDate(item.effective_date)}
                       </td>
                       <td className="px-4 py-3">{statusBadge(item.status)}</td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-[#546a7b]">
                         {item.rules_count}
                       </td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-[#546a7b]">
                         {formatDateTime(item.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <button
                           type="button"
                           onClick={() => void loadGazetteDetail(item.id)}
-                          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+                          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-[#393d3f] transition hover:bg-slate-800"
                         >
                           <ClipboardCheck className="h-4 w-4" />
                           Review
@@ -847,3 +847,4 @@ export default function GazetteManagementPage() {
     </div>
   );
 }
+

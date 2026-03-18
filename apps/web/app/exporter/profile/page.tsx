@@ -14,57 +14,57 @@ export default function ExporterProfilePage() {
     <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
       <div className="relative z-10 max-w-5xl mx-auto space-y-12">
         <div>
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#FE7743] mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-6">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FE7743] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FE7743]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
             </span>
             EXPORTER PROFILE :: ACCOUNT OVERVIEW
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-[#393d3f]">
             EXPORTER{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FE7743] to-orange-200">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9]">
               PROFILE.
             </span>
           </h1>
-          <p className="mt-4 text-lg text-gray-400 max-w-2xl">
+          <p className="mt-4 text-lg text-[#546a7b] max-w-2xl">
             Keep your exporter identity and workflow metrics up to date.
           </p>
         </div>
 
         {user && (
-          <div className="border border-white/10 rounded-[24px] bg-white/[0.03] divide-y divide-white/10">
+          <div className="border border-[#c6c5b9]/50 rounded-[24px] bg-[#c6c5b9]/20 divide-y divide-white/10">
             <div className="grid grid-cols-1 md:grid-cols-2 divide-x divide-white/10">
-              <div className="p-6 flex items-start gap-4 group hover:bg-white/5 transition-colors">
-                <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+              <div className="p-6 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors">
+                <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-white tracking-tight">
+                  <div className="text-xl font-bold text-[#393d3f] tracking-tight">
                     {user.name}
                   </div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                  <div className="text-xs text-[#546a7b] font-medium uppercase tracking-wider mt-1">
                     Full Name
                   </div>
-                  <div className="text-[10px] text-gray-600 font-mono mt-1">
+                  <div className="text-[10px] text-[#393d3f] font-mono mt-1">
                     Exporter Account
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 flex items-start gap-4 group hover:bg-white/5 transition-colors">
-                <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+              <div className="p-6 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors">
+                <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-white tracking-tight break-all">
+                  <div className="text-xl font-bold text-[#393d3f] tracking-tight break-all">
                     {user.email}
                   </div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                  <div className="text-xs text-[#546a7b] font-medium uppercase tracking-wider mt-1">
                     Email Address
                   </div>
-                  <div className="text-[10px] text-gray-600 font-mono mt-1">
+                  <div className="text-[10px] text-[#393d3f] font-mono mt-1">
                     Verified Contact
                   </div>
                 </div>
@@ -72,35 +72,35 @@ export default function ExporterProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 divide-x divide-white/10">
-              <div className="p-6 flex items-start gap-4 group hover:bg-white/5 transition-colors">
-                <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+              <div className="p-6 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors">
+                <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                   <Shield className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-white tracking-tight">
+                  <div className="text-xl font-bold text-[#393d3f] tracking-tight">
                     {user.role}
                   </div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                  <div className="text-xs text-[#546a7b] font-medium uppercase tracking-wider mt-1">
                     Access Role
                   </div>
-                  <div className="text-[10px] text-gray-600 font-mono mt-1">
+                  <div className="text-[10px] text-[#393d3f] font-mono mt-1">
                     Export Pipeline
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 flex items-start gap-4 group hover:bg-white/5 transition-colors">
-                <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+              <div className="p-6 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors">
+                <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                   <Terminal className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-mono text-white opacity-80 tracking-tight break-all">
+                  <div className="text-sm font-mono text-[#393d3f] opacity-80 tracking-tight break-all">
                     {user.id}
                   </div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                  <div className="text-xs text-[#546a7b] font-medium uppercase tracking-wider mt-1">
                     Exporter ID
                   </div>
-                  <div className="text-[10px] text-gray-600 font-mono mt-1">
+                  <div className="text-[10px] text-[#393d3f] font-mono mt-1">
                     Internal Reference
                   </div>
                 </div>
@@ -109,19 +109,19 @@ export default function ExporterProfilePage() {
           </div>
         )}
 
-        <div className="rounded-[24px] border border-white/10 bg-[#0A0A0A] p-6">
+        <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#fdfdff] p-6">
           <div className="flex items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-[#393d3f]">
                 Exporter Metrics
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#546a7b]">
                 Snapshot of your current workload.
               </p>
             </div>
             <Badge
               variant="outline"
-              className="border-[#FE7743]/20 text-[#FE7743]"
+              className="border-[#62929e]/20 text-[#62929e]"
             >
               LIVE
             </Badge>
@@ -136,40 +136,40 @@ export default function ExporterProfilePage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-2xl border border-white/10 bg-white/[0.02] p-4"
+                className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4"
               >
                 <div className="flex items-center gap-3">
-                  <div className="rounded-full bg-[#FE7743]/10 p-2 text-[#FE7743]">
+                  <div className="rounded-full bg-[#62929e]/10 p-2 text-[#62929e]">
                     <BarChart3 className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-xl font-semibold text-white">
+                    <div className="text-xl font-semibold text-[#393d3f]">
                       {item.value}
                     </div>
-                    <div className="text-xs text-gray-500">{item.label}</div>
+                    <div className="text-xs text-[#546a7b]">{item.label}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 text-xs text-gray-500">
+          <div className="mt-6 text-xs text-[#546a7b]">
             Metrics update in real-time as shipments progress through the
             workflow.
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-          <h2 className="text-lg font-semibold text-white mb-2">
+        <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+          <h2 className="text-lg font-semibold text-[#393d3f] mb-2">
             Exporter Support
           </h2>
-          <p className="text-sm text-gray-400 mb-4">
+          <p className="text-sm text-[#546a7b] mb-4">
             Need help with documents or shipping status updates? Reach the
             operations desk.
           </p>
           <Button
             variant="outline"
-            className="border-white/10 text-white hover:bg-white/5"
+            className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
           >
             Contact Ops Desk
           </Button>
@@ -178,3 +178,4 @@ export default function ExporterProfilePage() {
     </section>
   );
 }
+

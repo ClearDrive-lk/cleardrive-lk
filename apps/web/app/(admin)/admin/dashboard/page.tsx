@@ -131,12 +131,12 @@ function KpiCard({
   iconColor = "text-blue-600",
 }: KpiCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-400 text-sm">{title}</p>
-          <p className="text-3xl font-bold mt-1 text-white">{value}</p>
-          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+          <p className="text-[#546a7b] text-sm">{title}</p>
+          <p className="text-3xl font-bold mt-1 text-[#393d3f]">{value}</p>
+          <p className="text-sm text-[#546a7b] mt-1">{subtitle}</p>
         </div>
         <div className={`text-4xl ${iconColor}`}>{icon}</div>
       </div>
@@ -155,13 +155,13 @@ function MetricCard({
   title,
   value,
   subtitle,
-  valueColor = "text-white",
+  valueColor = "text-[#393d3f]",
 }: MetricCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
+    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+      <h3 className="text-lg font-semibold mb-2 text-[#393d3f]">{title}</h3>
       <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
-      <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+      <p className="text-sm text-[#546a7b] mt-1">{subtitle}</p>
     </div>
   );
 }
@@ -341,10 +341,10 @@ export default function AdminDashboard() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
+      <div className="flex items-center justify-center h-screen text-[#393d3f]">
         <div className="text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <p className="text-xl text-gray-400">Loading dashboard…</p>
+          <p className="text-xl text-[#546a7b]">Loading dashboard…</p>
         </div>
       </div>
     );
@@ -352,13 +352,13 @@ export default function AdminDashboard() {
 
   if (error || !stats) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
+      <div className="flex items-center justify-center h-screen text-[#393d3f]">
         <div className="text-center">
           <div className="text-4xl mb-4">⚠️</div>
           <p className="text-xl text-red-400">{error ?? "Unknown error"}</p>
           <button
             onClick={loadDashboardData}
-            className="mt-4 px-6 py-2 bg-[#FE7743] text-black rounded hover:bg-[#FE7743]/90"
+            className="mt-4 px-6 py-2 bg-[#62929e] text-[#fdfdff] rounded hover:bg-[#62929e]/90"
           >
             Retry
           </button>
@@ -371,27 +371,27 @@ export default function AdminDashboard() {
   // Render
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6 text-white">
+    <div className="p-6 space-y-6 text-[#393d3f]">
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Platform overview and analytics</p>
+          <p className="text-[#546a7b] mt-1">Platform overview and analytics</p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Auto-refresh indicator */}
-          <span className="text-xs text-gray-400">Auto-refresh: 30s</span>
+          <span className="text-xs text-[#546a7b]">Auto-refresh: 30s</span>
 
           <button
             onClick={exportCsv}
-            className="px-3 py-2 text-sm rounded-md border border-white/10 text-gray-200 hover:bg-white/10"
+            className="px-3 py-2 text-sm rounded-md border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30"
           >
             Export CSV
           </button>
           <button
             onClick={exportPdf}
-            className="px-3 py-2 text-sm rounded-md border border-white/10 text-gray-200 hover:bg-white/10"
+            className="px-3 py-2 text-sm rounded-md border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30"
           >
             Export PDF
           </button>
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
                 setDays(Number(next));
               }
             }}
-            className="px-4 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FE7743]"
+            className="px-4 py-2 border border-[#c6c5b9]/50 bg-transparent rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#62929e]"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -417,20 +417,20 @@ export default function AdminDashboard() {
         </div>
       </div>
       {selectedRange === CUSTOM_RANGE && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
           <input
             type="date"
             value={customStartDate}
             onChange={(e) => setCustomStartDate(e.target.value)}
-            className="px-3 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200"
+            className="px-3 py-2 border border-[#c6c5b9]/50 bg-transparent rounded-md text-sm text-gray-200"
           />
           <input
             type="date"
             value={customEndDate}
             onChange={(e) => setCustomEndDate(e.target.value)}
-            className="px-3 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200"
+            className="px-3 py-2 border border-[#c6c5b9]/50 bg-transparent rounded-md text-sm text-gray-200"
           />
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-[#546a7b]">
             Applies to analytics charts and tables.
           </span>
         </div>
@@ -502,7 +502,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 1 ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth – Line Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">User Growth</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={userAnalytics?.daily_registrations ?? []}>
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Order Status – Pie Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Order Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 2 ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Revenue – Bar Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Daily Revenue</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={revenueAnalytics?.daily_revenue ?? []}>
@@ -601,7 +601,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* User Roles – Pie Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">User Role Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -636,7 +636,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 3 – KYC & Payment breakdown ────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* KYC Status – Pie Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">KYC Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -668,7 +668,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Payment Methods – Bar Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Revenue by Payment Method</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={paymentChartData}>
@@ -723,12 +723,12 @@ export default function AdminDashboard() {
 
       {/* ── Top Revenue Sources Table ──────────────────────────────────────── */}
       {revenueAnalytics && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Top Revenue Sources</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b text-gray-500 uppercase text-xs">
+                <tr className="border-b text-[#546a7b] uppercase text-xs">
                   <th className="pb-3 pr-6">Source</th>
                   <th className="pb-3 pr-6">Revenue</th>
                   <th className="pb-3">Share</th>
@@ -746,7 +746,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-24 bg-white/10 rounded-full h-2">
+                        <div className="w-24 bg-[#c6c5b9]/30 rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full"
                             style={{ width: `${src.percentage}%` }}
@@ -765,3 +765,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

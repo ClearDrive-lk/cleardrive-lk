@@ -117,7 +117,7 @@ export default function CookiePreferences() {
       {/* ── Page Header ── */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Cookie Preferences</h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-[#393d3f]">
           Control which cookies ClearDrive.lk uses. Essential cookies are always
           active. You can change your preferences at any time.
         </p>
@@ -128,7 +128,7 @@ export default function CookiePreferences() {
         {COOKIE_CATEGORIES.map((category) => (
           <div
             key={category.key}
-            className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm"
+            className="border border-gray-200 rounded-xl p-5 bg-[#fdfdff] shadow-sm"
           >
             <div className="flex items-start justify-between gap-4">
               {/* Left: Category info */}
@@ -148,7 +148,7 @@ export default function CookiePreferences() {
                   )}
                 </div>
 
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-[#393d3f] mb-2">
                   {category.description}
                 </p>
 
@@ -157,7 +157,7 @@ export default function CookiePreferences() {
                   {category.examples.map((example) => (
                     <span
                       key={example}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                      className="text-xs bg-gray-100 text-[#393d3f] px-2 py-0.5 rounded-full"
                     >
                       {example}
                     </span>
@@ -175,7 +175,7 @@ export default function CookiePreferences() {
                   aria-label={`Toggle ${category.label}`}
                   className="w-11 h-6 bg-gray-300 rounded-full relative data-[state=checked]:bg-blue-600 cursor-pointer"
                 >
-                  <SwitchPrimitive.Thumb className="w-5 h-5 bg-white rounded-full shadow-sm absolute top-0.5 left-0.5 data-[state=checked]:translate-x-5 transition-transform" />
+                  <SwitchPrimitive.Thumb className="w-5 h-5 bg-[#fdfdff] rounded-full shadow-sm absolute top-0.5 left-0.5 data-[state=checked]:translate-x-5 transition-transform" />
                 </SwitchPrimitive.Root>
               </div>
             </div>
@@ -195,7 +195,7 @@ export default function CookiePreferences() {
 
         <Button
           onClick={handleSave}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-[#393d3f]"
         >
           {saved ? "✅ Saved!" : "Save Preferences"}
         </Button>
@@ -209,7 +209,7 @@ export default function CookiePreferences() {
       )}
 
       {/* ── Policy Links ── */}
-      <p className="mt-6 text-xs text-gray-500 text-center">
+      <p className="mt-6 text-xs text-[#546a7b] text-center">
         Learn more in our{" "}
         <a
           href="/api/v1/gdpr/cookie-policy"
@@ -230,3 +230,4 @@ export default function CookiePreferences() {
     </div>
   );
 }
+

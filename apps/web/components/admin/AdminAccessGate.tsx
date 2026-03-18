@@ -67,12 +67,12 @@ export default function AdminAccessGate({
 
   if (state.status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#fdfdff] text-[#393d3f]">
         <div className="text-center">
           <div className="mb-3 flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
           </div>
-          <p className="text-sm text-gray-400">Checking admin access...</p>
+          <p className="text-sm text-[#546a7b]">Checking admin access...</p>
         </div>
       </div>
     );
@@ -80,29 +80,29 @@ export default function AdminAccessGate({
 
   if (state.status === "denied") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050505] px-6 text-white">
-        <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl shadow-black/40">
+      <div className="flex min-h-screen items-center justify-center bg-[#fdfdff] px-6 text-[#393d3f]">
+        <div className="w-full max-w-lg rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-8 text-center shadow-2xl shadow-[#393d3f]/40">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/20">
             <AlertTriangle className="h-7 w-7 text-red-300" />
           </div>
           <h1 className="text-xl font-semibold">Access denied</h1>
-          <p className="mt-2 text-sm text-gray-400">{state.message}</p>
+          <p className="mt-2 text-sm text-[#546a7b]">{state.message}</p>
           {state.role && (
-            <p className="mt-3 text-xs text-gray-500">
-              Current role: <span className="text-gray-300">{state.role}</span>
+            <p className="mt-3 text-xs text-[#546a7b]">
+              Current role: <span className="text-[#546a7b]">{state.role}</span>
             </p>
           )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/login"
-              className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-orange-400"
+              className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-[#393d3f] transition hover:bg-orange-400"
             >
               Go to Login
             </Link>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-white/10"
+              className="rounded-xl border border-[#c6c5b9]/50 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Retry
             </button>
@@ -114,3 +114,4 @@ export default function AdminAccessGate({
 
   return <>{children}</>;
 }
+

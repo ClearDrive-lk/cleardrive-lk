@@ -188,7 +188,7 @@ export function OrderTimeline({
 
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-8 text-sm text-gray-400">
+      <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-8 text-sm text-[#546a7b]">
         Loading timeline...
       </div>
     );
@@ -203,43 +203,43 @@ export function OrderTimeline({
   }
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-      <h3 className="mb-6 text-xl font-semibold text-white">Order Timeline</h3>
+    <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+      <h3 className="mb-6 text-xl font-semibold text-[#393d3f]">Order Timeline</h3>
 
       <div className="relative">
-        <div className="absolute bottom-0 left-4 top-0 w-px bg-white/10"></div>
+        <div className="absolute bottom-0 left-4 top-0 w-px bg-[#c6c5b9]/30"></div>
 
         <div className="space-y-6">
           {timeline.map((event) => (
             <div key={event.id} className="relative pl-10">
-              <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border border-[#FE7743]/20 bg-[#111111] text-[#FE7743]">
+              <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border border-[#62929e]/20 bg-[#fdfdff] text-[#62929e]">
                 {getStatusIcon(event.to_status)}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-[#0D0D0D] p-4">
+              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff] p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <Badge
                       className={
                         statusStyles[event.to_status] ??
-                        "border-white/10 bg-white/5 text-white"
+                        "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]"
                       }
                     >
                       {event.to_status.replace(/_/g, " ")}
                     </Badge>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-[#546a7b]">
                     {formatDate(event.created_at)}
                   </span>
                 </div>
 
                 {event.notes && (
-                  <p className="mb-2 text-sm text-gray-300">{event.notes}</p>
+                  <p className="mb-2 text-sm text-[#546a7b]">{event.notes}</p>
                 )}
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#546a7b]">
                   Changed by{" "}
-                  <span className="font-medium text-white">
+                  <span className="font-medium text-[#393d3f]">
                     {event.changed_by_name}
                   </span>
                   {" · "}
@@ -252,8 +252,9 @@ export function OrderTimeline({
       </div>
 
       {timeline.length === 0 && (
-        <p className="py-8 text-center text-gray-500">No timeline events yet</p>
+        <p className="py-8 text-center text-[#546a7b]">No timeline events yet</p>
       )}
     </div>
   );
 }
+

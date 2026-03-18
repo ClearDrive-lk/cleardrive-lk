@@ -30,26 +30,26 @@
 }
 
 :root {
-  /* Default to Dark Values directly */
-  --background: 0 0% 2%; /* #050505 */
-  --foreground: 0 0% 95%;
-  --card: 0 0% 5%;
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 5%;
-  --popover-foreground: 0 0% 95%;
-  --primary: 22 98% 63%; /* #FE7743 Orange */
-  --primary-foreground: 0 0% 0%;
-  --secondary: 204 34% 23%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 0 0% 12%;
-  --accent-foreground: 0 0% 98%;
+  /* Moonlit Mist palette (light, high-contrast) */
+  --background: 240 100% 99.6%; /* #fdfdff */
+  --foreground: 200 5% 23.5%; /* #393d3f */
+  --card: 240 100% 99.6%;
+  --card-foreground: 200 5% 23.5%;
+  --popover: 240 100% 99.6%;
+  --popover-foreground: 200 5% 23.5%;
+  --primary: 192 23.6% 50.2%; /* #62929e */
+  --primary-foreground: 240 100% 99.6%;
+  --secondary: 206 18.8% 40.6%; /* #546a7b */
+  --secondary-foreground: 240 100% 99.6%;
+  --muted: 55 10.2% 75.1%; /* #c6c5b9 */
+  --muted-foreground: 206 18.8% 40.6%;
+  --accent: 55 10.2% 75.1%;
+  --accent-foreground: 200 5% 23.5%;
   --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 12%;
-  --input: 0 0% 12%;
-  --ring: 22 98% 63%;
+  --destructive-foreground: 240 100% 99.6%;
+  --border: 206 18.8% 40.6%; /* #546a7b */
+  --input: 240 100% 99.6%;
+  --ring: 192 23.6% 50.2%;
   --radius: 0.75rem;
 }
 
@@ -61,69 +61,67 @@
     @apply bg-background text-foreground;
   }
   .admin-theme {
-    @apply bg-[#050505] text-foreground;
+    @apply bg-[#fdfdff] text-[#393d3f];
   }
-  .admin-theme .bg-white {
-    @apply bg-white/5;
-  }
-  .admin-theme .bg-white\/90,
-  .admin-theme .bg-white\/80,
-  .admin-theme .bg-white\/70,
-  .admin-theme .bg-white\/60 {
-    @apply bg-white/5;
+  .admin-theme [class~="bg-[#fdfdff]"],
+  .admin-theme [class~="bg-[#fdfdff]/90"],
+  .admin-theme [class~="bg-[#fdfdff]/80"],
+  .admin-theme [class~="bg-[#fdfdff]/70"],
+  .admin-theme [class~="bg-[#fdfdff]/60"] {
+    @apply bg-[#fdfdff];
   }
   .admin-theme .bg-slate-50,
   .admin-theme .bg-gray-50 {
-    @apply bg-white/5;
+    @apply bg-[#fdfdff];
   }
   .admin-theme .bg-slate-100,
   .admin-theme .bg-gray-100 {
-    @apply bg-white/10;
+    @apply bg-[#fdfdff];
   }
   .admin-theme .border-slate-200,
   .admin-theme .border-gray-200,
   .admin-theme .border-slate-300,
   .admin-theme .border-gray-300 {
-    @apply border-white/10;
+    @apply border-[#546a7b]/60;
   }
   .admin-theme .text-slate-900,
   .admin-theme .text-gray-900 {
-    @apply text-white;
+    @apply text-[#393d3f];
   }
   .admin-theme .text-slate-700,
   .admin-theme .text-gray-700 {
-    @apply text-gray-300;
+    @apply text-[#546a7b];
   }
   .admin-theme .text-slate-600,
-  .admin-theme .text-gray-600 {
-    @apply text-gray-400;
+  .admin-theme .text-[#393d3f] {
+    @apply text-[#546a7b];
   }
   .admin-theme .text-slate-500,
-  .admin-theme .text-gray-500 {
-    @apply text-gray-500;
+  .admin-theme .text-[#546a7b] {
+    @apply text-[#546a7b];
   }
   .admin-theme .text-slate-400,
-  .admin-theme .text-gray-400 {
-    @apply text-gray-400;
+  .admin-theme .text-[#546a7b] {
+    @apply text-[#546a7b];
   }
   .admin-theme input,
   .admin-theme select,
   .admin-theme textarea {
-    @apply bg-white/10 text-gray-200 border-white/10 placeholder:text-gray-500;
+    @apply bg-[#fdfdff] text-[#393d3f] border-[#546a7b]/60 placeholder:text-[#546a7b];
   }
   .admin-theme input:focus,
   .admin-theme select:focus,
   .admin-theme textarea:focus {
-    @apply outline-none ring-2 ring-[#FE7743]/60 border-[#FE7743]/60;
+    @apply outline-none ring-2 ring-[#62929e]/50 border-[#62929e]/70;
   }
   .admin-theme select option {
-    background-color: #0b0b0b;
-    color: #e5e7eb;
+    background-color: #fdfdff;
+    color: #393d3f;
   }
   .admin-theme input[type="date"],
   .admin-theme input[type="datetime-local"],
   .admin-theme input[type="time"] {
-    color-scheme: dark;
+    color-scheme: light;
   }
   .admin-theme .bg-amber-50,
   .admin-theme .bg-emerald-50,
@@ -132,7 +130,7 @@
   .admin-theme .bg-sky-50,
   .admin-theme .bg-yellow-50,
   .admin-theme .bg-green-50 {
-    @apply bg-white/5;
+    @apply bg-[#fdfdff];
   }
   .admin-theme .bg-amber-100,
   .admin-theme .bg-emerald-100,
@@ -142,7 +140,7 @@
   .admin-theme .bg-yellow-100,
   .admin-theme .bg-green-100,
   .admin-theme .bg-purple-100 {
-    @apply bg-white/10;
+    @apply bg-[#fdfdff];
   }
   .admin-theme .text-amber-700,
   .admin-theme .text-amber-800,
@@ -160,7 +158,7 @@
   .admin-theme .text-yellow-800,
   .admin-theme .text-purple-700,
   .admin-theme .text-purple-800 {
-    @apply text-gray-200;
+    @apply text-[#393d3f];
   }
 }
 
@@ -175,3 +173,4 @@
 .animate-marquee {
   animation: marquee 120s linear infinite;
 }
+

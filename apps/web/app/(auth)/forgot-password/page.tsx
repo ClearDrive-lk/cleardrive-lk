@@ -94,24 +94,24 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl shadow-2xl">
+    <div className="min-h-screen bg-[#fdfdff] flex items-center justify-center p-6">
+      <div className="w-full max-w-md bg-[#fdfdff] border border-[#c6c5b9]/50 p-8 rounded-2xl shadow-2xl">
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-xs text-[#546a7b] hover:text-[#393d3f] transition-colors mb-6"
         >
           <ArrowLeft className="w-3 h-3" />
           Back to Login
         </Link>
 
-        <h1 className="text-2xl font-bold text-white mb-2">Reset Password</h1>
-        <p className="text-sm text-gray-400 mb-6">
+        <h1 className="text-2xl font-bold text-[#393d3f] mb-2">Reset Password</h1>
+        <p className="text-sm text-[#546a7b] mb-6">
           Request a reset code, then submit the code with your new password.
         </p>
 
         <form onSubmit={handleResetPassword} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs text-gray-400 uppercase">
+            <Label htmlFor="email" className="text-xs text-[#546a7b] uppercase">
               Email
             </Label>
             <Input
@@ -121,7 +121,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="bg-black/40 border-white/10 text-white"
+              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function ForgotPasswordPage() {
             onClick={handleRequestResetCode}
             disabled={requesting}
             variant="outline"
-            className="w-full border-white/20 text-white hover:bg-white/10"
+            className="w-full border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30"
           >
             {requesting ? (
               <Loader2 className="animate-spin" />
@@ -140,7 +140,7 @@ export default function ForgotPasswordPage() {
           </Button>
 
           <div className="space-y-2">
-            <Label htmlFor="otp" className="text-xs text-gray-400 uppercase">
+            <Label htmlFor="otp" className="text-xs text-[#546a7b] uppercase">
               OTP Code
             </Label>
             <Input
@@ -152,14 +152,14 @@ export default function ForgotPasswordPage() {
               inputMode="numeric"
               maxLength={6}
               required
-              className="bg-black/40 border-white/10 text-white"
+              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
             />
           </div>
 
           <div className="space-y-2">
             <Label
               htmlFor="new-password"
-              className="text-xs text-gray-400 uppercase"
+              className="text-xs text-[#546a7b] uppercase"
             >
               New Password
             </Label>
@@ -169,14 +169,14 @@ export default function ForgotPasswordPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              className="bg-black/40 border-white/10 text-white"
+              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
             />
           </div>
 
           <div className="space-y-2">
             <Label
               htmlFor="confirm-password"
-              className="text-xs text-gray-400 uppercase"
+              className="text-xs text-[#546a7b] uppercase"
             >
               Confirm Password
             </Label>
@@ -186,7 +186,7 @@ export default function ForgotPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="bg-black/40 border-white/10 text-white"
+              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
             />
           </div>
 
@@ -198,7 +198,7 @@ export default function ForgotPasswordPage() {
           <Button
             type="submit"
             disabled={resetting}
-            className="w-full bg-[#FE7743] hover:bg-[#FE7743]/90 text-black font-bold"
+            className="w-full bg-[#62929e] hover:bg-[#62929e]/90 text-[#fdfdff] font-bold"
           >
             {resetting ? (
               <Loader2 className="animate-spin" />
@@ -211,3 +211,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

@@ -72,34 +72,34 @@ export default function OrderConfirmationPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
-        <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#FE7743]" />
+              <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
+                <Terminal className="w-4 h-4 text-[#62929e]" />
               </div>
-              ClearDrive<span className="text-[#FE7743]">.lk</span>
+              ClearDrive<span className="text-[#62929e]">.lk</span>
             </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
               <Link
                 href="/dashboard"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Dashboard
               </Link>
               <Link
                 href="/dashboard/orders"
-                className="text-white transition-colors"
+                className="text-[#393d3f] transition-colors"
               >
                 Orders
               </Link>
               <Link
                 href="/dashboard/vehicles"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Vehicles
               </Link>
@@ -107,26 +107,26 @@ export default function OrderConfirmationPage() {
           </div>
         </nav>
 
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#FE7743]/5 rounded-[100%] blur-[120px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
 
         <main className="relative z-10 flex-1 px-6 py-16">
           <div className="max-w-3xl mx-auto">
-            <Card className="border-white/10 bg-[#0F0F0F]">
+            <Card className="border-[#c6c5b9]/50 bg-[#fdfdff]">
               <CardHeader className="space-y-2 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30">
                   <CheckCircle2 className="h-7 w-7 text-emerald-300" />
                 </div>
-                <CardTitle className="text-2xl text-white">
+                <CardTitle className="text-2xl text-[#393d3f]">
                   Order Created
                 </CardTitle>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-[#546a7b]">
                   Your order is locked in. Next, confirm payment to proceed.
                 </p>
               </CardHeader>
               <CardContent className="space-y-5">
                 {loading ? (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-gray-400">
+                  <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
                     Loading order details...
                   </div>
                 ) : error ? (
@@ -135,55 +135,55 @@ export default function OrderConfirmationPage() {
                   </div>
                 ) : order ? (
                   <div className="space-y-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
+                          <p className="text-xs uppercase tracking-[0.2em] text-[#546a7b]">
                             Order ID
                           </p>
-                          <p className="mt-1 font-mono text-sm text-white">
+                          <p className="mt-1 font-mono text-sm text-[#393d3f]">
                             {order.id}
                           </p>
                           <button
                             type="button"
                             onClick={handleCopyOrderId}
-                            className="mt-2 inline-flex items-center gap-2 text-xs text-gray-400 hover:text-white"
+                            className="mt-2 inline-flex items-center gap-2 text-xs text-[#546a7b] hover:text-[#393d3f]"
                           >
                             <Copy className="h-3 w-3" />
                             {copied ? "Copied" : "Copy ID"}
                           </button>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="border-white/10 bg-white/5 text-white">
+                          <Badge className="border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]">
                             {order.status.replace(/_/g, " ")}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-white/10 text-gray-300"
+                            className="border-[#c6c5b9]/50 text-[#546a7b]"
                           >
                             Payment {order.payment_status.replace(/_/g, " ")}
                           </Badge>
                         </div>
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-[#546a7b]">
                         <span>
                           Created {new Date(order.created_at).toLocaleString()}
                         </span>
                         <span>Total: {formatLkr(order.total_cost_lkr)}</span>
                       </div>
                       {order.vehicle_id && (
-                        <div className="mt-3 text-xs text-gray-500">
+                        <div className="mt-3 text-xs text-[#546a7b]">
                           Vehicle ID: {order.vehicle_id}
                         </div>
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-gray-400">
+                    <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
                       Shipping address is stored securely and encrypted.
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-gray-400">
+                  <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
                     Order details unavailable.
                   </div>
                 )}
@@ -191,7 +191,7 @@ export default function OrderConfirmationPage() {
                 <div className="flex flex-wrap gap-3">
                   <Button
                     asChild
-                    className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                    className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
                   >
                     <Link href={`/payment?orderId=${id}`}>
                       Proceed to Payment
@@ -201,7 +201,7 @@ export default function OrderConfirmationPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-white/10 text-white hover:bg-white/5"
+                      className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                     >
                       <Link href={`/dashboard/vehicles/${order.vehicle_id}`}>
                         View Vehicle
@@ -211,7 +211,7 @@ export default function OrderConfirmationPage() {
                   <Button
                     asChild
                     variant="outline"
-                    className="border-white/10 text-white hover:bg-white/5"
+                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                   >
                     <Link href={`/dashboard/orders/${id}`}>View Tracking</Link>
                   </Button>

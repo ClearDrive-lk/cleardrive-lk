@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased bg-[#050505]">
+      <body className="font-sans antialiased bg-[#fdfdff]">
         <StoreProvider>
           <ToastStateProvider>
             <AuthBootstrap />
@@ -33,3 +33,4 @@ export default function RootLayout({
     </html>
   );
 }
+

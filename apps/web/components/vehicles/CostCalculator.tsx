@@ -59,27 +59,27 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
 
   if (isLoading) {
     return (
-      <Card className="border-white/10 bg-[#0F0F0F] sticky top-6">
-        <CardHeader className="pb-2 border-b border-white/5">
+      <Card className="border-[#c6c5b9]/50 bg-[#fdfdff] sticky top-6">
+        <CardHeader className="pb-2 border-b border-[#c6c5b9]/20">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-[#FE7743]" />
+            <CardTitle className="text-[#393d3f] flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-[#62929e]" />
               Landed Cost Analysis
             </CardTitle>
             <Badge
               variant="outline"
-              className="border-white/10 bg-white/5 text-gray-400 text-[10px]"
+              className="border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#546a7b] text-[10px]"
             >
               Loading
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="pt-4 space-y-4">
-          <div className="h-4 w-3/4 rounded bg-white/5 animate-pulse" />
-          <div className="h-4 w-2/3 rounded bg-white/5 animate-pulse" />
-          <div className="h-4 w-full rounded bg-white/5 animate-pulse" />
-          <div className="h-16 w-full rounded bg-white/5 animate-pulse" />
-          <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
+          <div className="h-4 w-3/4 rounded bg-[#c6c5b9]/20 animate-pulse" />
+          <div className="h-4 w-2/3 rounded bg-[#c6c5b9]/20 animate-pulse" />
+          <div className="h-4 w-full rounded bg-[#c6c5b9]/20 animate-pulse" />
+          <div className="h-16 w-full rounded bg-[#c6c5b9]/20 animate-pulse" />
+          <div className="h-10 w-full rounded bg-[#c6c5b9]/20 animate-pulse" />
         </CardContent>
       </Card>
     );
@@ -87,11 +87,11 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
 
   if (isError || !data) {
     return (
-      <Card className="border-white/10 bg-[#0F0F0F] sticky top-6">
-        <CardHeader className="pb-2 border-b border-white/5">
+      <Card className="border-[#c6c5b9]/50 bg-[#fdfdff] sticky top-6">
+        <CardHeader className="pb-2 border-b border-[#c6c5b9]/20">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Calculator className="w-4 h-4 text-[#FE7743]" />
+            <CardTitle className="text-[#393d3f] flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-[#62929e]" />
               Landed Cost Analysis
             </CardTitle>
             <Badge
@@ -102,7 +102,7 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="pt-4 text-sm text-gray-400">
+        <CardContent className="pt-4 text-sm text-[#546a7b]">
           Unable to load the tax breakdown right now. Try again in a moment.
         </CardContent>
       </Card>
@@ -122,11 +122,11 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
     toNumber(data.documentation_fee_lkr);
 
   return (
-    <Card className="border-white/10 bg-[#0F0F0F] sticky top-6">
-      <CardHeader className="pb-2 border-b border-white/5">
+    <Card className="border-[#c6c5b9]/50 bg-[#fdfdff] sticky top-6">
+      <CardHeader className="pb-2 border-b border-[#c6c5b9]/20">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-white flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-[#FE7743]" />
+          <CardTitle className="text-[#393d3f] flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-[#62929e]" />
             Landed Cost Analysis
           </CardTitle>
           <Badge
@@ -141,68 +141,68 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
       <CardContent className="pt-4 space-y-4 font-mono text-sm">
         {/* Base Cost */}
         <div className="space-y-2">
-          <div className="flex justify-between text-gray-400">
+          <div className="flex justify-between text-[#546a7b]">
             <span>
               Auction Price ({hasPrice ? formatJPY(priceJPY) : "N/A"})
             </span>
             <span>{formatLKR(toNumber(data.vehicle_price_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400">
+          <div className="flex justify-between text-[#546a7b]">
             <span>Shipping & Insurance</span>
             <span>{formatLKR(toNumber(data.shipping_cost_lkr))}</span>
           </div>
-          <div className="flex justify-between font-bold text-white pt-2 border-t border-white/5">
+          <div className="flex justify-between font-bold text-[#393d3f] pt-2 border-t border-[#c6c5b9]/20">
             <span>Exchange Rate</span>
             <span>1 JPY = {Number(data.exchange_rate).toFixed(2)} LKR</span>
           </div>
         </div>
 
         {/* Taxes */}
-        <div className="p-3 bg-[#1A1A1A] rounded-lg space-y-2 border border-white/5">
-          <div className="flex items-center gap-2 text-[#FE7743] text-xs mb-2">
+        <div className="p-3 bg-[#fdfdff] rounded-lg space-y-2 border border-[#c6c5b9]/20">
+          <div className="flex items-center gap-2 text-[#62929e] text-xs mb-2">
             <span>Government Levies (Est.)</span>
           </div>
-          <div className="flex justify-between text-gray-400 text-xs">
+          <div className="flex justify-between text-[#546a7b] text-xs">
             <span>Customs Duty</span>
             <span>{formatLKR(toNumber(data.customs_duty_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400 text-xs">
+          <div className="flex justify-between text-[#546a7b] text-xs">
             <span>Excise Duty</span>
             <span>{formatLKR(toNumber(data.excise_duty_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400 text-xs">
+          <div className="flex justify-between text-[#546a7b] text-xs">
             <span>VAT</span>
             <span>{formatLKR(toNumber(data.vat_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400 text-xs">
+          <div className="flex justify-between text-[#546a7b] text-xs">
             <span>PAL</span>
             <span>{formatLKR(toNumber(data.pal_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400 text-xs">
+          <div className="flex justify-between text-[#546a7b] text-xs">
             <span>CESS</span>
             <span>{formatLKR(toNumber(data.cess_lkr))}</span>
           </div>
-          <div className="flex justify-between text-white font-bold pt-1 border-t border-white/5">
+          <div className="flex justify-between text-[#393d3f] font-bold pt-1 border-t border-[#c6c5b9]/20">
             <span>Total Taxes</span>
             <span>{formatLKR(taxesTotal)}</span>
           </div>
         </div>
 
         {/* Fees */}
-        <div className="p-3 bg-[#141414] rounded-lg space-y-2 border border-white/5 text-xs">
-          <div className="flex justify-between text-gray-400">
+        <div className="p-3 bg-[#141414] rounded-lg space-y-2 border border-[#c6c5b9]/20 text-xs">
+          <div className="flex justify-between text-[#546a7b]">
             <span>Port Charges</span>
             <span>{formatLKR(toNumber(data.port_charges_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400">
+          <div className="flex justify-between text-[#546a7b]">
             <span>Clearance Fee</span>
             <span>{formatLKR(toNumber(data.clearance_fee_lkr))}</span>
           </div>
-          <div className="flex justify-between text-gray-400">
+          <div className="flex justify-between text-[#546a7b]">
             <span>Documentation Fee</span>
             <span>{formatLKR(toNumber(data.documentation_fee_lkr))}</span>
           </div>
-          <div className="flex justify-between text-white font-bold pt-1 border-t border-white/5">
+          <div className="flex justify-between text-[#393d3f] font-bold pt-1 border-t border-[#c6c5b9]/20">
             <span>Total Fees</span>
             <span>{formatLKR(feesTotal)}</span>
           </div>
@@ -212,7 +212,7 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
         <div className="pt-4">
           <div className="flex justify-between items-end">
             <div className="space-y-1">
-              <span className="text-gray-400 text-xs">
+              <span className="text-[#546a7b] text-xs">
                 Estimated On-the-Road Price
               </span>
               <div className="flex items-center gap-1 text-xs text-green-500">
@@ -223,13 +223,13 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
                 </span>
               </div>
             </div>
-            <div className="text-2xl font-bold text-[#FE7743]">
+            <div className="text-2xl font-bold text-[#62929e]">
               {formatLKR(toNumber(data.total_cost_lkr))}
             </div>
           </div>
         </div>
 
-        <div className="text-[10px] text-gray-600 text-center pt-2">
+        <div className="text-[10px] text-[#393d3f] text-center pt-2">
           *Estimates only. Final duty based on Customs valuation on arrival
           date.
         </div>
@@ -237,3 +237,4 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
     </Card>
   );
 }
+

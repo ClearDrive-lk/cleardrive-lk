@@ -173,40 +173,40 @@ export default function OrderDetailPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
-        <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#FE7743]" />
+              <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
+                <Terminal className="w-4 h-4 text-[#62929e]" />
               </div>
-              ClearDrive<span className="text-[#FE7743]">.lk</span>
+              ClearDrive<span className="text-[#62929e]">.lk</span>
             </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
               <Link
                 href="/dashboard"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Dashboard
               </Link>
               <Link
                 href="/dashboard/orders"
-                className="text-white transition-colors flex items-center gap-2"
+                className="text-[#393d3f] transition-colors flex items-center gap-2"
               >
                 Orders
                 <Badge
                   variant="outline"
-                  className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
+                  className="text-[10px] border-[#62929e]/20 text-[#62929e] h-4 px-1"
                 >
                   ACTIVE
                 </Badge>
               </Link>
               <Link
                 href="/dashboard/vehicles"
-                className="hover:text-white transition-colors"
+                className="hover:text-[#393d3f] transition-colors"
               >
                 Vehicles
               </Link>
@@ -214,8 +214,8 @@ export default function OrderDetailPage() {
           </div>
         </nav>
 
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#FE7743]/5 rounded-[100%] blur-[120px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
 
         <main className="relative z-10 flex-1 px-6 py-12">
           <div className="max-w-6xl mx-auto space-y-8">
@@ -223,14 +223,14 @@ export default function OrderDetailPage() {
               <div>
                 <Link
                   href="/dashboard/orders"
-                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-gray-500 hover:text-white"
+                  className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-[#546a7b] hover:text-[#393d3f]"
                 >
                   <ArrowLeft className="h-4 w-4" /> Back to Orders
                 </Link>
-                <h1 className="mt-3 text-3xl md:text-4xl font-bold text-white">
+                <h1 className="mt-3 text-3xl md:text-4xl font-bold text-[#393d3f]">
                   Order Tracking
                 </h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-[#546a7b]">
                   Review payment status and shipment milestones in one place.
                 </p>
               </div>
@@ -238,14 +238,14 @@ export default function OrderDetailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => void loadOrder()}
-                className="border-white/10 text-white hover:bg-white/5"
+                className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
               >
                 <RefreshCcw className="mr-2 h-4 w-4" /> Refresh
               </Button>
             </div>
 
             {order && (
-              <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
                 {paymentStatus === "COMPLETED" ? (
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-emerald-300 text-sm">
@@ -263,7 +263,7 @@ export default function OrderDetailPage() {
                     </div>
                     <Button
                       asChild
-                      className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                      className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
                     >
                       <Link href={`/payment?orderId=${order.id}`}>
                         Retry Payment
@@ -277,7 +277,7 @@ export default function OrderDetailPage() {
                     </div>
                     <Button
                       asChild
-                      className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                      className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
                     >
                       <Link href="#payment-action">Complete Payment</Link>
                     </Button>
@@ -287,7 +287,7 @@ export default function OrderDetailPage() {
             )}
 
             {loading ? (
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center text-gray-400">
+              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-10 text-center text-[#546a7b]">
                 Loading order...
               </div>
             ) : error ? (
@@ -297,19 +297,19 @@ export default function OrderDetailPage() {
             ) : order ? (
               <div className="grid gap-8 lg:grid-cols-[360px_minmax(0,1fr)]">
                 <div className="space-y-4">
-                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
+                  <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.25em] text-gray-500">
+                        <p className="text-xs uppercase tracking-[0.25em] text-[#546a7b]">
                           Order ID
                         </p>
-                        <p className="mt-2 font-mono text-sm text-white">
+                        <p className="mt-2 font-mono text-sm text-[#393d3f]">
                           {order.id}
                         </p>
                         <button
                           type="button"
                           onClick={handleCopyOrderId}
-                          className="mt-2 inline-flex items-center gap-2 text-xs text-gray-400 hover:text-white"
+                          className="mt-2 inline-flex items-center gap-2 text-xs text-[#546a7b] hover:text-[#393d3f]"
                         >
                           <Copy className="h-3 w-3" />
                           {copied ? "Copied" : "Copy ID"}
@@ -318,30 +318,30 @@ export default function OrderDetailPage() {
                       <Badge
                         className={
                           statusTone[order.status] ??
-                          "border-white/10 bg-white/5 text-white"
+                          "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]"
                         }
                       >
                         {order.status.replace(/_/g, " ")}
                       </Badge>
                     </div>
-                    <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                    <div className="mt-4 flex items-center gap-2 text-xs text-[#546a7b]">
                       <Clock className="h-3 w-3" />
                       Created {new Date(order.created_at).toLocaleString()}
                     </div>
-                    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="flex items-center justify-between text-sm text-gray-300">
+                    <div className="mt-4 rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+                      <div className="flex items-center justify-between text-sm text-[#546a7b]">
                         <span>Total Cost</span>
-                        <span className="font-semibold text-white">
+                        <span className="font-semibold text-[#393d3f]">
                           {formatLkr(order.total_cost_lkr)}
                         </span>
                       </div>
-                      <div className="mt-2 text-xs text-gray-500">
+                      <div className="mt-2 text-xs text-[#546a7b]">
                         Payment status:{" "}
                         {order.payment_status.replace(/_/g, " ")}
                       </div>
                     </div>
 
-                    <div className="mt-4 text-xs text-gray-500">
+                    <div className="mt-4 text-xs text-[#546a7b]">
                       Shipping address is stored securely and encrypted.
                     </div>
                   </div>
@@ -351,24 +351,24 @@ export default function OrderDetailPage() {
                       <PaymentButton
                         orderId={order.id}
                         amount={totalAmount}
-                        className="w-full bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                        className="w-full bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
                       />
                     ) : (
                       <Button
                         disabled
-                        className="w-full bg-white/5 text-gray-400 border border-white/10"
+                        className="w-full bg-[#c6c5b9]/20 text-[#546a7b] border border-[#c6c5b9]/50"
                       >
                         Payment unavailable for this status
                       </Button>
                     )}
                   </div>
 
-                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
-                    <h3 className="text-sm font-semibold text-white">
+                  <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+                    <h3 className="text-sm font-semibold text-[#393d3f]">
                       Vehicle Summary
                     </h3>
                     {vehicleLoading ? (
-                      <div className="mt-3 text-xs text-gray-500">
+                      <div className="mt-3 text-xs text-[#546a7b]">
                         Loading vehicle details...
                       </div>
                     ) : vehicleError ? (
@@ -377,7 +377,7 @@ export default function OrderDetailPage() {
                       </div>
                     ) : vehicle ? (
                       <div className="mt-3 flex gap-4">
-                        <div className="relative h-20 w-28 overflow-hidden rounded-lg border border-white/10 bg-[#0D0D0D]">
+                        <div className="relative h-20 w-28 overflow-hidden rounded-lg border border-[#c6c5b9]/50 bg-[#fdfdff]">
                           {vehicle.imageUrl ? (
                             <Image
                               src={vehicle.imageUrl}
@@ -386,17 +386,17 @@ export default function OrderDetailPage() {
                               className="object-cover"
                             />
                           ) : (
-                            <div className="h-full w-full bg-white/5" />
+                            <div className="h-full w-full bg-[#c6c5b9]/20" />
                           )}
                         </div>
-                        <div className="flex-1 text-sm text-gray-300">
-                          <p className="text-white font-semibold">
+                        <div className="flex-1 text-sm text-[#546a7b]">
+                          <p className="text-[#393d3f] font-semibold">
                             {vehicle.year} {vehicle.make} {vehicle.model}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-[#546a7b]">
                             Lot #{vehicle.lotNumber} · {vehicle.mileage} km
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-[#546a7b]">
                             Est. Landed:{" "}
                             {formatLkr(vehicle.estimatedLandedCostLKR)}
                           </p>
@@ -404,7 +404,7 @@ export default function OrderDetailPage() {
                             asChild
                             size="sm"
                             variant="outline"
-                            className="mt-2 border-white/10 text-white hover:bg-white/5"
+                            className="mt-2 border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                           >
                             <Link href={`/dashboard/vehicles/${vehicle.id}`}>
                               View Vehicle
@@ -413,13 +413,13 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-3 text-xs text-gray-500">
+                      <div className="mt-3 text-xs text-[#546a7b]">
                         Vehicle details unavailable.
                       </div>
                     )}
                   </div>
 
-                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4 text-xs text-gray-400">
+                  <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
                     Vehicle ID: {order.vehicle_id ?? "N/A"}
                   </div>
 
@@ -427,7 +427,7 @@ export default function OrderDetailPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-white/10 text-white hover:bg-white/5"
+                      className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                     >
                       <Link href={`/payment?orderId=${order.id}`}>
                         Open Payment Page
@@ -436,7 +436,7 @@ export default function OrderDetailPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-white/10 text-white hover:bg-white/5"
+                      className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                     >
                       <Link href={`/dashboard/orders/${order.id}/confirmation`}>
                         Order Confirmation
@@ -471,7 +471,7 @@ export default function OrderDetailPage() {
                             <Button
                               onClick={handleCancelOrder}
                               disabled={cancelLoading}
-                              className="bg-red-500 text-white hover:bg-red-400"
+                              className="bg-red-500 text-[#393d3f] hover:bg-red-400"
                             >
                               {cancelLoading
                                 ? "Cancelling..."
@@ -479,7 +479,7 @@ export default function OrderDetailPage() {
                             </Button>
                             <Button
                               variant="outline"
-                              className="border-white/10 text-white hover:bg-white/5"
+                              className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                               onClick={() => setShowCancelConfirm(false)}
                             >
                               Keep Order

@@ -22,21 +22,21 @@ export default function ExporterAccessGate({
 
   if (!allowed) {
     return (
-      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center px-6">
-        <div className="max-w-lg text-center rounded-2xl border border-white/10 bg-white/[0.04] p-10">
+      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] flex items-center justify-center px-6">
+        <div className="max-w-lg text-center rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/8 p-10">
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-400">
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="text-2xl font-semibold text-[#393d3f]">
             Exporter Access Required
           </h1>
-          <p className="mt-3 text-sm text-gray-400">
+          <p className="mt-3 text-sm text-[#546a7b]">
             Your account does not have access to the exporter terminal. If this
             is unexpected, contact an administrator for role approval.
           </p>
           <Button
             asChild
-            className="mt-6 bg-[#FE7743] text-black font-semibold"
+            className="mt-6 bg-[#62929e] text-[#fdfdff] font-semibold"
           >
             <Link href={roleHomePath(role)}>
               Return to your dashboard <ArrowRight className="ml-2 h-4 w-4" />
@@ -49,3 +49,4 @@ export default function ExporterAccessGate({
 
   return <>{children}</>;
 }
+

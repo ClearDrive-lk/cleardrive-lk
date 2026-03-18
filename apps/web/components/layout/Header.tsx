@@ -21,25 +21,25 @@ export default function Header() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
+    <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
           href={isAuthenticated || hasSession ? "/dashboard" : "/"}
           className="font-bold text-xl tracking-tighter flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
-            <Terminal className="w-4 h-4 text-[#FE7743]" />
+          <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
+            <Terminal className="w-4 h-4 text-[#62929e]" />
           </div>
-          ClearDrive<span className="text-[#FE7743]">.lk</span>
+          ClearDrive<span className="text-[#62929e]">.lk</span>
         </Link>
 
         {/* Navigation Links */}
-        <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+        <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
           <Link
             href="/"
             className={`transition-colors ${
-              isActive("/") ? "text-white" : "hover:text-white"
+              isActive("/") ? "text-[#393d3f]" : "hover:text-[#393d3f]"
             }`}
           >
             Home
@@ -49,8 +49,8 @@ export default function Header() {
             href="/dashboard/vehicles"
             className={`transition-colors ${
               isActive("/dashboard/vehicles")
-                ? "text-white"
-                : "hover:text-white"
+                ? "text-[#393d3f]"
+                : "hover:text-[#393d3f]"
             }`}
           >
             Vehicles
@@ -61,14 +61,14 @@ export default function Header() {
               <Link
                 href="/dashboard"
                 className={`transition-colors flex items-center gap-2 ${
-                  isActive("/dashboard") ? "text-white" : "hover:text-white"
+                  isActive("/dashboard") ? "text-[#393d3f]" : "hover:text-[#393d3f]"
                 }`}
               >
                 Dashboard
                 {isActive("/dashboard") && (
                   <Badge
                     variant="outline"
-                    className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
+                    className="text-[10px] border-[#62929e]/20 text-[#62929e] h-4 px-1"
                   >
                     ACTIVE
                   </Badge>
@@ -78,8 +78,8 @@ export default function Header() {
                 href="/dashboard/orders"
                 className={`transition-colors ${
                   isActive("/dashboard/orders")
-                    ? "text-white"
-                    : "hover:text-white"
+                    ? "text-[#393d3f]"
+                    : "hover:text-[#393d3f]"
                 }`}
               >
                 Orders
@@ -87,7 +87,7 @@ export default function Header() {
               <Link
                 href="/dashboard/kyc"
                 className={`transition-colors ${
-                  isActive("/dashboard/kyc") ? "text-white" : "hover:text-white"
+                  isActive("/dashboard/kyc") ? "text-[#393d3f]" : "hover:text-[#393d3f]"
                 }`}
               >
                 KYC
@@ -96,8 +96,8 @@ export default function Header() {
                 href="/dashboard/profile"
                 className={`transition-colors ${
                   isActive("/dashboard/profile")
-                    ? "text-white"
-                    : "hover:text-white"
+                    ? "text-[#393d3f]"
+                    : "hover:text-[#393d3f]"
                 }`}
               >
                 Profile
@@ -110,14 +110,14 @@ export default function Header() {
         <div className="flex gap-4 items-center">
           {isAuthenticated ? (
             <>
-              <span className="hidden md:block text-sm text-gray-400 font-mono">
+              <span className="hidden md:block text-sm text-[#546a7b] font-mono">
                 {user?.name}
               </span>
               <Button
                 onClick={logout}
                 disabled={isLoading}
                 variant="ghost"
-                className="text-gray-400 hover:text-white hover:bg-white/5 font-mono flex items-center gap-2"
+                className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono flex items-center gap-2"
               >
                 <LogOut className="w-4 h-4" />
                 {isLoading ? "Signing out..." : "Sign Out"}
@@ -128,13 +128,13 @@ export default function Header() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="text-gray-400 hover:text-white hover:bg-white/5 font-mono"
+                  className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono"
                 >
                   Sign In
                 </Button>
               </Link>
               <Link href="/register">
-                <Button className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold">
+                <Button className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold">
                   Get Access
                 </Button>
               </Link>
@@ -145,3 +145,4 @@ export default function Header() {
     </nav>
   );
 }
+

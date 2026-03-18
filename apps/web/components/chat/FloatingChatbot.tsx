@@ -156,16 +156,16 @@ export default function FloatingChatbot() {
   return (
     <div className="fixed bottom-5 right-5 z-[70]">
       {isOpen ? (
-        <div className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#0a0a0a]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <div className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(254,119,67,0.22),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))] p-4">
-            <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-[#FE7743]/10 blur-2xl" />
+        <div className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] border border-[#c6c5b9]/50 bg-[#0a0a0a]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <div className="relative overflow-hidden border-b border-[#c6c5b9]/50 bg-[radial-gradient(circle_at_top_left,rgba(98,146,158,0.22),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))] p-4">
+            <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-[#62929e]/10 blur-2xl" />
             <div className="relative flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-[#FE7743]">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-[#62929e]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Vehicle Assistant
                 </div>
-                <p className="mt-2 max-w-[16rem] text-sm text-gray-300">
+                <p className="mt-2 max-w-[16rem] text-sm text-[#546a7b]">
                   Ask about vehicle types, budget, or preferences. Tax and
                   document questions are intentionally blocked.
                 </p>
@@ -173,7 +173,7 @@ export default function FloatingChatbot() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-full border border-white/10 bg-white/5 p-2 text-gray-300 transition hover:bg-white/10 hover:text-white"
+                className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-2 text-[#546a7b] transition hover:bg-[#c6c5b9]/30 hover:text-[#393d3f]"
                 aria-label="Close chat"
               >
                 <X className="h-4 w-4" />
@@ -194,8 +194,8 @@ export default function FloatingChatbot() {
                   <div
                     className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
                       message.role === "user"
-                        ? "bg-[#FE7743] text-black"
-                        : "border border-white/10 bg-white/5 text-gray-100"
+                        ? "bg-[#62929e] text-[#fdfdff]"
+                        : "border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-gray-100"
                     }`}
                   >
                     <p>{message.content}</p>
@@ -206,7 +206,7 @@ export default function FloatingChatbot() {
                             ? `/dashboard/vehicles/${message.vehicleIds[0]}#cost-calculator`
                             : "/dashboard/vehicles"
                         }
-                        className="mt-3 inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
+                        className="mt-3 inline-flex rounded-full border border-[#62929e]/30 bg-[#62929e]/10 px-3 py-1 text-xs font-medium text-[#62929e] transition hover:bg-[#62929e]/15"
                       >
                         Calculate Tax
                       </Link>
@@ -221,7 +221,7 @@ export default function FloatingChatbot() {
                           return (
                             <div
                               key={vehicleId}
-                              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-gray-400"
+                              className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-4 py-3 text-xs text-[#546a7b]"
                             >
                               Loading vehicle details...
                             </div>
@@ -232,7 +232,7 @@ export default function FloatingChatbot() {
                             <VehicleCard vehicle={vehicle} />
                             <Link
                               href={`/dashboard/vehicles/${vehicleId}#cost-calculator`}
-                              className="inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
+                              className="inline-flex rounded-full border border-[#62929e]/30 bg-[#62929e]/10 px-3 py-1 text-xs font-medium text-[#62929e] transition hover:bg-[#62929e]/15"
                             >
                               Calculate Tax
                             </Link>
@@ -246,14 +246,14 @@ export default function FloatingChatbot() {
             ))}
             {isSending ? (
               <div className="flex justify-start">
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-400">
+                <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-4 py-3 text-sm text-[#546a7b]">
                   Thinking...
                 </div>
               </div>
             ) : null}
           </div>
 
-          <div className="border-t border-white/10 p-4">
+          <div className="border-t border-[#c6c5b9]/50 p-4">
             {messages.length === 1 ? (
               <div className="mb-3 flex flex-wrap gap-2">
                 {STARTER_PROMPTS.map((prompt) => (
@@ -261,7 +261,7 @@ export default function FloatingChatbot() {
                     key={prompt}
                     type="button"
                     onClick={() => void sendMessage(prompt)}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition hover:border-[#FE7743]/30 hover:text-white"
+                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1.5 text-xs text-[#546a7b] transition hover:border-[#62929e]/30 hover:text-[#393d3f]"
                   >
                     {prompt}
                   </button>
@@ -286,13 +286,13 @@ export default function FloatingChatbot() {
                 rows={1}
                 maxLength={500}
                 placeholder="Ask about family SUVs, hybrids, or budget..."
-                className="min-h-11 flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-500 focus:border-[#FE7743]/40"
+                className="min-h-11 flex-1 resize-none rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-4 py-3 text-sm text-[#393d3f] outline-none placeholder:text-[#546a7b] focus:border-[#62929e]/40"
               />
               <button
                 type="button"
                 onClick={() => void sendMessage()}
                 disabled={isSending || !input.trim()}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FE7743] text-black transition hover:bg-[#ff885a] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e] text-[#fdfdff] transition hover:bg-[#546a7b] disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
@@ -305,7 +305,7 @@ export default function FloatingChatbot() {
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="ml-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#FE7743]/30 bg-[radial-gradient(circle_at_30%_30%,#ffb08f,#FE7743_55%,#a63f12)] text-black shadow-[0_20px_50px_rgba(254,119,67,0.35)] transition hover:scale-[1.03]"
+        className="ml-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#62929e]/30 bg-[radial-gradient(circle_at_30%_30%,#fdfdff,#62929e_55%,#546a7b)] text-[#393d3f] shadow-[0_20px_50px_rgba(98,146,158,0.35)] transition hover:scale-[1.03]"
         aria-label="Open vehicle assistant"
       >
         <MessageCircle className="h-7 w-7" />
@@ -313,3 +313,4 @@ export default function FloatingChatbot() {
     </div>
   );
 }
+
