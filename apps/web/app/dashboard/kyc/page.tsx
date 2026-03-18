@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { useLogout } from "@/lib/hooks/useLogout";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 interface KycStatusResponse {
   has_kyc: boolean;
@@ -243,13 +244,16 @@ export default function DashboardKycPage() {
                 Profile
               </Link>
             </div>
-            <Button
-              onClick={logout}
-              disabled={logoutLoading}
-              className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-            >
-              {logoutLoading ? "Signing out..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <Button
+                onClick={logout}
+                disabled={logoutLoading}
+                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
+              >
+                {logoutLoading ? "Signing out..." : "Sign Out"}
+              </Button>
+            </div>
           </div>
         </nav>
 

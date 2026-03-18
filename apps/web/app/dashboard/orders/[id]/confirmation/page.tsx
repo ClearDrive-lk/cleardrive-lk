@@ -9,6 +9,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import apiClient from "@/lib/api-client";
 
 interface OrderDetail {
@@ -103,6 +104,9 @@ export default function OrderConfirmationPage() {
               >
                 Vehicles
               </Link>
+            </div>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
             </div>
           </div>
         </nav>

@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 // Removed unused useVehicles
@@ -171,6 +172,9 @@ function VehicleDetail() {
             >
               KYC
             </Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
           </div>
         </div>
       </nav>

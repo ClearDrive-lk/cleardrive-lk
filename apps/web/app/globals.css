@@ -33,31 +33,84 @@
 
 :root {
   /* Moonlit Mist palette (warm, premium light) */
-  --background: 30 9.9% 60.4%; /* #a49a90 */
-  --foreground: 200 5% 23.5%; /* #393d3f */
-  --card: 27.3 16.4% 73.7%; /* #c7bbb1 */
-  --card-foreground: 200 5% 23.5%;
-  --popover: 27.3 16.4% 73.7%;
-  --popover-foreground: 200 5% 23.5%;
-  --primary: 192 23.6% 50.2%; /* #62929e */
+  --background: 210 33% 97%; /* #f5f7fa */
+  --foreground: 202.5 11.8% 13.3%; /* #1e2326 */
+  --card: 0 0% 100%; /* #ffffff */
+  --card-foreground: 202.5 11.8% 13.3%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 202.5 11.8% 13.3%;
+  --primary: 188.5 70.5% 41.2%; /* #1f9eb3 */
   --primary-foreground: 240 100% 99.6%;
-  --secondary: 206 18.8% 40.6%; /* #546a7b */
+  --secondary: 202.7 22.7% 32.0%; /* #3f5664 */
   --secondary-foreground: 240 100% 99.6%;
-  --muted: 27.3 13.4% 67.8%; /* #b8aca2 */
+  --muted: 210 23% 92%; /* #e6ebf0 */
   --muted-foreground: 206 18.8% 40.6%;
-  --accent: 27.3 16.4% 73.7%;
-  --accent-foreground: 200 5% 23.5%;
+  --accent: 210 23% 95%; /* #eef2f6 */
+  --accent-foreground: 202.5 11.8% 13.3%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 240 100% 99.6%;
-  --border: 206 18.8% 40.6%; /* #546a7b */
-  --input: 27.3 16.4% 73.7%;
-  --ring: 192 23.6% 50.2%;
+  --border: 204 20% 34.3%; /* #465b69 */
+  --input: 0 0% 100%;
+  --ring: 188.5 70.5% 41.2%;
   --radius: 0.75rem;
-  --bronze: 28 35% 35%; /* #7a5a3f */
-  --bronze-soft: 28 40% 55%; /* #a47a56 */
-  --steel: 210 12% 32%; /* #4d5963 */
-  --steel-soft: 210 12% 52%; /* #7a8792 */
-  --ink: 200 6% 18%;
+  --bronze: 27.5 31.9% 36.3%; /* #7a5a3f */
+  --bronze-soft: 27.7 31.2% 49%; /* #a47a56 */
+  --steel: 207.3 12.5% 34.5%; /* #4d5963 */
+  --steel-soft: 207.5 9.9% 52.5%; /* #7a8792 */
+  --ink: 202.5 15.4% 10.2%; /* #161b1e */
+  --app-backdrop-main: radial-gradient(1200px 600px at 10% -10%, rgba(31, 158, 179, 0.22), transparent 60%), radial-gradient(900px 520px at 90% 0%, rgba(210, 168, 93, 0.18), transparent 55%), linear-gradient(180deg, #f7f9fc 0%, #eef2f6 55%, #e6ebf0 100%);
+  --app-backdrop-orbits: radial-gradient(circle at 18% 20%, rgba(31, 158, 179, 0.16), transparent 52%), radial-gradient(circle at 82% 25%, rgba(210, 168, 93, 0.12), transparent 58%);
+  --app-backdrop-grid: linear-gradient(to right, rgba(63, 86, 100, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(63, 86, 100, 0.08) 1px, transparent 1px);
+  --app-backdrop-diagonal: repeating-linear-gradient(115deg, rgba(30, 35, 38, 0.05) 0 2px, transparent 2px 28px);
+  --app-backdrop-glow: radial-gradient(circle, rgba(210, 168, 93, 0.22), transparent 70%);
+  --app-backdrop-vignette: radial-gradient(circle at 50% 115%, rgba(0, 0, 0, 0.18), transparent 60%);
+}
+
+.dark {
+  --background: 202.5 21.1% 7.5%; /* #0f1417 */
+  --foreground: 0 0% 96%; /* #f5f5f5 */
+  --card: 202.5 22.2% 14.1%; /* #1c262c */
+  --card-foreground: 0 0% 96%;
+  --popover: 202.5 22.2% 14.1%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 187.4 64.3% 47.3%; /* #2bb3c6 */
+  --primary-foreground: 202.5 21.1% 7.5%;
+  --secondary: 205.5 17.5% 44.7%; /* #5e7586 */
+  --secondary-foreground: 0 0% 96%;
+  --muted: 202.5 16% 19.6%; /* #2a343a */
+  --muted-foreground: 205.5 17.5% 44.7%;
+  --accent: 36.2 55.3% 51.8%; /* #c89240 */
+  --accent-foreground: 0 0% 96%;
+  --destructive: 0 62.8% 40%;
+  --destructive-foreground: 0 0% 96%;
+  --border: 201.8 19% 22.7%; /* #2f3d45 */
+  --input: 202.5 22.2% 14.1%;
+  --ring: 187.4 64.3% 47.3%;
+  --bronze: 33.5 59.5% 45.5%; /* #b97c2f */
+  --bronze-soft: 36.1 52.8% 61.8%; /* #d1a86a */
+  --steel: 205 14.3% 50.6%; /* #6f8493 */
+  --steel-soft: 204.7 17.9% 62.7%; /* #8fa3b1 */
+  --ink: 28.2 21.5% 84.5%; /* #e0d7cf */
+  --app-backdrop-main: radial-gradient(1200px 600px at 10% -10%, rgba(43, 179, 198, 0.28), transparent 60%), radial-gradient(900px 520px at 90% 0%, rgba(200, 146, 64, 0.22), transparent 55%), linear-gradient(180deg, #0f1417 0%, #141b20 50%, #1c262c 100%);
+  --app-backdrop-orbits: radial-gradient(circle at 18% 20%, rgba(43, 179, 198, 0.18), transparent 52%), radial-gradient(circle at 82% 25%, rgba(200, 146, 64, 0.16), transparent 58%);
+  --app-backdrop-grid: linear-gradient(to right, rgba(236, 231, 225, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(236, 231, 225, 0.06) 1px, transparent 1px);
+  --app-backdrop-diagonal: repeating-linear-gradient(115deg, rgba(236, 231, 225, 0.05) 0 2px, transparent 2px 28px);
+  --app-backdrop-glow: radial-gradient(circle, rgba(200, 146, 64, 0.25), transparent 70%);
+  --app-backdrop-vignette: radial-gradient(circle at 50% 115%, rgba(0, 0, 0, 0.65), transparent 60%);
+}
+
+.dark [class~="text-[#546a7b]"],
+.dark [class~="text-[#62929e]"],
+.dark [class~="text-[#393d3f]"] {
+  color: hsl(var(--foreground));
+}
+.dark [class~="text-gray-900"],
+.dark [class~="text-gray-800"],
+.dark [class~="text-gray-700"],
+.dark [class~="text-gray-600"],
+.dark [class~="text-gray-500"],
+.dark [class~="text-gray-400"] {
+  color: hsl(var(--foreground));
 }
 
 @layer base {
@@ -78,59 +131,69 @@
     @apply leading-relaxed;
   }
   .admin-theme {
-    @apply bg-[#a49a90] text-[#393d3f];
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
   .admin-theme [class~="bg-[#fdfdff]"],
   .admin-theme [class~="bg-[#fdfdff]/90"],
   .admin-theme [class~="bg-[#fdfdff]/80"],
   .admin-theme [class~="bg-[#fdfdff]/70"],
   .admin-theme [class~="bg-[#fdfdff]/60"] {
-    @apply bg-[#c7bbb1];
+    background-color: hsl(var(--card));
   }
   .admin-theme .bg-slate-50,
   .admin-theme .bg-gray-50 {
-    @apply bg-[#c7bbb1];
+    background-color: hsl(var(--card));
   }
   .admin-theme .bg-slate-100,
   .admin-theme .bg-gray-100 {
-    @apply bg-[#c7bbb1];
+    background-color: hsl(var(--card));
   }
   .admin-theme .border-slate-200,
   .admin-theme .border-gray-200,
   .admin-theme .border-slate-300,
   .admin-theme .border-gray-300 {
-    @apply border-[#546a7b]/60;
+    border-color: color-mix(in oklab, hsl(var(--secondary)) 60%, transparent);
   }
   .admin-theme .text-slate-900,
   .admin-theme .text-gray-900 {
-    @apply text-[#393d3f];
+    color: hsl(var(--foreground));
   }
   .admin-theme .text-slate-700,
   .admin-theme .text-gray-700 {
-    @apply text-[#546a7b];
+    color: hsl(var(--secondary));
   }
   .admin-theme .text-slate-600 {
-    @apply text-[#546a7b];
+    color: hsl(var(--secondary));
   }
   .admin-theme .text-slate-500 {
-    @apply text-[#546a7b];
+    color: hsl(var(--secondary));
   }
   .admin-theme .text-slate-400 {
-    @apply text-[#546a7b];
+    color: hsl(var(--secondary));
   }
   .admin-theme input,
   .admin-theme select,
   .admin-theme textarea {
-    @apply bg-[#c7bbb1] text-[#393d3f] border-[#546a7b]/60 placeholder:text-[#546a7b];
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
+    border-color: color-mix(in oklab, hsl(var(--secondary)) 60%, transparent);
+  }
+  .admin-theme input::placeholder,
+  .admin-theme select::placeholder,
+  .admin-theme textarea::placeholder {
+    color: hsl(var(--secondary));
   }
   .admin-theme input:focus,
   .admin-theme select:focus,
   .admin-theme textarea:focus {
-    @apply outline-none ring-2 ring-[#62929e]/50 border-[#62929e]/70;
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in oklab, hsl(var(--primary)) 50%, transparent);
+    border-color: color-mix(in oklab, hsl(var(--primary)) 70%, transparent);
   }
   .admin-theme select option {
-    background-color: #c7bbb1;
-    color: #393d3f;
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
   }
   .admin-theme input[type="date"],
   .admin-theme input[type="datetime-local"],
@@ -144,7 +207,7 @@
   .admin-theme .bg-sky-50,
   .admin-theme .bg-yellow-50,
   .admin-theme .bg-green-50 {
-    @apply bg-[#c7bbb1];
+    background-color: hsl(var(--card));
   }
   .admin-theme .bg-amber-100,
   .admin-theme .bg-emerald-100,
@@ -154,7 +217,7 @@
   .admin-theme .bg-yellow-100,
   .admin-theme .bg-green-100,
   .admin-theme .bg-purple-100 {
-    @apply bg-[#c7bbb1];
+    background-color: hsl(var(--card));
   }
   /* Legacy hex utility remaps (keeps hard-coded classes in sync) */
   [class~="bg-[#fdfdff]"] {
@@ -172,6 +235,18 @@
   [class~="bg-[#fdfdff]/60"] {
     background-color: color-mix(in oklab, hsl(var(--card)) 60%, transparent);
   }
+  [class~="bg-[#fdfdff]/40"] {
+    background-color: color-mix(in oklab, hsl(var(--card)) 40%, transparent);
+  }
+  [class~="bg-[#fdfdff]/30"] {
+    background-color: color-mix(in oklab, hsl(var(--card)) 30%, transparent);
+  }
+  [class~="bg-[#fdfdff]/20"] {
+    background-color: color-mix(in oklab, hsl(var(--card)) 20%, transparent);
+  }
+  [class~="bg-[#fdfdff]/8"] {
+    background-color: color-mix(in oklab, hsl(var(--card)) 8%, transparent);
+  }
   [class~="text-[#393d3f]"] {
     color: hsl(var(--foreground));
   }
@@ -180,6 +255,21 @@
   }
   [class~="text-[#62929e]"] {
     color: hsl(var(--primary));
+  }
+  [class~="bg-[#62929e]"] {
+    background-color: hsl(var(--primary));
+  }
+  [class~="bg-[#546a7b]"] {
+    background-color: hsl(var(--secondary));
+  }
+  [class~="bg-[#c6c5b9]"] {
+    background-color: hsl(var(--muted));
+  }
+  [class~="border-[#62929e]"] {
+    border-color: hsl(var(--primary));
+  }
+  [class~="border-[#546a7b]"] {
+    border-color: hsl(var(--secondary));
   }
   [class~="border-[#546a7b]/65"] {
     border-color: color-mix(in oklab, hsl(var(--secondary)) 65%, transparent);
@@ -253,5 +343,148 @@
 }
 .animate-marquee {
   animation: marquee 120s linear infinite;
+}
+
+@keyframes backdrop-drift {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.02);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-orbit {
+  0% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes backdrop-glow {
+  0% {
+    transform: translateX(-4%) scale(1);
+  }
+  50% {
+    transform: translateX(4%) scale(1.05);
+  }
+  100% {
+    transform: translateX(-4%) scale(1);
+  }
+}
+
+.app-backdrop__main {
+  animation: backdrop-drift 18s ease-in-out infinite;
+}
+
+.app-backdrop__orbits {
+  animation: backdrop-orbit 16s ease-in-out infinite;
+}
+
+.app-backdrop__glow {
+  animation: backdrop-glow 22s ease-in-out infinite;
+}
+
+.theme-transition,
+.theme-transition * {
+  transition:
+    background-color 240ms ease,
+    color 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+
+@layer utilities {
+  .theme-override [class~="bg-[#fdfdff]"] {
+    background-color: hsl(var(--background)) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/90"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 90%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/80"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 80%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/70"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 70%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/60"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 60%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/40"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 40%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/30"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 30%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/20"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 20%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#fdfdff]/8"] {
+    background-color: color-mix(in oklab, hsl(var(--background)) 8%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#62929e]"] {
+    background-color: hsl(var(--primary)) !important;
+  }
+  .theme-override [class~="bg-[#546a7b]"] {
+    background-color: hsl(var(--secondary)) !important;
+  }
+  .theme-override [class~="bg-[#c6c5b9]"] {
+    background-color: hsl(var(--muted)) !important;
+  }
+  .theme-override [class~="bg-[#c6c5b9]/40"] {
+    background-color: color-mix(in oklab, hsl(var(--muted)) 40%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#c6c5b9]/30"] {
+    background-color: color-mix(in oklab, hsl(var(--muted)) 30%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#c6c5b9]/20"] {
+    background-color: color-mix(in oklab, hsl(var(--muted)) 20%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#c6c5b9]/15"] {
+    background-color: color-mix(in oklab, hsl(var(--muted)) 15%, transparent) !important;
+  }
+  .theme-override [class~="bg-[#c6c5b9]/10"] {
+    background-color: color-mix(in oklab, hsl(var(--muted)) 10%, transparent) !important;
+  }
+  .theme-override [class~="border-[#546a7b]"],
+  .theme-override [class~="border-[#546a7b]/65"],
+  .theme-override [class~="border-[#546a7b]/60"] {
+    border-color: color-mix(in oklab, hsl(var(--secondary)) 60%, transparent) !important;
+  }
+  .theme-override [class~="border-[#62929e]"],
+  .theme-override [class~="border-[#62929e]/40"],
+  .theme-override [class~="border-[#62929e]/30"],
+  .theme-override [class~="border-[#62929e]/20"] {
+    border-color: color-mix(in oklab, hsl(var(--primary)) 30%, transparent) !important;
+  }
+  .theme-override [class~="text-[#393d3f]"] {
+    color: hsl(var(--foreground)) !important;
+  }
+  .theme-override [class~="text-[#546a7b]"] {
+    color: hsl(var(--secondary)) !important;
+  }
+  .theme-override [class~="text-[#62929e]"] {
+    color: hsl(var(--primary)) !important;
+  }
+  .dark .theme-override [class~="text-[#546a7b]"],
+  .dark .theme-override [class~="text-[#62929e]"] {
+    color: hsl(var(--foreground)) !important;
+  }
+  .dark .theme-override [class~="text-gray-900"],
+  .dark .theme-override [class~="text-gray-800"],
+  .dark .theme-override [class~="text-gray-700"],
+  .dark .theme-override [class~="text-gray-600"],
+  .dark .theme-override [class~="text-gray-500"],
+  .dark .theme-override [class~="text-gray-400"] {
+    color: hsl(var(--foreground)) !important;
+  }
 }
 

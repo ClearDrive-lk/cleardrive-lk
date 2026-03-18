@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { AdminMobileNav, AdminSidebar } from "@/components/admin/AdminNav";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import AdminAccessGate from "@/components/admin/AdminAccessGate";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -24,7 +25,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   </p>
                 </div>
               </div>
-              <AdminMobileNav />
+              <div className="flex items-center gap-3">
+                <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+                <AdminMobileNav />
+              </div>
             </header>
 
             <main className="relative flex-1 overflow-y-auto">

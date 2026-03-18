@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Libre_Baskerville } from "next/font/google";
 import FloatingChatbot from "@/components/chat/FloatingChatbot";
 import AppBackdrop from "@/components/ui/app-backdrop";
+import ThemeInitScript from "@/components/ui/theme-init-script";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
 import CookieBanner from "@/components/cookie/cookieBanner";
@@ -34,10 +35,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${plusJakarta.variable} ${libreBaskerville.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${plusJakarta.variable} ${libreBaskerville.variable} font-sans antialiased bg-background text-foreground theme-override`}
       >
+        <ThemeInitScript />
         <StoreProvider>
           <ToastStateProvider>
             <AuthBootstrap />

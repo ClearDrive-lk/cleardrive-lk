@@ -6,6 +6,7 @@ import { useAppSelector } from "@/lib/store/store";
 import { Terminal, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
@@ -107,7 +108,8 @@ export default function Header() {
         </div>
 
         {/* User Actions */}
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-3 items-center">
+          <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
           {isAuthenticated ? (
             <>
               <span className="hidden md:block text-sm text-[#546a7b] font-mono">

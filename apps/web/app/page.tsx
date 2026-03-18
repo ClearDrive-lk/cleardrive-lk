@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AuctionTicker } from "@/components/ui/ticker";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import {
   Search,
   Zap,
@@ -67,7 +68,8 @@ export default function Home() {
               Tax Calculator
             </Link>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3 items-center">
+            <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
             <Link href="/login">
               <Button
                 variant="ghost"

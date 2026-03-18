@@ -6,6 +6,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/ui/OrderTimeline";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import apiClient from "@/lib/api-client";
 import { useLogout } from "@/lib/hooks/useLogout";
 import {
@@ -161,13 +162,16 @@ export default function OrdersPage() {
                 Profile
               </Link>
             </div>
-            <Button
-              onClick={logout}
-              disabled={isLoading}
-              className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-            >
-              {isLoading ? "Signing Out..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <Button
+                onClick={logout}
+                disabled={isLoading}
+                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
+              >
+                {isLoading ? "Signing Out..." : "Sign Out"}
+              </Button>
+            </div>
           </div>
         </nav>
 

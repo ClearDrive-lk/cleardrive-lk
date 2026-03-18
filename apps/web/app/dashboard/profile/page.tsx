@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { GDPRDataExport } from "@/components/gdpr/GDPRDataExport";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 export default function ProfilePage() {
   const { user } = useAppSelector((state) => state.auth);
@@ -66,13 +67,16 @@ export default function ProfilePage() {
                 </Badge>
               </Link>
             </div>
-            <Button
-              onClick={logout}
-              disabled={isLoading}
-              className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-            >
-              {isLoading ? "Signing out..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <Button
+                onClick={logout}
+                disabled={isLoading}
+                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
+              >
+                {isLoading ? "Signing out..." : "Sign Out"}
+              </Button>
+            </div>
           </div>
         </nav>
 

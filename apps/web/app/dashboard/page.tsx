@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { normalizeRole } from "@/lib/roles";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 /**
  * Dashboard Page - Exact homepage template
@@ -87,13 +88,16 @@ export default function DashboardPage() {
                 Profile
               </Link>
             </div>
-            <Button
-              onClick={logout}
-              disabled={isLoading}
-              className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-            >
-              {isLoading ? "Signing Out..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <Button
+                onClick={logout}
+                disabled={isLoading}
+                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
+              >
+                {isLoading ? "Signing Out..." : "Sign Out"}
+              </Button>
+            </div>
           </div>
         </nav>
 

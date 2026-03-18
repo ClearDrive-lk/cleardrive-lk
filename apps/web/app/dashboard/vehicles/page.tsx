@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import {
   Select,
   SelectContent,
@@ -347,28 +348,34 @@ function VehicleCatalog() {
             </Link>
           </div>
           {isAuthenticated ? (
-            <Button
-              onClick={logout}
-              disabled={isLogoutLoading}
-              className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-9"
-            >
-              {isLogoutLoading ? "..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <Button
+                onClick={logout}
+                disabled={isLogoutLoading}
+                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-9"
+              >
+                {isLogoutLoading ? "..." : "Sign Out"}
+              </Button>
+            </div>
           ) : (
-            <div className="flex gap-3">
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono h-9"
-                >
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-9">
-                  Get Access
-                </Button>
-              </Link>
+            <div className="flex items-center gap-3">
+              <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
+              <div className="flex gap-3">
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono h-9"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-9">
+                    Get Access
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>

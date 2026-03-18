@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 function SkeletonLine({
   width,
@@ -45,6 +46,9 @@ export default function VehicleDetailLoading() {
               </Badge>
             </span>
             <span>KYC</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle className="h-9 px-3 text-[9px] tracking-[0.2em]" />
           </div>
         </div>
       </nav>
