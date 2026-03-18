@@ -7,6 +7,7 @@ import { User, Mail, Shield, Terminal, LogOut, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLogout } from "@/lib/hooks/useLogout";
+import GDPRDataDeletion from "@/components/profile/GDPRDataDeletion";
 
 export default function ProfilePage() {
   const { user } = useAppSelector((state) => state.auth);
@@ -188,6 +189,8 @@ export default function ProfilePage() {
                 {isLoading ? "Signing out..." : "Sign Out & Return to Login"}
               </Button>
             </div>
+
+            <GDPRDataDeletion />
           </div>
         </section>
 

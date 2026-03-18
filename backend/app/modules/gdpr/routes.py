@@ -7,8 +7,14 @@ Story: CD-460 - Privacy & Cookie Policies
 from pathlib import Path
 
 import markdown  # type: ignore[import-untyped]
-from fastapi import APIRouter, HTTPException
+from app.core.database import get_db
+from app.core.dependencies import get_current_active_user
+from app.modules.auth.models import User
+from app.modules.gdpr.models import GDPRDeletion
+from app.services.gdpr.data_deletion_service import data_deletion_service
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/gdpr", tags=["gdpr"])
 
@@ -428,3 +434,89 @@ async def get_cookie_policy():
     """
 
     return full_html
+
+
+@router.get("/deletion-check")
+async def check_deletion_blockers(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Check if account deletion can proceed for current user.
+    """
+    blocker = data_deletion_service.check_deletion_blockers(current_user, db)
+    if blocker.blocked:
+        return {"can_delete": False, "blocked": True, "reason": blocker.reason}
+    return {
+        "can_delete": True,
+        "blocked": False,
+        "message": "Your account can be deleted. All checks passed.",
+    }
+
+
+@router.get("/deletion-status")
+async def get_deletion_status(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return latest GDPR deletion status for current user.
+    """
+    deletion = (
+        db.query(GDPRDeletion)
+        .filter(GDPRDeletion.user_id == current_user.id)
+        .order_by(GDPRDeletion.requested_at.desc())
+        .first()
+    )
+
+    if not deletion:
+        return {"has_deletion_request": False, "can_delete": True}
+
+    return {
+        "has_deletion_request": True,
+        "status": deletion.status.value,
+        "requested_at": deletion.requested_at.isoformat(),
+        "processed_at": deletion.processed_at.isoformat() if deletion.processed_at else None,
+        "rejection_reason": deletion.rejection_reason,
+    }
+
+
+@router.delete("/delete")
+async def delete_user_data(
+    request: Request,
+    confirmation: str = Query(..., description="Type 'DELETE MY ACCOUNT' to confirm"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    GDPR Article 17 account deletion (implemented as anonymization + revocation).
+    """
+    if confirmation != "DELETE MY ACCOUNT":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid confirmation. Type exactly: DELETE MY ACCOUNT",
+        )
+
+    success, message, deletion_record = await data_deletion_service.process_deletion(
+        user=current_user,
+        ip_address=request.client.host if request.client else "unknown",
+        user_agent=request.headers.get("user-agent", ""),
+        db=db,
+    )
+
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+    return {
+        "message": message,
+        "deletion_id": str(deletion_record.id),
+        "processed_at": (
+            deletion_record.processed_at.isoformat() if deletion_record.processed_at else None
+        ),
+        "details": {
+            "data_anonymized": deletion_record.data_anonymized,
+            "kyc_deleted": deletion_record.kyc_deleted,
+            "sessions_revoked": deletion_record.sessions_revoked,
+        },
+        "note": "This action is permanent and cannot be undone.",
+    }

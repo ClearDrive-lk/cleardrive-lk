@@ -17,7 +17,7 @@ from app.core.database import Base  # noqa: E402
 from app.models.audit_log import AuditLog
 from app.models.gazette import Gazette, TaxRule
 from app.modules.auth.models import Session, User
-from app.modules.gdpr.models import GDPRRequest
+from app.modules.gdpr.models import GDPRDeletion, GDPRRequest
 from app.modules.kyc.models import KYCDocument
 from app.modules.orders.models import Order, OrderStatusHistory
 from app.modules.payments.models import Payment, PaymentIdempotency
