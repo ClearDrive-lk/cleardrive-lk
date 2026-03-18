@@ -32,15 +32,19 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
 
   return (
-    <Card className="group relative overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(98,146,158,0.1)]">
+    <Card className="group relative overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
       {/* Image Section */}
-      <div className="relative h-48 w-full overflow-hidden bg-gray-900 group-hover:scale-105 transition-transform duration-500">
+      <div className="relative h-48 w-full overflow-hidden bg-gray-900 transition-transform duration-700 group-hover:scale-[1.07] group-hover:translate-x-1">
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.18),transparent)] animate-shimmer" />
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.08)_0_2px,transparent_2px_18px)] opacity-40" />
+        </div>
         {!imageError && vehicle.imageUrl ? (
           <Image
             src={vehicle.imageUrl}
             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
             onError={() => setImageError(true)}
           />
         ) : (
@@ -51,7 +55,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         )}
 
         {/* Overlays */}
-        <div className="absolute top-2 left-2 flex gap-2">
+        <div className="absolute top-2 left-2 flex gap-2 transition-transform duration-300 group-hover:-translate-y-0.5">
           <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#546a7b]/65 font-mono">
             {`Stock #${vehicle.lotNumber || "-"}`}
           </Badge>
@@ -68,7 +72,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             </Badge>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3 transition-opacity duration-300 group-hover:opacity-90">
           <div className="flex items-center gap-1 text-[#62929e] text-xs font-mono">
             <Timer className="w-3 h-3" />
             <span>
