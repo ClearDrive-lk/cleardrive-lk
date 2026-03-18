@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
           <span
             className={`px-2 py-1 rounded text-xs font-semibold ${
               roleColors[role] ||
-              "bg-[#c6c5b9]/30 text-gray-200 border border-[#c6c5b9]/50"
+              "bg-[#c6c5b9]/30 text-gray-200 border border-[#546a7b]/65"
             }`}
           >
             {role}
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
             onClick={() =>
               (window.location.href = `/admin/users/${row.original.id}`)
             }
-            className="px-3 py-1 rounded text-sm border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30"
+            className="px-3 py-1 rounded text-sm border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30"
           >
             View
           </button>
@@ -221,7 +221,7 @@ export default function AdminUsersPage() {
             setSearch(e.target.value);
             setPage(1); // Reset to first page
           }}
-          className="flex-1 rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
+          className="flex-1 rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
         />
 
         {/* Role Filter */}
@@ -231,7 +231,7 @@ export default function AdminUsersPage() {
             setRoleFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
         >
           <option value="">All Roles</option>
           <option value="CUSTOMER">Customer</option>
@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
             setKycFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
         >
           <option value="">All KYC Status</option>
           <option value="NONE">Not Submitted</option>
@@ -268,7 +268,7 @@ export default function AdminUsersPage() {
         <div className="text-center py-12 text-[#546a7b]">Loading...</div>
       ) : (
         <>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 overflow-hidden">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 overflow-hidden">
             <table className="min-w-full divide-y divide-white/10">
               <thead className="bg-[#c6c5b9]/20">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -323,14 +323,14 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="px-4 py-2 rounded border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

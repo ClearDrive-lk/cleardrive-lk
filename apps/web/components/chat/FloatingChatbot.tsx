@@ -156,8 +156,8 @@ export default function FloatingChatbot() {
   return (
     <div className="fixed bottom-5 right-5 z-[70]">
       {isOpen ? (
-        <div className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] border border-[#c6c5b9]/50 bg-[#0a0a0a]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <div className="relative overflow-hidden border-b border-[#c6c5b9]/50 bg-[radial-gradient(circle_at_top_left,rgba(98,146,158,0.22),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))] p-4">
+        <div className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] border border-[#546a7b]/65 bg-[#0a0a0a]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <div className="relative overflow-hidden border-b border-[#546a7b]/65 bg-[radial-gradient(circle_at_top_left,rgba(98,146,158,0.22),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))] p-4">
             <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-[#62929e]/10 blur-2xl" />
             <div className="relative flex items-start justify-between gap-4">
               <div>
@@ -173,7 +173,7 @@ export default function FloatingChatbot() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-2 text-[#546a7b] transition hover:bg-[#c6c5b9]/30 hover:text-[#393d3f]"
+                className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-2 text-[#546a7b] transition hover:bg-[#c6c5b9]/30 hover:text-[#393d3f]"
                 aria-label="Close chat"
               >
                 <X className="h-4 w-4" />
@@ -195,7 +195,7 @@ export default function FloatingChatbot() {
                     className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
                       message.role === "user"
                         ? "bg-[#62929e] text-[#fdfdff]"
-                        : "border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-gray-100"
+                        : "border border-[#546a7b]/65 bg-[#c6c5b9]/20 text-gray-100"
                     }`}
                   >
                     <p>{message.content}</p>
@@ -221,7 +221,7 @@ export default function FloatingChatbot() {
                           return (
                             <div
                               key={vehicleId}
-                              className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-4 py-3 text-xs text-[#546a7b]"
+                              className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-4 py-3 text-xs text-[#546a7b]"
                             >
                               Loading vehicle details...
                             </div>
@@ -246,14 +246,14 @@ export default function FloatingChatbot() {
             ))}
             {isSending ? (
               <div className="flex justify-start">
-                <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-4 py-3 text-sm text-[#546a7b]">
+                <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-4 py-3 text-sm text-[#546a7b]">
                   Thinking...
                 </div>
               </div>
             ) : null}
           </div>
 
-          <div className="border-t border-[#c6c5b9]/50 p-4">
+          <div className="border-t border-[#546a7b]/65 p-4">
             {messages.length === 1 ? (
               <div className="mb-3 flex flex-wrap gap-2">
                 {STARTER_PROMPTS.map((prompt) => (
@@ -261,7 +261,7 @@ export default function FloatingChatbot() {
                     key={prompt}
                     type="button"
                     onClick={() => void sendMessage(prompt)}
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1.5 text-xs text-[#546a7b] transition hover:border-[#62929e]/30 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1.5 text-xs text-[#546a7b] transition hover:border-[#62929e]/30 hover:text-[#393d3f]"
                   >
                     {prompt}
                   </button>
@@ -286,7 +286,7 @@ export default function FloatingChatbot() {
                 rows={1}
                 maxLength={500}
                 placeholder="Ask about family SUVs, hybrids, or budget..."
-                className="min-h-11 flex-1 resize-none rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-4 py-3 text-sm text-[#393d3f] outline-none placeholder:text-[#546a7b] focus:border-[#62929e]/40"
+                className="min-h-11 flex-1 resize-none rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-4 py-3 text-sm text-[#393d3f] outline-none placeholder:text-[#546a7b] focus:border-[#62929e]/40"
               />
               <button
                 type="button"

@@ -195,7 +195,7 @@ export default function AdminShippingPage() {
         </p>
       </div>
 
-      <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 shadow-sm space-y-4">
+      <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 shadow-sm space-y-4">
         <h2 className="text-lg font-semibold text-[#393d3f]">Assign Exporter</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -204,13 +204,13 @@ export default function AdminShippingPage() {
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
             placeholder="Order UUID"
-            className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
+            className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
           />
 
           <select
             value={selectedExporter}
             onChange={(e) => setSelectedExporter(e.target.value)}
-            className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
+            className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
           >
             {exporters.map((exporter) => (
               <option key={exporter.id} value={exporter.id}>
@@ -241,7 +241,7 @@ export default function AdminShippingPage() {
         )}
       </div>
 
-      <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 shadow-sm space-y-4">
+      <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 shadow-sm space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-[#393d3f]">
             Pending Approvals
@@ -269,7 +269,7 @@ export default function AdminShippingPage() {
             {pendingShipments.map((shipment) => (
               <div
                 key={shipment.id}
-                className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
               >
                 <div className="space-y-1">
                   <p className="text-sm text-[#546a7b]">Order ID</p>
@@ -313,23 +313,23 @@ export default function AdminShippingPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
           <p className="text-sm text-[#546a7b]">Total</p>
           <p className="text-2xl font-bold text-[#393d3f]">{summary?.total ?? 0}</p>
         </div>
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
           <p className="text-sm text-[#546a7b]">Awaiting Details</p>
           <p className="text-2xl font-bold text-[#393d3f]">
             {summary?.awaiting_details ?? 0}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
           <p className="text-sm text-[#546a7b]">Awaiting Approval</p>
           <p className="text-2xl font-bold text-[#393d3f]">
             {summary?.awaiting_approval ?? 0}
           </p>
         </div>
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
           <p className="text-sm text-[#546a7b]">Approved</p>
           <p className="text-2xl font-bold text-[#393d3f]">
             {summary?.approved ?? 0}
@@ -337,8 +337,8 @@ export default function AdminShippingPage() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#c6c5b9]/50">
+      <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#546a7b]/65">
           <h2 className="font-semibold text-[#393d3f]">Current Shipments</h2>
         </div>
         {loading ? (

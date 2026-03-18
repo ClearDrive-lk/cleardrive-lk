@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-[#fdfdff] flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-[#fdfdff] border border-[#c6c5b9]/50 p-8 rounded-2xl shadow-2xl">
+      <div className="w-full max-w-md bg-[#fdfdff] border border-[#546a7b]/65 p-8 rounded-2xl shadow-2xl">
         <Link
           href="/login"
           className="inline-flex items-center gap-2 text-xs text-[#546a7b] hover:text-[#393d3f] transition-colors mb-6"
@@ -121,7 +121,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f]"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function ForgotPasswordPage() {
             onClick={handleRequestResetCode}
             disabled={requesting}
             variant="outline"
-            className="w-full border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30"
+            className="w-full border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30"
           >
             {requesting ? (
               <Loader2 className="animate-spin" />
@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
               inputMode="numeric"
               maxLength={6}
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f]"
             />
           </div>
 
@@ -169,7 +169,7 @@ export default function ForgotPasswordPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f]"
             />
           </div>
 
@@ -186,7 +186,7 @@ export default function ForgotPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f]"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f]"
             />
           </div>
 

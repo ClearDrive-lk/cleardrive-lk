@@ -66,7 +66,7 @@ export function RoleChangeModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fdfdff]/70">
-      <div className="w-full max-w-md rounded-2xl border border-[#c6c5b9]/50 bg-[#0b0b0b] p-6">
+      <div className="w-full max-w-md rounded-2xl border border-[#546a7b]/65 bg-[#0b0b0b] p-6">
         <h2 className="text-xl font-bold text-[#393d3f] mb-4">Change User Role</h2>
 
         <div className="mb-4">
@@ -85,7 +85,7 @@ export function RoleChangeModal({
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
+              className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
               required
             >
               <option value="CUSTOMER">Customer</option>
@@ -104,7 +104,7 @@ export function RoleChangeModal({
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
+              className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
               rows={3}
               placeholder="Explain why this role change is necessary..."
               required
@@ -127,7 +127,7 @@ export function RoleChangeModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border border-[#c6c5b9]/50 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-[#c6c5b9]/30"
+              className="flex-1 rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-[#c6c5b9]/30"
               disabled={loading}
             >
               Cancel

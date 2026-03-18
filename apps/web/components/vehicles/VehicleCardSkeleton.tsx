@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export function VehicleCardSkeleton() {
   return (
-    <Card className="border-[#c6c5b9]/20 bg-[#fdfdff]">
+    <Card className="border-[#546a7b]/40 bg-[#fdfdff]">
       <div className="h-48 w-full bg-[#c6c5b9]/20 animate-pulse" />
       <CardContent className="p-4 space-y-3">
         <div className="space-y-2">

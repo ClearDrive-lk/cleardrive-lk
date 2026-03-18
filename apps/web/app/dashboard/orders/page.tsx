@@ -100,7 +100,7 @@ export default function OrdersPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
-        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+        <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
@@ -176,7 +176,7 @@ export default function OrdersPage() {
 
         <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1">
           <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-8">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
@@ -196,7 +196,7 @@ export default function OrdersPage() {
               and inspect every milestone in one place.
             </p>
 
-            <div className="border-b border-[#c6c5b9]/50 bg-[#fdfdff] mb-12">
+            <div className="border-b border-[#546a7b]/65 bg-[#fdfdff] mb-12">
               <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
                 {[
                   {
@@ -256,11 +256,11 @@ export default function OrdersPage() {
             )}
 
             {pageLoading ? (
-              <div className="rounded-[28px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-10 text-center text-[#546a7b]">
+              <div className="rounded-[28px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-10 text-center text-[#546a7b]">
                 Loading orders...
               </div>
             ) : orders.length === 0 ? (
-              <div className="max-w-2xl mx-auto p-1 rounded-xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-[#c6c5b9]/50 shadow-2xl">
+              <div className="max-w-2xl mx-auto p-1 rounded-xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl">
                 <div className="text-center bg-[#fdfdff] rounded-lg p-16">
                   <div className="inline-flex p-6 rounded-full bg-[#62929e]/10 border border-[#62929e]/20 mb-6">
                     <Package className="w-16 h-16 text-[#62929e]" />
@@ -284,7 +284,7 @@ export default function OrdersPage() {
               </div>
             ) : (
               <div className="grid gap-8 lg:grid-cols-[380px_minmax(0,1fr)]">
-                <div className="rounded-[28px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+                <div className="rounded-[28px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-[#393d3f]">
@@ -318,7 +318,7 @@ export default function OrdersPage() {
                           className={`w-full rounded-2xl border p-4 text-left transition-colors ${
                             selected
                               ? "border-[#62929e]/40 bg-[#62929e]/10"
-                              : "border-[#c6c5b9]/50 bg-[#fdfdff] hover:bg-[#c6c5b9]/20"
+                              : "border-[#546a7b]/65 bg-[#fdfdff] hover:bg-[#c6c5b9]/20"
                           }`}
                         >
                           <div className="mb-3 flex items-start justify-between gap-3">
@@ -333,7 +333,7 @@ export default function OrdersPage() {
                             <Badge
                               className={
                                 statusTone[order.status] ??
-                                "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]"
+                                "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
                               }
                             >
                               {order.status.replace(/_/g, " ")}
@@ -363,7 +363,7 @@ export default function OrdersPage() {
                 <div className="space-y-4">
                   {selectedOrder ? (
                     <>
-                      <div className="rounded-[28px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+                      <div className="rounded-[28px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                           <div>
                             <p className="text-xs uppercase tracking-[0.25em] text-[#546a7b]">
@@ -377,21 +377,21 @@ export default function OrdersPage() {
                             <Badge
                               className={
                                 statusTone[selectedOrder.status] ??
-                                "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]"
+                                "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
                               }
                             >
                               {selectedOrder.status.replace(/_/g, " ")}
                             </Badge>
                             <Badge
                               variant="outline"
-                              className="border-[#c6c5b9]/50 text-[#546a7b]"
+                              className="border-[#546a7b]/65 text-[#546a7b]"
                             >
                               Payment {selectedOrder.payment_status}
                             </Badge>
                             <Button
                               asChild
                               variant="outline"
-                              className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                              className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                             >
                               <Link
                                 href={`/dashboard/orders/${selectedOrder.id}`}
@@ -402,7 +402,7 @@ export default function OrdersPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+                      <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
                         <h3 className="text-sm font-semibold text-[#393d3f]">
                           Quick Actions
                         </h3>
@@ -424,7 +424,7 @@ export default function OrdersPage() {
                           ) : (
                             <Button
                               disabled
-                              className="bg-[#c6c5b9]/20 text-[#546a7b] border border-[#c6c5b9]/50"
+                              className="bg-[#c6c5b9]/20 text-[#546a7b] border border-[#546a7b]/65"
                             >
                               Payment Unavailable
                             </Button>
@@ -432,7 +432,7 @@ export default function OrdersPage() {
                           <Button
                             asChild
                             variant="outline"
-                            className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                            className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                           >
                             <Link
                               href={`/dashboard/orders/${selectedOrder.id}`}

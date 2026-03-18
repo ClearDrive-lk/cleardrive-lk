@@ -73,7 +73,7 @@ export default function OrderConfirmationPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
-        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+        <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
@@ -112,7 +112,7 @@ export default function OrderConfirmationPage() {
 
         <main className="relative z-10 flex-1 px-6 py-16">
           <div className="max-w-3xl mx-auto">
-            <Card className="border-[#c6c5b9]/50 bg-[#fdfdff]">
+            <Card className="border-[#546a7b]/65 bg-[#fdfdff]">
               <CardHeader className="space-y-2 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30">
                   <CheckCircle2 className="h-7 w-7 text-emerald-300" />
@@ -126,7 +126,7 @@ export default function OrderConfirmationPage() {
               </CardHeader>
               <CardContent className="space-y-5">
                 {loading ? (
-                  <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
+                  <div className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
                     Loading order details...
                   </div>
                 ) : error ? (
@@ -135,7 +135,7 @@ export default function OrderConfirmationPage() {
                   </div>
                 ) : order ? (
                   <div className="space-y-3">
-                    <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4">
+                    <div className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <p className="text-xs uppercase tracking-[0.2em] text-[#546a7b]">
@@ -154,12 +154,12 @@ export default function OrderConfirmationPage() {
                           </button>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]">
+                          <Badge className="border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]">
                             {order.status.replace(/_/g, " ")}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-[#c6c5b9]/50 text-[#546a7b]"
+                            className="border-[#546a7b]/65 text-[#546a7b]"
                           >
                             Payment {order.payment_status.replace(/_/g, " ")}
                           </Badge>
@@ -178,12 +178,12 @@ export default function OrderConfirmationPage() {
                       )}
                     </div>
 
-                    <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
+                    <div className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
                       Shipping address is stored securely and encrypted.
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
+                  <div className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
                     Order details unavailable.
                   </div>
                 )}
@@ -201,7 +201,7 @@ export default function OrderConfirmationPage() {
                     <Button
                       asChild
                       variant="outline"
-                      className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                      className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                     >
                       <Link href={`/dashboard/vehicles/${order.vehicle_id}`}>
                         View Vehicle
@@ -211,7 +211,7 @@ export default function OrderConfirmationPage() {
                   <Button
                     asChild
                     variant="outline"
-                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                    className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                   >
                     <Link href={`/dashboard/orders/${id}`}>View Tracking</Link>
                   </Button>

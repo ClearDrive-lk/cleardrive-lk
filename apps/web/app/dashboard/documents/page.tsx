@@ -73,7 +73,7 @@ export default function DocumentsPage() {
 
       {/* Loading */}
       {loading && (
-        <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-12 text-center">
+        <div className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-12 text-center">
           <p className="text-[#546a7b] text-sm">Loading your order...</p>
         </div>
       )}
@@ -87,7 +87,7 @@ export default function DocumentsPage() {
 
       {/* No active order */}
       {!loading && !error && !orderId && (
-        <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 border-dashed p-12 text-center">
+        <div className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 border-dashed p-12 text-center">
           <div className="flex flex-col items-center max-w-md mx-auto">
             <div className="w-16 h-16 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center mb-6">
               <FileText className="w-8 h-8 text-[#546a7b]" />
@@ -105,7 +105,7 @@ export default function DocumentsPage() {
 
       {/* Upload component */}
       {!loading && !error && orderId && (
-        <div className="rounded-xl border border-[#c6c5b9]/50 bg-[#fdfdff] p-6">
+        <div className="rounded-xl border border-[#546a7b]/65 bg-[#fdfdff] p-6">
           <ShippingDocumentUpload
             orderId={orderId}
             onAllUploaded={() => setAllUploaded(true)}

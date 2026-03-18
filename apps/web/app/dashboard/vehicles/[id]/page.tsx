@@ -105,7 +105,7 @@ function VehicleDetail() {
           <Button
             onClick={() => router.back()}
             variant="outline"
-            className="border-[#c6c5b9]/50"
+            className="border-[#546a7b]/65"
           >
             Go Back
           </Button>
@@ -137,7 +137,7 @@ function VehicleDetail() {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
@@ -188,7 +188,7 @@ function VehicleDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* LEFT COLUMN: Gallery */}
           <div className="space-y-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-900 border border-[#c6c5b9]/50">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-900 border border-[#546a7b]/65">
               {displayImage ? (
                 <Image
                   src={displayImage}
@@ -265,7 +265,7 @@ function VehicleDetail() {
             <Separator className="bg-[#c6c5b9]/30" />
 
             {/* Price Card */}
-            <Card className="bg-[#c6c5b9]/20 border-[#c6c5b9]/50 overflow-hidden">
+            <Card className="bg-[#c6c5b9]/20 border-[#546a7b]/65 overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-[#546a7b] text-sm">
@@ -296,7 +296,7 @@ function VehicleDetail() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20 h-12"
+                    className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 h-12"
                   >
                     <Share2 className="w-4 h-4 mr-2" /> Share
                   </Button>
@@ -318,7 +318,7 @@ function VehicleDetail() {
                   estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
                 />
               ) : (
-                <Card className="border-[#c6c5b9]/50 bg-[#fdfdff]">
+                <Card className="border-[#546a7b]/65 bg-[#fdfdff]">
                   <CardContent className="p-6 space-y-3">
                     <h3 className="text-lg font-bold text-[#393d3f]">
                       Sign in to reserve this vehicle
@@ -334,7 +334,7 @@ function VehicleDetail() {
                       <Button
                         asChild
                         variant="outline"
-                        className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                        className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                       >
                         <Link href="/register">Create Account</Link>
                       </Button>
@@ -349,10 +349,10 @@ function VehicleDetail() {
               <h3 className="text-lg font-bold text-[#393d3f] mb-4 flex items-center gap-2">
                 <Gauge className="w-5 h-5 text-[#62929e]" /> Specifications
               </h3>
-              <div className="rounded-lg border border-[#c6c5b9]/50 overflow-hidden">
+              <div className="rounded-lg border border-[#546a7b]/65 overflow-hidden">
                 <Table>
                   <TableBody>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Stock No
                       </TableCell>
@@ -360,7 +360,7 @@ function VehicleDetail() {
                         {vehicle.lotNumber}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Make
                       </TableCell>
@@ -368,7 +368,7 @@ function VehicleDetail() {
                         {vehicle.make}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Model
                       </TableCell>
@@ -376,7 +376,7 @@ function VehicleDetail() {
                         {vehicle.model}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Year
                       </TableCell>
@@ -384,7 +384,7 @@ function VehicleDetail() {
                         {vehicle.year}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         First Registration
                       </TableCell>
@@ -394,7 +394,7 @@ function VehicleDetail() {
                           : "N/A"}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Type
                       </TableCell>
@@ -402,7 +402,7 @@ function VehicleDetail() {
                         {vehicle.vehicleType || "N/A"}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Mileage
                       </TableCell>
@@ -410,7 +410,7 @@ function VehicleDetail() {
                         {formatKm(vehicle.mileage)} km
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Engine
                       </TableCell>
@@ -418,7 +418,7 @@ function VehicleDetail() {
                         {vehicle.engineCC} cc
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Fuel
                       </TableCell>
@@ -426,7 +426,7 @@ function VehicleDetail() {
                         {vehicle.fuel}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Transmission
                       </TableCell>
@@ -434,7 +434,7 @@ function VehicleDetail() {
                         {vehicle.transmission}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Steering
                       </TableCell>
@@ -442,7 +442,7 @@ function VehicleDetail() {
                         {vehicle.steering || "N/A"}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Drive
                       </TableCell>
@@ -450,7 +450,7 @@ function VehicleDetail() {
                         {vehicle.drive || "N/A"}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Seats / Doors
                       </TableCell>
@@ -458,7 +458,7 @@ function VehicleDetail() {
                         {vehicle.seats || "N/A"} / {vehicle.doors || "N/A"}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Color
                       </TableCell>
@@ -466,7 +466,7 @@ function VehicleDetail() {
                         {vehicle.color || "N/A"}
                       </TableCell>
                     </TableRow>
-                    <TableRow className="border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/20">
+                    <TableRow className="border-[#546a7b]/40 hover:bg-[#c6c5b9]/20">
                       <TableCell className="font-medium text-[#546a7b]">
                         Location
                       </TableCell>
@@ -481,7 +481,7 @@ function VehicleDetail() {
 
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-[#393d3f]">Other Details</h3>
-              <div className="rounded-lg border border-[#c6c5b9]/50 p-4 bg-[#c6c5b9]/20">
+              <div className="rounded-lg border border-[#546a7b]/65 p-4 bg-[#c6c5b9]/20">
                 <p className="text-sm font-semibold text-[#546a7b] mb-2">
                   Options
                 </p>
@@ -489,7 +489,7 @@ function VehicleDetail() {
                   {vehicle.options || "N/A"}
                 </p>
               </div>
-              <div className="rounded-lg border border-[#c6c5b9]/50 p-4 bg-[#c6c5b9]/20">
+              <div className="rounded-lg border border-[#546a7b]/65 p-4 bg-[#c6c5b9]/20">
                 <p className="text-sm font-semibold text-[#546a7b] mb-2">
                   Other Remarks
                 </p>

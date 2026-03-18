@@ -81,7 +81,7 @@ export default function AdminAccessGate({
   if (state.status === "denied") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fdfdff] px-6 text-[#393d3f]">
-        <div className="w-full max-w-lg rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-8 text-center shadow-2xl shadow-[#393d3f]/40">
+        <div className="w-full max-w-lg rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-8 text-center shadow-2xl shadow-[#393d3f]/40">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/20">
             <AlertTriangle className="h-7 w-7 text-red-300" />
           </div>
@@ -102,7 +102,7 @@ export default function AdminAccessGate({
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-xl border border-[#c6c5b9]/50 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Retry
             </button>

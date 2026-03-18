@@ -114,7 +114,7 @@ export default function OrderCreateForm({
   }, [createdOrder, router]);
 
   return (
-    <Card className="border-[#c6c5b9]/50 bg-[#fdfdff]">
+    <Card className="border-[#546a7b]/65 bg-[#fdfdff]">
       <CardHeader className="space-y-2">
         <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#62929e]">
           <Shield className="h-4 w-4" /> Secure Checkout
@@ -140,7 +140,7 @@ export default function OrderCreateForm({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
+            <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
               <div className="flex items-center justify-between">
                 <span>Estimated Total</span>
                 <span className="font-semibold text-[#393d3f]">
@@ -164,7 +164,7 @@ export default function OrderCreateForm({
               <Button
                 asChild
                 variant="outline"
-                className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
               >
                 <Link
                   href={`/dashboard/orders/${createdOrder.id}/confirmation`}
@@ -190,7 +190,7 @@ export default function OrderCreateForm({
                   value={shippingAddress}
                   onChange={(event) => setShippingAddress(event.target.value)}
                   placeholder="House no, street, city, postal code"
-                  className="min-h-[120px] w-full rounded-md border border-[#c6c5b9]/50 bg-transparent px-10 py-2 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e] focus:outline-none focus:ring-2 focus:ring-[#62929e]/30"
+                  className="min-h-[120px] w-full rounded-md border border-[#546a7b]/65 bg-transparent px-10 py-2 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e] focus:outline-none focus:ring-2 focus:ring-[#62929e]/30"
                 />
               </div>
               {!isAddressValid && trimmedAddress.length > 0 && (
@@ -211,7 +211,7 @@ export default function OrderCreateForm({
                   onChange={(event) => setPhone(event.target.value)}
                   placeholder="07X XXX XXXX"
                   type="tel"
-                  className="pl-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] focus:border-[#62929e]"
+                  className="pl-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e]"
                 />
               </div>
               {!isPhoneValid && trimmedPhone.length > 0 && (
@@ -221,7 +221,7 @@ export default function OrderCreateForm({
               )}
             </div>
 
-            <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
+            <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-sm text-[#546a7b]">
               <div className="flex items-center justify-between">
                 <span>Estimated Total</span>
                 <span className="font-semibold text-[#393d3f]">

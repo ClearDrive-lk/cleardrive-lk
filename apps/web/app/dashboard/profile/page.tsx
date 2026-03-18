@@ -17,7 +17,7 @@ export default function ProfilePage() {
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
         {/* Navigation */}
-        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+        <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
@@ -83,7 +83,7 @@ export default function ProfilePage() {
         {/* Content */}
         <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1">
           <div className="relative z-10 max-w-5xl mx-auto">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-8">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
@@ -104,7 +104,7 @@ export default function ProfilePage() {
 
             {/* Profile Info Grid */}
             {user && (
-              <div className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]">
+              <div className="border-b border-[#546a7b]/65 bg-[#fdfdff]">
                 <div className="grid grid-cols-1 md:grid-cols-2 divide-x divide-y divide-white/10">
                   <div className="p-8 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors">
                     <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
@@ -186,7 +186,7 @@ export default function ProfilePage() {
                 onClick={logout}
                 disabled={isLoading}
                 variant="outline"
-                className="border-[#c6c5b9]/50 hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] gap-2"
+                className="border-[#546a7b]/65 hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] gap-2"
               >
                 <LogOut className="w-4 h-4" />
                 {isLoading ? "Signing out..." : "Sign Out & Return to Login"}
@@ -196,7 +196,7 @@ export default function ProfilePage() {
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-[#c6c5b9]/50 py-16 bg-[#fdfdff]">
+        <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="space-y-6">
               <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
@@ -237,7 +237,7 @@ export default function ProfilePage() {
               </ul>
             </div>
           </div>
-          <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#c6c5b9]/20 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
+          <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
             <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
             <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
           </div>

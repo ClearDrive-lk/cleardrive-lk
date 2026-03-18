@@ -194,7 +194,7 @@ export default function DashboardKycPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
-        <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+        <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link
               href="/"
@@ -258,8 +258,8 @@ export default function DashboardKycPage() {
           <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
 
           <div className="relative z-10 max-w-6xl mx-auto space-y-6">
-            <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
-              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-6">
+            <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-6">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 KYC SUBMISSION TERMINAL
               </div>
@@ -276,7 +276,7 @@ export default function DashboardKycPage() {
             </header>
 
             <section className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+              <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
                 <p className="text-sm text-[#546a7b]">Current Status</p>
                 <span
                   className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusBadge.className}`}
@@ -284,7 +284,7 @@ export default function DashboardKycPage() {
                   {statusBadge.label}
                 </span>
               </div>
-              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+              <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
                 <p className="text-sm text-[#546a7b]">Submitted At</p>
                 <p className="mt-3 text-sm font-medium text-[#393d3f]">
                   {status?.submitted_at
@@ -292,7 +292,7 @@ export default function DashboardKycPage() {
                     : "Not submitted"}
                 </p>
               </div>
-              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5">
+              <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
                 <p className="text-sm text-[#546a7b]">Reviewed At</p>
                 <p className="mt-3 text-sm font-medium text-[#393d3f]">
                   {status?.reviewed_at
@@ -317,7 +317,7 @@ export default function DashboardKycPage() {
             ) : null}
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+              <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
                 <h2 className="text-2xl font-semibold text-[#393d3f]">
                   Submit KYC
                 </h2>
@@ -339,7 +339,7 @@ export default function DashboardKycPage() {
                           nic_number: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
+                      className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
@@ -355,7 +355,7 @@ export default function DashboardKycPage() {
                           full_name: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
+                      className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
@@ -372,7 +372,7 @@ export default function DashboardKycPage() {
                           date_of_birth: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
+                      className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
@@ -388,7 +388,7 @@ export default function DashboardKycPage() {
                           gender: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
+                      className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
@@ -405,7 +405,7 @@ export default function DashboardKycPage() {
                           address: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
+                      className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/30 px-4 py-3 text-sm text-[#393d3f]"
                       disabled={Boolean(status?.has_kyc)}
                     />
                   </div>
@@ -421,7 +421,7 @@ export default function DashboardKycPage() {
                   ).map(([key, label]) => (
                     <label
                       key={key}
-                      className="rounded-2xl border border-dashed border-[#c6c5b9]/35 bg-[#c6c5b9]/40 p-4"
+                      className="rounded-2xl border border-dashed border-[#546a7b]/50 bg-[#c6c5b9]/40 p-4"
                     >
                       <div className="flex items-center gap-2 text-sm font-medium text-[#393d3f]">
                         <FileImage className="h-4 w-4 text-[#62929e]" />
@@ -473,7 +473,7 @@ export default function DashboardKycPage() {
                 </div>
               </section>
 
-              <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+              <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
                 <h2 className="text-2xl font-semibold text-[#393d3f]">
                   Submission Snapshot
                 </h2>
@@ -488,7 +488,7 @@ export default function DashboardKycPage() {
                   </p>
                 ) : documents ? (
                   <div className="mt-6 space-y-4">
-                    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/40 p-4 text-sm">
+                    <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/40 p-4 text-sm">
                       <p className="text-[#546a7b]">Submitted Identity</p>
                       <div className="mt-3 space-y-2 text-[#393d3f]">
                         <p>
@@ -523,7 +523,7 @@ export default function DashboardKycPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/40 p-4 text-sm">
+                    <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/40 p-4 text-sm">
                       <p className="text-[#546a7b]">Uploaded Files</p>
                       <div className="mt-3 space-y-2">
                         <a

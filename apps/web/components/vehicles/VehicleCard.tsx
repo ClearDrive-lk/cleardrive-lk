@@ -32,7 +32,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
 
   return (
-    <Card className="group relative overflow-hidden border-[#c6c5b9]/50 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(98,146,158,0.1)]">
+    <Card className="group relative overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(98,146,158,0.1)]">
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-900 group-hover:scale-105 transition-transform duration-500">
         {!imageError && vehicle.imageUrl ? (
@@ -52,7 +52,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Overlays */}
         <div className="absolute top-2 left-2 flex gap-2">
-          <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#c6c5b9]/50 font-mono">
+          <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#546a7b]/65 font-mono">
             {`Stock #${vehicle.lotNumber || "-"}`}
           </Badge>
           <Badge className="bg-[#62929e] text-[#fdfdff] font-bold border-0">
@@ -90,16 +90,16 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
 
         {/* Specs Grid */}
-        <div className="grid grid-cols-3 gap-2 text-xs text-[#546a7b] font-mono py-2 border-y border-[#c6c5b9]/20">
+        <div className="grid grid-cols-3 gap-2 text-xs text-[#546a7b] font-mono py-2 border-y border-[#546a7b]/40">
           <div className="flex flex-col items-center gap-1">
             <Calendar className="w-3 h-3 text-[#393d3f]" />
             {vehicle.year}
           </div>
-          <div className="flex flex-col items-center gap-1 border-l border-[#c6c5b9]/20">
+          <div className="flex flex-col items-center gap-1 border-l border-[#546a7b]/40">
             <Gauge className="w-3 h-3 text-[#393d3f]" />
             {formatKm(vehicle.mileage)} km
           </div>
-          <div className="flex flex-col items-center gap-1 border-l border-[#c6c5b9]/20">
+          <div className="flex flex-col items-center gap-1 border-l border-[#546a7b]/40">
             <Fuel className="w-3 h-3 text-[#393d3f]" />
             {vehicle.engineCC}cc
           </div>
@@ -140,7 +140,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
       <CardFooter className="p-4 pt-0">
         <Link href={`/dashboard/vehicles/${vehicle.id}`} className="w-full">
-          <Button className="w-full bg-[#c6c5b9]/20 hover:bg-[#62929e] hover:text-[#fdfdff] text-[#393d3f] border border-[#c6c5b9]/50 transition-colors font-mono text-xs h-9">
+          <Button className="w-full bg-[#c6c5b9]/20 hover:bg-[#62929e] hover:text-[#fdfdff] text-[#393d3f] border border-[#546a7b]/65 transition-colors font-mono text-xs h-9">
             VIEW DETAILS &gt;
           </Button>
         </Link>

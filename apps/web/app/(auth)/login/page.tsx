@@ -67,7 +67,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex bg-[#fdfdff] relative overflow-hidden font-sans selection:bg-[#62929e] selection:text-[#fdfdff]">
       {/* --- VISUAL SIDE (LEFT) - The "Terminal" Aesthetic --- */}
-      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 z-10 border-r border-[#c6c5b9]/20">
+      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 z-10 border-r border-[#546a7b]/40">
         {/* Animated Background Layers */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[-20%] left-[-20%] w-[800px] h-[800px] bg-[#62929e]/10 rounded-full blur-[120px]" />
@@ -88,7 +88,7 @@ export default function LoginPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#62929e] animate-pulse" />
               SYSTEM ONLINE
             </Badge>
-            <Badge variant="outline" className="border-[#c6c5b9]/50 text-[#546a7b]">
+            <Badge variant="outline" className="border-[#546a7b]/65 text-[#546a7b]">
               v2.4.0-stable
             </Badge>
           </div>
@@ -100,7 +100,7 @@ export default function LoginPage() {
             Personnel Only.
           </h2>
           <div className="space-y-4">
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 backdrop-blur-md hover:bg-[#c6c5b9]/30 transition-colors">
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-[#c6c5b9]/20 border border-[#546a7b]/65 backdrop-blur-md hover:bg-[#c6c5b9]/30 transition-colors">
               <ShieldCheck className="w-6 h-6 text-[#62929e] mt-1" />
               <div>
                 <h3 className="font-bold text-[#393d3f]">Direct Market Access</h3>
@@ -110,7 +110,7 @@ export default function LoginPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 backdrop-blur-md hover:bg-[#c6c5b9]/30 transition-colors">
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-[#c6c5b9]/20 border border-[#546a7b]/65 backdrop-blur-md hover:bg-[#c6c5b9]/30 transition-colors">
               <Lock className="w-6 h-6 text-[#62929e] mt-1" />
               <div>
                 <h3 className="font-bold text-[#393d3f]">End-to-End Encryption</h3>
@@ -123,7 +123,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-[#393d3f] font-mono flex justify-between items-center border-t border-[#c6c5b9]/20 pt-6">
+        <div className="relative z-10 text-xs text-[#393d3f] font-mono flex justify-between items-center border-t border-[#546a7b]/40 pt-6">
           <span>IP: 192.168.1.X // CLIENT: WEB_TERMINAL</span>
           <span>SESSION ID: AUTH-8829-XJ</span>
         </div>
@@ -151,7 +151,7 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <div className="w-full max-w-md bg-[#fdfdff] border border-[#c6c5b9]/50 p-8 rounded-2xl shadow-2xl relative z-10">
+        <div className="w-full max-w-md bg-[#fdfdff] border border-[#546a7b]/65 p-8 rounded-2xl shadow-2xl relative z-10">
           <div className="mb-8">
             <h3 className="text-2xl font-bold text-[#393d3f] mb-2">
               Terminal Access
@@ -176,7 +176,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f] placeholder:text-gray-700 focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all"
+                className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] placeholder:text-gray-700 focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all"
               />
             </div>
 
@@ -201,7 +201,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono tracking-widest transition-all pr-12"
+                className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono tracking-widest transition-all pr-12"
               />
               <button
                 type="button"
@@ -234,7 +234,7 @@ export default function LoginPage() {
 
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-[#c6c5b9]/50"></span>
+              <span className="w-full border-t border-[#546a7b]/65"></span>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-[#fdfdff] px-2 text-[#546a7b] font-mono">
@@ -247,7 +247,7 @@ export default function LoginPage() {
             <GoogleLoginButton />
           </div>
 
-          <div className="mt-8 pt-6 border-t border-[#c6c5b9]/20 text-center text-sm text-[#546a7b]">
+          <div className="mt-8 pt-6 border-t border-[#546a7b]/40 text-center text-sm text-[#546a7b]">
             New customer?{" "}
             <Link
               href="/register"

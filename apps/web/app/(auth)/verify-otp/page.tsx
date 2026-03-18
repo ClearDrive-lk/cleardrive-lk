@@ -181,7 +181,7 @@ function OTPForm() {
 
   return (
     <div className="min-h-screen w-full flex bg-[#fdfdff] relative overflow-hidden font-sans selection:bg-[#62929e] selection:text-[#fdfdff]">
-      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 z-10 border-r border-[#c6c5b9]/20">
+      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 z-10 border-r border-[#546a7b]/40">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
           <div className="absolute top-[20%] left-[20%] w-[600px] h-[600px] bg-[#62929e]/5 rounded-full blur-[120px]" />
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -206,7 +206,7 @@ function OTPForm() {
           </h2>
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-[#546a7b] group">
-              <div className="w-10 h-10 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center text-[#62929e] border border-[#c6c5b9]/50 group-hover:bg-[#62929e]/10 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center text-[#62929e] border border-[#546a7b]/65 group-hover:bg-[#62929e]/10 transition-colors">
                 <Zap className="w-5 h-5" />
               </div>
               <div>
@@ -215,7 +215,7 @@ function OTPForm() {
               </div>
             </div>
             <div className="flex items-center gap-3 text-[#546a7b] group">
-              <div className="w-10 h-10 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center text-[#62929e] border border-[#c6c5b9]/50 group-hover:bg-[#62929e]/10 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center text-[#62929e] border border-[#546a7b]/65 group-hover:bg-[#62929e]/10 transition-colors">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
@@ -249,7 +249,7 @@ function OTPForm() {
           </Link>
         </div>
 
-        <div className="w-full max-w-md bg-[#fdfdff] border border-[#c6c5b9]/50 p-8 rounded-2xl shadow-2xl relative z-10">
+        <div className="w-full max-w-md bg-[#fdfdff] border border-[#546a7b]/65 p-8 rounded-2xl shadow-2xl relative z-10">
           <div className="mb-8 text-center">
             <div className="mx-auto w-16 h-16 bg-[#62929e]/10 rounded-full flex items-center justify-center mb-6 border border-[#62929e]/20 relative">
               <div className="absolute inset-0 bg-[#62929e]/20 blur-md rounded-full animate-pulse" />
@@ -282,7 +282,7 @@ function OTPForm() {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={(e) => handlePaste(index, e)}
-                  className="w-12 h-14 text-center text-xl bg-[#fdfdff]/40 border-[#c6c5b9]/50 focus:border-[#62929e] focus:ring-[#62929e]/20 transition-all text-[#393d3f] font-mono rounded-lg"
+                  className="w-12 h-14 text-center text-xl bg-[#fdfdff]/40 border-[#546a7b]/65 focus:border-[#62929e] focus:ring-[#62929e]/20 transition-all text-[#393d3f] font-mono rounded-lg"
                 />
               ))}
             </div>
@@ -341,7 +341,7 @@ function OTPForm() {
             )}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-[#c6c5b9]/20 text-center">
+          <div className="mt-8 pt-6 border-t border-[#546a7b]/40 text-center">
             <Link
               href="/login"
               className="text-xs text-[#546a7b] hover:text-[#393d3f] flex items-center justify-center gap-2 group"

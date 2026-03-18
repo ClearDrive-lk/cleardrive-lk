@@ -36,7 +36,7 @@ export default function ExporterDashboardPage() {
     <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
       <div className="relative z-10 max-w-7xl mx-auto space-y-12">
         <div>
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-6">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
@@ -60,7 +60,7 @@ export default function ExporterDashboardPage() {
             <Button
               variant="outline"
               onClick={() => void reload()}
-              className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+              className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
             >
               <RefreshCcw className="w-4 h-4 mr-2" />
               Refresh Orders
@@ -68,7 +68,7 @@ export default function ExporterDashboardPage() {
           </div>
         </div>
 
-        <div className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]">
+        <div className="border-b border-[#546a7b]/65 bg-[#fdfdff]">
           <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-white/10">
             {[
               {
@@ -134,11 +134,11 @@ export default function ExporterDashboardPage() {
         )}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-12 text-center text-[#546a7b]">
+          <div className="rounded-[28px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-12 text-center text-[#546a7b]">
             Loading assigned orders...
           </div>
         ) : orders.length === 0 ? (
-          <div className="rounded-[28px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-12 text-center text-[#546a7b]">
+          <div className="rounded-[28px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-12 text-center text-[#546a7b]">
             <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#c6c5b9]/20">
               <Package className="h-6 w-6 text-[#62929e]" />
             </div>
@@ -155,7 +155,7 @@ export default function ExporterDashboardPage() {
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6"
+                className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -169,7 +169,7 @@ export default function ExporterDashboardPage() {
                   <Badge
                     className={
                       statusTone[order.status] ??
-                      "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]"
+                      "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
                     }
                   >
                     {order.status.replace(/_/g, " ")}
@@ -197,7 +197,7 @@ export default function ExporterDashboardPage() {
                   <Button
                     asChild
                     variant="outline"
-                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                    className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                   >
                     <Link href={`/exporter/documents?orderId=${order.id}`}>
                       Upload Docs
@@ -206,7 +206,7 @@ export default function ExporterDashboardPage() {
                   <Button
                     asChild
                     variant="outline"
-                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                    className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
                   >
                     <Link href={`/exporter/tracking?orderId=${order.id}`}>
                       Track Status
@@ -218,7 +218,7 @@ export default function ExporterDashboardPage() {
           </div>
         )}
 
-        <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#fdfdff] p-6">
+        <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#fdfdff] p-6">
           <h2 className="text-lg font-semibold text-[#393d3f] mb-2">
             Exporter Workflow
           </h2>
@@ -245,7 +245,7 @@ export default function ExporterDashboardPage() {
             ].map((step) => (
               <div
                 key={step.title}
-                className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4"
+                className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4"
               >
                 <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#62929e]/10 text-[#62929e]">
                   <step.icon className="h-4 w-4" />

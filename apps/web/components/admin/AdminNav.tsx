@@ -143,7 +143,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition",
                       active
-                        ? "bg-[#c6c5b9]/30 text-[#393d3f] border border-[#c6c5b9]/50"
+                        ? "bg-[#c6c5b9]/30 text-[#393d3f] border border-[#546a7b]/65"
                         : "text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f]",
                     )}
                   >
@@ -175,7 +175,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
       </nav>
 
       <div className="px-6 pb-6">
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b]">
           <p className="text-[10px] uppercase tracking-[0.3em] text-[#546a7b]">
             System
           </p>
@@ -193,7 +193,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden w-72 flex-col border-r border-[#c6c5b9]/50 bg-[#fdfdff] lg:flex">
+    <aside className="hidden w-72 flex-col border-r border-[#546a7b]/65 bg-[#fdfdff] lg:flex">
       <AdminNavContent />
     </aside>
   );
@@ -205,7 +205,7 @@ export function AdminMobileNav() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-200 shadow-sm transition hover:bg-[#c6c5b9]/30"
+          className="inline-flex items-center gap-2 rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-200 shadow-sm transition hover:bg-[#c6c5b9]/30"
         >
           <Menu className="h-4 w-4" />
           Menu

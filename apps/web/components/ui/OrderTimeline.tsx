@@ -188,7 +188,7 @@ export function OrderTimeline({
 
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-8 text-sm text-[#546a7b]">
+      <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-8 text-sm text-[#546a7b]">
         Loading timeline...
       </div>
     );
@@ -203,7 +203,7 @@ export function OrderTimeline({
   }
 
   return (
-    <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6">
+    <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
       <h3 className="mb-6 text-xl font-semibold text-[#393d3f]">Order Timeline</h3>
 
       <div className="relative">
@@ -216,13 +216,13 @@ export function OrderTimeline({
                 {getStatusIcon(event.to_status)}
               </div>
 
-              <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff] p-4">
+              <div className="rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff] p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <Badge
                       className={
                         statusStyles[event.to_status] ??
-                        "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#393d3f]"
+                        "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
                       }
                     >
                       {event.to_status.replace(/_/g, " ")}

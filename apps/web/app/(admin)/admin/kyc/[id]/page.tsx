@@ -263,7 +263,7 @@ export default function AdminKycReviewDetailPage() {
   return (
     <div className="min-h-screen p-6 text-[#393d3f]">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-52 KYC Admin Review
           </p>
@@ -278,7 +278,7 @@ export default function AdminKycReviewDetailPage() {
               {extractionBadge.label}
             </span>
             {detail.manual_extracted_by ? (
-              <span className="inline-flex rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-3 py-1 text-xs font-semibold text-gray-200">
+              <span className="inline-flex rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-1 text-xs font-semibold text-gray-200">
                 Saved by {detail.manual_extracted_by}
               </span>
             ) : null}
@@ -286,25 +286,25 @@ export default function AdminKycReviewDetailPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Status</p>
             <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {detail.status}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Extraction</p>
             <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {detail.extraction_method}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Discrepancies</p>
             <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {mismatchCount}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Submitted</p>
             <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {new Date(detail.created_at).toLocaleString()}
@@ -313,9 +313,9 @@ export default function AdminKycReviewDetailPage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#393d3f]">NIC Front</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#c6c5b9]/50">
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#546a7b]/65">
               <Image
                 src={detail.nic_front_url}
                 alt="NIC front"
@@ -325,9 +325,9 @@ export default function AdminKycReviewDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#393d3f]">NIC Back</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#c6c5b9]/50">
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#546a7b]/65">
               <Image
                 src={detail.nic_back_url}
                 alt="NIC back"
@@ -337,9 +337,9 @@ export default function AdminKycReviewDetailPage() {
               />
             </div>
           </div>
-          <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-[#393d3f]">Selfie</h2>
-            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#c6c5b9]/50">
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#546a7b]/65">
               <Image
                 src={detail.selfie_url}
                 alt="Selfie"
@@ -375,7 +375,7 @@ export default function AdminKycReviewDetailPage() {
                       nic_number: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
@@ -391,7 +391,7 @@ export default function AdminKycReviewDetailPage() {
                       full_name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
@@ -407,7 +407,7 @@ export default function AdminKycReviewDetailPage() {
                       date_of_birth: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
@@ -423,7 +423,7 @@ export default function AdminKycReviewDetailPage() {
                       gender: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div className="md:col-span-2">
@@ -439,7 +439,7 @@ export default function AdminKycReviewDetailPage() {
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
               <div>
@@ -455,7 +455,7 @@ export default function AdminKycReviewDetailPage() {
                       issue_date: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
                 />
               </div>
             </div>
@@ -473,8 +473,8 @@ export default function AdminKycReviewDetailPage() {
           </section>
         ) : null}
 
-        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 shadow-sm">
-          <div className="border-b border-[#c6c5b9]/50 px-6 py-4">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="border-b border-[#546a7b]/65 px-6 py-4">
             <h2 className="text-xl font-semibold text-[#393d3f]">
               Extracted vs Stored Data
             </h2>
@@ -537,7 +537,7 @@ export default function AdminKycReviewDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-[#393d3f]">Decision</h2>
           <p className="mt-2 text-sm text-[#546a7b]">
             Approval sends a notification to the customer. Rejection requires a
@@ -550,7 +550,7 @@ export default function AdminKycReviewDetailPage() {
           <textarea
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200 shadow-sm focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+            className="mt-2 w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200 shadow-sm focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
             rows={4}
             placeholder="Explain why this KYC submission should be rejected."
           />
@@ -581,7 +581,7 @@ export default function AdminKycReviewDetailPage() {
             <button
               type="button"
               onClick={() => router.push("/admin/kyc")}
-              className="rounded-xl border border-[#c6c5b9]/50 px-5 py-3 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-5 py-3 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Back to Queue
             </button>

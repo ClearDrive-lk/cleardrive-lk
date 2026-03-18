@@ -23,7 +23,7 @@ export default function ExporterAccessGate({
   if (!allowed) {
     return (
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] flex items-center justify-center px-6">
-        <div className="max-w-lg text-center rounded-2xl border border-[#c6c5b9]/50 bg-[#fdfdff]/8 p-10">
+        <div className="max-w-lg text-center rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/8 p-10">
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-400">
             <ShieldAlert className="h-6 w-6" />
           </div>

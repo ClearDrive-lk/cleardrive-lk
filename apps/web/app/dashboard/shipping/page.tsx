@@ -162,23 +162,23 @@ export default function ShippingDetailsPage() {
 
           <form
             onSubmit={onSubmit}
-            className="space-y-4 bg-[#fdfdff] border border-[#c6c5b9]/50 rounded-lg p-6"
+            className="space-y-4 bg-[#fdfdff] border border-[#546a7b]/65 rounded-lg p-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Order ID (UUID)"
                 value={form.orderId}
                 onChange={(e) => updateField("orderId", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Vessel Name"
                 value={form.vesselName}
                 onChange={(e) => updateField("vesselName", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Vessel Registration"
                 value={form.vesselRegistration}
                 onChange={(e) =>
@@ -186,45 +186,45 @@ export default function ShippingDetailsPage() {
                 }
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Voyage Number"
                 value={form.voyageNumber}
                 onChange={(e) => updateField("voyageNumber", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Departure Port"
                 value={form.departurePort}
                 onChange={(e) => updateField("departurePort", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Arrival Port"
                 value={form.arrivalPort}
                 onChange={(e) => updateField("arrivalPort", e.target.value)}
               />
               <input
                 type="date"
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 value={form.departureDate}
                 onChange={(e) => updateField("departureDate", e.target.value)}
               />
               <input
                 type="date"
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 value={form.estimatedArrivalDate}
                 onChange={(e) =>
                   updateField("estimatedArrivalDate", e.target.value)
                 }
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Container Number"
                 value={form.containerNumber}
                 onChange={(e) => updateField("containerNumber", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Bill of Landing Number"
                 value={form.billOfLandingNumber}
                 onChange={(e) =>
@@ -232,13 +232,13 @@ export default function ShippingDetailsPage() {
                 }
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Seal Number"
                 value={form.sealNumber}
                 onChange={(e) => updateField("sealNumber", e.target.value)}
               />
               <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#c6c5b9]/35"
+                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
                 placeholder="Tracking Number"
                 value={form.trackingNumber}
                 onChange={(e) => updateField("trackingNumber", e.target.value)}

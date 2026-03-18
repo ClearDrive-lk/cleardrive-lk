@@ -362,7 +362,7 @@ export default function GazetteManagementPage() {
 
   return (
     <div className="min-h-screen space-y-8 p-6">
-      <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm backdrop-blur">
+      <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">
@@ -388,7 +388,7 @@ export default function GazetteManagementPage() {
       </header>
 
       <section id="upload" className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">
@@ -408,7 +408,7 @@ export default function GazetteManagementPage() {
                 value={gazetteNo}
                 onChange={(event) => setGazetteNo(event.target.value)}
                 placeholder="Example: 2026/03"
-                className="w-full rounded-2xl border border-[#c6c5b9]/50 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-orange-400 focus:outline-none"
+                className="w-full rounded-2xl border border-[#546a7b]/65 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-orange-400 focus:outline-none"
               />
             </label>
 
@@ -429,7 +429,7 @@ export default function GazetteManagementPage() {
                 "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-10 text-center transition",
                 dragOver
                   ? "border-orange-400 bg-orange-500/10"
-                  : "border-[#c6c5b9]/50 bg-[#c6c5b9]/20 hover:border-orange-300 hover:bg-orange-500/10",
+                  : "border-[#546a7b]/65 bg-[#c6c5b9]/20 hover:border-orange-300 hover:bg-orange-500/10",
               )}
             >
               <FileText className="h-10 w-10 text-[#546a7b]" />
@@ -482,7 +482,7 @@ export default function GazetteManagementPage() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-[#c6c5b9]/50 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-sm">
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
             Latest Upload
           </p>
@@ -524,7 +524,7 @@ export default function GazetteManagementPage() {
 
       <section
         id="review"
-        className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm"
+        className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -537,7 +537,7 @@ export default function GazetteManagementPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {selectedGazette && (
-              <div className="rounded-2xl border border-[#c6c5b9]/50 px-3 py-2 text-sm text-[#546a7b]">
+              <div className="rounded-2xl border border-[#546a7b]/65 px-3 py-2 text-sm text-[#546a7b]">
                 Gazette{" "}
                 <span className="font-semibold">
                   {selectedGazette.gazette_no}
@@ -605,7 +605,7 @@ export default function GazetteManagementPage() {
                 No structured rules were extracted. Manual review is required.
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-[#c6c5b9]/50">
+              <div className="overflow-x-auto rounded-2xl border border-[#546a7b]/65">
                 <table className="min-w-full text-left text-sm">
                   <thead className="bg-[#c6c5b9]/20 text-xs uppercase tracking-wide text-[#546a7b]">
                     <tr>
@@ -665,7 +665,7 @@ export default function GazetteManagementPage() {
             )}
 
             <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-2xl border border-[#c6c5b9]/50 p-4">
+              <div className="rounded-2xl border border-[#546a7b]/65 p-4">
                 <label className="text-xs font-semibold uppercase tracking-wide text-[#546a7b]">
                   Rejection Reason
                 </label>
@@ -673,7 +673,7 @@ export default function GazetteManagementPage() {
                   value={rejectionReason}
                   onChange={(event) => setRejectionReason(event.target.value)}
                   placeholder="Provide a detailed reason if rejecting."
-                  className="mt-2 min-h-[120px] w-full rounded-2xl border border-[#c6c5b9]/50 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-rose-400 focus:outline-none"
+                  className="mt-2 min-h-[120px] w-full rounded-2xl border border-[#546a7b]/65 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-rose-400 focus:outline-none"
                 />
                 <p className="mt-2 text-xs text-[#546a7b]">
                   Minimum 10 characters required for rejection.
@@ -720,7 +720,7 @@ export default function GazetteManagementPage() {
 
       <section
         id="history"
-        className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm"
+        className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -737,7 +737,7 @@ export default function GazetteManagementPage() {
               <select
                 value={historyStatus}
                 onChange={(event) => setHistoryStatus(event.target.value)}
-                className="ml-2 rounded-xl border border-[#c6c5b9]/50 bg-transparent px-3 py-2 text-sm text-[#393d3f]"
+                className="ml-2 rounded-xl border border-[#546a7b]/65 bg-transparent px-3 py-2 text-sm text-[#393d3f]"
               >
                 <option value="">All</option>
                 <option value="PENDING">PENDING</option>
@@ -763,12 +763,12 @@ export default function GazetteManagementPage() {
             {historyError}
           </div>
         ) : !history || history.items.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-[#c6c5b9]/50 px-6 py-10 text-center text-sm text-[#546a7b]">
+          <div className="mt-6 rounded-2xl border border-dashed border-[#546a7b]/65 px-6 py-10 text-center text-sm text-[#546a7b]">
             No gazettes found for the selected filter.
           </div>
         ) : (
           <div className="mt-6 space-y-4">
-            <div className="overflow-x-auto rounded-2xl border border-[#c6c5b9]/50">
+            <div className="overflow-x-auto rounded-2xl border border-[#546a7b]/65">
               <table className="min-w-full text-left text-sm">
                 <thead className="bg-[#c6c5b9]/20 text-xs uppercase tracking-wide text-[#546a7b]">
                   <tr>

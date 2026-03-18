@@ -69,7 +69,7 @@ export default function AdminKycPage() {
   return (
     <div className="min-h-screen p-6 text-[#393d3f]">
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-52 KYC Admin Review
           </p>
@@ -83,19 +83,19 @@ export default function AdminKycPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Queue Size</p>
             <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {items.length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Auto Extracted</p>
             <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {items.filter((item) => item.auto_extracted).length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Manual Review Needed</p>
             <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {items.filter((item) => item.needs_manual_extraction).length}
@@ -103,8 +103,8 @@ export default function AdminKycPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 shadow-sm">
-          <div className="flex items-center justify-between border-b border-[#c6c5b9]/50 px-6 py-4">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
               <h2 className="text-xl font-semibold text-[#393d3f]">Review Queue</h2>
               <p className="text-sm text-[#546a7b]">
@@ -114,7 +114,7 @@ export default function AdminKycPage() {
             <button
               type="button"
               onClick={() => void loadItems()}
-              className="rounded-xl border border-[#c6c5b9]/50 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>

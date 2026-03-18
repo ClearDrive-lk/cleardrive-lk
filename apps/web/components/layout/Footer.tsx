@@ -6,7 +6,7 @@ import { Terminal, ArrowRight } from "lucide-react";
  */
 export default function Footer() {
   return (
-    <footer className="border-t border-[#c6c5b9]/50 py-16 bg-[#fdfdff]">
+    <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
         {/* Company Info */}
         <div className="space-y-6">
@@ -70,7 +70,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#c6c5b9]/20 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
+      <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
         <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
         <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
       </div>

@@ -248,7 +248,7 @@ export default function ExporterShippingDetailsPage() {
     <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
       <div className="relative z-10 max-w-5xl mx-auto space-y-8">
         <div>
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-6">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
@@ -268,7 +268,7 @@ export default function ExporterShippingDetailsPage() {
           </p>
         </div>
 
-        <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 space-y-5">
+        <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-[#393d3f]">
@@ -281,7 +281,7 @@ export default function ExporterShippingDetailsPage() {
             <Button
               variant="outline"
               onClick={() => void reload()}
-              className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+              className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
             >
               <RefreshCcw className="w-4 h-4 mr-2" />
               Refresh
@@ -296,7 +296,7 @@ export default function ExporterShippingDetailsPage() {
 
           <div className="grid gap-4 md:grid-cols-[1fr_auto]">
             <select
-              className="h-11 rounded-xl bg-[#fdfdff]/60 border border-[#c6c5b9]/50 px-3 text-sm text-[#393d3f]"
+              className="h-11 rounded-xl bg-[#fdfdff]/60 border border-[#546a7b]/65 px-3 text-sm text-[#393d3f]"
               value={selectedOrderId}
               onChange={(e) => setSelectedOrderId(e.target.value)}
               disabled={ordersLoading && !orders.length}
@@ -335,7 +335,7 @@ export default function ExporterShippingDetailsPage() {
 
         <form
           onSubmit={onSubmit}
-          className="space-y-6 rounded-[24px] border border-[#c6c5b9]/50 bg-[#fdfdff] p-6"
+          className="space-y-6 rounded-[24px] border border-[#546a7b]/65 bg-[#fdfdff] p-6"
         >
           <div className="flex items-center gap-2 text-sm text-[#546a7b]">
             <Ship className="h-4 w-4 text-[#62929e]" />
@@ -344,13 +344,13 @@ export default function ExporterShippingDetailsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Vessel Name"
               value={form.vesselName}
               onChange={(e) => updateField("vesselName", e.target.value)}
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Vessel Registration"
               value={form.vesselRegistration}
               onChange={(e) =>
@@ -358,19 +358,19 @@ export default function ExporterShippingDetailsPage() {
               }
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Voyage Number"
               value={form.voyageNumber}
               onChange={(e) => updateField("voyageNumber", e.target.value)}
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Container Number"
               value={form.containerNumber}
               onChange={(e) => updateField("containerNumber", e.target.value)}
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Bill of Lading Number"
               value={form.billOfLandingNumber}
               onChange={(e) =>
@@ -378,7 +378,7 @@ export default function ExporterShippingDetailsPage() {
               }
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Seal Number"
               value={form.sealNumber}
               onChange={(e) => updateField("sealNumber", e.target.value)}
@@ -387,33 +387,33 @@ export default function ExporterShippingDetailsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Departure Port"
               value={form.departurePort}
               onChange={(e) => updateField("departurePort", e.target.value)}
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               placeholder="Arrival Port"
               value={form.arrivalPort}
               onChange={(e) => updateField("arrivalPort", e.target.value)}
             />
             <input
               type="date"
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               value={form.departureDate}
               onChange={(e) => updateField("departureDate", e.target.value)}
             />
             <input
               type="date"
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm"
               value={form.estimatedArrivalDate}
               onChange={(e) =>
                 updateField("estimatedArrivalDate", e.target.value)
               }
             />
             <input
-              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#c6c5b9]/50 text-sm md:col-span-2"
+              className="px-4 py-3 rounded-xl bg-[#fdfdff]/70 border border-[#546a7b]/65 text-sm md:col-span-2"
               placeholder="Tracking Number"
               value={form.trackingNumber}
               onChange={(e) => updateField("trackingNumber", e.target.value)}

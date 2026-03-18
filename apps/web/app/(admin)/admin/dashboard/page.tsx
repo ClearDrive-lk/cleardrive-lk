@@ -131,7 +131,7 @@ function KpiCard({
   iconColor = "text-blue-600",
 }: KpiCardProps) {
   return (
-    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+    <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-[#546a7b] text-sm">{title}</p>
@@ -158,7 +158,7 @@ function MetricCard({
   valueColor = "text-[#393d3f]",
 }: MetricCardProps) {
   return (
-    <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+    <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
       <h3 className="text-lg font-semibold mb-2 text-[#393d3f]">{title}</h3>
       <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
       <p className="text-sm text-[#546a7b] mt-1">{subtitle}</p>
@@ -385,13 +385,13 @@ export default function AdminDashboard() {
 
           <button
             onClick={exportCsv}
-            className="px-3 py-2 text-sm rounded-md border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30"
+            className="px-3 py-2 text-sm rounded-md border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30"
           >
             Export CSV
           </button>
           <button
             onClick={exportPdf}
-            className="px-3 py-2 text-sm rounded-md border border-[#c6c5b9]/50 text-gray-200 hover:bg-[#c6c5b9]/30"
+            className="px-3 py-2 text-sm rounded-md border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30"
           >
             Export PDF
           </button>
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
                 setDays(Number(next));
               }
             }}
-            className="px-4 py-2 border border-[#c6c5b9]/50 bg-transparent rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#62929e]"
+            className="px-4 py-2 border border-[#546a7b]/65 bg-transparent rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#62929e]"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -417,18 +417,18 @@ export default function AdminDashboard() {
         </div>
       </div>
       {selectedRange === CUSTOM_RANGE && (
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
           <input
             type="date"
             value={customStartDate}
             onChange={(e) => setCustomStartDate(e.target.value)}
-            className="px-3 py-2 border border-[#c6c5b9]/50 bg-transparent rounded-md text-sm text-gray-200"
+            className="px-3 py-2 border border-[#546a7b]/65 bg-transparent rounded-md text-sm text-gray-200"
           />
           <input
             type="date"
             value={customEndDate}
             onChange={(e) => setCustomEndDate(e.target.value)}
-            className="px-3 py-2 border border-[#c6c5b9]/50 bg-transparent rounded-md text-sm text-gray-200"
+            className="px-3 py-2 border border-[#546a7b]/65 bg-transparent rounded-md text-sm text-gray-200"
           />
           <span className="text-xs text-[#546a7b]">
             Applies to analytics charts and tables.
@@ -502,7 +502,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 1 ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth – Line Chart */}
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">User Growth</h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={userAnalytics?.daily_registrations ?? []}>
@@ -533,7 +533,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Order Status – Pie Chart */}
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Order Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 2 ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Revenue – Bar Chart */}
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Daily Revenue</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={revenueAnalytics?.daily_revenue ?? []}>
@@ -601,7 +601,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* User Roles – Pie Chart */}
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">User Role Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -636,7 +636,7 @@ export default function AdminDashboard() {
       {/* ── Charts Row 3 – KYC & Payment breakdown ────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* KYC Status – Pie Chart */}
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">KYC Status Distribution</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
@@ -668,7 +668,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Payment Methods – Bar Chart */}
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Revenue by Payment Method</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={paymentChartData}>
@@ -723,7 +723,7 @@ export default function AdminDashboard() {
 
       {/* ── Top Revenue Sources Table ──────────────────────────────────────── */}
       {revenueAnalytics && (
-        <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <h2 className="text-xl font-bold mb-4">Top Revenue Sources</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">

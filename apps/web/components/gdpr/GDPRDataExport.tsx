@@ -85,7 +85,7 @@ export function GDPRDataExport() {
   };
 
   return (
-    <div className="border border-[#c6c5b9]/50 bg-[#fdfdff] rounded-2xl p-6">
+    <div className="border border-[#546a7b]/65 bg-[#fdfdff] rounded-2xl p-6">
       <div className="flex items-start justify-between gap-6">
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-mono text-[#62929e] mb-3">

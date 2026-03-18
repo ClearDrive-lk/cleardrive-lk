@@ -299,7 +299,7 @@ function VehicleCatalog() {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
@@ -375,7 +375,7 @@ function VehicleCatalog() {
       </nav>
 
       {/* Page Header */}
-      <header className="relative z-10 pt-12 pb-8 px-6 border-b border-[#c6c5b9]/20">
+      <header className="relative z-10 pt-12 pb-8 px-6 border-b border-[#546a7b]/40">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
@@ -412,7 +412,7 @@ function VehicleCatalog() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#546a7b]" />
                 <Input
                   placeholder="Search make, model, chassis..."
-                  className="pl-10 h-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] focus:border-[#62929e] hover:bg-[#c6c5b9]/30 transition-colors"
+                  className="pl-10 h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] hover:bg-[#c6c5b9]/30 transition-colors"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -420,7 +420,7 @@ function VehicleCatalog() {
 
               {/* Dropdowns & Sheet Trigger */}
               <div className="flex flex-wrap gap-2">
-                <div className="flex items-center gap-1 rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-2 py-1">
+                <div className="flex items-center gap-1 rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-2 py-1">
                   <button
                     type="button"
                     onClick={() => handleCurrencyToggle("LKR")}
@@ -449,10 +449,10 @@ function VehicleCatalog() {
                   value={currentType}
                   onValueChange={(val) => updateFilters({ type: val })}
                 >
-                  <SelectTrigger className="w-[140px] h-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[140px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#c6c5b9]/50 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
                     <SelectItem value="All">All Types</SelectItem>
                     <SelectItem value="SUV">SUV</SelectItem>
                     <SelectItem value="Sedan">Sedan</SelectItem>
@@ -467,10 +467,10 @@ function VehicleCatalog() {
                   value={currentFuel}
                   onValueChange={(val) => updateFilters({ fuel: val })}
                 >
-                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
                     <SelectValue placeholder="Fuel" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#c6c5b9]/50 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
                     <SelectItem value="All">All Fuels</SelectItem>
                     <SelectItem value="Gasoline">Gasoline</SelectItem>
                     <SelectItem value="Gasoline/Hybrid">
@@ -485,10 +485,10 @@ function VehicleCatalog() {
                   value={currentStatus}
                   onValueChange={(val) => updateFilters({ status: val })}
                 >
-                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#c6c5b9]/50 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
                     <SelectItem value="All">All Status</SelectItem>
                     <SelectItem value="Available">Available</SelectItem>
                   </SelectContent>
@@ -498,10 +498,10 @@ function VehicleCatalog() {
                   value={currentSort}
                   onValueChange={(val) => updateFilters({ sort: val })}
                 >
-                  <SelectTrigger className="w-[160px] h-10 bg-[#c6c5b9]/20 border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[160px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#c6c5b9]/50 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
                     <SelectItem value="newest">Newest Listed</SelectItem>
                     <SelectItem value="price_asc">
                       Price: Low to High
@@ -519,12 +519,12 @@ function VehicleCatalog() {
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-10 border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/30 hover:text-[#62929e]"
+                      className="h-10 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 hover:text-[#62929e]"
                     >
                       <SlidersHorizontal className="w-4 h-4 mr-2" /> Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent className="bg-[#fdfdff] border-[#c6c5b9]/50 text-[#393d3f] overflow-y-auto">
+                  <SheetContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] overflow-y-auto">
                     <SheetHeader className="mb-6">
                       <SheetTitle className="text-[#393d3f]">
                         Advanced Filters
@@ -620,7 +620,7 @@ function VehicleCatalog() {
                             <RadioGroupItem
                               value="All"
                               id="t-all"
-                              className="border-[#c6c5b9]/50 text-[#62929e]"
+                              className="border-[#546a7b]/65 text-[#62929e]"
                             />
                             <Label htmlFor="t-all" className="text-[#546a7b]">
                               Any
@@ -630,7 +630,7 @@ function VehicleCatalog() {
                             <RadioGroupItem
                               value="Automatic"
                               id="t-at"
-                              className="border-[#c6c5b9]/50 text-[#62929e]"
+                              className="border-[#546a7b]/65 text-[#62929e]"
                             />
                             <Label htmlFor="t-at" className="text-[#546a7b]">
                               Automatic
@@ -659,7 +659,7 @@ function VehicleCatalog() {
                 <button
                   key={index}
                   onClick={() => updateFilters(filter.params)}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/20 hover:bg-[#c6c5b9]/30 hover:border-[#62929e]/50 text-xs font-medium text-[#546a7b] transition-all whitespace-nowrap"
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/40 hover:bg-[#c6c5b9]/30 hover:border-[#62929e]/50 text-xs font-medium text-[#546a7b] transition-all whitespace-nowrap"
                 >
                   {filter.label}
                 </button>
@@ -676,7 +676,7 @@ function VehicleCatalog() {
                 {currentSearch && (
                   <button
                     onClick={() => updateFilters({ search: "" })}
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
                   >
                     Search: {currentSearch} ✕
                   </button>
@@ -684,7 +684,7 @@ function VehicleCatalog() {
                 {currentFuel !== "All" && (
                   <button
                     onClick={() => updateFilters({ fuel: "All" })}
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
                   >
                     Fuel: {currentFuel} ✕
                   </button>
@@ -692,7 +692,7 @@ function VehicleCatalog() {
                 {currentStatus !== "All" && (
                   <button
                     onClick={() => updateFilters({ status: "All" })}
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
                   >
                     Status: {currentStatus} ✕
                   </button>
@@ -700,7 +700,7 @@ function VehicleCatalog() {
                 {currentType !== "All" && (
                   <button
                     onClick={() => updateFilters({ type: "All" })}
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
                   >
                     Type: {currentType} ✕
                   </button>
@@ -708,7 +708,7 @@ function VehicleCatalog() {
                 {currentMinPrice > 0 && (
                   <button
                     onClick={() => updateFilters({ minPrice: undefined })}
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
                   >
                     Min Price ✕
                   </button>
@@ -723,7 +723,7 @@ function VehicleCatalog() {
                         transmission: "All",
                       })
                     }
-                    className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
                   >
                     Advanced Filters ✕
                   </button>
@@ -772,7 +772,7 @@ function VehicleCatalog() {
               </div>
 
               {/* Pagination Controls */}
-              <div className="mt-12 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[#c6c5b9]/20 pt-8">
+              <div className="mt-12 flex flex-col sm:flex-row justify-between items-center gap-4 border-t border-[#546a7b]/40 pt-8">
                 <span className="text-sm text-[#546a7b]">
                   Showing {(currentPage - 1) * 8 + 1} to{" "}
                   {Math.min(currentPage * 8, totalItems)} of {totalItems}{" "}
@@ -785,7 +785,7 @@ function VehicleCatalog() {
                     size="sm"
                     disabled={currentPage === 1}
                     onClick={() => updateFilters({ page: currentPage - 1 })}
-                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
+                    className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" /> Prev
                   </Button>
@@ -799,7 +799,7 @@ function VehicleCatalog() {
                     size="sm"
                     disabled={currentPage >= totalPages}
                     onClick={() => updateFilters({ page: currentPage + 1 })}
-                    className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
+                    className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
                   >
                     Next <ChevronRight className="w-4 h-4 ml-1" />
                   </Button>
@@ -819,17 +819,17 @@ function VehicleCatalog() {
                 criteria. Try adjusting your filters or search term.
               </p>
               <div className="flex flex-wrap justify-center gap-2 text-xs text-[#546a7b] mb-6">
-                <span className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1">
+                <span className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1">
                   Try removing fuel/type filters
                 </span>
-                <span className="rounded-full border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 px-3 py-1">
+                <span className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1">
                   Increase price range
                 </span>
               </div>
               <Button
                 onClick={clearFilters}
                 variant="outline"
-                className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
               >
                 Clear All Filters
               </Button>

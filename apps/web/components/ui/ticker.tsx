@@ -1,6 +1,6 @@
 export function AuctionTicker() {
   return (
-    <div className="w-full bg-[#fdfdff] border-b border-[#c6c5b9]/20 overflow-hidden py-2 select-none">
+    <div className="w-full bg-[#fdfdff] border-b border-[#546a7b]/40 overflow-hidden py-2 select-none">
       {/* We use Array(10) to ensure the content is WAY wider than any screen.
            The animation moves -50% of the total width.
            Since we have repeating patterns, as long as the pattern repeats seamlessly,

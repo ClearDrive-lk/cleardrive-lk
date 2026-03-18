@@ -64,7 +64,7 @@ export default function RegisterPage() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px]" />
       <div className="absolute top-[20%] right-[20%] w-[600px] h-[600px] bg-[#62929e]/5 rounded-full blur-[120px]" />
 
-      <div className="w-full max-w-md bg-[#fdfdff] border border-[#c6c5b9]/50 p-8 rounded-2xl shadow-2xl relative z-10">
+      <div className="w-full max-w-md bg-[#fdfdff] border border-[#546a7b]/65 p-8 rounded-2xl shadow-2xl relative z-10">
         <div className="mb-8">
           <Link
             href="/"
@@ -97,7 +97,7 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="dealer@company.com"
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f] placeholder:text-gray-700 focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] placeholder:text-gray-700 focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all"
             />
           </div>
 
@@ -114,7 +114,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all pr-12"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all pr-12"
             />
             <button
               type="button"
@@ -143,7 +143,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="bg-[#fdfdff]/40 border-[#c6c5b9]/50 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all pr-12"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all pr-12"
             />
             <button
               type="button"
@@ -174,7 +174,7 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-[#c6c5b9]/20 text-center text-sm text-[#546a7b]">
+        <div className="mt-8 pt-6 border-t border-[#546a7b]/40 text-center text-sm text-[#546a7b]">
           Already registered?{" "}
           <Link
             href="/login"

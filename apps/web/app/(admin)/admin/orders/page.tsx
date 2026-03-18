@@ -133,7 +133,7 @@ export default function AdminOrdersPage() {
   return (
     <div className="min-h-screen p-6 text-[#393d3f]">
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="flex flex-col gap-2 rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 shadow-sm">
+        <header className="flex flex-col gap-2 rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-70 Exporter Assignment
           </p>
@@ -148,25 +148,25 @@ export default function AdminOrdersPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Assignable Orders</p>
             <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {orders.length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Pending Payments</p>
             <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {pendingPayments.length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Available Exporters</p>
             <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {exporters.length}
             </p>
           </div>
-          <div className="rounded-2xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-5 shadow-sm">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Status Gate</p>
             <p className="mt-2 text-lg font-semibold text-emerald-200">
               PAYMENT_CONFIRMED only
@@ -174,8 +174,8 @@ export default function AdminOrdersPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 shadow-sm">
-          <div className="flex items-center justify-between border-b border-[#c6c5b9]/50 px-6 py-4">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
               <h2 className="text-xl font-semibold text-[#393d3f]">
                 Orders Awaiting Payment Confirmation
@@ -187,7 +187,7 @@ export default function AdminOrdersPage() {
             </div>
             <button
               onClick={() => void loadPendingPayments()}
-              className="rounded-xl border border-[#c6c5b9]/50 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>
@@ -271,8 +271,8 @@ export default function AdminOrdersPage() {
           )}
         </section>
 
-        <section className="rounded-3xl border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 shadow-sm">
-          <div className="flex items-center justify-between border-b border-[#c6c5b9]/50 px-6 py-4">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
               <h2 className="text-xl font-semibold text-[#393d3f]">
                 Paid Orders Awaiting Assignment
@@ -283,7 +283,7 @@ export default function AdminOrdersPage() {
             </div>
             <button
               onClick={() => void loadData()}
-              className="rounded-xl border border-[#c6c5b9]/50 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>

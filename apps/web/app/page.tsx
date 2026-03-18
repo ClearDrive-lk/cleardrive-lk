@@ -36,7 +36,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
       {/* --- NAVIGATION --- */}
-      <nav className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
@@ -91,7 +91,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
 
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] animate-in fade-in slide-in-from-bottom-4 duration-1000">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
@@ -119,7 +119,7 @@ export default function Home() {
             </span>
           </p>
 
-          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-[#c6c5b9]/50 shadow-2xl">
+          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl">
             <div className="relative flex items-center bg-[#fdfdff] rounded-lg p-1.5">
               <Search className="w-5 h-5 text-[#546a7b] ml-4" />
               <Input
@@ -178,7 +178,7 @@ export default function Home() {
       <AuctionTicker />
 
       {/* --- LIVE STATS STRIP --- */}
-      <div className="border-b border-[#c6c5b9]/50 bg-[#fdfdff]">
+      <div className="border-b border-[#546a7b]/65 bg-[#fdfdff]">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
           {[
             {
@@ -244,7 +244,7 @@ export default function Home() {
             <Button
               asChild
               variant="outline"
-              className="border-[#c6c5b9]/50 hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] gap-2"
+              className="border-[#546a7b]/65 hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] gap-2"
             >
               <Link href="/dashboard/vehicles">
                 View All 45,000+ Units <ArrowRight className="w-4 h-4" />
@@ -285,14 +285,14 @@ export default function Home() {
             ].map((cat, i) => (
               <div
                 key={i}
-                className={`group relative h-72 rounded-xl border border-[#c6c5b9]/50 bg-gradient-to-br ${cat.bg} p-6 flex flex-col justify-between overflow-hidden hover:border-[#62929e]/50 transition-all cursor-pointer`}
+                className={`group relative h-72 rounded-xl border border-[#546a7b]/65 bg-gradient-to-br ${cat.bg} p-6 flex flex-col justify-between overflow-hidden hover:border-[#62929e]/50 transition-all cursor-pointer`}
               >
                 <div className="absolute inset-0 bg-[#fdfdff]/40 group-hover:bg-transparent transition-colors duration-500" />
 
                 <div className="relative z-10 flex justify-between items-start">
                   <Badge
                     variant="outline"
-                    className="border-[#c6c5b9]/50 text-[#393d3f]/50 font-mono text-[10px]"
+                    className="border-[#546a7b]/65 text-[#393d3f]/50 font-mono text-[10px]"
                   >
                     {cat.code}
                   </Badge>
@@ -315,7 +315,7 @@ export default function Home() {
       </section>
 
       {/* --- HOW IT WORKS --- */}
-      <section className="py-24 px-6 border-t border-[#c6c5b9]/20 relative bg-[#fdfdff]">
+      <section className="py-24 px-6 border-t border-[#546a7b]/40 relative bg-[#fdfdff]">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-[#393d3f] tracking-tight">
@@ -328,7 +328,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-[#62929e]/50 to-transparent border-t border-dashed border-[#c6c5b9]/50 z-0" />
+            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-px bg-gradient-to-r from-transparent via-[#62929e]/50 to-transparent border-t border-dashed border-[#546a7b]/65 z-0" />
 
             {[
               {
@@ -354,7 +354,7 @@ export default function Home() {
                 key={i}
                 className="relative z-10 flex flex-col items-center text-center"
               >
-                <div className="w-24 h-24 rounded-full bg-[#fdfdff] border border-[#c6c5b9]/50 flex items-center justify-center mb-6 shadow-2xl relative group">
+                <div className="w-24 h-24 rounded-full bg-[#fdfdff] border border-[#546a7b]/65 flex items-center justify-center mb-6 shadow-2xl relative group">
                   <div className="absolute inset-0 bg-[#62929e]/10 rounded-full blur-xl group-hover:bg-[#62929e]/20 transition-all" />
                   <span className="text-2xl font-bold text-[#393d3f] font-mono">
                     {item.step}
@@ -379,7 +379,7 @@ export default function Home() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="border-t border-[#c6c5b9]/50 py-16 bg-[#fdfdff]">
+      <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-6">
             <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
@@ -441,7 +441,7 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#c6c5b9]/20 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
+        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
           <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
           <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
         </div>

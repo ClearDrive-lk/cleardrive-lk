@@ -59,8 +59,8 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
 
   if (isLoading) {
     return (
-      <Card className="border-[#c6c5b9]/50 bg-[#fdfdff] sticky top-6">
-        <CardHeader className="pb-2 border-b border-[#c6c5b9]/20">
+      <Card className="border-[#546a7b]/65 bg-[#fdfdff] sticky top-6">
+        <CardHeader className="pb-2 border-b border-[#546a7b]/40">
           <div className="flex items-center justify-between">
             <CardTitle className="text-[#393d3f] flex items-center gap-2">
               <Calculator className="w-4 h-4 text-[#62929e]" />
@@ -68,7 +68,7 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             </CardTitle>
             <Badge
               variant="outline"
-              className="border-[#c6c5b9]/50 bg-[#c6c5b9]/20 text-[#546a7b] text-[10px]"
+              className="border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#546a7b] text-[10px]"
             >
               Loading
             </Badge>
@@ -87,8 +87,8 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
 
   if (isError || !data) {
     return (
-      <Card className="border-[#c6c5b9]/50 bg-[#fdfdff] sticky top-6">
-        <CardHeader className="pb-2 border-b border-[#c6c5b9]/20">
+      <Card className="border-[#546a7b]/65 bg-[#fdfdff] sticky top-6">
+        <CardHeader className="pb-2 border-b border-[#546a7b]/40">
           <div className="flex items-center justify-between">
             <CardTitle className="text-[#393d3f] flex items-center gap-2">
               <Calculator className="w-4 h-4 text-[#62929e]" />
@@ -122,8 +122,8 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
     toNumber(data.documentation_fee_lkr);
 
   return (
-    <Card className="border-[#c6c5b9]/50 bg-[#fdfdff] sticky top-6">
-      <CardHeader className="pb-2 border-b border-[#c6c5b9]/20">
+    <Card className="border-[#546a7b]/65 bg-[#fdfdff] sticky top-6">
+      <CardHeader className="pb-2 border-b border-[#546a7b]/40">
         <div className="flex items-center justify-between">
           <CardTitle className="text-[#393d3f] flex items-center gap-2">
             <Calculator className="w-4 h-4 text-[#62929e]" />
@@ -151,14 +151,14 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             <span>Shipping & Insurance</span>
             <span>{formatLKR(toNumber(data.shipping_cost_lkr))}</span>
           </div>
-          <div className="flex justify-between font-bold text-[#393d3f] pt-2 border-t border-[#c6c5b9]/20">
+          <div className="flex justify-between font-bold text-[#393d3f] pt-2 border-t border-[#546a7b]/40">
             <span>Exchange Rate</span>
             <span>1 JPY = {Number(data.exchange_rate).toFixed(2)} LKR</span>
           </div>
         </div>
 
         {/* Taxes */}
-        <div className="p-3 bg-[#fdfdff] rounded-lg space-y-2 border border-[#c6c5b9]/20">
+        <div className="p-3 bg-[#fdfdff] rounded-lg space-y-2 border border-[#546a7b]/40">
           <div className="flex items-center gap-2 text-[#62929e] text-xs mb-2">
             <span>Government Levies (Est.)</span>
           </div>
@@ -182,14 +182,14 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             <span>CESS</span>
             <span>{formatLKR(toNumber(data.cess_lkr))}</span>
           </div>
-          <div className="flex justify-between text-[#393d3f] font-bold pt-1 border-t border-[#c6c5b9]/20">
+          <div className="flex justify-between text-[#393d3f] font-bold pt-1 border-t border-[#546a7b]/40">
             <span>Total Taxes</span>
             <span>{formatLKR(taxesTotal)}</span>
           </div>
         </div>
 
         {/* Fees */}
-        <div className="p-3 bg-[#141414] rounded-lg space-y-2 border border-[#c6c5b9]/20 text-xs">
+        <div className="p-3 bg-[#141414] rounded-lg space-y-2 border border-[#546a7b]/40 text-xs">
           <div className="flex justify-between text-[#546a7b]">
             <span>Port Charges</span>
             <span>{formatLKR(toNumber(data.port_charges_lkr))}</span>
@@ -202,7 +202,7 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             <span>Documentation Fee</span>
             <span>{formatLKR(toNumber(data.documentation_fee_lkr))}</span>
           </div>
-          <div className="flex justify-between text-[#393d3f] font-bold pt-1 border-t border-[#c6c5b9]/20">
+          <div className="flex justify-between text-[#393d3f] font-bold pt-1 border-t border-[#546a7b]/40">
             <span>Total Fees</span>
             <span>{formatLKR(feesTotal)}</span>
           </div>

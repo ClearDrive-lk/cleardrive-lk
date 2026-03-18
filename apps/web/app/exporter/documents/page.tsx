@@ -27,7 +27,7 @@ export default function ExporterDocumentsPage() {
     <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
       <div className="relative z-10 max-w-6xl mx-auto space-y-8">
         <div>
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#c6c5b9]/50 text-xs font-mono text-[#62929e] mb-6">
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-6">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
@@ -57,7 +57,7 @@ export default function ExporterDocumentsPage() {
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-6 space-y-4">
+        <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-semibold text-[#393d3f]">
@@ -70,7 +70,7 @@ export default function ExporterDocumentsPage() {
             <Button
               variant="outline"
               onClick={() => void reload()}
-              className="border-[#c6c5b9]/50 text-[#393d3f] hover:bg-[#c6c5b9]/20"
+              className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20"
             >
               <RefreshCcw className="w-4 h-4 mr-2" />
               Refresh
@@ -84,7 +84,7 @@ export default function ExporterDocumentsPage() {
           )}
 
           <select
-            className="h-11 w-full rounded-xl bg-[#fdfdff]/60 border border-[#c6c5b9]/50 px-3 text-sm text-[#393d3f]"
+            className="h-11 w-full rounded-xl bg-[#fdfdff]/60 border border-[#546a7b]/65 px-3 text-sm text-[#393d3f]"
             value={selectedOrderId}
             onChange={(e) => {
               const next = e.target.value;
@@ -102,14 +102,14 @@ export default function ExporterDocumentsPage() {
         </div>
 
         {!selectedOrderId ? (
-          <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#c6c5b9]/20 p-12 text-center text-[#546a7b]">
+          <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-12 text-center text-[#546a7b]">
             <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-[#c6c5b9]/20">
               <FileText className="h-6 w-6 text-[#62929e]" />
             </div>
             Select an order to begin uploading shipping documents.
           </div>
         ) : (
-          <div className="rounded-[24px] border border-[#c6c5b9]/50 bg-[#fdfdff] p-6">
+          <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#fdfdff] p-6">
             <ShippingDocumentUpload
               orderId={selectedOrderId}
               onAllUploaded={() => {

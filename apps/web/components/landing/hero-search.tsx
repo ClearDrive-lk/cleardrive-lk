@@ -5,7 +5,7 @@ export function HeroSearch() {
   return (
     <div className="relative group w-full max-w-xl mx-auto">
       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#62929e] to-[#546a7b] rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500" />
-      <div className="relative flex items-center bg-[#fdfdff] rounded-full border border-[#c6c5b9]/50 p-2 pr-2">
+      <div className="relative flex items-center bg-[#fdfdff] rounded-full border border-[#546a7b]/65 p-2 pr-2">
         <Search className="ml-4 w-5 h-5 text-[#546a7b]" />
         <input
           type="text"
