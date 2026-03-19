@@ -28,6 +28,7 @@ export default function Home() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const hasSession = Boolean(getAccessToken() || getRefreshToken());
   const [searchTerm, setSearchTerm] = useState("");
+  const [mounted, setMounted] = useState(false);
   const heroRef = useRef<HTMLElement | null>(null);
   const heroRafRef = useRef<number | null>(null);
   const handleSearch = () => {
@@ -60,6 +61,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    setMounted(true);
     return () => {
       if (heroRafRef.current !== null) {
         cancelAnimationFrame(heroRafRef.current);
@@ -67,13 +69,16 @@ export default function Home() {
     };
   }, []);
 
+  const navHref =
+    mounted && (isAuthenticated || hasSession) ? "/dashboard" : "/";
+
   return (
     <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
       {/* --- NAVIGATION --- */}
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
-            href={isAuthenticated || hasSession ? "/dashboard" : "/"}
+            href={navHref}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
             <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
@@ -342,9 +347,9 @@ export default function Home() {
               </p>
             </div>
             <div className="relative w-full md:w-[55%] h-14 rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 overflow-hidden transition-shadow duration-200 group-hover:shadow-[0_10px_30px_rgba(15,23,42,0.15)]">
-              <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(98,146,158,0.18)_0_6px,transparent_6px_16px)] opacity-60" />
+              <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(98,146,158,0.18)_0_6px,transparent_6px_16px)] opacity-60 lane-flow" />
               <div className="absolute inset-y-0 left-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.25),transparent)] animate-scanline" />
-              <div className="absolute inset-y-0 left-0 flex w-full items-center gap-3 animate-lane-drive group-hover:[animation-duration:3s]">
+              <div className="absolute inset-y-0 left-0 flex w-full items-center gap-3 lane-drive-force group-hover:[animation-duration:3s]">
                 <div className="h-8 w-8 rounded-full bg-[#62929e] text-[#fdfdff] flex items-center justify-center shadow-[0_12px_24px_rgba(98,146,158,0.4)]">
                   <Truck className="h-4 w-4" />
                 </div>
