@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { AdminMobileNav, AdminSidebar } from "@/components/admin/AdminNav";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import AdminAccessGate from "@/components/admin/AdminAccessGate";
+import { BrandMark } from "@/components/ui/brand";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -14,9 +15,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <header className="sticky top-0 z-30 border-b border-[#546a7b]/65 bg-[#fdfdff]/80 py-3 backdrop-blur">
               <div className="cd-container flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#62929e]/10 border border-[#62929e]/30 text-sm font-semibold text-[#62929e] shadow-lg shadow-[0_0_20px_rgba(98,146,158,0.3)]">
-                    CD
-                  </div>
+                  <BrandMark className="h-10 w-10 rounded-2xl border border-[#62929e]/30 bg-[#62929e]/10 p-2 shadow-lg shadow-[0_0_20px_rgba(98,146,158,0.3)]" />
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.4em] text-[#546a7b]">
                       Admin

@@ -11,7 +11,6 @@ import {
   Loader2,
   Lock,
   ShieldCheck,
-  Terminal,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -19,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -77,8 +77,8 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="font-bold text-2xl tracking-tighter flex items-center gap-2 text-[#393d3f]">
-            <Terminal className="w-6 h-6 text-[#62929e]" />
-            ClearDrive<span className="text-[#62929e]">.lk</span>
+            <BrandMark className="h-7 w-7 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandWordmark />
           </div>
           <div className="mt-4 flex gap-2">
             <Badge

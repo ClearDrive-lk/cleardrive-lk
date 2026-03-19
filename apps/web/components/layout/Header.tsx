@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/lib/store/store";
-import { Terminal, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 /**
  * Header Component - Matching homepage design
@@ -29,10 +30,8 @@ export default function Header() {
           href={isAuthenticated || hasSession ? "/dashboard" : "/"}
           className="font-bold text-xl tracking-tighter flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
-            <Terminal className="w-4 h-4 text-[#62929e]" />
-          </div>
-          ClearDrive<span className="text-[#62929e]">.lk</span>
+          <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+          <BrandWordmark />
         </Link>
 
         {/* Navigation Links */}

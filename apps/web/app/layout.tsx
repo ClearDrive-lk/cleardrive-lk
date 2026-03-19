@@ -4,6 +4,7 @@ import FloatingChatbot from "@/components/chat/FloatingChatbot";
 import AppBackdrop from "@/components/ui/app-backdrop";
 import ThemeInitScript from "@/components/ui/theme-init-script";
 import SplashScreen from "@/components/ui/splash-screen";
+import Footer from "@/components/layout/Footer";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
 import CookieBanner from "@/components/cookie/cookieBanner";
@@ -28,6 +29,10 @@ const libreBaskerville = Libre_Baskerville({
 export const metadata: Metadata = {
   title: "ClearDrive.lk",
   description: "Direct-access vehicle import terminal",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -47,6 +52,7 @@ export default function RootLayout({
             <SplashScreen />
             <AppBackdrop />
             {children}
+            <Footer />
             <FloatingChatbot />
             <Toaster />
           </ToastStateProvider>

@@ -9,7 +9,6 @@ import {
   UploadCloud,
   Radar,
   User,
-  Terminal,
   Activity,
 } from "lucide-react";
 
@@ -19,6 +18,7 @@ import ThemeToggle from "@/components/ui/theme-toggle";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api-client";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 const NAV_ITEMS = [
   { label: "Assigned Orders", href: "/exporter", icon: ClipboardList },
@@ -64,10 +64,8 @@ export default function ExporterNav() {
           href="/exporter"
           className="font-bold text-xl tracking-tighter flex items-center gap-2"
         >
-          <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
-            <Terminal className="w-4 h-4 text-[#62929e]" />
-          </div>
-          ClearDrive<span className="text-[#62929e]">.lk</span>
+          <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+          <BrandWordmark />
         </Link>
         <div className="hidden md:flex gap-6 text-sm font-medium text-[#546a7b]">
           {NAV_ITEMS.map((item) => {

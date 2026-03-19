@@ -4,7 +4,6 @@ import { useState, Suspense, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Terminal,
   ChevronLeft,
   ChevronRight,
   Search,
@@ -35,6 +34,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 import { useLogout } from "@/lib/hooks/useLogout";
 import { useVehicles } from "@/lib/hooks/useVehicles";
@@ -306,8 +306,8 @@ function VehicleCatalog() {
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
-            <Terminal className="w-5 h-5 text-[#62929e]" />
-            ClearDrive<span className="text-[#62929e]">.lk</span>
+            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandWordmark />
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
             <Link

@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Terminal,
   ChevronLeft,
   Car,
   Gauge,
@@ -28,6 +27,7 @@ import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
 import { CostCalculator } from "@/components/vehicles/CostCalculator";
 import OrderCreateForm from "@/components/orders/OrderCreateForm";
 import { useAppSelector } from "@/lib/store/store";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 // Fetch single vehicle helper
@@ -144,8 +144,8 @@ function VehicleDetail() {
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
-            <Terminal className="w-5 h-5 text-[#62929e]" />
-            ClearDrive<span className="text-[#62929e]">.lk</span>
+            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandWordmark />
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
             <Link

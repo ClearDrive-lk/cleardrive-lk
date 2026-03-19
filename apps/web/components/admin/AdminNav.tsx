@@ -15,7 +15,6 @@ import {
   ClipboardCheck,
   History,
   Menu,
-  Terminal,
 } from "lucide-react";
 
 import {
@@ -25,6 +24,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/ui/brand";
 
 type NavItem = {
   label: string;
@@ -115,9 +115,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
     <div className="flex h-full flex-col">
       <div className="px-6 py-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e]/10 border border-[#62929e]/30 text-[#62929e] shadow-lg shadow-[0_0_16px_rgba(98,146,158,0.2)]">
-            <Terminal className="h-5 w-5" />
-          </div>
+          <BrandMark className="h-11 w-11 rounded-2xl border border-[#62929e]/30 bg-[#62929e]/10 p-2 shadow-lg shadow-[0_0_16px_rgba(98,146,158,0.2)]" />
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-[#546a7b]">
               ClearDrive

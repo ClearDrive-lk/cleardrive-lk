@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CheckCircle2, Copy, Terminal } from "lucide-react";
+import { CheckCircle2, Copy } from "lucide-react";
 
 import AuthGuard from "@/components/auth/AuthGuard";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import apiClient from "@/lib/api-client";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 interface OrderDetail {
   id: string;
@@ -80,10 +81,8 @@ export default function OrderConfirmationPage() {
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#62929e]" />
-              </div>
-              ClearDrive<span className="text-[#62929e]">.lk</span>
+              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+              <BrandWordmark />
             </Link>
             <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
               <Link

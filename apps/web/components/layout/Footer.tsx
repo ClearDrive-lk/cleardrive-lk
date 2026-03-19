@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Terminal, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 /**
  * Footer Component - Matching homepage design
@@ -11,30 +13,54 @@ export default function Footer() {
         {/* Company Info */}
         <div className="space-y-6">
           <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-[#62929e]" />
-            ClearDrive<span className="text-[#62929e]">.lk</span>
+            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandWordmark />
           </div>
           <p className="text-sm text-[#546a7b] leading-relaxed">
             The first tech-enabled vehicle import platform in Sri Lanka.
             Replacing brokers with code, ensuring 100% financial transparency.
           </p>
+          <div className="flex flex-wrap gap-3 text-[11px] text-[#546a7b] font-mono uppercase tracking-[0.2em]">
+            <span>Colombo HQ</span>
+            <span>Mon-Sat 9am-6pm</span>
+          </div>
         </div>
 
-        {/* Market Data */}
+        {/* Platform */}
         <div>
-          <h4 className="font-bold text-[#393d3f] mb-6">Market Data</h4>
+          <h4 className="font-bold text-[#393d3f] mb-6">Platform</h4>
           <ul className="space-y-3 text-sm text-[#546a7b] font-mono">
-            <li className="hover:text-[#62929e] cursor-pointer flex items-center gap-2">
-              <ArrowRight className="w-3 h-3" /> USS Tokyo Live
+            <li>
+              <Link
+                href="/dashboard"
+                className="hover:text-[#62929e] flex items-center gap-2"
+              >
+                <ArrowRight className="w-3 h-3" /> Dashboard
+              </Link>
             </li>
-            <li className="hover:text-[#62929e] cursor-pointer flex items-center gap-2">
-              <ArrowRight className="w-3 h-3" /> JAA Condition Sheets
+            <li>
+              <Link
+                href="/dashboard/vehicles"
+                className="hover:text-[#62929e] flex items-center gap-2"
+              >
+                <ArrowRight className="w-3 h-3" /> Live Auctions
+              </Link>
             </li>
-            <li className="hover:text-[#62929e] cursor-pointer flex items-center gap-2">
-              <ArrowRight className="w-3 h-3" /> Cost Calculator
+            <li>
+              <Link
+                href="/dashboard/orders"
+                className="hover:text-[#62929e] flex items-center gap-2"
+              >
+                <ArrowRight className="w-3 h-3" /> Orders & Tracking
+              </Link>
             </li>
-            <li className="hover:text-[#62929e] cursor-pointer flex items-center gap-2">
-              <ArrowRight className="w-3 h-3" /> Past Sales (2025)
+            <li>
+              <Link
+                href="/exporter"
+                className="hover:text-[#62929e] flex items-center gap-2"
+              >
+                <ArrowRight className="w-3 h-3" /> Exporter Terminal
+              </Link>
             </li>
           </ul>
         </div>
@@ -48,12 +74,20 @@ export default function Footer() {
                 About Us
               </Link>
             </li>
-            <li className="hover:text-[#62929e] cursor-pointer">Careers</li>
-            <li className="hover:text-[#62929e] cursor-pointer">
-              Terms of Service
+            <li>
+              <Link href="/about#careers" className="hover:text-[#62929e]">
+                Careers
+              </Link>
             </li>
-            <li className="hover:text-[#62929e] cursor-pointer">
-              Privacy Policy
+            <li>
+              <Link href="/terms" className="hover:text-[#62929e]">
+                Terms of Service
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="hover:text-[#62929e]">
+                Privacy Policy
+              </Link>
             </li>
           </ul>
         </div>
@@ -62,45 +96,62 @@ export default function Footer() {
         <div>
           <h4 className="font-bold text-[#393d3f] mb-6">Support</h4>
           <ul className="space-y-3 text-sm text-[#546a7b]">
-            <li className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" /> Systems
-              Operational
+            <li>
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 hover:text-[#62929e]"
+              >
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                System Status
+              </Link>
             </li>
-            <li>Colombo 03, Sri Lanka</li>
-            <li>support@cleardrive.lk</li>
-            <li>+94 77 123 4567</li>
+            <li>
+              <a
+                href="mailto:support@cleardrive.lk"
+                className="hover:text-[#62929e]"
+              >
+                support@cleardrive.lk
+              </a>
+            </li>
+            <li>
+              <a href="tel:+94771234567" className="hover:text-[#62929e]">
+                +94 77 123 4567
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://maps.google.com/?q=Colombo%2003%2C%20Sri%20Lanka"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-[#62929e]"
+              >
+                Colombo 03, Sri Lanka
+              </a>
+            </li>
+            <li>
+              <Link href="/cookie-preferences" className="hover:text-[#62929e]">
+                Cookie Preferences
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="cd-container mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
-        <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
-        <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
-      </div>
-
-      {/*cookie banner*/}
-      <div className="cd-container mt-6">
+      <div className="cd-container mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-[#393d3f] font-mono">
+        <p>(c) 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
         <nav
           aria-label="Legal links"
-          className="flex flex-wrap items-center gap-4 text-sm text-[#546a7b]"
+          className="flex flex-wrap items-center gap-4 text-xs text-[#546a7b]"
         >
-          <Link href="/cookie-preferences" className="hover:text-gray-700">
-            Cookie Preferences
+          <Link href="/terms" className="hover:text-[#62929e]">
+            Terms
           </Link>
-          <Link
-            href="http://localhost:8000/api/v1/gdpr/privacy-policy"
-            target="_blank"
-            className="hover:text-gray-700"
-          >
-            Privacy Policy
+          <Link href="/privacy" className="hover:text-[#62929e]">
+            Privacy
           </Link>
-          <Link
-            href="http://localhost:8000/api/v1/gdpr/cookie-policy"
-            target="_blank"
-            className="hover:text-gray-700"
-          >
-            Cookie Policy
+          <Link href="/cookie-preferences" className="hover:text-[#62929e]">
+            Cookies
           </Link>
         </nav>
       </div>

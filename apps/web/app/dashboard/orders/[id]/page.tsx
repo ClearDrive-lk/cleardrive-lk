@@ -10,7 +10,6 @@ import {
   Clock,
   Copy,
   RefreshCcw,
-  Terminal,
 } from "lucide-react";
 
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -21,6 +20,7 @@ import ThemeToggle from "@/components/ui/theme-toggle";
 import PaymentButton from "@/components/payment/PaymentButton";
 import apiClient from "@/lib/api-client";
 import { mapBackendVehicle } from "@/lib/vehicle-mapper";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import type { Vehicle } from "@/types/vehicle";
 import { useToast } from "@/lib/hooks/use-toast";
 
@@ -181,10 +181,8 @@ export default function OrderDetailPage() {
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#62929e]" />
-              </div>
-              ClearDrive<span className="text-[#62929e]">.lk</span>
+              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+              <BrandWordmark />
             </Link>
             <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
               <Link

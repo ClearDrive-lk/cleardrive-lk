@@ -1,12 +1,13 @@
 "use client";
 
-import { ChevronLeft, Gauge, Terminal } from "lucide-react";
+import { ChevronLeft, Gauge } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ui/theme-toggle";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 function SkeletonLine({
   width,
@@ -33,8 +34,8 @@ export default function VehicleDetailLoading() {
             href="/"
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
-            <Terminal className="w-5 h-5 text-[#62929e]" />
-            ClearDrive<span className="text-[#62929e]">.lk</span>
+            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandWordmark />
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
             <span>Dashboard</span>

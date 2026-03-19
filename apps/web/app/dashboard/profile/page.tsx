@@ -3,12 +3,13 @@
 import AuthGuard from "@/components/auth/AuthGuard";
 import { useAppSelector } from "@/lib/store/store";
 import Link from "next/link";
-import { User, Mail, Shield, Terminal, LogOut, ArrowRight } from "lucide-react";
+import { User, Mail, Shield, Terminal, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { GDPRDataExport } from "@/components/gdpr/GDPRDataExport";
 import ThemeToggle from "@/components/ui/theme-toggle";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 export default function ProfilePage() {
   const { user } = useAppSelector((state) => state.auth);
@@ -24,10 +25,8 @@ export default function ProfilePage() {
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <div className="w-8 h-8 bg-[#62929e]/10 border border-[#62929e]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#62929e]" />
-              </div>
-              ClearDrive<span className="text-[#62929e]">.lk</span>
+              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+              <BrandWordmark />
             </Link>
             <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
               <Link
@@ -198,55 +197,9 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
-          <div className="cd-container grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="space-y-6">
-              <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-[#62929e]" />
-                ClearDrive<span className="text-[#62929e]">.lk</span>
-              </div>
-              <p className="text-sm text-[#546a7b] leading-relaxed">
-                The first tech-enabled vehicle import platform in Sri Lanka.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-[#393d3f] mb-6">Quick Links</h4>
-              <ul className="space-y-3 text-sm text-[#546a7b] font-mono">
-                <li className="hover:text-[#62929e] cursor-pointer flex items-center gap-2">
-                  <ArrowRight className="w-3 h-3" /> Dashboard
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[#393d3f] mb-6">Company</h4>
-              <ul className="space-y-3 text-sm text-[#546a7b]">
-                <li className="hover:text-[#62929e] cursor-pointer">
-                  About Us
-                </li>
-                <li className="hover:text-[#62929e] cursor-pointer">
-                  Terms of Service
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-[#393d3f] mb-6">Support</h4>
-              <ul className="space-y-3 text-sm text-[#546a7b]">
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" /> Systems
-                  Operational
-                </li>
-                <li>support@cleardrive.lk</li>
-              </ul>
-            </div>
-          </div>
-          <div className="cd-container mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
-            <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
-            <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
-          </div>
-        </footer>
       </div>
     </AuthGuard>
   );
 }
+
+
