@@ -111,11 +111,23 @@ export default function Home() {
                 LIVE
               </Badge>
             </Link>
-            <Link href="#" className="hover:text-[#393d3f] transition-colors">
-              Logistics
+            <Link
+              href="/#inventory"
+              className="hover:text-[#393d3f] transition-colors"
+            >
+              Live Inventory
             </Link>
-            <Link href="#" className="hover:text-[#393d3f] transition-colors">
-              Tax Calculator
+            <Link
+              href="/#process"
+              className="hover:text-[#393d3f] transition-colors"
+            >
+              How It Works
+            </Link>
+            <Link
+              href="/#lane"
+              className="hover:text-[#393d3f] transition-colors"
+            >
+              Live Shipping Lane
             </Link>
           </div>
           <div className="flex gap-3 items-center">
@@ -340,7 +352,10 @@ export default function Home() {
       </div>
 
       {/* --- LIVE ROUTE --- */}
-      <section className="relative py-12 bg-[#fdfdff] border-b border-[#546a7b]/40 overflow-hidden group">
+      <section
+        id="lane"
+        className="relative py-12 bg-[#fdfdff] border-b border-[#546a7b]/40 overflow-hidden group"
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(98,146,158,0.12),transparent_55%)] animate-halo" />
         <div className="cd-container relative">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -374,7 +389,7 @@ export default function Home() {
       </section>
 
       {/* --- CATEGORIES --- */}
-      <section className="py-24 bg-[#fdfdff]">
+      <section id="inventory" className="py-24 bg-[#fdfdff]">
         <div className="cd-container">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
             <div>
@@ -539,7 +554,10 @@ export default function Home() {
       </section>
 
       {/* --- HOW IT WORKS --- */}
-      <section className="py-24 border-t border-[#546a7b]/40 relative bg-[#fdfdff]">
+      <section
+        id="process"
+        className="py-24 border-t border-[#546a7b]/40 relative bg-[#fdfdff]"
+      >
         <div className="cd-container relative z-10">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-[#393d3f] tracking-tight">
