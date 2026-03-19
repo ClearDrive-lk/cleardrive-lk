@@ -109,6 +109,14 @@ export default function Header() {
               </Link>
             </>
           )}
+          <Link
+            href="/about"
+            className={`transition-colors ${
+              isActive("/about") ? "text-[#393d3f]" : "hover:text-[#393d3f]"
+            }`}
+          >
+            About Us
+          </Link>
         </div>
 
         {/* User Actions */}

@@ -43,7 +43,11 @@ export default function Footer() {
         <div>
           <h4 className="font-bold text-[#393d3f] mb-6">Company</h4>
           <ul className="space-y-3 text-sm text-[#546a7b]">
-            <li className="hover:text-[#62929e] cursor-pointer">About Us</li>
+            <li>
+              <Link href="/about" className="hover:text-[#62929e]">
+                About Us
+              </Link>
+            </li>
             <li className="hover:text-[#62929e] cursor-pointer">Careers</li>
             <li className="hover:text-[#62929e] cursor-pointer">
               Terms of Service

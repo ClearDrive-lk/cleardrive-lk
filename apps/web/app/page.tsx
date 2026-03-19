@@ -112,12 +112,6 @@ export default function Home() {
               </Badge>
             </Link>
             <Link
-              href="/#inventory"
-              className="hover:text-[#393d3f] transition-colors"
-            >
-              Live Inventory
-            </Link>
-            <Link
               href="/#process"
               className="hover:text-[#393d3f] transition-colors"
             >
@@ -128,6 +122,12 @@ export default function Home() {
               className="hover:text-[#393d3f] transition-colors"
             >
               Live Shipping Lane
+            </Link>
+            <Link
+              href="/about"
+              className="hover:text-[#393d3f] transition-colors"
+            >
+              About Us
             </Link>
           </div>
           <div className="flex gap-3 items-center">
@@ -659,7 +659,11 @@ export default function Home() {
           <div>
             <h4 className="font-bold text-[#393d3f] mb-6">Company</h4>
             <ul className="space-y-3 text-sm text-[#546a7b]">
-              <li className="hover:text-[#62929e] cursor-pointer">About Us</li>
+              <li>
+                <Link href="/about" className="hover:text-[#62929e]">
+                  About Us
+                </Link>
+              </li>
               <li className="hover:text-[#62929e] cursor-pointer">Careers</li>
               <li className="hover:text-[#62929e] cursor-pointer">
                 Terms of Service
