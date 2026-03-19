@@ -4,12 +4,7 @@ import { useEffect, useState } from "react";
 import AuthGuard from "@/components/auth/AuthGuard";
 import Link from "next/link";
 import { isAxiosError } from "axios";
-import {
-  ShieldCheck,
-  Upload,
-  FileImage,
-  AlertTriangle,
-} from "lucide-react";
+import { ShieldCheck, Upload, FileImage, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
