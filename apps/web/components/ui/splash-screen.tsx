@@ -17,6 +17,7 @@ export default function SplashScreen() {
       aria-hidden={!active}
     >
       <div className="splash-card">
+        <div className="splash-badge">Direct Import Lane</div>
         <div className="splash-wheel" aria-hidden="true">
           <div className="splash-wheel__spin">
             <svg
@@ -57,7 +58,7 @@ export default function SplashScreen() {
         </div>
         <div className="splash-title">ClearDrive.lk</div>
         <div className="splash-subtitle">
-          Japan Auction Imports · Sri Lanka Delivery
+          Japan Auction Imports - Sri Lanka Delivery
         </div>
         <div className="splash-vin">
           VIN PLATE: CD-JP-2026-AX04
@@ -73,6 +74,9 @@ export default function SplashScreen() {
             <span className="splash-route__dot" />
           </span>
         </div>
+        <div className="splash-lane">
+          <span className="splash-lane__ship" />
+        </div>
         <div className="splash-status">Confirming shipping slots...</div>
         <div className="splash-progress">
           <span />
@@ -80,14 +84,15 @@ export default function SplashScreen() {
         <div className="splash-metrics">
           <div>
             <span className="splash-metrics__label">Auctions</span>
-            <span className="splash-metrics__value">USS · JAA · CAI</span>
+            <span className="splash-metrics__value">USS - JAA - CAI</span>
           </div>
           <div>
             <span className="splash-metrics__label">ETA</span>
-            <span className="splash-metrics__value">14–18 Days</span>
+            <span className="splash-metrics__value">14-18 Days</span>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
