@@ -349,12 +349,14 @@ export default function Home() {
             <div className="relative w-full md:w-[55%] h-14 rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 overflow-hidden transition-shadow duration-200 group-hover:shadow-[0_10px_30px_rgba(15,23,42,0.15)]">
               <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(98,146,158,0.18)_0_6px,transparent_6px_16px)] opacity-60 lane-flow" />
               <div className="absolute inset-y-0 left-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.25),transparent)] animate-scanline" />
-              <div className="absolute inset-y-0 left-0 flex w-full items-center gap-3 lane-drive-force group-hover:[animation-duration:3s]">
-                <div className="h-8 w-8 rounded-full bg-[#62929e] text-[#fdfdff] flex items-center justify-center shadow-[0_12px_24px_rgba(98,146,158,0.4)]">
-                  <Truck className="h-4 w-4" />
-                </div>
-                <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#393d3f]">
-                  In Transit
+              <div className="absolute inset-y-0 left-0 flex w-full items-center">
+                <div className="lane-car flex items-center gap-3 group-hover:[animation-duration:3s]">
+                  <div className="h-8 w-8 rounded-full bg-[#62929e] text-[#fdfdff] flex items-center justify-center shadow-[0_12px_24px_rgba(98,146,158,0.4)]">
+                    <Truck className="h-4 w-4" />
+                  </div>
+                  <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#393d3f]">
+                    In Transit
+                  </div>
                 </div>
               </div>
             </div>

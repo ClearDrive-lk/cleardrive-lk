@@ -536,6 +536,23 @@
   }
 }
 
+@keyframes lane-car {
+  0% {
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(100% - 3.5rem));
+    opacity: 0;
+  }
+}
+
 @keyframes lane-flow {
   0% {
     background-position: 0 0;
@@ -600,6 +617,11 @@
 
 .lane-drive-force {
   animation: lane-drive 4.5s linear infinite;
+  will-change: transform;
+}
+
+.lane-car {
+  animation: lane-car 4.5s linear infinite;
   will-change: transform;
 }
 
@@ -669,6 +691,8 @@
   .animate-scanline,
   .animate-shimmer,
   .animate-lane-drive,
+  .lane-car,
+  .lane-flow,
   .animate-halo {
     animation: none !important;
   }
