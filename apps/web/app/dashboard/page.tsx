@@ -34,7 +34,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
         {/* --- NAVIGATION (Same as Homepage) --- */}
         <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-            <div className="cd-container h-16 flex items-center justify-between">
+          <div className="cd-container h-16 flex items-center justify-between">
             <Link
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"

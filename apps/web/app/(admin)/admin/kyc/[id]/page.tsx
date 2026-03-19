@@ -249,7 +249,11 @@ export default function AdminKycReviewDetailPage() {
   };
 
   if (loading) {
-    return <div className="cd-container py-6 text-[#546a7b]">Loading KYC review...</div>;
+    return (
+      <div className="cd-container py-6 text-[#546a7b]">
+        Loading KYC review...
+      </div>
+    );
   }
 
   if (error && !detail) {
@@ -257,7 +261,11 @@ export default function AdminKycReviewDetailPage() {
   }
 
   if (!detail) {
-    return <div className="cd-container py-6 text-[#546a7b]">KYC record not found.</div>;
+    return (
+      <div className="cd-container py-6 text-[#546a7b]">
+        KYC record not found.
+      </div>
+    );
   }
 
   return (
