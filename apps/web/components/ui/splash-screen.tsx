@@ -60,9 +60,7 @@ export default function SplashScreen() {
         <div className="splash-subtitle">
           Japan Auction Imports - Sri Lanka Delivery
         </div>
-        <div className="splash-vin">
-          VIN PLATE: CD-JP-2026-AX04
-        </div>
+        <div className="splash-vin">VIN PLATE: CD-JP-2026-AX04</div>
         <div className="splash-meta">
           <span>Auction</span>
           <span>Shipping</span>
@@ -95,4 +93,3 @@ export default function SplashScreen() {
     </div>
   );
 }
-

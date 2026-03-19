@@ -717,16 +717,35 @@
   padding: 28px;
   border-radius: 24px;
   border: 1px solid color-mix(in oklab, hsl(var(--secondary)) 60%, transparent);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in oklab, hsl(var(--card)) 98%, transparent),
-      color-mix(in oklab, hsl(var(--muted)) 40%, transparent)
-    );
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, hsl(var(--card)) 98%, transparent),
+    color-mix(in oklab, hsl(var(--muted)) 40%, transparent)
+  );
   box-shadow:
     0 22px 60px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
   text-align: center;
+}
+
+.splash-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: hsl(var(--foreground));
+  background: linear-gradient(
+    120deg,
+    color-mix(in oklab, hsl(var(--primary)) 35%, transparent),
+    color-mix(in oklab, hsl(var(--accent)) 35%, transparent)
+  );
+  border: 1px solid color-mix(in oklab, hsl(var(--secondary)) 55%, transparent);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .splash-card::before {
@@ -735,11 +754,7 @@
   inset: 10px 10px auto 10px;
   height: 44px;
   border-radius: 18px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.22),
-    transparent
-  );
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent);
   pointer-events: none;
 }
 
@@ -762,9 +777,9 @@
 
 .splash-wheel {
   position: relative;
-  width: 180px;
-  height: 180px;
-  margin: 0 auto 20px;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 18px;
 }
 
 .splash-wheel::before {
@@ -878,7 +893,11 @@
   font-size: 0.7rem;
   letter-spacing: 0.35em;
   text-transform: uppercase;
-  color: color-mix(in oklab, hsl(var(--primary)) 65%, hsl(var(--foreground)) 35%);
+  color: color-mix(
+    in oklab,
+    hsl(var(--primary)) 65%,
+    hsl(var(--foreground)) 35%
+  );
 }
 
 .splash-route__line {
@@ -990,6 +1009,43 @@
   font-weight: 600;
 }
 
+.splash-lane {
+  margin: 10px auto 0;
+  width: min(300px, 76vw);
+  height: 10px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in oklab, hsl(var(--secondary)) 35%, transparent) 0 12px,
+    transparent 12px 22px
+  );
+  border: 1px solid color-mix(in oklab, hsl(var(--secondary)) 45%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.splash-lane__ship {
+  position: absolute;
+  top: -4px;
+  left: -20px;
+  width: 20px;
+  height: 8px;
+  border-radius: 6px 10px 6px 6px;
+  background: hsl(var(--accent));
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  animation: lane-ship 1.8s linear infinite;
+}
+
+.splash-lane__ship::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 1px;
+  border-left: 6px solid hsl(var(--accent));
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+
 @keyframes splash-spin {
   to {
     transform: rotate(360deg);
@@ -1013,6 +1069,20 @@
   100% {
     transform: translateX(240px);
     opacity: 0.2;
+  }
+}
+
+@keyframes lane-ship {
+  0% {
+    transform: translateX(-20px);
+    opacity: 0.4;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(300px);
+    opacity: 0.4;
   }
 }
 
@@ -1048,7 +1118,8 @@
   .lane-flow,
   .animate-halo,
   .splash-route__dot,
-  .splash-progress span {
+  .splash-progress span,
+  .splash-lane__ship {
     animation: none !important;
   }
 }
