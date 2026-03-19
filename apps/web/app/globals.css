@@ -1216,7 +1216,8 @@ body::-webkit-scrollbar {
   min-height: 360px;
   border-radius: 28px;
   border: 1px solid rgba(98, 146, 158, 0.45);
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 20% 20%,
       rgba(77, 122, 156, 0.35),
       transparent 55%
@@ -1232,16 +1233,9 @@ body::-webkit-scrollbar {
 .radar-grid {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(
-      to right,
-      rgba(150, 214, 232, 0.08) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(150, 214, 232, 0.08) 1px,
-      transparent 1px
-    );
+  background-image:
+    linear-gradient(to right, rgba(150, 214, 232, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(150, 214, 232, 0.08) 1px, transparent 1px);
   background-size: 44px 44px;
   opacity: 0.6;
 }
@@ -1320,7 +1314,8 @@ body::-webkit-scrollbar {
   letter-spacing: 0.35em;
   text-transform: uppercase;
   color: rgba(195, 225, 235, 0.8);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
 }
 
@@ -1342,7 +1337,8 @@ body::-webkit-scrollbar {
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: rgba(195, 225, 235, 0.7);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
 }
 
@@ -1383,7 +1379,8 @@ body::-webkit-scrollbar {
   text-transform: uppercase;
   letter-spacing: 0.35em;
   color: color-mix(in oklab, hsl(var(--foreground)) 78%, transparent);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
 }
 
@@ -1399,7 +1396,8 @@ body::-webkit-scrollbar {
   margin-top: 18px;
   display: grid;
   gap: 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
 }
 
@@ -1445,7 +1443,11 @@ body::-webkit-scrollbar {
   font-size: 0.85rem;
   padding: 6px 0;
   border-bottom: 1px dashed rgba(84, 106, 123, 0.4);
-  color: color-mix(in oklab, hsl(var(--foreground)) 70%, hsl(var(--secondary)) 30%);
+  color: color-mix(
+    in oklab,
+    hsl(var(--foreground)) 70%,
+    hsl(var(--secondary)) 30%
+  );
 }
 
 .pipeline-row span:last-child {
@@ -1586,13 +1588,10 @@ body::-webkit-scrollbar {
       var(--terminal-accent, #7dd3fc) 55%,
       rgba(98, 146, 158, 0.35)
     );
-  background: radial-gradient(
+  background:
+    radial-gradient(
       120% 140% at 0% 0%,
-      color-mix(
-        in oklab,
-        var(--terminal-accent, #7dd3fc) 22%,
-        transparent
-      ),
+      color-mix(in oklab, var(--terminal-accent, #7dd3fc) 22%, transparent),
       transparent 55%
     ),
     radial-gradient(
@@ -1681,14 +1680,11 @@ body::-webkit-scrollbar {
 }
 
 .terminal-card::after {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       120deg,
       transparent,
-      color-mix(
-        in oklab,
-        var(--terminal-accent, #7dd3fc) 22%,
-        transparent
-      ),
+      color-mix(in oklab, var(--terminal-accent, #7dd3fc) 22%, transparent),
       transparent
     ),
     repeating-linear-gradient(
@@ -1722,11 +1718,7 @@ body::-webkit-scrollbar {
   position: relative;
   background: radial-gradient(
     circle at 30% 30%,
-    color-mix(
-      in oklab,
-      var(--terminal-accent, #7dd3fc) 90%,
-      white
-    ),
+    color-mix(in oklab, var(--terminal-accent, #7dd3fc) 90%, white),
     color-mix(
       in oklab,
       var(--terminal-accent-2, var(--terminal-accent, #7dd3fc)) 55%,
@@ -1738,7 +1730,8 @@ body::-webkit-scrollbar {
   font-size: 1.1rem;
   box-shadow:
     0 12px 28px rgba(4, 10, 14, 0.5),
-    0 0 22px color-mix(in oklab, var(--terminal-accent, #7dd3fc) 55%, transparent);
+    0 0 22px
+      color-mix(in oklab, var(--terminal-accent, #7dd3fc) 55%, transparent);
   transition: transform 200ms ease;
 }
 
@@ -1791,11 +1784,11 @@ body::-webkit-scrollbar {
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--terminal-accent-2, var(--terminal-accent, #7dd3fc));
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
-
 
 .tech-card {
   position: relative;
@@ -1953,14 +1946,16 @@ body::-webkit-scrollbar {
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: rgba(181, 198, 209, 0.8);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 .terminal-body {
   padding: 18px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   font-size: 0.9rem;
   display: grid;
   gap: 8px;

@@ -167,7 +167,7 @@ export default function AboutPage() {
           }
         });
       },
-      { threshold: 0.35 }
+      { threshold: 0.35 },
     );
 
     if (timelineNode) observer.observe(timelineNode);
@@ -427,9 +427,11 @@ export default function AboutPage() {
                   className={`timeline-node ${
                     timelineActive ? "timeline-node--active" : ""
                   }`}
-                  style={{
-                    "--delay": `${index * 0.2}s`,
-                  } as React.CSSProperties}
+                  style={
+                    {
+                      "--delay": `${index * 0.2}s`,
+                    } as React.CSSProperties
+                  }
                 >
                   <div className="timeline-dot" />
                   <div>
@@ -581,10 +583,12 @@ export default function AboutPage() {
                     className={`terminal-line ${
                       manifestoActive ? "terminal-line--active" : ""
                     }`}
-                    style={{
-                      "--delay": `${index * 0.45}s`,
-                      "--chars": displayLine.length,
-                    } as React.CSSProperties}
+                    style={
+                      {
+                        "--delay": `${index * 0.45}s`,
+                        "--chars": displayLine.length,
+                      } as React.CSSProperties
+                    }
                   >
                     {displayLine}
                   </div>
