@@ -361,7 +361,7 @@ export default function GazetteManagementPage() {
   };
 
   return (
-    <div className="min-h-screen space-y-8 p-6">
+    <div className="cd-container min-h-screen py-6 space-y-8">
       <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>

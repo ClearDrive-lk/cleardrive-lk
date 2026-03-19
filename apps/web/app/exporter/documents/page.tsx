@@ -24,8 +24,8 @@ export default function ExporterDocumentsPage() {
   }, [selectedOrderId, uploadState]);
 
   return (
-    <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
-      <div className="relative z-10 max-w-6xl mx-auto space-y-8">
+    <section className="relative pt-16 pb-20 overflow-hidden flex-1">
+      <div className="relative z-10 cd-container space-y-8">
         <div>
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-6">
             <span className="relative flex h-2 w-2">

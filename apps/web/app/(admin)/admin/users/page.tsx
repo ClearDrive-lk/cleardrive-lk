@@ -203,7 +203,7 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="p-6 text-[#393d3f]">
+    <div className="cd-container py-6 text-[#393d3f]">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">User Management</h1>

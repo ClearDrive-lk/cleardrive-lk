@@ -371,7 +371,7 @@ export default function AdminDashboard() {
   // Render
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6 text-[#393d3f]">
+    <div className="cd-container py-6 space-y-6 text-[#393d3f]">
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { IBM_Plex_Sans, Playfair_Display } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAppSelector } from "@/lib/store/store";
@@ -22,6 +23,15 @@ import {
   ArrowRight,
   Terminal,
 } from "lucide-react";
+
+const plex = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
 export default function Home() {
   const router = useRouter();
@@ -73,10 +83,12 @@ export default function Home() {
     mounted && (isAuthenticated || hasSession) ? "/dashboard" : "/";
 
   return (
-    <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+    <div
+      className={`${plex.className} min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] flex flex-col`}
+    >
       {/* --- NAVIGATION --- */}
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="cd-container h-16 flex items-center justify-between">
           <Link
             href={navHref}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
@@ -130,45 +142,42 @@ export default function Home() {
         ref={heroRef}
         onMouseMove={handleHeroMove}
         onMouseLeave={resetHeroSpotlight}
-        className="relative pt-20 pb-24 px-6 overflow-hidden flex-1 flex flex-col justify-center group"
+        className="relative pt-20 pb-24 overflow-hidden flex-1 flex flex-col justify-center group"
       >
         <div className="hero-spotlight absolute inset-0 pointer-events-none" />
         <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/8 rounded-[100%] blur-[120px] pointer-events-none animate-float-slower transition-transform duration-500 group-hover:scale-[1.02]" />
         <div className="absolute -top-24 right-[-160px] w-[420px] h-[420px] rounded-full border border-[#62929e]/25 animate-orbit-slow pointer-events-none transition-transform duration-500 group-hover:translate-y-4" />
         <div className="absolute -bottom-32 left-[-140px] w-[340px] h-[340px] rounded-full border border-[#62929e]/20 animate-orbit-slow pointer-events-none transition-transform duration-500 group-hover:-translate-y-4" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-        <div className="absolute right-[8%] top-[18%] hidden md:block rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 px-4 py-2 text-[10px] font-mono text-[#546a7b] shadow-[0_12px_30px_rgba(0,0,0,0.12)] backdrop-blur animate-float-slow">
-          LIVE PIPELINE :: TOKYO -&gt; HAMBANTOTA
-        </div>
-
-        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+        <div className="relative z-10 cd-container text-center space-y-8">
+          <div className="absolute right-6 top-[-40px] hidden md:block rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 px-4 py-2 text-[10px] font-mono text-[#546a7b] shadow-[0_12px_30px_rgba(0,0,0,0.12)] backdrop-blur animate-float-slow">
+            LIVE PIPELINE :: TOKYO -&gt; HAMBANTOTA
+          </div>
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] animate-in fade-in slide-in-from-bottom-4 duration-1000">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
             </span>
-            DIRECT MARKET ACCESS (DMA) :: v2.4.0
+            Direct Market Access • Verified Live Feeds
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-[#393d3f] leading-[0.9]">
-            IMPORT{" "}
+          <h1
+            className={`${playfair.className} text-5xl md:text-7xl font-semibold tracking-tight text-[#393d3f] leading-[1.05]`}
+          >
+            Direct Import.{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9]">
-              DIRECT.
+              Zero Markup.
             </span>
             <br />
-            PAY ZERO MARKUP.
+            Built for Sri Lanka.
           </h1>
 
           <p className="text-lg md:text-xl text-[#546a7b] max-w-2xl mx-auto leading-relaxed">
-            The first{" "}
-            <span className="text-[#393d3f] font-medium">
-              Direct-to-Consumer
-            </span>{" "}
-            import terminal in Sri Lanka. Access USS Tokyo, JAA, and CAI
-            auctions in real-time.
-            <span className="block mt-2 text-[#546a7b] text-sm font-mono">
-              AUTOMATED CIF CALCULATION // INSTANT LC OPENING // CLEARING @
-              HAMBANTOTA
+            Sri Lanka&apos;s direct-to-consumer vehicle import terminal. Access
+            USS Tokyo, JAA, and CAI auctions in real time, with automated CIF
+            calculation, instant LC opening, and clearance at Hambantota.
+            <span className="block mt-3 text-[#546a7b] text-xs font-mono uppercase tracking-[0.2em]">
+              CIF automation · instant LC · Hambantota clearance
             </span>
           </p>
 
@@ -277,7 +286,7 @@ export default function Home() {
 
       {/* --- LIVE STATS STRIP --- */}
       <div className="border-b border-[#546a7b]/65 bg-[#fdfdff]">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+        <div className="cd-container grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
           {[
             {
               label: "Auction Access",
@@ -331,9 +340,9 @@ export default function Home() {
       </div>
 
       {/* --- LIVE ROUTE --- */}
-      <section className="relative py-12 px-6 bg-[#fdfdff] border-b border-[#546a7b]/40 overflow-hidden group">
+      <section className="relative py-12 bg-[#fdfdff] border-b border-[#546a7b]/40 overflow-hidden group">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(98,146,158,0.12),transparent_55%)] animate-halo" />
-        <div className="max-w-7xl mx-auto relative">
+        <div className="cd-container relative">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[#546a7b]">
@@ -365,8 +374,8 @@ export default function Home() {
       </section>
 
       {/* --- CATEGORIES --- */}
-      <section className="py-24 px-6 bg-[#fdfdff]">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-24 bg-[#fdfdff]">
+        <div className="cd-container">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
             <div>
               <h2 className="text-3xl font-bold text-[#393d3f] tracking-tight">
@@ -530,8 +539,8 @@ export default function Home() {
       </section>
 
       {/* --- HOW IT WORKS --- */}
-      <section className="py-24 px-6 border-t border-[#546a7b]/40 relative bg-[#fdfdff]">
-        <div className="max-w-7xl mx-auto relative z-10">
+      <section className="py-24 border-t border-[#546a7b]/40 relative bg-[#fdfdff]">
+        <div className="cd-container relative z-10">
           <div className="text-center mb-16 max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-[#393d3f] tracking-tight">
               The ClearDrive Process
@@ -595,7 +604,7 @@ export default function Home() {
 
       {/* --- FOOTER --- */}
       <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="cd-container grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="space-y-6">
             <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
               <Terminal className="w-5 h-5 text-[#62929e]" />
@@ -656,7 +665,7 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
+        <div className="cd-container mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
           <p>(c) 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
           <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
         </div>

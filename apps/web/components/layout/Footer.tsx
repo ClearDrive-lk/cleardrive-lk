@@ -7,7 +7,7 @@ import { Terminal, ArrowRight } from "lucide-react";
 export default function Footer() {
   return (
     <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="cd-container grid grid-cols-1 md:grid-cols-4 gap-12">
         {/* Company Info */}
         <div className="space-y-6">
           <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
@@ -70,34 +70,36 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
+      <div className="cd-container mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
         <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
         <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
       </div>
 
       {/*cookie banner*/}
-      <nav aria-label="Legal links">
-        <Link
-          href="/cookie-preferences"
-          className="text-sm text-[#546a7b] hover:text-gray-700"
+      <div className="cd-container mt-6">
+        <nav
+          aria-label="Legal links"
+          className="flex flex-wrap items-center gap-4 text-sm text-[#546a7b]"
         >
-          Cookie Preferences
-        </Link>
-        <Link
-          href="http://localhost:8000/api/v1/gdpr/privacy-policy"
-          target="_blank"
-          className="text-sm text-[#546a7b] hover:text-gray-700"
-        >
-          Privacy Policy
-        </Link>
-        <Link
-          href="http://localhost:8000/api/v1/gdpr/cookie-policy"
-          target="_blank"
-          className="text-sm text-[#546a7b] hover:text-gray-700"
-        >
-          Cookie Policy
-        </Link>
-      </nav>
+          <Link href="/cookie-preferences" className="hover:text-gray-700">
+            Cookie Preferences
+          </Link>
+          <Link
+            href="http://localhost:8000/api/v1/gdpr/privacy-policy"
+            target="_blank"
+            className="hover:text-gray-700"
+          >
+            Privacy Policy
+          </Link>
+          <Link
+            href="http://localhost:8000/api/v1/gdpr/cookie-policy"
+            target="_blank"
+            className="hover:text-gray-700"
+          >
+            Cookie Policy
+          </Link>
+        </nav>
+      </div>
     </footer>
   );
 }

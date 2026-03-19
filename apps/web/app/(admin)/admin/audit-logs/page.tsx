@@ -196,8 +196,8 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="min-h-screen p-6 text-[#393d3f]">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-screen text-[#393d3f]">
+      <div className="cd-container py-6 space-y-6">
         <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-62 Admin Audit Logs

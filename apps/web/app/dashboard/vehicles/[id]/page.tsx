@@ -139,7 +139,7 @@ function VehicleDetail() {
 
       {/* Navigation */}
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="cd-container h-16 flex items-center justify-between">
           <Link
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
@@ -179,7 +179,7 @@ function VehicleDetail() {
         </div>
       </nav>
 
-      <main className="flex-1 relative z-10 max-w-7xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 relative z-10 cd-container py-8">
         {/* Breadcrumb / Back */}
         <Button
           onClick={() => router.back()}

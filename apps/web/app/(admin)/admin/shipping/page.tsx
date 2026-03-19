@@ -187,7 +187,7 @@ export default function AdminShippingPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 text-[#393d3f]">
+    <div className="cd-container py-6 space-y-6 text-[#393d3f]">
       <div>
         <h1 className="text-2xl font-bold">Shipping Assignment</h1>
         <p className="text-[#546a7b]">
@@ -346,7 +346,7 @@ export default function AdminShippingPage() {
           <h2 className="font-semibold text-[#393d3f]">Current Shipments</h2>
         </div>
         {loading ? (
-          <div className="p-6 text-center text-[#546a7b]">Loading...</div>
+          <div className="py-10 text-center text-[#546a7b]">Loading...</div>
         ) : (
           <table className="min-w-full divide-y divide-white/10 text-sm">
             <thead className="bg-[#c6c5b9]/20">

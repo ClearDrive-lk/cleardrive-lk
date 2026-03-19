@@ -301,7 +301,7 @@ function VehicleCatalog() {
 
       {/* Navigation */}
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="cd-container h-16 flex items-center justify-between">
           <Link
             href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
@@ -382,8 +382,8 @@ function VehicleCatalog() {
       </nav>
 
       {/* Page Header */}
-      <header className="relative z-10 pt-12 pb-8 px-6 border-b border-[#546a7b]/40">
-        <div className="max-w-7xl mx-auto">
+      <header className="relative z-10 pt-12 pb-8 border-b border-[#546a7b]/40">
+        <div className="cd-container">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-[#393d3f] mb-2 tracking-tight">
@@ -742,8 +742,8 @@ function VehicleCatalog() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 relative z-10 px-6 py-8">
-        <div className="max-w-7xl mx-auto">
+      <main className="flex-1 relative z-10 py-8">
+        <div className="cd-container">
           {isError ? (
             <div className="mb-8 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-center space-y-2">
               <div>Failed to load vehicles. Please try again later.</div>

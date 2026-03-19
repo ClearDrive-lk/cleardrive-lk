@@ -75,7 +75,7 @@ export default function OrderConfirmationPage() {
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
         <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="cd-container h-16 flex items-center justify-between">
             <Link
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
@@ -114,8 +114,8 @@ export default function OrderConfirmationPage() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
         <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
 
-        <main className="relative z-10 flex-1 px-6 py-16">
-          <div className="max-w-3xl mx-auto">
+        <main className="relative z-10 flex-1 py-16">
+          <div className="cd-container-tight">
             <Card className="border-[#546a7b]/65 bg-[#fdfdff]">
               <CardHeader className="space-y-2 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30">

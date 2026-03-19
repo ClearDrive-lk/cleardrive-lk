@@ -34,7 +34,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
         {/* --- NAVIGATION (Same as Homepage) --- */}
         <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div className="cd-container h-16 flex items-center justify-between">
             <Link
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
@@ -106,8 +106,8 @@ export default function DashboardPage() {
         <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />
 
         {/* Content */}
-        <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1">
-          <div className="relative z-10 max-w-7xl mx-auto">
+        <section className="relative pt-20 pb-20 overflow-hidden flex-1">
+          <div className="relative z-10 cd-container">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
 
         {/* Footer (Same as Homepage) */}
         <footer className="border-t border-[#546a7b]/65 py-16 bg-[#fdfdff]">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="cd-container grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="space-y-6">
               <div className="font-bold text-xl tracking-tighter text-[#393d3f] flex items-center gap-2">
                 <Terminal className="w-5 h-5 text-[#62929e]" />
@@ -319,7 +319,7 @@ export default function DashboardPage() {
               </ul>
             </div>
           </div>
-          <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
+          <div className="cd-container mt-16 pt-8 border-t border-[#546a7b]/40 flex flex-col md:flex-row justify-between items-center text-xs text-[#393d3f] font-mono">
             <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
             <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
           </div>

@@ -1125,6 +1125,15 @@
 }
 
 @layer utilities {
+  .cd-container {
+    @apply mx-auto w-full max-w-7xl px-6;
+  }
+  .cd-container-narrow {
+    @apply mx-auto w-full max-w-5xl px-6;
+  }
+  .cd-container-tight {
+    @apply mx-auto w-full max-w-3xl px-6;
+  }
   .theme-override [class~="bg-[#fdfdff]"] {
     background-color: hsl(var(--background)) !important;
   }

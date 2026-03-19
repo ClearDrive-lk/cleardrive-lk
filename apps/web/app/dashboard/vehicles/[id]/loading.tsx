@@ -28,7 +28,7 @@ export default function VehicleDetailLoading() {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="cd-container h-16 flex items-center justify-between">
           <Link
             href="/"
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
@@ -55,7 +55,7 @@ export default function VehicleDetailLoading() {
         </div>
       </nav>
 
-      <main className="flex-1 relative z-10 max-w-7xl mx-auto w-full px-6 py-8">
+      <main className="flex-1 relative z-10 cd-container py-8">
         <Button
           variant="ghost"
           disabled

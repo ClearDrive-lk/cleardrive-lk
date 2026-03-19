@@ -51,7 +51,7 @@ export default function DocumentsPage() {
   }, []);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="cd-container-tight py-6">
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
