@@ -180,8 +180,8 @@ function VehicleDetail() {
   const canCreateOrder = isAuthed && isAvailable;
   const estDuty =
     hasPrice && vehicle ? Math.round(vehicle.estimatedLandedCostLKR * 0.3) : 0;
-  const bidLabel = hasPrice ? formatJPY(vehicle.priceJPY) : "Bid pending";
-  const landedLabel = hasPrice
+  const bidLabel = hasPrice && vehicle ? formatJPY(vehicle.priceJPY) : "Bid pending";
+  const landedLabel = hasPrice && vehicle
     ? formatLKR(vehicle.estimatedLandedCostLKR)
     : "Awaiting bid";
   const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
