@@ -114,7 +114,8 @@ async def create_order(
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    if str(vehicle["status"]) != "AVAILABLE":
+    status_value = str(vehicle["status"]).upper() if vehicle.get("status") is not None else ""
+    if status_value != "AVAILABLE":
         raise HTTPException(status_code=400, detail="Vehicle is not available")
 
     # 3. Calculate total cost

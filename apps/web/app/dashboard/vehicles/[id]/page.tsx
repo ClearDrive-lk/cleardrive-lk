@@ -168,6 +168,7 @@ function VehicleDetail() {
   const hasPrice = Boolean(
     vehicle && Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0,
   );
+  const isAvailable = vehicle?.status === "Live";
   const isElectric = vehicle?.fuel.toLowerCase().includes("electric");
   const engineLabel =
     isElectric
@@ -175,9 +176,14 @@ function VehicleDetail() {
       : typeof vehicle?.engineCC === "number" && vehicle.engineCC > 0
       ? `${vehicle.engineCC} cc`
       : "Spec pending";
-  const canCreateOrder = isAuthed;
+  const canCreateOrder = isAuthed && isAvailable;
   const estDuty =
     hasPrice && vehicle ? Math.round(vehicle.estimatedLandedCostLKR * 0.3) : 0;
+  const bidLabel = hasPrice ? formatJPY(vehicle.priceJPY) : "Bid pending";
+  const landedLabel = hasPrice
+    ? formatLKR(vehicle.estimatedLandedCostLKR)
+    : "Awaiting bid";
+  const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
   const displayImage = selectedImage || images[0] || null;
 
   if (isLoading) {
@@ -437,20 +443,16 @@ function VehicleDetail() {
                   <p className="text-[11px] uppercase tracking-[0.16em] text-[hsl(var(--secondary))]">
                     Estimated Landed
                   </p>
-                  <p className="mt-1 text-xl font-bold">
-                    {hasPrice ? formatLKR(vehicle.estimatedLandedCostLKR) : "N/A"}
-                  </p>
+                  <p className="mt-1 text-xl font-bold">{landedLabel}</p>
                   <p className="mt-1 text-xs text-[hsl(var(--secondary))]">
-                    Duty estimate: {hasPrice ? formatLKR(estDuty) : "N/A"}
+                    Duty estimate: {dutyLabel}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/22 p-3">
                   <p className="text-[11px] uppercase tracking-[0.16em] text-[hsl(var(--secondary))]">
                     Current Bid
                   </p>
-                  <p className="mt-1 text-xl font-bold">
-                    {hasPrice ? formatJPY(vehicle.priceJPY) : "N/A"}
-                  </p>
+                  <p className="mt-1 text-xl font-bold">{bidLabel}</p>
                   <p className="mt-1 text-xs text-[hsl(var(--secondary))]">
                     Last refreshed with live feed
                   </p>
@@ -533,7 +535,7 @@ function VehicleDetail() {
                 vehicleId={vehicle.id}
                 estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
               />
-            ) : (
+            ) : !isAuthed ? (
               <div className="p-6 space-y-3">
                 <h3 className="text-lg font-bold">Sign in to reserve this vehicle</h3>
                 <p className="text-sm text-[hsl(var(--secondary))]">
@@ -547,6 +549,18 @@ function VehicleDetail() {
                     <Link href="/register">Create Account</Link>
                   </Button>
                 </div>
+              </div>
+            ) : (
+              <div className="p-6 space-y-3">
+                <h3 className="text-lg font-bold">Vehicle not available</h3>
+                <p className="text-sm text-[hsl(var(--secondary))]">
+                  This listing is currently marked as {vehicle.status}. Check back later
+                  or contact an agent to request availability.
+                </p>
+                <Button onClick={contactAgent}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Contact Agent
+                </Button>
               </div>
             )}
           </article>

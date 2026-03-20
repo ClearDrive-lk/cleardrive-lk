@@ -37,6 +37,11 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
   // Mini Cost Calculator: Est. Duty = 30% of price (placeholder logic)
   const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
+  const bidLabel = hasPrice ? formatJPY(vehicle.priceJPY) : "Bid pending";
+  const landedLabel = hasPrice
+    ? formatLKR(vehicle.estimatedLandedCostLKR)
+    : "Awaiting bid";
+  const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
 
   return (
     <Card className="group relative flex h-full flex-col overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
@@ -118,51 +123,23 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Price Section */}
         <div className="min-h-[100px] space-y-1">
-          {hasPrice ? (
-            <>
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-[#546a7b]">
-                  Current Bid (JPY)
-                </span>
-                <span className="text-sm font-medium text-[#546a7b]">
-                  {formatJPY(vehicle.priceJPY)}
-                </span>
-              </div>
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-[#62929e]">
-                  Est. Landed (LKR)
-                </span>
-                <span className="text-lg font-bold text-[#393d3f]">
-                  {formatLKR(vehicle.estimatedLandedCostLKR)}
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-[#546a7b]">
-                  Est. Duty: {formatLKR(estDuty)}
-                </span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-[#546a7b]">
-                  Current Bid (JPY)
-                </span>
-                <span className="text-sm font-medium text-[#546a7b]">N/A</span>
-              </div>
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-[#62929e]">
-                  Est. Landed (LKR)
-                </span>
-                <span className="text-lg font-bold text-[#393d3f]">N/A</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-[#546a7b]">
-                  Est. Duty: N/A
-                </span>
-              </div>
-            </>
-          )}
+          <div className="flex justify-between items-end">
+            <span className="text-xs text-[#546a7b]">Current Bid (JPY)</span>
+            <span className="text-sm font-medium text-[#546a7b]">
+              {bidLabel}
+            </span>
+          </div>
+          <div className="flex justify-between items-end">
+            <span className="text-xs text-[#62929e]">Est. Landed (LKR)</span>
+            <span className="text-lg font-bold text-[#393d3f]">
+              {landedLabel}
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] text-[#546a7b]">
+              Est. Duty: {dutyLabel}
+            </span>
+          </div>
         </div>
       </CardContent>
 
