@@ -292,7 +292,10 @@ export default function FloatingChatbot() {
             </div>
           </div>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
+          <div
+            ref={scrollRef}
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4"
+          >
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}

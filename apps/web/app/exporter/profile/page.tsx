@@ -17,7 +17,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@/lib/store/store";
 import { useAssignedOrders } from "@/lib/hooks/useAssignedOrders";
-import { ExporterPageShell, ExporterPanel } from "@/components/exporter/ExporterPageShell";
+import {
+  ExporterPageShell,
+  ExporterPanel,
+} from "@/components/exporter/ExporterPageShell";
 import { EXPORTER_TERMS } from "@/lib/exporter-phrases";
 
 export default function ExporterProfilePage() {
@@ -168,7 +171,8 @@ export default function ExporterProfilePage() {
             Exporter Support
           </h3>
           <p className="mt-1 text-sm text-[#546a7b] dark:text-[#bdcad4]">
-            Reach operations for shipment blockers, missing docs, or approval delays.
+            Reach operations for shipment blockers, missing docs, or approval
+            delays.
           </p>
           <Button
             asChild

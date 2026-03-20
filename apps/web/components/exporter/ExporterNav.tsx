@@ -48,7 +48,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/exporter",
     icon: ClipboardList,
   },
-  { label: "Active", shortLabel: "Active", href: "/exporter/active", icon: Flame },
+  {
+    label: "Active",
+    shortLabel: "Active",
+    href: "/exporter/active",
+    icon: Flame,
+  },
   {
     label: "Shipping Details",
     shortLabel: "Shipping",

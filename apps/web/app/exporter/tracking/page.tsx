@@ -3,7 +3,14 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Radar, RefreshCcw, PackageCheck, ArrowRight, Ship, UploadCloud } from "lucide-react";
+import {
+  Radar,
+  RefreshCcw,
+  PackageCheck,
+  ArrowRight,
+  Ship,
+  UploadCloud,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -102,9 +109,10 @@ export default function ExporterTrackingPage() {
                   key: "attention" as const,
                   label: "Attention",
                   count: orders.filter((order) =>
-                    ["ASSIGNED_TO_EXPORTER", "AWAITING_SHIPMENT_CONFIRMATION"].includes(
-                      order.status,
-                    ),
+                    [
+                      "ASSIGNED_TO_EXPORTER",
+                      "AWAITING_SHIPMENT_CONFIRMATION",
+                    ].includes(order.status),
                   ).length,
                 },
                 {
@@ -180,7 +188,9 @@ export default function ExporterTrackingPage() {
                         {selectedOrder.id}
                       </p>
                     </div>
-                    <Badge className={getOrderStatusBadgeClass(selectedOrder.status)}>
+                    <Badge
+                      className={getOrderStatusBadgeClass(selectedOrder.status)}
+                    >
                       {selectedOrder.status.replace(/_/g, " ")}
                     </Badge>
                   </div>
@@ -190,7 +200,9 @@ export default function ExporterTrackingPage() {
                       asChild
                       className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90"
                     >
-                      <Link href={`/exporter/shipping?orderId=${selectedOrder.id}`}>
+                      <Link
+                        href={`/exporter/shipping?orderId=${selectedOrder.id}`}
+                      >
                         <Ship className="mr-2 h-4 w-4" />
                         Shipping Details
                       </Link>
@@ -200,7 +212,9 @@ export default function ExporterTrackingPage() {
                       variant="outline"
                       className="border-[#546a7b]/45 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/35 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
                     >
-                      <Link href={`/exporter/documents?orderId=${selectedOrder.id}`}>
+                      <Link
+                        href={`/exporter/documents?orderId=${selectedOrder.id}`}
+                      >
                         <UploadCloud className="mr-2 h-4 w-4" />
                         Documents
                       </Link>
@@ -210,7 +224,9 @@ export default function ExporterTrackingPage() {
                       variant="outline"
                       className="border-[#546a7b]/45 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/35 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
                     >
-                      <Link href={`/exporter/shipping?orderId=${selectedOrder.id}`}>
+                      <Link
+                        href={`/exporter/shipping?orderId=${selectedOrder.id}`}
+                      >
                         Edit Details
                         <ArrowRight className="ml-2 h-3.5 w-3.5" />
                       </Link>

@@ -41,9 +41,12 @@ export default function ExporterDashboardPage() {
     }
     if (filter === "in_transit") {
       return orders.filter((order) =>
-        ["SHIPPED", "IN_TRANSIT", "ARRIVED_AT_PORT", "CUSTOMS_CLEARANCE"].includes(
-          order.status,
-        ),
+        [
+          "SHIPPED",
+          "IN_TRANSIT",
+          "ARRIVED_AT_PORT",
+          "CUSTOMS_CLEARANCE",
+        ].includes(order.status),
       );
     }
     if (filter === "delivered") {
@@ -67,9 +70,12 @@ export default function ExporterDashboardPage() {
       key: "in_transit" as const,
       label: "Transit",
       count: orders.filter((order) =>
-        ["SHIPPED", "IN_TRANSIT", "ARRIVED_AT_PORT", "CUSTOMS_CLEARANCE"].includes(
-          order.status,
-        ),
+        [
+          "SHIPPED",
+          "IN_TRANSIT",
+          "ARRIVED_AT_PORT",
+          "CUSTOMS_CLEARANCE",
+        ].includes(order.status),
       ).length,
     },
     {

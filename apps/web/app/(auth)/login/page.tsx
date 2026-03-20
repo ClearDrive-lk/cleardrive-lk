@@ -57,7 +57,8 @@ const SECURITY_CONTROLS = [
     summary: "Anomalous sign-ins are flagged.",
     detail:
       "Session metadata and suspicious-activity checks run in the verification pipeline before finalizing access.",
-    proof: "Risk signaling is wired into OTP verification and session creation flow.",
+    proof:
+      "Risk signaling is wired into OTP verification and session creation flow.",
     icon: Radar,
   },
 ] as const;

@@ -32,19 +32,26 @@ export default function ExporterActivePage() {
   const [scope, setScope] = useState<"all" | "action" | "transit">("all");
 
   const activeOrders = useMemo(
-    () => orders.filter((order) => !["DELIVERED", "CANCELLED"].includes(order.status)),
+    () =>
+      orders.filter(
+        (order) => !["DELIVERED", "CANCELLED"].includes(order.status),
+      ),
     [orders],
   );
   const needsAction = useMemo(
-    () => activeOrders.filter((order) => NEEDS_EXPORTER_ACTION.has(order.status)),
+    () =>
+      activeOrders.filter((order) => NEEDS_EXPORTER_ACTION.has(order.status)),
     [activeOrders],
   );
   const inTransit = useMemo(
     () =>
       activeOrders.filter((order) =>
-        ["SHIPPED", "IN_TRANSIT", "ARRIVED_AT_PORT", "CUSTOMS_CLEARANCE"].includes(
-          order.status,
-        ),
+        [
+          "SHIPPED",
+          "IN_TRANSIT",
+          "ARRIVED_AT_PORT",
+          "CUSTOMS_CLEARANCE",
+        ].includes(order.status),
       ),
     [activeOrders],
   );
@@ -110,13 +117,21 @@ export default function ExporterActivePage() {
       <ExporterPanel className="p-4">
         <div className="flex flex-wrap gap-2">
           {[
-            { key: "all" as const, label: "All Active", count: activeOrders.length },
+            {
+              key: "all" as const,
+              label: "All Active",
+              count: activeOrders.length,
+            },
             {
               key: "action" as const,
               label: EXPORTER_TERMS.actionRequired,
               count: needsAction.length,
             },
-            { key: "transit" as const, label: "In Transit", count: inTransit.length },
+            {
+              key: "transit" as const,
+              label: "In Transit",
+              count: inTransit.length,
+            },
           ].map((item) => (
             <button
               key={item.key}

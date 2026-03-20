@@ -9,7 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { useAssignedOrders } from "@/lib/hooks/useAssignedOrders";
-import { ExporterPageShell, ExporterPanel } from "@/components/exporter/ExporterPageShell";
+import {
+  ExporterPageShell,
+  ExporterPanel,
+} from "@/components/exporter/ExporterPageShell";
 import { EXPORTER_TERMS } from "@/lib/exporter-phrases";
 
 type FormState = {
@@ -214,7 +217,9 @@ export default function ExporterShippingDetailsPage() {
       "sealNumber",
       "trackingNumber",
     ];
-    const filled = requiredFields.filter((field) => form[field].trim().length > 0);
+    const filled = requiredFields.filter(
+      (field) => form[field].trim().length > 0,
+    );
     return Math.round((filled.length / requiredFields.length) * 100);
   }, [form]);
 
@@ -343,7 +348,9 @@ export default function ExporterShippingDetailsPage() {
           </p>
         ) : null}
         {detailsError ? (
-          <p className="text-sm text-red-700 dark:text-red-200">{detailsError}</p>
+          <p className="text-sm text-red-700 dark:text-red-200">
+            {detailsError}
+          </p>
         ) : null}
 
         <div className="space-y-2">
@@ -453,9 +460,13 @@ export default function ExporterShippingDetailsPage() {
             />
           </div>
 
-          {error ? <p className="text-sm text-red-700 dark:text-red-200">{error}</p> : null}
+          {error ? (
+            <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+          ) : null}
           {success ? (
-            <p className="text-sm text-emerald-700 dark:text-emerald-300">{success}</p>
+            <p className="text-sm text-emerald-700 dark:text-emerald-300">
+              {success}
+            </p>
           ) : null}
 
           <Button

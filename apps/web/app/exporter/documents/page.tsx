@@ -120,7 +120,8 @@ export default function ExporterDocumentsPage() {
               {selectedOrderId}
             </p>
             <p className="mt-1 text-xs text-[#546a7b] dark:text-[#bdcad4]">
-              Upload set should include {EXPORTER_TERMS.billOfLading}, invoice, and packing list to speed approval.
+              Upload set should include {EXPORTER_TERMS.billOfLading}, invoice,
+              and packing list to speed approval.
             </p>
           </div>
           <div className="p-5 md:p-6">
