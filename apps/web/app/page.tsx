@@ -91,7 +91,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const duration = 7500;
+    const duration = 9500;
 
     const animateLane = (timestamp: number) => {
       const progress = (timestamp % duration) / duration;
@@ -596,12 +596,9 @@ export default function Home() {
               <div className="absolute inset-y-0 left-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.18),transparent)] animate-scanline" />
               <div className="lane-vehicle-wrap absolute inset-y-0 left-0 w-full">
                 <div className="lane-vehicle">
-                  <div className="lane-vehicle-body" />
-                  <div className="lane-vehicle-cab">
+                  <div className="lane-vehicle-core">
                     <Truck className="h-4 w-4" />
                   </div>
-                  <span className="lane-wheel lane-wheel--front" />
-                  <span className="lane-wheel lane-wheel--rear" />
                 </div>
               </div>
             </div>
