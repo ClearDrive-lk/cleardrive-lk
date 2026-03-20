@@ -116,8 +116,8 @@ export default function CookiePreferences() {
           Cookie Preferences
         </h1>
         <p className="mt-2 text-[#546a7b] dark:text-[#bdcad4]">
-          Control which cookies ClearDrive.lk uses. Essential cookies are
-          always active. You can change your preferences at any time.
+          Control which cookies ClearDrive.lk uses. Essential cookies are always
+          active. You can change your preferences at any time.
         </p>
       </div>
 
@@ -231,4 +231,3 @@ export default function CookiePreferences() {
     </div>
   );
 }
-

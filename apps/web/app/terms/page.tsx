@@ -36,8 +36,8 @@ export default function TermsPage() {
               confirmed.
             </li>
             <li>
-              Live auction data is provided for informational use and may
-              change without notice.
+              Live auction data is provided for informational use and may change
+              without notice.
             </li>
             <li>
               Import duties, taxes, and clearance timelines are estimates and

@@ -20,15 +20,15 @@ export default function PrivacyPage() {
             </h1>
           </div>
           <p className="leading-relaxed text-[#546a7b] dark:text-[#bdcad4]">
-            ClearDrive.lk collects the minimum data required to verify
-            identity, process orders, and provide shipment updates. We use
-            secure storage and encryption for sensitive records and never sell
-            your personal information.
+            ClearDrive.lk collects the minimum data required to verify identity,
+            process orders, and provide shipment updates. We use secure storage
+            and encryption for sensitive records and never sell your personal
+            information.
           </p>
           <ul className="space-y-3 text-sm text-[#546a7b] dark:text-[#bdcad4]">
             <li>
-              We store contact, identity, and transaction details to comply
-              with KYC and import regulations.
+              We store contact, identity, and transaction details to comply with
+              KYC and import regulations.
             </li>
             <li>
               Payment references are stored for auditability and dispute

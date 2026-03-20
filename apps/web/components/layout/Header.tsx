@@ -143,7 +143,10 @@ export default function Header() {
                 </Link>
               </>
             )}
-            <Link href="/about" className={isActive("/about") ? activeLink : linkBase}>
+            <Link
+              href="/about"
+              className={isActive("/about") ? activeLink : linkBase}
+            >
               About Us
             </Link>
           </div>

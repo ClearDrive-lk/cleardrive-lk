@@ -82,8 +82,7 @@ export default function ProfilePage() {
     try {
       const parsed = JSON.parse(raw) as Partial<ProfilePreferences>;
       setPreferences({
-        emailUpdates:
-          parsed.emailUpdates ?? DEFAULT_PREFERENCES.emailUpdates,
+        emailUpdates: parsed.emailUpdates ?? DEFAULT_PREFERENCES.emailUpdates,
         auctionAlerts:
           parsed.auctionAlerts ?? DEFAULT_PREFERENCES.auctionAlerts,
         weeklyDigest: parsed.weeklyDigest ?? DEFAULT_PREFERENCES.weeklyDigest,
@@ -198,7 +197,10 @@ export default function ProfilePage() {
   })();
 
   const completionItems = [
-    { label: "Name and email present", done: Boolean(user?.name && user?.email) },
+    {
+      label: "Name and email present",
+      done: Boolean(user?.name && user?.email),
+    },
     { label: "KYC submitted", done: Boolean(kycStatus?.has_kyc) },
     { label: "At least one order", done: orderStats.total > 0 },
     {
@@ -392,7 +394,9 @@ export default function ProfilePage() {
                         Quick overview of your orders and verification status.
                       </p>
                     </div>
-                    <Badge className={kycBadge.className}>{kycBadge.label}</Badge>
+                    <Badge className={kycBadge.className}>
+                      {kycBadge.label}
+                    </Badge>
                   </div>
 
                   {insightsError ? (
@@ -615,7 +619,9 @@ export default function ProfilePage() {
                     className="mt-4 w-full border-[#546a7b]/55 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/35 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    {isLoading ? "Signing out..." : "Sign Out & Return to Login"}
+                    {isLoading
+                      ? "Signing out..."
+                      : "Sign Out & Return to Login"}
                   </Button>
                 </section>
               </aside>
