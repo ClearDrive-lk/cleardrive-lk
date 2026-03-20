@@ -1,0 +1,88 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ui/theme-toggle";
+import { BrandMark, BrandWordmark } from "@/components/ui/brand";
+import { useLogout } from "@/lib/hooks/useLogout";
+
+type NavItem = {
+  label: string;
+  href: string;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Orders", href: "/dashboard/orders" },
+  { label: "Vehicles", href: "/dashboard/vehicles" },
+  { label: "KYC", href: "/dashboard/kyc" },
+  { label: "Shipping", href: "/dashboard/shipping" },
+  { label: "Documents", href: "/dashboard/documents" },
+  { label: "Profile", href: "/dashboard/profile" },
+];
+
+function isItemActive(pathname: string, href: string): boolean {
+  if (href === "/dashboard") {
+    return pathname === href;
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export default function CustomerDashboardNav() {
+  const pathname = usePathname();
+  const { logout, isLoading } = useLogout();
+
+  return (
+    <nav className="border-b border-[#546a7b]/45 dark:border-[#8fa3b1]/35 bg-[#fdfdff]/80 dark:bg-[#10191e]/80 backdrop-blur-md sticky top-0 z-50">
+      <div className="cd-container h-16 flex items-center justify-between">
+        <Link
+          href="/"
+          className="font-bold text-xl tracking-tighter flex items-center gap-2 group text-[#1f2937] dark:text-[#edf2f7]"
+        >
+          <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10 group-hover:bg-[#62929e]/20 transition-colors" />
+          <BrandWordmark />
+        </Link>
+
+        <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b] dark:text-[#b8c7d4]">
+          {NAV_ITEMS.map((item) => {
+            const active = isItemActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  active
+                    ? "text-[#1f2937] dark:text-[#edf2f7] transition-colors flex items-center gap-2"
+                    : "hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
+                }
+              >
+                {item.label}
+                {active && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-[#62929e]/30 text-[#3f7480] dark:text-[#88d6e4] h-4 px-1"
+                  >
+                    ACTIVE
+                  </Badge>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Button
+            onClick={logout}
+            disabled={isLoading}
+            className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
+          >
+            {isLoading ? "Signing Out..." : "Sign Out"}
+          </Button>
+        </div>
+      </div>
+    </nav>
+  );
+}

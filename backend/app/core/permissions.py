@@ -134,6 +134,8 @@ ROLE_PERMISSIONS: dict[Role, Set[Permission]] = {
         # Documents
         Permission.UPLOAD_DOCUMENTS,
         Permission.VIEW_OWN_DOCUMENTS,
+        # Shipping documents (customer-owned orders only; route-level ownership enforced)
+        Permission.UPLOAD_SHIPMENT_DOCUMENTS,
         # Profile
         Permission.VIEW_OWN_PROFILE,
         Permission.EDIT_OWN_PROFILE,

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import AuthGuard from "@/components/auth/AuthGuard";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 import { apiClient } from "@/lib/api-client";
 import Link from "next/link";
 import { isAxiosError } from "axios";
@@ -141,122 +142,143 @@ export default function ShippingDetailsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f]">
-        <div className="cd-container-narrow py-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">
-                Shipping Details Submission
-              </h1>
-              <p className="text-[#546a7b] mt-1">
-                Submit vessel and shipment details for your assigned order.
-              </p>
+      <div className="min-h-screen bg-[#fdfdff] dark:bg-[#0f1417] text-[#1f2937] dark:text-[#edf2f7] font-sans flex flex-col">
+        <CustomerDashboardNav />
+
+        <section className="relative flex-1 overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+          <div className="absolute top-[8%] left-1/2 -translate-x-1/2 w-[1000px] h-[520px] bg-[#62929e]/6 rounded-[100%] blur-[120px] pointer-events-none" />
+
+          <div className="relative z-10 cd-container-narrow py-8 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-[#1f2937] dark:text-[#edf2f7]">
+                  Shipping Details Submission
+                </h1>
+                <p className="text-[#4f6576] dark:text-[#bdcad4] mt-1">
+                  Submit vessel and shipment details for your assigned order.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-semibold text-[#3f7480] dark:text-[#9edcec] hover:underline"
+                >
+                  Back to Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/orders"
+                  className="text-sm font-semibold text-[#3f7480] dark:text-[#9edcec] hover:underline"
+                >
+                  Back to Orders
+                </Link>
+              </div>
             </div>
-            <Link
-              href="/dashboard/orders"
-              className="text-[#62929e] hover:underline"
+
+            <form
+              onSubmit={onSubmit}
+              className="space-y-4 bg-[#fdfdff] dark:bg-[#111b21] border border-[#546a7b]/55 dark:border-[#8ea3b4]/35 rounded-lg p-6"
             >
-              Back to Orders
-            </Link>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Order ID (UUID)"
+                  value={form.orderId}
+                  onChange={(e) => updateField("orderId", e.target.value)}
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Vessel Name"
+                  value={form.vesselName}
+                  onChange={(e) => updateField("vesselName", e.target.value)}
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Vessel Registration"
+                  value={form.vesselRegistration}
+                  onChange={(e) =>
+                    updateField("vesselRegistration", e.target.value)
+                  }
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Voyage Number"
+                  value={form.voyageNumber}
+                  onChange={(e) => updateField("voyageNumber", e.target.value)}
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Departure Port"
+                  value={form.departurePort}
+                  onChange={(e) => updateField("departurePort", e.target.value)}
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Arrival Port"
+                  value={form.arrivalPort}
+                  onChange={(e) => updateField("arrivalPort", e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  value={form.departureDate}
+                  onChange={(e) => updateField("departureDate", e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  value={form.estimatedArrivalDate}
+                  onChange={(e) =>
+                    updateField("estimatedArrivalDate", e.target.value)
+                  }
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Container Number"
+                  value={form.containerNumber}
+                  onChange={(e) =>
+                    updateField("containerNumber", e.target.value)
+                  }
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Bill of Landing Number"
+                  value={form.billOfLandingNumber}
+                  onChange={(e) =>
+                    updateField("billOfLandingNumber", e.target.value)
+                  }
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Seal Number"
+                  value={form.sealNumber}
+                  onChange={(e) => updateField("sealNumber", e.target.value)}
+                />
+                <input
+                  className="px-3 py-2 rounded bg-[#fdfdff] dark:bg-[#0f1417] border border-[#546a7b]/50 dark:border-[#8ea3b4]/35"
+                  placeholder="Tracking Number"
+                  value={form.trackingNumber}
+                  onChange={(e) =>
+                    updateField("trackingNumber", e.target.value)
+                  }
+                />
+              </div>
+
+              {error && <div className="text-red-300 text-sm">{error}</div>}
+              {success && (
+                <div className="text-emerald-300 text-sm">{success}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className="px-4 py-2 rounded bg-[#62929e] text-[#fdfdff] font-semibold disabled:opacity-60"
+              >
+                {submitting ? "Submitting..." : "Submit Shipping Details"}
+              </button>
+            </form>
           </div>
-
-          <form
-            onSubmit={onSubmit}
-            className="space-y-4 bg-[#fdfdff] border border-[#546a7b]/65 rounded-lg p-6"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Order ID (UUID)"
-                value={form.orderId}
-                onChange={(e) => updateField("orderId", e.target.value)}
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Vessel Name"
-                value={form.vesselName}
-                onChange={(e) => updateField("vesselName", e.target.value)}
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Vessel Registration"
-                value={form.vesselRegistration}
-                onChange={(e) =>
-                  updateField("vesselRegistration", e.target.value)
-                }
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Voyage Number"
-                value={form.voyageNumber}
-                onChange={(e) => updateField("voyageNumber", e.target.value)}
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Departure Port"
-                value={form.departurePort}
-                onChange={(e) => updateField("departurePort", e.target.value)}
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Arrival Port"
-                value={form.arrivalPort}
-                onChange={(e) => updateField("arrivalPort", e.target.value)}
-              />
-              <input
-                type="date"
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                value={form.departureDate}
-                onChange={(e) => updateField("departureDate", e.target.value)}
-              />
-              <input
-                type="date"
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                value={form.estimatedArrivalDate}
-                onChange={(e) =>
-                  updateField("estimatedArrivalDate", e.target.value)
-                }
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Container Number"
-                value={form.containerNumber}
-                onChange={(e) => updateField("containerNumber", e.target.value)}
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Bill of Landing Number"
-                value={form.billOfLandingNumber}
-                onChange={(e) =>
-                  updateField("billOfLandingNumber", e.target.value)
-                }
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Seal Number"
-                value={form.sealNumber}
-                onChange={(e) => updateField("sealNumber", e.target.value)}
-              />
-              <input
-                className="px-3 py-2 rounded bg-[#fdfdff] border border-[#546a7b]/50"
-                placeholder="Tracking Number"
-                value={form.trackingNumber}
-                onChange={(e) => updateField("trackingNumber", e.target.value)}
-              />
-            </div>
-
-            {error && <div className="text-red-300 text-sm">{error}</div>}
-            {success && <div className="text-green-300 text-sm">{success}</div>}
-
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="px-4 py-2 rounded bg-[#62929e] text-[#fdfdff] font-semibold disabled:opacity-60"
-            >
-              {submitting ? "Submitting..." : "Submit Shipping Details"}
-            </button>
-          </form>
-        </div>
+        </section>
       </div>
     </AuthGuard>
   );

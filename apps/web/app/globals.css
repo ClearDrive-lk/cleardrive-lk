@@ -188,17 +188,23 @@ body::-webkit-scrollbar {
   );
 }
 
-.dark [class~="text-[#546a7b]"],
-.dark [class~="text-[#62929e]"],
-.dark [class~="text-[#393d3f]"] {
+.dark [class*="text-[#546a7b]"],
+.dark [class*="text-[#62929e]"],
+.dark [class*="text-[#393d3f]"] {
   color: hsl(var(--foreground));
 }
-.dark [class~="text-gray-900"],
-.dark [class~="text-gray-800"],
-.dark [class~="text-gray-700"],
-.dark [class~="text-gray-600"],
-.dark [class~="text-gray-500"],
-.dark [class~="text-gray-400"] {
+.dark [class*="text-gray-900"],
+.dark [class*="text-gray-800"],
+.dark [class*="text-gray-700"],
+.dark [class*="text-gray-600"],
+.dark [class*="text-gray-500"],
+.dark [class*="text-gray-400"],
+.dark [class*="text-slate-900"],
+.dark [class*="text-slate-800"],
+.dark [class*="text-slate-700"],
+.dark [class*="text-slate-600"],
+.dark [class*="text-slate-500"],
+.dark [class*="text-slate-400"] {
   color: hsl(var(--foreground));
 }
 
@@ -2201,16 +2207,23 @@ body::-webkit-scrollbar {
   .theme-override [class~="text-[#62929e]"] {
     color: hsl(var(--primary)) !important;
   }
-  .dark .theme-override [class~="text-[#546a7b]"],
-  .dark .theme-override [class~="text-[#62929e]"] {
+  .dark .theme-override [class*="text-[#546a7b]"],
+  .dark .theme-override [class*="text-[#62929e]"],
+  .dark .theme-override [class*="text-[#393d3f]"] {
     color: hsl(var(--foreground)) !important;
   }
-  .dark .theme-override [class~="text-gray-900"],
-  .dark .theme-override [class~="text-gray-800"],
-  .dark .theme-override [class~="text-gray-700"],
-  .dark .theme-override [class~="text-gray-600"],
-  .dark .theme-override [class~="text-gray-500"],
-  .dark .theme-override [class~="text-gray-400"] {
+  .dark .theme-override [class*="text-gray-900"],
+  .dark .theme-override [class*="text-gray-800"],
+  .dark .theme-override [class*="text-gray-700"],
+  .dark .theme-override [class*="text-gray-600"],
+  .dark .theme-override [class*="text-gray-500"],
+  .dark .theme-override [class*="text-gray-400"],
+  .dark .theme-override [class*="text-slate-900"],
+  .dark .theme-override [class*="text-slate-800"],
+  .dark .theme-override [class*="text-slate-700"],
+  .dark .theme-override [class*="text-slate-600"],
+  .dark .theme-override [class*="text-slate-500"],
+  .dark .theme-override [class*="text-slate-400"] {
     color: hsl(var(--foreground)) !important;
   }
 }

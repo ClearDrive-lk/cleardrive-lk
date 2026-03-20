@@ -41,6 +41,7 @@ const ROLE_PERMISSIONS: Record<string, Set<Permission>> = {
     Permission.CREATE_ORDER,
     Permission.VIEW_OWN_ORDERS,
     Permission.SUBMIT_KYC,
+    Permission.UPLOAD_SHIPMENT_DOCUMENTS,
   ]),
 
   ADMIN: new Set(Object.values(Permission)), // All permissions
