@@ -1847,75 +1847,83 @@ async def update_catalog_row(
     values = payload.values
 
     if dataset == "global_tax_parameters":
-        record = (
+        global_record = (
             db.query(GlobalTaxParameter)
             .filter(
                 GlobalTaxParameter.id == parsed_record_id, GlobalTaxParameter.is_active.is_(True)
             )
             .first()
         )
-        if record is None:
+        if global_record is None:
             raise HTTPException(status_code=404, detail="Catalog row not found")
-        updated = versioning_service.update_global_tax_parameter(
-            record=record,
-            parameter_group=str(values.get("parameter_group") or record.parameter_group)
+        updated_global = versioning_service.update_global_tax_parameter(
+            record=global_record,
+            parameter_group=str(values.get("parameter_group") or global_record.parameter_group)
             .strip()
             .upper(),
-            parameter_name=str(values.get("parameter_name") or record.parameter_name)
+            parameter_name=str(values.get("parameter_name") or global_record.parameter_name)
             .strip()
             .upper(),
-            condition_or_type=str(values.get("condition_or_type") or record.condition_or_type)
+            condition_or_type=str(
+                values.get("condition_or_type") or global_record.condition_or_type
+            )
             .strip()
             .upper(),
-            value=_parse_csv_decimal(values.get("value")) or record.value,
-            unit=str(values.get("unit") or record.unit).strip().upper(),
-            calculation_order=_parse_int(values.get("calculation_order"), record.calculation_order),
+            value=_parse_csv_decimal(values.get("value")) or global_record.value,
+            unit=str(values.get("unit") or global_record.unit).strip().upper(),
+            calculation_order=_parse_int(
+                values.get("calculation_order"), global_record.calculation_order
+            ),
             applicability_flag=(
                 str(values.get("applicability_flag")).strip().upper()
                 if values.get("applicability_flag") not in (None, "")
-                else record.applicability_flag
+                else global_record.applicability_flag
             ),
             effective_date=_parse_effective_date(values.get("effective_date"))
-            or record.effective_date,
+            or global_record.effective_date,
             changed_by=current_user.id,
             change_reason=change_reason,
         )
         db.commit()
-        db.refresh(updated)
-        return _serialize_catalog_record(updated, dataset)
+        db.refresh(updated_global)
+        return _serialize_catalog_record(updated_global, dataset)
 
     if dataset == "hs_code_matrix":
-        record = (
+        hs_record = (
             db.query(HSCodeMatrixRule)
             .filter(HSCodeMatrixRule.id == parsed_record_id, HSCodeMatrixRule.is_active.is_(True))
             .first()
         )
-        if record is None:
+        if hs_record is None:
             raise HTTPException(status_code=404, detail="Catalog row not found")
-        updated = versioning_service.update_hs_code_matrix_rule(
-            record=record,
-            vehicle_type=str(values.get("vehicle_type") or record.vehicle_type).strip().upper(),
-            fuel_type=str(values.get("fuel_type") or record.fuel_type).strip().upper(),
-            age_condition=str(values.get("age_condition") or record.age_condition).strip().upper(),
-            hs_code=str(values.get("hs_code") or record.hs_code).strip(),
-            capacity_min=_parse_csv_decimal(values.get("capacity_min")) or record.capacity_min,
-            capacity_max=_parse_csv_decimal(values.get("capacity_max")) or record.capacity_max,
-            capacity_unit=str(values.get("capacity_unit") or record.capacity_unit).strip().upper(),
-            cid_pct=_parse_csv_decimal(values.get("cid_pct")) or record.cid_pct,
-            pal_pct=_parse_csv_decimal(values.get("pal_pct")) or record.pal_pct,
-            cess_pct=_parse_csv_decimal(values.get("cess_pct")) or record.cess_pct,
+        updated_hs = versioning_service.update_hs_code_matrix_rule(
+            record=hs_record,
+            vehicle_type=str(values.get("vehicle_type") or hs_record.vehicle_type).strip().upper(),
+            fuel_type=str(values.get("fuel_type") or hs_record.fuel_type).strip().upper(),
+            age_condition=str(values.get("age_condition") or hs_record.age_condition)
+            .strip()
+            .upper(),
+            hs_code=str(values.get("hs_code") or hs_record.hs_code).strip(),
+            capacity_min=_parse_csv_decimal(values.get("capacity_min")) or hs_record.capacity_min,
+            capacity_max=_parse_csv_decimal(values.get("capacity_max")) or hs_record.capacity_max,
+            capacity_unit=str(values.get("capacity_unit") or hs_record.capacity_unit)
+            .strip()
+            .upper(),
+            cid_pct=_parse_csv_decimal(values.get("cid_pct")) or hs_record.cid_pct,
+            pal_pct=_parse_csv_decimal(values.get("pal_pct")) or hs_record.pal_pct,
+            cess_pct=_parse_csv_decimal(values.get("cess_pct")) or hs_record.cess_pct,
             excise_unit_rate_lkr=(
                 _parse_csv_decimal(values.get("excise_unit_rate_lkr"))
-                or record.excise_unit_rate_lkr
+                or hs_record.excise_unit_rate_lkr
             ),
             effective_date=_parse_effective_date(values.get("effective_date"))
-            or record.effective_date,
+            or hs_record.effective_date,
             changed_by=current_user.id,
             change_reason=change_reason,
         )
         db.commit()
-        db.refresh(updated)
-        return _serialize_catalog_record(updated, dataset)
+        db.refresh(updated_hs)
+        return _serialize_catalog_record(updated_hs, dataset)
 
     raise HTTPException(status_code=400, detail="Unsupported catalog dataset")
 
@@ -1933,17 +1941,17 @@ async def delete_catalog_row(
     reason = change_reason or "Manual catalog deactivation"
 
     if dataset == "global_tax_parameters":
-        record = (
+        global_record = (
             db.query(GlobalTaxParameter)
             .filter(
                 GlobalTaxParameter.id == parsed_record_id, GlobalTaxParameter.is_active.is_(True)
             )
             .first()
         )
-        if record is None:
+        if global_record is None:
             raise HTTPException(status_code=404, detail="Catalog row not found")
         versioning_service.deactivate_global_tax_parameter(
-            record=record,
+            record=global_record,
             changed_by=current_user.id,
             change_reason=reason,
         )
@@ -1951,15 +1959,15 @@ async def delete_catalog_row(
         return {"message": "Catalog row deactivated"}
 
     if dataset == "hs_code_matrix":
-        record = (
+        hs_record = (
             db.query(HSCodeMatrixRule)
             .filter(HSCodeMatrixRule.id == parsed_record_id, HSCodeMatrixRule.is_active.is_(True))
             .first()
         )
-        if record is None:
+        if hs_record is None:
             raise HTTPException(status_code=404, detail="Catalog row not found")
         versioning_service.deactivate_hs_code_matrix_rule(
-            record=record,
+            record=hs_record,
             changed_by=current_user.id,
             change_reason=reason,
         )
@@ -2182,16 +2190,16 @@ async def approve_gazette(
     db.query(CustomsRule).delete()
     db.query(SurchargeRule).delete()
     db.query(LuxuryTaxRule).delete()
-    for rule in legacy_rules:
-        db.add(rule)
-    for rule in vehicle_tax_rules:
-        db.add(rule)
-    for rule in customs_rules:
-        db.add(rule)
-    for rule in surcharge_rules:
-        db.add(rule)
-    for rule in luxury_tax_rules:
-        db.add(rule)
+    for legacy_rule in legacy_rules:
+        db.add(legacy_rule)
+    for vehicle_tax_rule in vehicle_tax_rules:
+        db.add(vehicle_tax_rule)
+    for customs_rule in customs_rules:
+        db.add(customs_rule)
+    for surcharge_rule in surcharge_rules:
+        db.add(surcharge_rule)
+    for luxury_tax_rule in luxury_tax_rules:
+        db.add(luxury_tax_rule)
     db.add(
         AuditLog(
             event_type=AuditEventType.GAZETTE_APPROVED,

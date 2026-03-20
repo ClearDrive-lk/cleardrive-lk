@@ -484,12 +484,17 @@ def _canonical_rule_matches(
     age_min_years: float,
     age_max_years: float,
 ) -> bool:
-    return (
-        candidate["category_code"] == category_code
-        and candidate["power_min_kw"] == power_min_kw
-        and candidate["power_max_kw"] == power_max_kw
-        and candidate["age_min_years"] == age_min_years
-        and candidate["age_max_years"] == age_max_years
+    candidate_category = str(candidate.get("category_code") or "")
+    candidate_power_min = _canonicalize_numeric(candidate.get("power_min_kw"))
+    candidate_power_max = _canonicalize_numeric(candidate.get("power_max_kw"))
+    candidate_age_min = _canonicalize_numeric(candidate.get("age_min_years"))
+    candidate_age_max = _canonicalize_numeric(candidate.get("age_max_years"))
+    return bool(
+        candidate_category == category_code
+        and candidate_power_min == power_min_kw
+        and candidate_power_max == power_max_kw
+        and candidate_age_min == age_min_years
+        and candidate_age_max == age_max_years
     )
 
 
