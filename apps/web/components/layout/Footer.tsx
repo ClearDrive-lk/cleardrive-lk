@@ -139,11 +139,20 @@ export default function Footer() {
               </li>
               <li>
                 <a
+                  href="mailto:cleardrivelk@gmail.com"
+                  className="inline-flex items-center gap-2 transition hover:text-[#62929e] dark:hover:text-[#88d6e4]"
+                >
+                  <Mail className="h-4 w-4" />
+                  cleardrivelk@gmail.com
+                </a>
+              </li>
+              <li>
+                <a
                   href="tel:+94771234567"
                   className="inline-flex items-center gap-2 transition hover:text-[#62929e] dark:hover:text-[#88d6e4]"
                 >
                   <PhoneCall className="h-4 w-4" />
-                  +94 77 123 4567
+                  +94 77 695 7571
                 </a>
               </li>
               <li>
