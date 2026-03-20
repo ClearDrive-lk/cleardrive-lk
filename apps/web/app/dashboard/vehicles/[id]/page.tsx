@@ -75,8 +75,9 @@ function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const hasSession = Boolean(getAccessToken() || getRefreshToken());
-  const isAuthed = isAuthenticated || hasSession;
+  const [hasSession, setHasSession] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const isAuthed = authReady && (isAuthenticated || hasSession);
 
   const { data: vehicle, isLoading, isError } = useVehicle(id);
   const { data: galleryImages } = useVehicleImages(id);
@@ -84,6 +85,11 @@ function VehicleDetail() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    setHasSession(Boolean(getAccessToken() || getRefreshToken()));
+    setAuthReady(true);
+  }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 30000);

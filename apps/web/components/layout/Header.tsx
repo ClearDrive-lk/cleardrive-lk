@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/lib/store/store";
 import { LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ThemeToggle from "@/components/ui/theme-toggle";
@@ -20,8 +21,15 @@ export default function Header() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const role = normalizeRole(user?.role);
   const { logout, isLoading } = useLogout();
-  const hasSession = Boolean(getAccessToken() || getRefreshToken());
+  const [hasSession, setHasSession] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const showCustomerOnlyNav = isAuthenticated && role === "CUSTOMER";
+  const isAuthed = authReady && (isAuthenticated || hasSession);
+
+  useEffect(() => {
+    setHasSession(Boolean(getAccessToken() || getRefreshToken()));
+    setAuthReady(true);
+  }, []);
 
   const isActive = (path: string) => pathname === path;
   const linkBase =
@@ -33,7 +41,7 @@ export default function Header() {
       <div className="cd-container h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
-          href={isAuthenticated || hasSession ? "/dashboard" : "/"}
+          href={isAuthed ? "/dashboard" : "/"}
           className="flex items-center gap-2 text-xl font-bold tracking-tighter text-[#393d3f] dark:text-[#edf2f7]"
         >
           <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
@@ -155,7 +163,7 @@ export default function Header() {
         {/* User Actions */}
         <div className="flex gap-3 items-center">
           <ThemeToggle />
-          {isAuthenticated ? (
+          {isAuthed ? (
             <>
               <span className="hidden font-mono text-sm text-[#546a7b] dark:text-[#b8c7d4] md:block">
                 {user?.name}
