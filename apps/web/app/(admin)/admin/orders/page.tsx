@@ -142,7 +142,9 @@ export default function AdminOrdersPage() {
           </h1>
           <p className="max-w-3xl text-sm text-[#546a7b]">
             Review orders in{" "}
-            <span className="font-medium text-gray-200">PAYMENT_CONFIRMED</span>{" "}
+            <span className="font-medium text-emerald-700 dark:text-emerald-200">
+              PAYMENT_CONFIRMED
+            </span>{" "}
             status and assign an exporter to move them into shipment handling.
           </p>
         </header>
@@ -168,7 +170,7 @@ export default function AdminOrdersPage() {
           </div>
           <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
             <p className="text-sm text-[#546a7b]">Status Gate</p>
-            <p className="mt-2 text-lg font-semibold text-emerald-200">
+            <p className="mt-2 text-lg font-semibold text-emerald-700 dark:text-emerald-200">
               PAYMENT_CONFIRMED only
             </p>
           </div>
@@ -187,7 +189,7 @@ export default function AdminOrdersPage() {
             </div>
             <button
               onClick={() => void loadPendingPayments()}
-              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>
@@ -199,7 +201,9 @@ export default function AdminOrdersPage() {
             </div>
           ) : pendingError ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-sm text-red-300">{pendingError}</p>
+              <p className="text-sm text-red-600 dark:text-red-300">
+                {pendingError}
+              </p>
             </div>
           ) : pendingPayments.length === 0 ? (
             <div className="px-6 py-16 text-center text-[#546a7b]">
@@ -250,7 +254,7 @@ export default function AdminOrdersPage() {
                         {order.vehicle_label}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="inline-flex rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                        <div className="inline-flex rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-200">
                           {order.payment_status}
                         </div>
                       </td>
@@ -285,7 +289,7 @@ export default function AdminOrdersPage() {
             </div>
             <button
               onClick={() => void loadData()}
-              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>
@@ -297,7 +301,7 @@ export default function AdminOrdersPage() {
             </div>
           ) : error ? (
             <div className="px-6 py-16 text-center">
-              <p className="text-sm text-red-300">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
             </div>
           ) : orders.length === 0 ? (
             <div className="px-6 py-16 text-center text-[#546a7b]">
@@ -356,7 +360,7 @@ export default function AdminOrdersPage() {
                           : "N/A"}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                        <div className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
                           {order.status}
                         </div>
                       </td>

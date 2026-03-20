@@ -116,7 +116,7 @@ export default function AdminKycPage() {
             <button
               type="button"
               onClick={() => void loadItems()}
-              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>

@@ -286,7 +286,7 @@ export default function AdminKycReviewDetailPage() {
               {extractionBadge.label}
             </span>
             {detail.manual_extracted_by ? (
-              <span className="inline-flex rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-1 text-xs font-semibold text-gray-200">
+              <span className="inline-flex rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-1 text-xs font-semibold text-[#393d3f]">
                 Saved by {detail.manual_extracted_by}
               </span>
             ) : null}
@@ -383,7 +383,7 @@ export default function AdminKycReviewDetailPage() {
                       nic_number: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
@@ -399,7 +399,7 @@ export default function AdminKycReviewDetailPage() {
                       full_name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
@@ -415,7 +415,7 @@ export default function AdminKycReviewDetailPage() {
                       date_of_birth: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
@@ -431,7 +431,7 @@ export default function AdminKycReviewDetailPage() {
                       gender: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div className="md:col-span-2">
@@ -447,7 +447,7 @@ export default function AdminKycReviewDetailPage() {
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
@@ -463,7 +463,7 @@ export default function AdminKycReviewDetailPage() {
                       issue_date: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
             </div>
@@ -558,7 +558,7 @@ export default function AdminKycReviewDetailPage() {
           <textarea
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-gray-200 shadow-sm focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+            className="mt-2 w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f] shadow-sm focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
             rows={4}
             placeholder="Explain why this KYC submission should be rejected."
           />
@@ -589,7 +589,7 @@ export default function AdminKycReviewDetailPage() {
             <button
               type="button"
               onClick={() => router.push("/admin/kyc")}
-              className="rounded-xl border border-[#546a7b]/65 px-5 py-3 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-5 py-3 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Back to Queue
             </button>

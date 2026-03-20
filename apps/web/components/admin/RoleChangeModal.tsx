@@ -65,8 +65,8 @@ export function RoleChangeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fdfdff]/70">
-      <div className="w-full max-w-md rounded-2xl border border-[#546a7b]/65 bg-[#0b0b0b] p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#fdfdff]/60 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/95 p-6 shadow-2xl shadow-black/20">
         <h2 className="text-xl font-bold text-[#393d3f] mb-4">
           Change User Role
         </h2>
@@ -88,7 +88,7 @@ export function RoleChangeModal({
             <select
               value={newRole}
               onChange={(e) => setNewRole(e.target.value)}
-              className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
+              className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-[#393d3f]"
               required
             >
               <option value="CUSTOMER">Customer</option>
@@ -107,7 +107,7 @@ export function RoleChangeModal({
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
+              className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-[#393d3f]"
               rows={3}
               placeholder="Explain why this role change is necessary..."
               required
@@ -120,7 +120,7 @@ export function RoleChangeModal({
 
           {/* Error Display */}
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-300">
               {error}
             </div>
           )}
@@ -130,7 +130,7 @@ export function RoleChangeModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 hover:bg-[#c6c5b9]/30"
+              className="flex-1 rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] hover:bg-[#c6c5b9]/30"
               disabled={loading}
             >
               Cancel
@@ -148,3 +148,4 @@ export function RoleChangeModal({
     </div>
   );
 }
+

@@ -102,7 +102,7 @@ export default function AdminAccessGate({
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-semibold text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Retry
             </button>

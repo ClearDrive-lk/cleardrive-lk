@@ -273,7 +273,7 @@ export default function AuditLogsPage() {
                 onChange={(event) =>
                   handleDraftChange("eventType", event.target.value)
                 }
-                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-gray-200 focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               >
                 <option value="">All event types</option>
                 {eventTypes.map((eventType) => (
@@ -294,7 +294,7 @@ export default function AuditLogsPage() {
                   handleDraftChange("userId", event.target.value)
                 }
                 placeholder="Filter by affected user UUID"
-                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-gray-200 placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
@@ -308,7 +308,7 @@ export default function AuditLogsPage() {
                   handleDraftChange("adminId", event.target.value)
                 }
                 placeholder="Filter by acting admin UUID"
-                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-gray-200 placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
@@ -322,7 +322,7 @@ export default function AuditLogsPage() {
                 onChange={(event) =>
                   handleDraftChange("startDate", event.target.value)
                 }
-                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-gray-200 focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
@@ -336,7 +336,7 @@ export default function AuditLogsPage() {
                 onChange={(event) =>
                   handleDraftChange("endDate", event.target.value)
                 }
-                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-gray-200 focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
@@ -348,7 +348,7 @@ export default function AuditLogsPage() {
                   handleDraftChange("search", event.target.value)
                 }
                 placeholder="Search details JSON"
-                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-gray-200 placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
           </div>
@@ -364,7 +364,7 @@ export default function AuditLogsPage() {
             <button
               type="button"
               onClick={resetFilters}
-              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Reset
             </button>
@@ -384,7 +384,7 @@ export default function AuditLogsPage() {
             <button
               type="button"
               onClick={() => void loadLogs(currentPage)}
-              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>
@@ -489,7 +489,7 @@ export default function AuditLogsPage() {
                     type="button"
                     disabled={logsResponse.page <= 1}
                     onClick={() => void loadLogs(logsResponse.page - 1)}
-                    className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Previous
                   </button>
@@ -497,7 +497,7 @@ export default function AuditLogsPage() {
                     type="button"
                     disabled={logsResponse.page >= logsResponse.total_pages}
                     onClick={() => void loadLogs(logsResponse.page + 1)}
-                    className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-[#c6c5b9]/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Next
                   </button>

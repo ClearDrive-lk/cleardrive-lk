@@ -206,13 +206,13 @@ export default function AdminShippingPage() {
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
             placeholder="Order UUID"
-            className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
+            className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-[#393d3f] placeholder:text-[#546a7b]"
           />
 
           <select
             value={selectedExporter}
             onChange={(e) => setSelectedExporter(e.target.value)}
-            className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-gray-200"
+            className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-2 text-sm text-[#393d3f]"
           >
             {exporters.map((exporter) => (
               <option key={exporter.id} value={exporter.id}>
@@ -232,12 +232,12 @@ export default function AdminShippingPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-200">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-600 dark:text-red-300">
             {error}
           </div>
         )}
         {success && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 text-sm text-emerald-200">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 text-sm text-emerald-700 dark:text-emerald-200">
             {success}
           </div>
         )}
@@ -259,7 +259,7 @@ export default function AdminShippingPage() {
             Loading pending shipments...
           </div>
         ) : pendingError ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-200">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-600 dark:text-red-300">
             {pendingError}
           </div>
         ) : pendingShipments.length === 0 ? (

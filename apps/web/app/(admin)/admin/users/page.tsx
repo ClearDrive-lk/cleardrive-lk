@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { apiClient } from "@/lib/api-client";
 import { RoleChangeModal } from "@/components/admin/RoleChangeModal";
 import {
@@ -106,14 +107,16 @@ export default function AdminUsersPage() {
       header: "Role",
       cell: ({ row }) => {
         const roleColors: Record<string, string> = {
-          CUSTOMER: "bg-blue-500/10 text-blue-200 border border-blue-500/20",
-          ADMIN: "bg-red-500/10 text-red-200 border border-red-500/20",
+          CUSTOMER:
+            "bg-blue-500/10 text-blue-700 border border-blue-500/20 dark:text-blue-200",
+          ADMIN:
+            "bg-red-500/10 text-red-700 border border-red-500/20 dark:text-red-200",
           EXPORTER:
-            "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
+            "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 dark:text-emerald-200",
           CLEARING_AGENT:
-            "bg-amber-500/10 text-amber-200 border border-amber-500/20",
+            "bg-amber-500/10 text-amber-700 border border-amber-500/20 dark:text-amber-200",
           FINANCE_PARTNER:
-            "bg-purple-500/10 text-purple-200 border border-purple-500/20",
+            "bg-purple-500/10 text-purple-700 border border-purple-500/20 dark:text-purple-200",
         };
 
         const role = row.original.role;
@@ -121,7 +124,7 @@ export default function AdminUsersPage() {
           <span
             className={`px-2 py-1 rounded text-xs font-semibold ${
               roleColors[role] ||
-              "bg-[#c6c5b9]/30 text-gray-200 border border-[#546a7b]/65"
+              "bg-[#c6c5b9]/30 text-[#393d3f] border border-[#546a7b]/65"
             }`}
           >
             {role}
@@ -140,10 +143,12 @@ export default function AdminUsersPage() {
         }
 
         const statusColors: Record<string, string> = {
-          PENDING: "bg-amber-500/10 text-amber-200 border border-amber-500/20",
+          PENDING:
+            "bg-amber-500/10 text-amber-700 border border-amber-500/20 dark:text-amber-200",
           APPROVED:
-            "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
-          REJECTED: "bg-red-500/10 text-red-200 border border-red-500/20",
+            "bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 dark:text-emerald-200",
+          REJECTED:
+            "bg-red-500/10 text-red-700 border border-red-500/20 dark:text-red-200",
         };
 
         return (
@@ -177,14 +182,12 @@ export default function AdminUsersPage() {
           >
             Change Role
           </button>
-          <button
-            onClick={() =>
-              (window.location.href = `/admin/users/${row.original.id}`)
-            }
-            className="px-3 py-1 rounded text-sm border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30"
+          <Link
+            href={`/admin/users/${row.original.id}`}
+            className="px-3 py-1 rounded text-sm border border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30"
           >
             View
-          </button>
+          </Link>
         </div>
       ),
     },
@@ -221,7 +224,7 @@ export default function AdminUsersPage() {
             setSearch(e.target.value);
             setPage(1); // Reset to first page
           }}
-          className="flex-1 rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200 placeholder:text-[#546a7b]"
+          className="flex-1 rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-[#393d3f] placeholder:text-[#546a7b]"
         />
 
         {/* Role Filter */}
@@ -231,7 +234,7 @@ export default function AdminUsersPage() {
             setRoleFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-[#393d3f]"
         >
           <option value="">All Roles</option>
           <option value="CUSTOMER">Customer</option>
@@ -248,7 +251,7 @@ export default function AdminUsersPage() {
             setKycFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2 text-sm text-[#393d3f]"
         >
           <option value="">All KYC Status</option>
           <option value="NONE">Not Submitted</option>
@@ -323,14 +326,14 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="px-4 py-2 rounded border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
-                className="px-4 py-2 rounded border border-[#546a7b]/65 text-gray-200 hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded border border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
