@@ -22,15 +22,15 @@ export default function ExporterAccessGate({
 
   if (!allowed) {
     return (
-      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] flex items-center justify-center px-6">
-        <div className="max-w-lg text-center rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff]/8 p-10">
+      <div className="flex min-h-screen items-center justify-center bg-[#fdfdff] px-6 text-[#393d3f] dark:bg-[#0f1417] dark:text-[#edf2f7]">
+        <div className="max-w-lg rounded-2xl border border-[#546a7b]/45 bg-[#fdfdff]/80 p-10 text-center dark:border-[#8fa3b1]/30 dark:bg-[#131d23]/75">
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-400">
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-semibold text-[#393d3f]">
+          <h1 className="text-2xl font-semibold text-[#393d3f] dark:text-[#edf2f7]">
             Exporter Access Required
           </h1>
-          <p className="mt-3 text-sm text-[#546a7b]">
+          <p className="mt-3 text-sm text-[#546a7b] dark:text-[#bdcad4]">
             Your account does not have access to the exporter terminal. If this
             is unexpected, contact an administrator for role approval.
           </p>

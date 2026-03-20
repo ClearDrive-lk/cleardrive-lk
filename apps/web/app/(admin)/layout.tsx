@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { AdminMobileNav, AdminSidebar } from "@/components/admin/AdminNav";
+import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import AdminAccessGate from "@/components/admin/AdminAccessGate";
 import { BrandMark } from "@/components/ui/brand";
@@ -35,6 +36,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       Live monitoring enabled
                     </p>
                   </div>
+                  <AdminLogoutButton />
                   <ThemeToggle />
                   <div className="lg:hidden">
                     <AdminMobileNav />
