@@ -33,6 +33,8 @@ const playfair = Playfair_Display({
   weight: ["500", "600", "700"],
 });
 
+const AUCTION_LOT_CELLS = Array.from({ length: 20 }, (_, index) => index);
+
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -41,6 +43,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const heroRef = useRef<HTMLElement | null>(null);
   const heroRafRef = useRef<number | null>(null);
+  const laneSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const laneRafRef = useRef<number | null>(null);
   const handleSearch = () => {
     const trimmed = searchTerm.trim();
     if (!trimmed) return;
@@ -78,6 +82,38 @@ export default function Home() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const duration = 7500;
+
+    const animateLane = (timestamp: number) => {
+      const progress = (timestamp % duration) / duration;
+      laneSurfaceRef.current?.style.setProperty(
+        "--lane-progress",
+        progress.toFixed(4),
+      );
+      laneRafRef.current = requestAnimationFrame(animateLane);
+    };
+
+    laneRafRef.current = requestAnimationFrame(animateLane);
+
+    return () => {
+      if (laneRafRef.current !== null) {
+        cancelAnimationFrame(laneRafRef.current);
+      }
+    };
+  }, []);
+
+  const handleLaneMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    const focusX = ((event.clientX - rect.left) / rect.width) * 100;
+    event.currentTarget.style.setProperty("--lane-focus", `${focusX}%`);
+  };
+
+  const resetLaneMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.currentTarget.style.setProperty("--lane-focus", "50%");
+  };
 
   const navHref =
     mounted && (isAuthenticated || hasSession) ? "/dashboard" : "/";
@@ -159,6 +195,182 @@ export default function Home() {
         <div className="absolute -top-24 right-[-160px] w-[420px] h-[420px] rounded-full border border-[#62929e]/25 animate-orbit-slow pointer-events-none transition-transform duration-500 group-hover:translate-y-4" />
         <div className="absolute -bottom-32 left-[-140px] w-[340px] h-[340px] rounded-full border border-[#62929e]/20 animate-orbit-slow pointer-events-none transition-transform duration-500 group-hover:-translate-y-4" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[2] hidden lg:block opacity-45"
+        >
+          <div
+            className="absolute inset-0 opacity-90"
+            style={{
+              background:
+                "radial-gradient(340px circle at var(--mx, 50%) var(--my, 20%), rgba(98,146,158,0.08), transparent 66%)",
+            }}
+          />
+
+          <div
+            className="absolute left-[5%] top-[13%] h-[17.5rem] w-[28rem] rounded-[1.8rem] border border-[#62929e]/30 shadow-[0_24px_50px_rgba(6,12,18,0.24)] backdrop-blur-[2px] transition-transform duration-300 group-hover:-translate-y-1"
+            style={{ backgroundColor: "rgba(253,253,255,0.02)" }}
+          >
+            <div className="absolute inset-x-4 top-5 h-px bg-gradient-to-r from-transparent via-[#62929e]/55 to-transparent" />
+            <div className="absolute inset-x-4 bottom-5 h-px bg-gradient-to-r from-transparent via-[#62929e]/40 to-transparent" />
+            <svg
+              viewBox="0 0 520 260"
+              className="absolute inset-0 h-full w-full opacity-90"
+            >
+              <defs>
+                <linearGradient id="chassisStroke" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="rgba(198,197,185,0.64)" />
+                  <stop offset="55%" stopColor="rgba(98,146,158,0.86)" />
+                  <stop offset="100%" stopColor="rgba(84,106,123,0.7)" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M56 170 L102 170 L138 127 L220 118 L260 94 L343 94 L392 123 L448 131 L468 151 L468 170 L442 170 L420 170 L400 170 L384 170 L136 170 L112 170 L90 170 L56 170 Z"
+                fill="rgba(15,25,32,0.2)"
+                stroke="url(#chassisStroke)"
+                strokeWidth="2.2"
+              />
+              <path
+                d="M170 127 L214 118 L260 95 L333 95 L366 119 L188 120 Z"
+                fill="rgba(98,146,158,0.11)"
+                stroke="rgba(198,197,185,0.45)"
+                strokeWidth="1.3"
+              />
+              <line
+                x1="136"
+                y1="170"
+                x2="136"
+                y2="128"
+                stroke="rgba(98,146,158,0.5)"
+                strokeWidth="1.2"
+              />
+              <line
+                x1="384"
+                y1="170"
+                x2="384"
+                y2="124"
+                stroke="rgba(98,146,158,0.5)"
+                strokeWidth="1.2"
+              />
+              <circle
+                cx="168"
+                cy="170"
+                r="31"
+                fill="rgba(15,20,23,0.34)"
+                stroke="rgba(198,197,185,0.64)"
+                strokeWidth="2"
+              />
+              <circle
+                cx="168"
+                cy="170"
+                r="13"
+                fill="rgba(98,146,158,0.4)"
+                stroke="rgba(198,197,185,0.45)"
+              />
+              <circle
+                cx="353"
+                cy="170"
+                r="31"
+                fill="rgba(15,20,23,0.34)"
+                stroke="rgba(198,197,185,0.64)"
+                strokeWidth="2"
+              />
+              <circle
+                cx="353"
+                cy="170"
+                r="13"
+                fill="rgba(98,146,158,0.4)"
+                stroke="rgba(198,197,185,0.45)"
+              />
+              <circle
+                cx="220"
+                cy="118"
+                r="4"
+                fill="rgba(198,197,185,0.82)"
+                className="animate-pulse"
+              />
+              <circle
+                cx="343"
+                cy="94"
+                r="4"
+                fill="rgba(198,197,185,0.82)"
+                className="animate-pulse"
+                style={{ animationDelay: "0.5s" }}
+              />
+              <path
+                d="M102 170 C147 124, 309 71, 448 131"
+                fill="none"
+                stroke="rgba(98,146,158,0.42)"
+                strokeWidth="1.4"
+                strokeDasharray="5 6"
+              />
+            </svg>
+            <div className="absolute left-[42%] top-[52%] h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#62929e]/30 animate-[spin_12s_linear_infinite]" />
+          </div>
+
+          <div
+            className="absolute right-[6%] top-[18%] h-[21rem] w-[20rem] rounded-[1.7rem] border border-[#546a7b]/45 p-4 shadow-[0_22px_46px_rgba(7,12,18,0.24)] backdrop-blur-[2px] transition-transform duration-300 group-hover:translate-y-1"
+            style={{ backgroundColor: "rgba(253,253,255,0.025)" }}
+          >
+            <div className="absolute inset-0 rounded-[1.7rem] bg-[radial-gradient(circle_at_20%_15%,rgba(98,146,158,0.2),transparent_45%)]" />
+            <div className="relative grid grid-cols-4 gap-2">
+              {AUCTION_LOT_CELLS.map((cell) => (
+                <div
+                  key={cell}
+                  className="h-9 rounded-md border border-[#62929e]/30 bg-[#c6c5b9]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]"
+                >
+                  <div
+                    className="h-full w-full rounded-md bg-gradient-to-r from-transparent via-[#62929e]/30 to-transparent animate-[pulse_2.7s_ease-in-out_infinite]"
+                    style={{ animationDelay: `${(cell % 7) * 0.19}s` }}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="absolute inset-x-6 bottom-6 h-12 rounded-full border border-[#62929e]/38 bg-[#62929e]/10">
+              <div className="absolute left-3 top-1/2 h-6 w-6 -translate-y-1/2 rounded-full border border-[#c6c5b9]/70 bg-[#62929e]/45 shadow-[0_0_16px_rgba(98,146,158,0.52)] animate-[pulse_1.8s_ease-in-out_infinite]" />
+              <div className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 bg-[linear-gradient(90deg,transparent,rgba(198,197,185,0.68),transparent)]" />
+            </div>
+          </div>
+
+          <div className="absolute left-1/2 top-[30%] h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#62929e]/40 transition-[left,top] duration-150" />
+          <div
+            className="absolute h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c6c5b9]/65 shadow-[0_0_26px_rgba(98,146,158,0.48)] transition-[left,top] duration-150"
+            style={{ left: "var(--mx, 50%)", top: "var(--my, 20%)" }}
+          >
+            <div className="absolute inset-[17px] rounded-full bg-[#62929e]/45 animate-ping" />
+          </div>
+
+          <div
+            className="absolute bottom-[12%] left-1/2 h-[7rem] w-[32rem] -translate-x-1/2 rounded-[3rem] border border-[#62929e]/28"
+            style={{ backgroundColor: "rgba(198,197,185,0.03)" }}
+          >
+            <div className="absolute inset-x-8 top-1/2 h-px -translate-y-1/2 bg-[repeating-linear-gradient(90deg,rgba(198,197,185,0.55)_0_12px,transparent_12px_24px)]" />
+            <div className="absolute left-10 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[#62929e] shadow-[0_0_20px_rgba(98,146,158,0.7)] animate-[pulse_1.4s_ease-in-out_infinite]" />
+            <div className="absolute right-10 top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-[#c6c5b9] shadow-[0_0_20px_rgba(198,197,185,0.65)] animate-[pulse_1.7s_ease-in-out_infinite]" />
+          </div>
+        </div>
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-[18%] z-[2] px-6 lg:hidden opacity-40"
+        >
+          <div
+            className="mx-auto h-24 max-w-md rounded-3xl border border-[#62929e]/30 p-4 backdrop-blur-sm"
+            style={{ backgroundColor: "rgba(253,253,255,0.03)" }}
+          >
+            <div className="grid grid-cols-6 gap-2">
+              {AUCTION_LOT_CELLS.slice(0, 12).map((cell) => (
+                <div
+                  key={cell}
+                  className="h-5 rounded-sm border border-[#62929e]/30 bg-[#c6c5b9]/12 animate-pulse"
+                  style={{ animationDelay: `${(cell % 6) * 0.15}s` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="relative z-10 cd-container text-center space-y-8">
           <div className="absolute right-6 top-[-40px] hidden md:block rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 px-4 py-2 text-[10px] font-mono text-[#546a7b] shadow-[0_12px_30px_rgba(0,0,0,0.12)] backdrop-blur animate-float-slow">
             LIVE PIPELINE :: TOKYO -&gt; HAMBANTOTA
@@ -368,17 +580,22 @@ export default function Home() {
                 Real-time route tracking with automated clearance milestones.
               </p>
             </div>
-            <div className="relative w-full md:w-[55%] h-14 rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 overflow-hidden transition-shadow duration-200 group-hover:shadow-[0_10px_30px_rgba(15,23,42,0.15)]">
+            <div
+              ref={laneSurfaceRef}
+              onMouseMove={handleLaneMove}
+              onMouseLeave={resetLaneMove}
+              className="lane-surface relative w-full md:w-[55%] h-14 rounded-full border border-[#546a7b]/40 bg-[#fdfdff]/80 overflow-hidden transition-shadow duration-200 group-hover:shadow-[0_10px_30px_rgba(15,23,42,0.15)]"
+            >
               <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(98,146,158,0.18)_0_6px,transparent_6px_16px)] opacity-60 lane-flow" />
-              <div className="absolute inset-y-0 left-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.25),transparent)] animate-scanline" />
-              <div className="absolute inset-y-0 left-0 flex w-full items-center">
-                <div className="lane-car flex items-center gap-3 group-hover:[animation-duration:3s]">
-                  <div className="h-8 w-8 rounded-full bg-[#62929e] text-[#fdfdff] flex items-center justify-center shadow-[0_12px_24px_rgba(98,146,158,0.4)]">
+              <div className="absolute inset-y-0 left-0 w-24 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.18),transparent)] animate-scanline" />
+              <div className="lane-vehicle-wrap absolute inset-y-0 left-0 w-full">
+                <div className="lane-vehicle">
+                  <div className="lane-vehicle-body" />
+                  <div className="lane-vehicle-cab">
                     <Truck className="h-4 w-4" />
                   </div>
-                  <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#393d3f]">
-                    In Transit
-                  </div>
+                  <span className="lane-wheel lane-wheel--front" />
+                  <span className="lane-wheel lane-wheel--rear" />
                 </div>
               </div>
             </div>

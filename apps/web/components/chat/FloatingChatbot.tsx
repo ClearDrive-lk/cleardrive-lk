@@ -236,10 +236,10 @@ export default function FloatingChatbot() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[70]">
+    <div className="fixed bottom-2 right-2 z-[70] sm:bottom-5 sm:right-5">
       {isOpen ? (
-        <div className="w-[min(28rem,calc(100vw-1rem))] overflow-hidden rounded-[1.5rem] border border-[#5d7385]/70 bg-[#0c1116]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <div className="relative overflow-hidden border-b border-[#5d7385]/70 bg-[radial-gradient(circle_at_top_left,rgba(98,146,158,0.28),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.01))] p-4">
+        <div className="flex max-h-[calc(100dvh-1rem)] w-[min(28rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-[1.5rem] border border-[#5d7385]/70 bg-[#0c1116]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:max-h-[calc(100dvh-2.5rem)] sm:w-[min(28rem,calc(100vw-2.5rem))]">
+          <div className="relative overflow-hidden border-b border-[#5d7385]/70 bg-[radial-gradient(circle_at_top_left,rgba(98,146,158,0.28),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.01))] p-3 sm:p-4">
             <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-[#62929e]/15 blur-2xl" />
             <div className="relative flex items-start justify-between gap-3">
               <div>
@@ -292,10 +292,7 @@ export default function FloatingChatbot() {
             </div>
           </div>
 
-          <div
-            ref={scrollRef}
-            className="max-h-[26rem] space-y-3 overflow-y-auto p-4"
-          >
+          <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
@@ -387,7 +384,7 @@ export default function FloatingChatbot() {
             ) : null}
           </div>
 
-          <div className="border-t border-[#5d7385]/65 p-4">
+          <div className="border-t border-[#5d7385]/65 p-3 sm:p-4">
             {messages.length === 1 ? (
               <div className="mb-3 flex flex-wrap gap-2">
                 {DISCOVERY_PROMPTS.map((prompt) => (
@@ -440,14 +437,16 @@ export default function FloatingChatbot() {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((current) => !current)}
-        className="ml-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#62929e]/30 bg-[radial-gradient(circle_at_30%_30%,#fdfdff,#62929e_55%,#546a7b)] text-[#393d3f] shadow-[0_20px_50px_rgba(98,146,158,0.35)] transition hover:scale-[1.03] hover:shadow-[0_24px_58px_rgba(98,146,158,0.45)]"
-        aria-label="Open vehicle assistant"
-      >
-        <MessageCircle className="h-7 w-7" />
-      </button>
+      {!isOpen ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen((current) => !current)}
+          className="ml-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#62929e]/30 bg-[radial-gradient(circle_at_30%_30%,#fdfdff,#62929e_55%,#546a7b)] text-[#393d3f] shadow-[0_20px_50px_rgba(98,146,158,0.35)] transition hover:scale-[1.03] hover:shadow-[0_24px_58px_rgba(98,146,158,0.45)]"
+          aria-label="Open vehicle assistant"
+        >
+          <MessageCircle className="h-7 w-7" />
+        </button>
+      ) : null}
     </div>
   );
 }
