@@ -30,8 +30,9 @@ export const metadata: Metadata = {
   title: "ClearDrive.lk",
   description: "Direct-access vehicle import terminal",
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: "/favicon.png?v=20260321a",
+    apple: "/favicon.png?v=20260321a",
+    shortcut: "/favicon.png?v=20260321a",
   },
 };
 

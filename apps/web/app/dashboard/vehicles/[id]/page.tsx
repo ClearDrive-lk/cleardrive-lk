@@ -296,7 +296,7 @@ function VehicleDetail() {
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <BrandMark className="h-8 w-8 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--primary))]/15" />
+              <BrandMark className="h-12 w-12" />
               <BrandWordmark />
             </Link>
             <div className="hidden md:flex gap-8 text-sm font-medium text-[hsl(var(--secondary))]">

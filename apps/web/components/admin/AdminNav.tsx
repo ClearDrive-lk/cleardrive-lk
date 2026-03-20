@@ -115,7 +115,7 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
     <div className="flex h-full flex-col">
       <div className="px-6 py-6">
         <div className="flex items-center gap-3">
-          <BrandMark className="h-11 w-11 rounded-2xl border border-[#62929e]/30 bg-[#62929e]/10 p-2 shadow-lg shadow-[0_0_16px_rgba(98,146,158,0.2)]" />
+          <BrandMark className="h-14 w-14" />
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-[#546a7b]">
               ClearDrive

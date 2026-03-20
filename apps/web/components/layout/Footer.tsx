@@ -59,7 +59,7 @@ export default function Footer() {
         <div className="grid w-full grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
           <section className="space-y-5">
             <div className="flex items-center gap-2 text-xl font-bold tracking-tight text-[#393d3f] dark:text-[#edf2f7]">
-              <BrandMark className="h-9 w-9 rounded-md border border-[#62929e]/30 bg-[#62929e]/10" />
+              <BrandMark className="h-12 w-12" />
               <BrandWordmark />
             </div>
             <p className="text-sm leading-relaxed text-[#546a7b] dark:text-[#bdcad4]">

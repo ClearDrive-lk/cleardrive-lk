@@ -56,7 +56,7 @@ export default function CustomerDashboardNav() {
           href="/"
           className="font-bold text-xl tracking-tighter flex items-center gap-2 group text-[#1f2937] dark:text-[#edf2f7]"
         >
-          <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10 group-hover:bg-[#62929e]/20 transition-colors" />
+          <BrandMark className="h-12 w-12 transition-transform group-hover:scale-105" />
           <BrandWordmark />
         </Link>
 

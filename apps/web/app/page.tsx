@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { IBM_Plex_Sans, Playfair_Display } from "next/font/google";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAppSelector } from "@/lib/store/store";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -34,13 +34,21 @@ const playfair = Playfair_Display({
 });
 
 const AUCTION_LOT_CELLS = Array.from({ length: 20 }, (_, index) => index);
+const subscribeHydration = () => () => {};
+const getClientHydratedSnapshot = () => true;
+const getServerHydratedSnapshot = () => false;
 
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const hasSession = Boolean(getAccessToken() || getRefreshToken());
+  const hasHydrated = useSyncExternalStore(
+    subscribeHydration,
+    getClientHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
+  const hasSession =
+    hasHydrated && Boolean(getAccessToken() || getRefreshToken());
   const [searchTerm, setSearchTerm] = useState("");
-  const [mounted, setMounted] = useState(false);
   const heroRef = useRef<HTMLElement | null>(null);
   const heroRafRef = useRef<number | null>(null);
   const laneSurfaceRef = useRef<HTMLDivElement | null>(null);
@@ -75,7 +83,6 @@ export default function Home() {
   };
 
   useEffect(() => {
-    setMounted(true);
     return () => {
       if (heroRafRef.current !== null) {
         cancelAnimationFrame(heroRafRef.current);
@@ -115,8 +122,7 @@ export default function Home() {
     event.currentTarget.style.setProperty("--lane-focus", "50%");
   };
 
-  const navHref =
-    mounted && (isAuthenticated || hasSession) ? "/dashboard" : "/";
+  const navHref = isAuthenticated || hasSession ? "/dashboard" : "/";
 
   return (
     <div
@@ -129,7 +135,7 @@ export default function Home() {
             href={navHref}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
-            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandMark className="h-12 w-12" />
             <BrandWordmark />
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">

@@ -521,7 +521,7 @@ function VehicleCatalog({
               href="/"
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+              <BrandMark className="h-12 w-12" />
               <BrandWordmark />
             </Link>
             <div className="flex items-center gap-3">

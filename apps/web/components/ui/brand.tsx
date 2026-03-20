@@ -4,6 +4,8 @@ import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
+const BRAND_ASSET_VERSION = "20260321a";
+
 type BrandMarkProps = {
   className?: string;
   size?: number;
@@ -17,11 +19,15 @@ type BrandWordmarkProps = {
 export function BrandMark({ className, size = 32 }: BrandMarkProps) {
   return (
     <Image
-      src="/cleardrive-logo.png"
+      src={`/cleardrive-logo.png?v=${BRAND_ASSET_VERSION}`}
       alt="ClearDrive logo"
       width={size}
       height={size}
-      className={cn("rounded-md object-contain", className)}
+      unoptimized
+      className={cn(
+        "origin-center object-contain [transform:scaleX(1.08)]",
+        className,
+      )}
     />
   );
 }

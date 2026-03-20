@@ -105,7 +105,7 @@ export default function ExporterNav() {
           href="/exporter"
           className="font-bold text-xl tracking-tighter flex items-center gap-2 text-[#1f2937] dark:text-[#edf2f7]"
         >
-          <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/25 bg-[#62929e]/10" />
+          <BrandMark className="h-12 w-12" />
           <BrandWordmark />
         </Link>
 

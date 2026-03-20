@@ -136,7 +136,7 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="font-bold text-2xl tracking-tighter flex items-center gap-2 text-[#393d3f]">
-            <BrandMark className="h-7 w-7 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+            <BrandMark className="h-11 w-11" />
             <BrandWordmark />
           </div>
           <div className="mt-4 flex gap-2">

@@ -44,7 +44,7 @@ export default function Header() {
           href={isAuthed ? "/dashboard" : "/"}
           className="flex items-center gap-2 text-xl font-bold tracking-tighter text-[#393d3f] dark:text-[#edf2f7]"
         >
-          <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+          <BrandMark className="h-12 w-12" />
           <BrandWordmark />
         </Link>
 
