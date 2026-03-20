@@ -541,6 +541,206 @@ def test_calculate_cost_custom_exchange_rate(client, db):
     assert float(data["vehicle_price_lkr"]) == 2000000  # 1000000 * 2.0
 
 
+def test_calculate_cost_requires_approved_tax_rule(client, db):
+    vehicle = Vehicle(
+        stock_no="TEST-NO-RULE",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1000000,
+        engine_cc=1800,
+        vehicle_type=VehicleType.SEDAN,
+        fuel_type=FuelType.HYBRID,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
+
+    assert response.status_code == 404
+    assert "No approved gazette tax rule matches this vehicle yet" in response.json()["detail"]
+
+
+def test_calculate_cost_uses_approved_gazette_rules(client, db, admin_headers, admin_user):
+    gazette = Gazette(
+        gazette_no="2024/APPROVED-COST",
+        effective_date=None,
+        raw_extracted={
+            "effective_date": "2024-02-01",
+            "rules": [
+                {
+                    "vehicle_type": "SEDAN",
+                    "fuel_type": "HYBRID",
+                    "engine_min": 1500,
+                    "engine_max": 2000,
+                    "customs_percent": 25,
+                    "excise_percent": 35,
+                    "vat_percent": 15,
+                    "pal_percent": 7.5,
+                    "cess_percent": 5,
+                    "apply_on": "CIF_PLUS_CUSTOMS",
+                }
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    approve_response = client.post(f"/api/v1/gazette/{gazette.id}/approve", headers=admin_headers)
+    assert approve_response.status_code == 200
+
+    vehicle = Vehicle(
+        stock_no="TEST-GAZETTE-RULE",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1000000,
+        engine_cc=1800,
+        vehicle_type=VehicleType.SEDAN,
+        fuel_type=FuelType.HYBRID,
+        transmission=Transmission.AUTOMATIC,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert float(data["customs_duty_lkr"]) == 607500.0
+    assert float(data["pal_lkr"]) > 0
+
+
+def test_calculate_cost_uses_specific_electric_rule(client, db, admin_headers, admin_user):
+    gazette = Gazette(
+        gazette_no="2025/ELECTRIC-COST",
+        effective_date=None,
+        raw_extracted={
+            "effective_date": "2025-02-01",
+            "rules": [
+                {
+                    "vehicle_type": "Passenger Vehicle (BEV)",
+                    "fuel_type": "Electric",
+                    "category_code": "PASSENGER_VEHICLE_BEV",
+                    "engine_min": 0,
+                    "engine_max": 999999,
+                    "power_kw_min": 50.01,
+                    "power_kw_max": 100,
+                    "age_years_min": 0,
+                    "age_years_max": 3,
+                    "customs_percent": 0,
+                    "excise_percent": 0,
+                    "excise_per_kw_amount": 24100,
+                    "vat_percent": 15,
+                    "pal_percent": 0,
+                    "cess_percent": 0,
+                    "apply_on": "CIF",
+                }
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    approve_response = client.post(f"/api/v1/gazette/{gazette.id}/approve", headers=admin_headers)
+    assert approve_response.status_code == 200
+
+    vehicle = Vehicle(
+        stock_no="TEST-ELECTRIC-RULE",
+        make="Nissan",
+        model="Leaf",
+        year=date.today().year - 2,
+        price_jpy=1000000,
+        engine_cc=0,
+        motor_power_kw=75,
+        vehicle_type=VehicleType.HATCHBACK,
+        fuel_type=FuelType.ELECTRIC,
+        transmission=Transmission.AUTOMATIC,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert float(data["excise_duty_lkr"]) > 0
+    assert float(data["vat_lkr"]) > 0
+
+
+def test_calculate_cost_requires_motor_power_for_specific_electric_rule(
+    client, db, admin_headers, admin_user
+):
+    gazette = Gazette(
+        gazette_no="2025/ELECTRIC-MISSING-POWER",
+        effective_date=None,
+        raw_extracted={
+            "effective_date": "2025-02-01",
+            "rules": [
+                {
+                    "vehicle_type": "Passenger Vehicle (BEV)",
+                    "fuel_type": "Electric",
+                    "category_code": "PASSENGER_VEHICLE_BEV",
+                    "engine_min": 0,
+                    "engine_max": 999999,
+                    "power_kw_min": 50.01,
+                    "power_kw_max": 100,
+                    "age_years_min": 0,
+                    "age_years_max": 3,
+                    "customs_percent": 0,
+                    "excise_percent": 0,
+                    "excise_per_kw_amount": 24100,
+                    "vat_percent": 15,
+                    "pal_percent": 0,
+                    "cess_percent": 0,
+                    "apply_on": "CIF",
+                }
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    approve_response = client.post(f"/api/v1/gazette/{gazette.id}/approve", headers=admin_headers)
+    assert approve_response.status_code == 200
+
+    vehicle = Vehicle(
+        stock_no="TEST-ELECTRIC-NO-POWER",
+        make="Nissan",
+        model="Leaf",
+        year=date.today().year - 2,
+        price_jpy=1000000,
+        engine_cc=0,
+        vehicle_type=VehicleType.HATCHBACK,
+        fuel_type=FuelType.ELECTRIC,
+        transmission=Transmission.AUTOMATIC,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
+
+    assert response.status_code == 400
+    assert "Motor power (kW) is required" in response.json()["detail"]
+
+
 # ============================================================================
 # ADMIN ENDPOINTS TESTS (Require authentication)
 # ============================================================================

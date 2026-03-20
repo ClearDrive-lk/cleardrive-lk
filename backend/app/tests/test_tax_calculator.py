@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from app.models.gazette import (
     ApplyOn,
+    CustomsRule,
     Gazette,
     GazetteStatus,
+    LuxuryTaxRule,
+    SurchargeRule,
     TaxFuelType,
     TaxRule,
     TaxVehicleType,
+    VehicleTaxRule,
 )
 from app.services.tax_calculator import NoTaxRuleError, TaxCalculator
 
@@ -152,3 +157,199 @@ def test_invalid_parameters_400(client):
     )
     assert response.status_code == 400
     assert response.json()["detail"]["error"] == "INVALID_PARAMETERS"
+
+
+def test_calculate_specific_excise_per_kw_with_age_and_power(db):
+    gazette = Gazette(
+        gazette_no="TEST/ELECTRIC/PERKW",
+        effective_date=date(2025, 2, 1),
+        raw_extracted={},
+        status=GazetteStatus.APPROVED.value,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    rule = TaxRule(
+        gazette_id=gazette.id,
+        vehicle_type=TaxVehicleType.ELECTRIC.value,
+        fuel_type=TaxFuelType.ELECTRIC.value,
+        category_code="PASSENGER_VEHICLE_BEV",
+        engine_min=0,
+        engine_max=999999,
+        power_kw_min=Decimal("50.01"),
+        power_kw_max=Decimal("100.00"),
+        age_years_min=Decimal("0"),
+        age_years_max=Decimal("3"),
+        customs_percent=0.0,
+        excise_percent=0.0,
+        excise_per_kw_amount=Decimal("24100"),
+        vat_percent=15.0,
+        pal_percent=0.0,
+        cess_percent=0.0,
+        apply_on=ApplyOn.CIF.value,
+        effective_date=date(2025, 2, 1),
+        is_active=True,
+    )
+    db.add(rule)
+    db.commit()
+
+    calculator = TaxCalculator(db)
+    result = calculator.calculate_import_duty(
+        "ELECTRIC",
+        "ELECTRIC",
+        0,
+        8_000_000.0,
+        power_kw=75,
+        vehicle_age_years=2,
+        category_codes=["PASSENGER_VEHICLE_BEV"],
+    )
+
+    assert result["excise_duty"] == 1_807_500.0
+    assert result["rule_used"]["excise_per_kw_amount"] == 24100.0
+    assert result["rule_used"]["category_code"] == "PASSENGER_VEHICLE_BEV"
+
+
+def test_calculate_tax_with_surcharge_and_luxury_tax(db):
+    gazette = Gazette(
+        gazette_no="TEST/ELECTRIC/FULL-STACK",
+        effective_date=date(2025, 2, 1),
+        raw_extracted={},
+        status=GazetteStatus.APPROVED.value,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    rule = TaxRule(
+        gazette_id=gazette.id,
+        vehicle_type=TaxVehicleType.ELECTRIC.value,
+        fuel_type=TaxFuelType.ELECTRIC.value,
+        category_code="PASSENGER_VEHICLE_BEV",
+        hs_code="8703.80.33",
+        engine_min=0,
+        engine_max=999999,
+        power_kw_min=Decimal("100.01"),
+        power_kw_max=Decimal("200.00"),
+        age_years_min=Decimal("1.01"),
+        age_years_max=Decimal("3.00"),
+        customs_percent=Decimal("20.0"),
+        surcharge_percent=Decimal("50.0"),
+        excise_percent=Decimal("0.0"),
+        excise_per_kw_amount=Decimal("60400"),
+        vat_percent=Decimal("15.0"),
+        pal_percent=Decimal("0.0"),
+        cess_percent=Decimal("0.0"),
+        luxury_tax_threshold=Decimal("5000000"),
+        luxury_tax_percent=Decimal("10.0"),
+        apply_on=ApplyOn.CIF.value,
+        effective_date=date(2025, 2, 1),
+        is_active=True,
+    )
+    db.add(rule)
+    db.commit()
+
+    calculator = TaxCalculator(db)
+    result = calculator.calculate_import_duty(
+        "ELECTRIC",
+        "ELECTRIC",
+        0,
+        8_000_000.0,
+        power_kw=120,
+        vehicle_age_years=2,
+        category_codes=["PASSENGER_VEHICLE_BEV"],
+    )
+
+    assert result["customs_duty"] == 1_600_000.0
+    assert result["surcharge"] == 800_000.0
+    assert result["excise_duty"] == 7_248_000.0
+    assert result["vat"] == 2_647_200.0
+    assert result["luxury_tax"] == 800_000.0
+    assert result["total_duty"] == 13_095_200.0
+    assert result["rule_used"]["hs_code"] == "8703.80.33"
+    assert result["rule_used"]["surcharge_percent"] == 50.0
+
+
+def test_calculate_tax_uses_dedicated_rule_tables(db):
+    gazette = Gazette(
+        gazette_no="TEST/DEDICATED/2025",
+        effective_date=date(2025, 2, 1),
+        raw_extracted={},
+        status=GazetteStatus.APPROVED.value,
+    )
+    db.add(gazette)
+    db.commit()
+    db.refresh(gazette)
+
+    db.add(
+        VehicleTaxRule(
+            gazette_id=gazette.id,
+            category_code="PASSENGER_VEHICLE_BEV",
+            fuel_type=TaxFuelType.ELECTRIC.value,
+            hs_code="8703.80.33",
+            power_kw_min=Decimal("100.01"),
+            power_kw_max=Decimal("200.00"),
+            age_years_min=Decimal("1.01"),
+            age_years_max=Decimal("3.00"),
+            excise_type="PER_KW",
+            excise_rate=Decimal("60400"),
+            effective_date=date(2025, 2, 1),
+            is_active=True,
+        )
+    )
+    db.add(
+        CustomsRule(
+            gazette_id=gazette.id,
+            hs_code="8703.80.33",
+            customs_percent=Decimal("20"),
+            vat_percent=Decimal("15"),
+            pal_percent=Decimal("10"),
+            cess_type="FIXED",
+            cess_value=Decimal("250000"),
+            effective_date=date(2025, 2, 1),
+            is_active=True,
+        )
+    )
+    db.add(
+        SurchargeRule(
+            gazette_id=gazette.id,
+            name="CUSTOMS_SURCHARGE",
+            rate_percent=Decimal("50"),
+            applies_to="CUSTOMS_DUTY",
+            effective_date=date(2025, 2, 1),
+            is_active=True,
+        )
+    )
+    db.add(
+        LuxuryTaxRule(
+            gazette_id=gazette.id,
+            hs_code="8703.80.33",
+            threshold_value=Decimal("5000000"),
+            rate_percent=Decimal("10"),
+            effective_date=date(2025, 2, 1),
+            is_active=True,
+        )
+    )
+    db.commit()
+
+    calculator = TaxCalculator(db)
+    result = calculator.calculate_import_duty(
+        "ELECTRIC",
+        "ELECTRIC",
+        0,
+        8_000_000.0,
+        power_kw=120,
+        vehicle_age_years=2,
+        category_codes=["PASSENGER_VEHICLE_BEV"],
+    )
+
+    assert result["customs_duty"] == 1_600_000.0
+    assert result["surcharge"] == 800_000.0
+    assert result["excise_duty"] == 7_248_000.0
+    assert result["pal"] == 800_000.0
+    assert result["cess"] == 250_000.0
+    assert result["vat"] == 2_804_700.0
+    assert result["luxury_tax"] == 300_000.0
+    assert result["total_duty"] == 13_802_700.0
+    assert result["rule_used"]["rule_source"] == "DEDICATED_RULE_TABLES"
+    assert result["rule_used"]["cess_type"] == "FIXED"

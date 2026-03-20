@@ -52,6 +52,7 @@ class VehicleBase(BaseModel):
 
     mileage_km: Optional[int] = Field(None, ge=0, description="Mileage in kilometers")
     engine_cc: Optional[int] = Field(None, ge=0, description="Engine capacity in cc")
+    motor_power_kw: Optional[Decimal] = Field(None, ge=0, description="Motor power in kW")
     engine_model: Optional[str] = Field(None, max_length=100)
     fuel_type: Optional[FuelType] = None
     transmission: Optional[Transmission] = None
@@ -112,6 +113,7 @@ class VehicleUpdate(BaseModel):
 
     price_jpy: Optional[Decimal] = Field(None, gt=0)
     mileage_km: Optional[int] = Field(None, ge=0)
+    motor_power_kw: Optional[Decimal] = Field(None, ge=0)
     status: Optional[VehicleStatus] = None
     image_url: Optional[str] = None
     color: Optional[str] = None
@@ -205,10 +207,12 @@ class CostBreakdown(BaseModel):
     # Import costs
     shipping_cost_lkr: Decimal = Field(..., description="Estimated shipping cost")
     customs_duty_lkr: Decimal = Field(..., description="Customs duty (based on engine CC)")
+    surcharge_lkr: Decimal = Field(Decimal("0"), description="Customs surcharge")
     excise_duty_lkr: Decimal = Field(..., description="Excise duty")
     pal_lkr: Decimal = Field(Decimal("0"), description="Ports & Airports Levy")
     vat_lkr: Decimal = Field(..., description="Value Added Tax (15%)")
     cess_lkr: Decimal = Field(..., description="Cess (if applicable)")
+    luxury_tax_lkr: Decimal = Field(Decimal("0"), description="Luxury tax (if applicable)")
     port_charges_lkr: Decimal = Field(..., description="Port and handling charges")
 
     # Service fees

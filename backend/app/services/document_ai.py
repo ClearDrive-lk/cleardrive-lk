@@ -5,6 +5,7 @@ Google Document AI service for gazette PDF parsing.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from typing import Any
 
@@ -34,11 +35,41 @@ class DocumentAIService:
         try:
             from google.api_core.client_options import ClientOptions
             from google.cloud import documentai_v1 as documentai
+            from google.oauth2 import service_account
         except ImportError as exc:
             raise RuntimeError("google-cloud-documentai is not installed") from exc
 
         opts = ClientOptions(api_endpoint=f"{self.location}-documentai.googleapis.com")
-        self._client = documentai.DocumentProcessorServiceClient(client_options=opts)
+        credentials = None
+        if settings.GOOGLE_SERVICE_ACCOUNT_JSON:
+            try:
+                info = json.loads(settings.GOOGLE_SERVICE_ACCOUNT_JSON)
+                credentials = service_account.Credentials.from_service_account_info(info)
+            except Exception as exc:
+                raise RuntimeError("Invalid GOOGLE_SERVICE_ACCOUNT_JSON configuration") from exc
+        elif settings.GOOGLE_APPLICATION_CREDENTIALS_PATH:
+            try:
+                credentials = service_account.Credentials.from_service_account_file(
+                    settings.GOOGLE_APPLICATION_CREDENTIALS_PATH
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    "Invalid GOOGLE_APPLICATION_CREDENTIALS_PATH configuration"
+                ) from exc
+
+        try:
+            self._client = documentai.DocumentProcessorServiceClient(
+                client_options=opts,
+                credentials=credentials,
+            )
+        except Exception as exc:
+            message = str(exc)
+            if "default credentials were not found" in message.lower():
+                raise RuntimeError(
+                    "Document AI credentials are missing. Configure "
+                    "GOOGLE_APPLICATION_CREDENTIALS_PATH or GOOGLE_SERVICE_ACCOUNT_JSON."
+                ) from exc
+            raise
         self._documentai = documentai
         self._processor_name = self._client.processor_path(
             self.project_id,
@@ -56,11 +87,7 @@ class DocumentAIService:
         assert self._documentai is not None
         assert self._processor_name is not None
 
-        raw_document = self._documentai.RawDocument(content=pdf_bytes, mime_type=mime_type)
-        request = self._documentai.ProcessRequest(
-            name=self._processor_name,
-            raw_document=raw_document,
-        )
+        request = self._build_process_request(pdf_bytes, mime_type=mime_type, imageless_mode=True)
 
         try:
             result = await asyncio.to_thread(self._client.process_document, request=request)
@@ -78,6 +105,41 @@ class DocumentAIService:
         except Exception as exc:
             logger.exception("Document AI processing failed")
             raise RuntimeError(f"Failed to parse gazette PDF: {exc}") from exc
+
+    def _build_process_request(
+        self,
+        pdf_bytes: bytes,
+        *,
+        mime_type: str,
+        imageless_mode: bool,
+    ) -> Any:
+        assert self._documentai is not None
+        assert self._processor_name is not None
+
+        raw_document = self._documentai.RawDocument(content=pdf_bytes, mime_type=mime_type)
+        request_kwargs: dict[str, Any] = {
+            "name": self._processor_name,
+            "raw_document": raw_document,
+        }
+
+        process_options_cls = getattr(self._documentai, "ProcessOptions", None)
+        if process_options_cls is not None:
+            try:
+                process_options = process_options_cls()
+                if imageless_mode and hasattr(process_options, "imageless_mode"):
+                    setattr(process_options, "imageless_mode", True)
+                request_kwargs["process_options"] = process_options
+            except Exception:
+                logger.warning("Unable to configure Document AI process_options", exc_info=True)
+
+        try:
+            return self._documentai.ProcessRequest(**request_kwargs)
+        except TypeError:
+            logger.warning("Document AI request options unsupported; retrying without options")
+            return self._documentai.ProcessRequest(
+                name=self._processor_name,
+                raw_document=raw_document,
+            )
 
     def _extract_tables(self, document: Any, full_text: str) -> list[dict[str, Any]]:
         tables: list[dict[str, Any]] = []
