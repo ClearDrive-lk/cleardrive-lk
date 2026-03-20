@@ -158,7 +158,9 @@ export default function OrderConfirmationPage() {
                           </button>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className={getOrderStatusBadgeClass(order.status)}>
+                          <Badge
+                            className={getOrderStatusBadgeClass(order.status)}
+                          >
                             {order.status.replace(/_/g, " ")}
                           </Badge>
                           <Badge

@@ -425,7 +425,9 @@ export default function ExporterShippingDetailsPage() {
           </div>
 
           {error && (
-            <div className="text-sm text-red-700 dark:text-red-200">{error}</div>
+            <div className="text-sm text-red-700 dark:text-red-200">
+              {error}
+            </div>
           )}
           {success && (
             <div className="text-sm text-green-700 dark:text-green-300">

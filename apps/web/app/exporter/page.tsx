@@ -154,9 +154,7 @@ export default function ExporterDashboardPage() {
                       {order.id}
                     </p>
                   </div>
-                  <Badge
-                    className={getOrderStatusBadgeClass(order.status)}
-                  >
+                  <Badge className={getOrderStatusBadgeClass(order.status)}>
                     {order.status.replace(/_/g, " ")}
                   </Badge>
                 </div>

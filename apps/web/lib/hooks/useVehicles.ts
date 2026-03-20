@@ -64,7 +64,10 @@ const mapSort = (sort: string | undefined) => {
   switch (sort) {
     case "price_asc":
     case "price_desc":
-      return { sort_by: "price_jpy", sort_order: sort === "price_asc" ? "asc" : "desc" };
+      return {
+        sort_by: "price_jpy",
+        sort_order: sort === "price_asc" ? "asc" : "desc",
+      };
     case "year_desc":
       return { sort_by: "year", sort_order: "desc" };
     case "mileage_asc":

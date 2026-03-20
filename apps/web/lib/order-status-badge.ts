@@ -15,8 +15,10 @@ const ORDER_STATUS_BADGE_CLASSES: Record<string, string> = {
     "border-orange-500/30 bg-orange-500/15 text-orange-800 dark:text-orange-200",
   SHIPPED:
     "border-indigo-500/30 bg-indigo-500/15 text-indigo-800 dark:text-indigo-200",
-  IN_TRANSIT: "border-cyan-500/30 bg-cyan-500/15 text-cyan-800 dark:text-cyan-200",
-  ARRIVED_AT_PORT: "border-teal-500/30 bg-teal-500/15 text-teal-800 dark:text-teal-200",
+  IN_TRANSIT:
+    "border-cyan-500/30 bg-cyan-500/15 text-cyan-800 dark:text-cyan-200",
+  ARRIVED_AT_PORT:
+    "border-teal-500/30 bg-teal-500/15 text-teal-800 dark:text-teal-200",
   CUSTOMS_CLEARANCE:
     "border-yellow-500/30 bg-yellow-500/15 text-yellow-900 dark:text-yellow-200",
   DELIVERED:
@@ -29,4 +31,3 @@ const DEFAULT_STATUS_BADGE_CLASS =
 
 export const getOrderStatusBadgeClass = (status: string): string =>
   ORDER_STATUS_BADGE_CLASSES[status] ?? DEFAULT_STATUS_BADGE_CLASS;
-

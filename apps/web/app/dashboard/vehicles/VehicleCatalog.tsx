@@ -193,7 +193,8 @@ function VehicleCatalog({
   const hasTransmissionFilter = currentTransmission !== "All";
   const hasAdvancedFilters =
     hasYearFilters || hasMileageFilter || hasTransmissionFilter;
-  const hasPriceFilters = currentMinPrice > 0 || currentMaxPrice < priceMaxLimit;
+  const hasPriceFilters =
+    currentMinPrice > 0 || currentMaxPrice < priceMaxLimit;
   const hasAnyFilters =
     Boolean(currentSearch) ||
     currentFuel !== "All" ||
@@ -392,7 +393,8 @@ function VehicleCatalog({
     maxYear: currentMaxYear < maxYearLimit ? currentMaxYear : undefined,
     maxMileage:
       currentMaxMileage < maxMileageLimit ? currentMaxMileage : undefined,
-    transmission: currentTransmission !== "All" ? currentTransmission : undefined,
+    transmission:
+      currentTransmission !== "All" ? currentTransmission : undefined,
     vehicleType: currentType === "All" ? undefined : currentType,
     priceCurrency: currentCurrency,
     exchangeRate,
@@ -693,9 +695,7 @@ function VehicleCatalog({
                     <SelectItem value="Gasoline/Hybrid">
                       Gasoline/Hybrid
                     </SelectItem>
-                    <SelectItem value="Plugin Hybrid">
-                      Plugin Hybrid
-                    </SelectItem>
+                    <SelectItem value="Plugin Hybrid">Plugin Hybrid</SelectItem>
                     <SelectItem value="Diesel">Diesel</SelectItem>
                     <SelectItem value="Electric">Electric</SelectItem>
                   </SelectContent>
@@ -763,7 +763,8 @@ function VehicleCatalog({
                             Price Range ({currentCurrency})
                           </Label>
                           <span className="rounded-full border border-teal-400/40 bg-teal-50 px-2.5 py-1 text-[11px] font-mono font-semibold text-teal-800 dark:border-teal-300/35 dark:bg-teal-500/15 dark:text-teal-100">
-                            {formatCompact(priceRange[0])} - {formatCompact(priceRange[1])}
+                            {formatCompact(priceRange[0])} -{" "}
+                            {formatCompact(priceRange[1])}
                           </span>
                         </div>
                         <Slider
@@ -776,7 +777,9 @@ function VehicleCatalog({
                         />
                         <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                           1 JPY = {exchangeRate.toFixed(2)} LKR
-                          {exchangeRateData?.date ? ` | ${exchangeRateData.date}` : ""}
+                          {exchangeRateData?.date
+                            ? ` | ${exchangeRateData.date}`
+                            : ""}
                         </div>
                       </div>
 
@@ -829,7 +832,11 @@ function VehicleCatalog({
                         >
                           {[
                             { value: "All", label: "Any", id: "t-all" },
-                            { value: "Automatic", label: "Automatic", id: "t-at" },
+                            {
+                              value: "Automatic",
+                              label: "Automatic",
+                              id: "t-at",
+                            },
                             { value: "Manual", label: "Manual", id: "t-mt" },
                             { value: "CVT", label: "CVT", id: "t-cvt" },
                           ].map((item) => (

@@ -141,17 +141,13 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                 <span className="text-xs text-[#546a7b]">
                   Current Bid (JPY)
                 </span>
-                <span className="text-sm font-medium text-[#546a7b]">
-                  N/A
-                </span>
+                <span className="text-sm font-medium text-[#546a7b]">N/A</span>
               </div>
               <div className="flex justify-between items-end">
                 <span className="text-xs text-[#62929e]">
                   Est. Landed (LKR)
                 </span>
-                <span className="text-lg font-bold text-[#393d3f]">
-                  N/A
-                </span>
+                <span className="text-lg font-bold text-[#393d3f]">N/A</span>
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-[#546a7b]">
