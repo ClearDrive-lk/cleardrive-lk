@@ -63,7 +63,9 @@ const useVehicleImages = (id: string) =>
     queryKey: ["vehicle-images", id],
     queryFn: async () => {
       const response = await apiClient.get(`/vehicles/${id}/images`);
-      const raw = Array.isArray(response.data?.images) ? response.data.images : [];
+      const raw = Array.isArray(response.data?.images)
+        ? response.data.images
+        : [];
       return raw
         .map((img: string) => normalizeImageUrl(img) || null)
         .filter((img: string | null): img is string => Boolean(img));
@@ -151,8 +153,8 @@ function VehicleDetail() {
       vehicle.fuel.toLowerCase().includes("electric")
         ? "Electric drivetrain"
         : vehicle.engineCC && vehicle.engineCC > 0
-        ? `${vehicle.engineCC}cc engine`
-        : "Engine spec pending",
+          ? `${vehicle.engineCC}cc engine`
+          : "Engine spec pending",
       `${vehicle.year} model year`,
     ];
   }, [
@@ -170,10 +172,9 @@ function VehicleDetail() {
   );
   const isAvailable = vehicle?.status === "Live";
   const isElectric = vehicle?.fuel.toLowerCase().includes("electric");
-  const engineLabel =
-    isElectric
-      ? "Electric drivetrain"
-      : typeof vehicle?.engineCC === "number" && vehicle.engineCC > 0
+  const engineLabel = isElectric
+    ? "Electric drivetrain"
+    : typeof vehicle?.engineCC === "number" && vehicle.engineCC > 0
       ? `${vehicle.engineCC} cc`
       : "Spec pending";
   const canCreateOrder = isAuthed && isAvailable;
@@ -248,7 +249,11 @@ function VehicleDetail() {
   const summaryStats = [
     { label: "Mileage", value: `${formatKm(vehicle.mileage)} km`, icon: Gauge },
     { label: "Engine", value: engineLabel, icon: Car },
-    { label: "Transmission", value: vehicle.transmission || "N/A", icon: Timer },
+    {
+      label: "Transmission",
+      value: vehicle.transmission || "N/A",
+      icon: Timer,
+    },
     { label: "Fuel", value: vehicle.fuel || "N/A", icon: Zap },
   ];
 
@@ -287,7 +292,10 @@ function VehicleDetail() {
       ) : (
         <nav className="sticky top-0 z-50 border-b border-[hsl(var(--border))] bg-[hsl(var(--background))]/85 backdrop-blur-md">
           <div className="cd-container h-16 flex items-center justify-between">
-            <Link href="/" className="font-bold text-xl tracking-tighter flex items-center gap-2">
+            <Link
+              href="/"
+              className="font-bold text-xl tracking-tighter flex items-center gap-2"
+            >
               <BrandMark className="h-8 w-8 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--primary))]/15" />
               <BrandWordmark />
             </Link>
@@ -364,7 +372,9 @@ function VehicleDetail() {
                   <p className="rounded-full bg-black/35 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]">
                     Lot #{vehicle.lotNumber || "N/A"}
                   </p>
-                  <p className="text-xs font-medium">{vehicle.location || "Japan"}</p>
+                  <p className="text-xs font-medium">
+                    {vehicle.location || "Japan"}
+                  </p>
                 </div>
               </div>
 
@@ -420,7 +430,9 @@ function VehicleDetail() {
             <article className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 p-5 shadow-[0_20px_45px_rgba(12,23,38,0.16)] md:p-6">
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
                 {vehicle.year} {vehicle.make}{" "}
-                <span className="text-[hsl(var(--primary))]">{vehicle.model}</span>
+                <span className="text-[hsl(var(--primary))]">
+                  {vehicle.model}
+                </span>
               </h1>
               <p className="mt-1 text-sm text-[hsl(var(--secondary))] md:text-base">
                 {vehicle.trim || "Trim unavailable"}{" "}
@@ -480,7 +492,9 @@ function VehicleDetail() {
                     <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold">
                       <CalendarDays className="h-3.5 w-3.5 text-[hsl(var(--primary))]" />
                       {vehicle.firstRegistrationDate
-                        ? new Date(vehicle.firstRegistrationDate).toLocaleDateString()
+                        ? new Date(
+                            vehicle.firstRegistrationDate,
+                          ).toLocaleDateString()
                         : "N/A"}
                     </p>
                   </div>
@@ -504,7 +518,9 @@ function VehicleDetail() {
             </article>
 
             <article className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 p-5">
-              <h2 className="mb-3 text-base font-semibold">Auction Readiness</h2>
+              <h2 className="mb-3 text-base font-semibold">
+                Auction Readiness
+              </h2>
               <div className="space-y-2">
                 {readinessItems.map((item) => (
                   <div
@@ -526,7 +542,10 @@ function VehicleDetail() {
 
         <section className="grid gap-5 xl:grid-cols-2">
           <article className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 p-1 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
-            <CostCalculator vehicleId={vehicle.id} priceJPY={vehicle.priceJPY} />
+            <CostCalculator
+              vehicleId={vehicle.id}
+              priceJPY={vehicle.priceJPY}
+            />
           </article>
 
           <article className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 p-1 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
@@ -537,9 +556,12 @@ function VehicleDetail() {
               />
             ) : !isAuthed ? (
               <div className="p-6 space-y-3">
-                <h3 className="text-lg font-bold">Sign in to reserve this vehicle</h3>
+                <h3 className="text-lg font-bold">
+                  Sign in to reserve this vehicle
+                </h3>
                 <p className="text-sm text-[hsl(var(--secondary))]">
-                  Browse freely, then sign in when you are ready to create an order.
+                  Browse freely, then sign in when you are ready to create an
+                  order.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button asChild>
@@ -554,8 +576,8 @@ function VehicleDetail() {
               <div className="p-6 space-y-3">
                 <h3 className="text-lg font-bold">Vehicle not available</h3>
                 <p className="text-sm text-[hsl(var(--secondary))]">
-                  This listing is currently marked as {vehicle.status}. Check back later
-                  or contact an agent to request availability.
+                  This listing is currently marked as {vehicle.status}. Check
+                  back later or contact an agent to request availability.
                 </p>
                 <Button onClick={contactAgent}>
                   <Mail className="mr-2 h-4 w-4" />
@@ -576,11 +598,16 @@ function VehicleDetail() {
               <Table>
                 <TableBody>
                   {specRows.map(([label, value]) => (
-                    <TableRow key={label} className="border-[hsl(var(--border))]/60">
+                    <TableRow
+                      key={label}
+                      className="border-[hsl(var(--border))]/60"
+                    >
                       <TableCell className="font-medium text-[hsl(var(--secondary))]">
                         {label}
                       </TableCell>
-                      <TableCell className="text-right font-medium">{value}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {value}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

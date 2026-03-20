@@ -112,7 +112,9 @@ function inferEngineCCFromKnownModels(
   return modelCcMap[`${makeKey}|${modelKey}`] ?? null;
 }
 
-function inferEngineCC(...sources: Array<string | null | undefined>): number | null {
+function inferEngineCC(
+  ...sources: Array<string | null | undefined>
+): number | null {
   const joined = sources.filter(Boolean).join(" ");
   if (!joined) return null;
 
@@ -149,7 +151,13 @@ export function mapBackendVehicle(v: BackendVehicle): Vehicle {
   })();
   const engineCC =
     normalizeEngineCC(v.engine_cc) ??
-    inferEngineCC(v.engine_model, v.model, v.grade, v.options, v.other_remarks) ??
+    inferEngineCC(
+      v.engine_model,
+      v.model,
+      v.grade,
+      v.options,
+      v.other_remarks,
+    ) ??
     inferEngineCCFromKnownModels(v.make, v.model, v.fuel_type);
 
   return {

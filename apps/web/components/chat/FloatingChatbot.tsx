@@ -324,7 +324,8 @@ export default function FloatingChatbot() {
                     ) : null}
                   </div>
 
-                  {message.role === "assistant" && message.quickReplies?.length ? (
+                  {message.role === "assistant" &&
+                  message.quickReplies?.length ? (
                     <div className="flex flex-wrap gap-2">
                       {message.quickReplies.map((reply) => (
                         <button
@@ -428,9 +429,9 @@ export default function FloatingChatbot() {
                 className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e] text-[#fdfdff] transition hover:bg-[#546a7b] disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send message"
               >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
             <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-[#8ea2b0]">
               <span>Press Enter to send, Shift+Enter for a new line</span>
               <span>{input.length}/500</span>

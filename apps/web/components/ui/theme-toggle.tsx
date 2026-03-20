@@ -72,7 +72,9 @@ export default function ThemeToggle({
     <button
       type="button"
       onClick={handleToggle}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+      }
       title={theme === "dark" ? "Light mode" : "Dark mode"}
       className={cn(
         "group inline-flex items-center justify-center rounded-full border border-[#546a7b]/60 bg-[#fdfdff]/90 text-[#1f2937] shadow-[0_10px_22px_rgba(0,0,0,0.15)] backdrop-blur-md transition-[transform,box-shadow,background-color,color,border-color] duration-200 hover:-translate-y-[1px] hover:bg-[#f7fafc] hover:shadow-[0_14px_28px_rgba(0,0,0,0.22)] active:translate-y-[1px] dark:border-[#8fa3b1]/45 dark:bg-[#132028]/90 dark:text-[#e6eef5] dark:hover:bg-[#1b2b35]",

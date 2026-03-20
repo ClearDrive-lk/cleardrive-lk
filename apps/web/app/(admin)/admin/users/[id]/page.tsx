@@ -261,9 +261,7 @@ export default function AdminUserDetailPage() {
                 {detail.kyc_status || "Not Submitted"}
               </p>
               <p className="text-[#546a7b]">
-                <span className="font-semibold text-[#393d3f]">
-                  Submitted:
-                </span>{" "}
+                <span className="font-semibold text-[#393d3f]">Submitted:</span>{" "}
                 {formatDate(detail.kyc_submitted_at)}
               </p>
               <p className="text-[#546a7b]">

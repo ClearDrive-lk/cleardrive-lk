@@ -28,10 +28,9 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
   const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
   const isElectric = vehicle.fuel.toLowerCase().includes("electric");
-  const engineLabel =
-    isElectric
-      ? "Electric"
-      : typeof vehicle.engineCC === "number" && vehicle.engineCC > 0
+  const engineLabel = isElectric
+    ? "Electric"
+    : typeof vehicle.engineCC === "number" && vehicle.engineCC > 0
       ? `${vehicle.engineCC}cc`
       : "Spec pending";
 
