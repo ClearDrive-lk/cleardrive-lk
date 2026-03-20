@@ -133,6 +133,29 @@ def test_search_vehicles_by_make(client, db):
     assert data["pagination"]["total"] == 1
 
 
+def test_search_vehicles_by_stock_or_chassis(client, db):
+    """Search should match stock and chassis identifiers used in the catalog UI."""
+
+    vehicle = Vehicle(
+        stock_no="CAT-SEARCH-01",
+        chassis="CHS-987654",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1850000,
+    )
+    db.add(vehicle)
+    db.commit()
+
+    stock_response = client.get("/api/v1/vehicles", params={"search": "CAT-SEARCH-01"})
+    assert stock_response.status_code == 200
+    assert stock_response.json()["pagination"]["total"] == 1
+
+    chassis_response = client.get("/api/v1/vehicles", params={"search": "CHS-987654"})
+    assert chassis_response.status_code == 200
+    assert chassis_response.json()["pagination"]["total"] == 1
+
+
 def test_filter_vehicles_by_make(client, db):
     """Test filtering vehicles by make."""
 
@@ -275,6 +298,173 @@ def test_filter_vehicles_by_fuel_type(client, db):
     data = response.json()
     assert data["pagination"]["total"] == 1
     assert data["vehicles"][0]["fuel_type"] == "Gasoline/hybrid"
+
+
+def test_filter_hybrid_includes_plugin_hybrid_variants(client, db):
+    """Hybrid-focused filters should include plugin-hybrid scraped variants."""
+
+    vehicles = [
+        Vehicle(
+            stock_no="HY-1",
+            make="Toyota",
+            model="Prius",
+            year=2020,
+            price_jpy=1850000,
+            fuel_type=FuelType.HYBRID,
+        ),
+        Vehicle(
+            stock_no="HY-2",
+            make="Mitsubishi",
+            model="Outlander",
+            year=2021,
+            price_jpy=3200000,
+            fuel_type=FuelType.PLUGIN_HYBRID,
+        ),
+        Vehicle(
+            stock_no="HY-3",
+            make="Honda",
+            model="Fit",
+            year=2020,
+            price_jpy=1350000,
+            fuel_type=FuelType.GASOLINE,
+        ),
+    ]
+    for vehicle in vehicles:
+        db.add(vehicle)
+    db.commit()
+
+    response = client.get("/api/v1/vehicles", params={"fuel_type": "Hybrid"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pagination"]["total"] == 2
+    returned_fuels = {item["fuel_type"] for item in data["vehicles"]}
+    assert "Gasoline/hybrid" in returned_fuels
+    assert "Plugin Hybrid" in returned_fuels
+
+
+def test_filter_vehicle_type_uses_body_type_aliases(client, db):
+    """Type filters should still work when scraper kept only body_type text."""
+
+    vehicles = [
+        Vehicle(
+            stock_no="VT-1",
+            make="Mazda",
+            model="CX-5",
+            year=2020,
+            price_jpy=2400000,
+            body_type="SUVs",
+        ),
+        Vehicle(
+            stock_no="VT-2",
+            make="Toyota",
+            model="Land Cruiser",
+            year=2021,
+            price_jpy=5200000,
+            vehicle_type=VehicleType.SUV,
+        ),
+        Vehicle(
+            stock_no="VT-3",
+            make="Toyota",
+            model="Corolla",
+            year=2019,
+            price_jpy=1800000,
+            vehicle_type=VehicleType.SEDAN,
+        ),
+    ]
+    for vehicle in vehicles:
+        db.add(vehicle)
+    db.commit()
+
+    response = client.get("/api/v1/vehicles", params={"vehicle_type": "SUV"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pagination"]["total"] == 2
+    stock_nos = {item["stock_no"] for item in data["vehicles"]}
+    assert {"VT-1", "VT-2"}.issubset(stock_nos)
+
+
+def test_vehicle_catalog_quick_filter_values(client, db):
+    """Mirror the exact quick-filter values used by the web catalog."""
+
+    vehicles = [
+        Vehicle(
+            stock_no="QF-TOYOTA",
+            make="Toyota",
+            model="Harrier",
+            year=2021,
+            price_jpy=4200000,
+            vehicle_type=VehicleType.SUV,
+            body_type="SUV",
+            fuel_type=FuelType.HYBRID,
+            transmission=Transmission.AUTOMATIC,
+        ),
+        Vehicle(
+            stock_no="QF-HONDA",
+            make="Honda",
+            model="Fit",
+            year=2020,
+            price_jpy=3200000,
+            vehicle_type=VehicleType.HATCHBACK,
+            body_type="Hatchback",
+            fuel_type=FuelType.GASOLINE,
+            transmission=Transmission.AUTOMATIC,
+        ),
+        Vehicle(
+            stock_no="QF-ELECTRIC",
+            make="Nissan",
+            model="Leaf",
+            year=2022,
+            price_jpy=6100000,
+            vehicle_type=VehicleType.SUV,
+            body_type="SUV",
+            fuel_type=FuelType.ELECTRIC,
+            transmission=Transmission.AUTOMATIC,
+        ),
+        Vehicle(
+            stock_no="QF-LUXURY",
+            make="Lexus",
+            model="LX600",
+            year=2023,
+            price_jpy=16800000,
+            vehicle_type=VehicleType.SUV,
+            body_type="SUV",
+            fuel_type=FuelType.GASOLINE,
+            transmission=Transmission.AUTOMATIC,
+        ),
+    ]
+    for vehicle in vehicles:
+        db.add(vehicle)
+    db.commit()
+
+    response = client.get("/api/v1/vehicles", params={"search": "Toyota"})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 1
+
+    response = client.get("/api/v1/vehicles", params={"search": "Honda"})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 1
+
+    response = client.get("/api/v1/vehicles", params={"price_max": 5000000})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 2
+
+    response = client.get("/api/v1/vehicles", params={"fuel_type": "Gasoline/Hybrid"})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 1
+
+    response = client.get("/api/v1/vehicles", params={"vehicle_type": "SUVs", "search": "QF-"})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 3
+
+    response = client.get("/api/v1/vehicles", params={"fuel_type": "Electric"})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 1
+
+    response = client.get("/api/v1/vehicles", params={"price_min": 15000000})
+    assert response.status_code == 200
+    assert response.json()["pagination"]["total"] == 1
 
 
 def test_pagination(client, db):

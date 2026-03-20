@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
@@ -48,6 +47,34 @@ import { getAccessToken, getRefreshToken } from "@/lib/auth";
 type VehicleSearchParams = Record<string, string | string[] | undefined>;
 
 const ALLOWED_STATUS_VALUES = new Set(["All", "Available", "Sold", "Upcoming"]);
+const ALLOWED_FUEL_VALUES = new Set([
+  "All",
+  "Gasoline",
+  "Gasoline/Hybrid",
+  "Plugin Hybrid",
+  "Diesel",
+  "Electric",
+]);
+const ALLOWED_TYPE_VALUES = new Set([
+  "All",
+  "SUV",
+  "Sedan",
+  "Hatchback",
+  "Van/minivan",
+  "Wagon",
+  "Pickup",
+  "Coupe",
+  "Convertible",
+  "Bikes",
+  "Machinery",
+]);
+const ALLOWED_SORT_VALUES = new Set([
+  "newest",
+  "price_asc",
+  "price_desc",
+  "year_desc",
+  "mileage_asc",
+]);
 
 const isThenable = (value: unknown): value is Promise<unknown> =>
   Boolean(value) &&
@@ -104,14 +131,16 @@ function VehicleCatalog({
   // -- URL STATE --
   const currentPage = Number(getParam(searchParams, "page", "1")) || 1;
   const currentSearch = getParam(searchParams, "search", "") || "";
-  const currentFuel = getParam(searchParams, "fuel", "All") || "All";
+  const rawFuel = getParam(searchParams, "fuel", "All") || "All";
+  const currentFuel = ALLOWED_FUEL_VALUES.has(rawFuel) ? rawFuel : "All";
   const rawStatus = getParam(searchParams, "status", "All") || "All";
   const currentStatus = ALLOWED_STATUS_VALUES.has(rawStatus)
     ? rawStatus
     : "All";
-  const currentSort =
-    getParam(searchParams, "sort", "year_desc") || "year_desc";
-  const currentType = getParam(searchParams, "type", "All") || "All";
+  const rawSort = getParam(searchParams, "sort", "year_desc") || "year_desc";
+  const currentSort = ALLOWED_SORT_VALUES.has(rawSort) ? rawSort : "year_desc";
+  const rawType = getParam(searchParams, "type", "All") || "All";
+  const currentType = ALLOWED_TYPE_VALUES.has(rawType) ? rawType : "All";
   const currentCurrency =
     (getParam(searchParams, "currency", "LKR") as "LKR" | "JPY") || "LKR";
 
@@ -123,33 +152,69 @@ function VehicleCatalog({
     currentCurrency === "LKR"
       ? 50000000
       : Math.max(1000000, Math.round(50000000 / exchangeRate));
-  const currentMinPrice = Number(getParam(searchParams, "minPrice")) || 0;
-  const currentMaxPrice =
-    Number(getParam(searchParams, "maxPrice")) || priceMaxLimit;
-  const currentMinYear = Number(getParam(searchParams, "minYear")) || 2000;
-  const currentMaxYear =
-    Number(getParam(searchParams, "maxYear")) || new Date().getFullYear();
+  const parsedMinPrice = Number(getParam(searchParams, "minPrice"));
+  const parsedMaxPrice = Number(getParam(searchParams, "maxPrice"));
+  const normalizedMinPrice =
+    Number.isFinite(parsedMinPrice) && parsedMinPrice > 0
+      ? Math.min(parsedMinPrice, priceMaxLimit)
+      : 0;
+  const normalizedMaxPrice =
+    Number.isFinite(parsedMaxPrice) && parsedMaxPrice > 0
+      ? Math.min(parsedMaxPrice, priceMaxLimit)
+      : priceMaxLimit;
+  const currentMinPrice = Math.min(normalizedMinPrice, normalizedMaxPrice);
+  const currentMaxPrice = Math.max(normalizedMaxPrice, normalizedMinPrice);
+  const minYearLimit = 2000;
+  const maxYearLimit = new Date().getFullYear();
+  const maxMileageLimit = 200000;
+  const parsedMinYear = Number(getParam(searchParams, "minYear"));
+  const parsedMaxYear = Number(getParam(searchParams, "maxYear"));
+  const normalizedMinYear =
+    Number.isFinite(parsedMinYear) && parsedMinYear > 0
+      ? Math.max(minYearLimit, Math.min(parsedMinYear, maxYearLimit))
+      : minYearLimit;
+  const normalizedMaxYear =
+    Number.isFinite(parsedMaxYear) && parsedMaxYear > 0
+      ? Math.max(minYearLimit, Math.min(parsedMaxYear, maxYearLimit))
+      : maxYearLimit;
+  const currentMinYear = Math.min(normalizedMinYear, normalizedMaxYear);
+  const currentMaxYear = Math.max(normalizedMaxYear, normalizedMinYear);
+  const parsedMaxMileage = Number(getParam(searchParams, "maxMileage"));
   const currentMaxMileage =
-    Number(getParam(searchParams, "maxMileage")) || 200000;
+    Number.isFinite(parsedMaxMileage) && parsedMaxMileage >= 0
+      ? Math.max(0, Math.min(parsedMaxMileage, maxMileageLimit))
+      : maxMileageLimit;
   const currentTransmission =
     getParam(searchParams, "transmission", "All") || "All";
   const hasTypeParam = hasParam(searchParams, "type");
-  const hasMinYearParam = hasParam(searchParams, "minYear");
-  const hasMaxYearParam = hasParam(searchParams, "maxYear");
-  const hasMaxMileageParam = hasParam(searchParams, "maxMileage");
-  const hasTransmissionParam = hasParam(searchParams, "transmission");
+  const hasYearFilters =
+    currentMinYear > minYearLimit || currentMaxYear < maxYearLimit;
+  const hasMileageFilter = currentMaxMileage < maxMileageLimit;
+  const hasTransmissionFilter = currentTransmission !== "All";
   const hasAdvancedFilters =
-    hasMinYearParam ||
-    hasMaxYearParam ||
-    hasMaxMileageParam ||
-    hasTransmissionParam;
+    hasYearFilters || hasMileageFilter || hasTransmissionFilter;
+  const hasPriceFilters = currentMinPrice > 0 || currentMaxPrice < priceMaxLimit;
+  const hasAnyFilters =
+    Boolean(currentSearch) ||
+    currentFuel !== "All" ||
+    currentStatus !== "All" ||
+    currentType !== "All" ||
+    hasPriceFilters ||
+    hasAdvancedFilters;
 
   // -- LOCAL STATE --
   const [searchTerm, setSearchTerm] = useState(currentSearch);
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const isSyncingSearchFromUrlRef = useRef(false);
 
   useEffect(() => {
-    setSearchTerm((prev) => (prev === currentSearch ? prev : currentSearch));
+    setSearchTerm((prev) => {
+      if (prev === currentSearch) {
+        return prev;
+      }
+      isSyncingSearchFromUrlRef.current = true;
+      return currentSearch;
+    });
   }, [currentSearch]);
 
   // Sheet Local State (for applying only on "Apply")
@@ -212,15 +277,52 @@ function VehicleCatalog({
         sort: currentSort,
         currency: currentCurrency,
         minPrice: currentMinPrice > 0 ? currentMinPrice : undefined,
-        maxPrice: currentMaxPrice !== 50000000 ? currentMaxPrice : undefined,
-        minYear: hasMinYearParam ? currentMinYear : undefined,
-        maxYear: hasMaxYearParam ? currentMaxYear : undefined,
-        maxMileage: hasMaxMileageParam ? currentMaxMileage : undefined,
-        transmission: hasTransmissionParam ? currentTransmission : undefined,
+        maxPrice: currentMaxPrice < priceMaxLimit ? currentMaxPrice : undefined,
+        minYear: currentMinYear > minYearLimit ? currentMinYear : undefined,
+        maxYear: currentMaxYear < maxYearLimit ? currentMaxYear : undefined,
+        maxMileage:
+          currentMaxMileage < maxMileageLimit ? currentMaxMileage : undefined,
+        transmission:
+          currentTransmission !== "All" ? currentTransmission : undefined,
         type: hasTypeParam ? currentType : undefined,
       };
 
       const mergedParams = { ...baseParams, ...newParams };
+
+      // Drop default values from URL so defaults are not treated as active filters.
+      if (
+        typeof mergedParams.minPrice === "number" &&
+        mergedParams.minPrice <= 0
+      ) {
+        mergedParams.minPrice = undefined;
+      }
+      if (
+        typeof mergedParams.maxPrice === "number" &&
+        mergedParams.maxPrice >= priceMaxLimit
+      ) {
+        mergedParams.maxPrice = undefined;
+      }
+      if (
+        typeof mergedParams.minYear === "number" &&
+        mergedParams.minYear <= minYearLimit
+      ) {
+        mergedParams.minYear = undefined;
+      }
+      if (
+        typeof mergedParams.maxYear === "number" &&
+        mergedParams.maxYear >= maxYearLimit
+      ) {
+        mergedParams.maxYear = undefined;
+      }
+      if (
+        typeof mergedParams.maxMileage === "number" &&
+        mergedParams.maxMileage >= maxMileageLimit
+      ) {
+        mergedParams.maxMileage = undefined;
+      }
+      if (mergedParams.transmission === "All") {
+        mergedParams.transmission = undefined;
+      }
 
       if (!newParams.page) {
         mergedParams.page = 1;
@@ -249,22 +351,32 @@ function VehicleCatalog({
       currentMaxYear,
       currentMaxMileage,
       currentTransmission,
-      hasMinYearParam,
-      hasMaxYearParam,
-      hasMaxMileageParam,
-      hasTransmissionParam,
       hasTypeParam,
       currentType,
       currentCurrency,
+      priceMaxLimit,
+      minYearLimit,
+      maxYearLimit,
+      maxMileageLimit,
     ],
   );
 
   // -- SYNC DEBOUNCE WITH URL --
   useEffect(() => {
+    if (debouncedSearch === currentSearch) {
+      isSyncingSearchFromUrlRef.current = false;
+      return;
+    }
+    if (isSyncingSearchFromUrlRef.current) {
+      return;
+    }
+    if (debouncedSearch !== searchTerm) {
+      return;
+    }
     if (debouncedSearch !== currentSearch) {
       void updateFilters({ search: debouncedSearch });
     }
-  }, [debouncedSearch, currentSearch, updateFilters]);
+  }, [debouncedSearch, currentSearch, searchTerm, updateFilters]);
 
   // -- DATA FETCHING --
   const { data, isLoading, isError, error, refetch } = useVehicles({
@@ -275,11 +387,12 @@ function VehicleCatalog({
     status: currentStatus === "All" ? undefined : currentStatus,
     sort: currentSort,
     minPrice: currentMinPrice,
-    maxPrice: currentMaxPrice === 50000000 ? undefined : currentMaxPrice,
-    minYear: hasMinYearParam ? currentMinYear : undefined,
-    maxYear: hasMaxYearParam ? currentMaxYear : undefined,
-    maxMileage: hasMaxMileageParam ? currentMaxMileage : undefined,
-    transmission: hasTransmissionParam ? currentTransmission : undefined,
+    maxPrice: currentMaxPrice < priceMaxLimit ? currentMaxPrice : undefined,
+    minYear: currentMinYear > minYearLimit ? currentMinYear : undefined,
+    maxYear: currentMaxYear < maxYearLimit ? currentMaxYear : undefined,
+    maxMileage:
+      currentMaxMileage < maxMileageLimit ? currentMaxMileage : undefined,
+    transmission: currentTransmission !== "All" ? currentTransmission : undefined,
     vehicleType: currentType === "All" ? undefined : currentType,
     priceCurrency: currentCurrency,
     exchangeRate,
@@ -322,6 +435,21 @@ function VehicleCatalog({
       params.delete("status");
       changed = true;
     }
+    const fuelValue = params.get("fuel");
+    if (fuelValue && !ALLOWED_FUEL_VALUES.has(fuelValue)) {
+      params.delete("fuel");
+      changed = true;
+    }
+    const typeValue = params.get("type");
+    if (typeValue && !ALLOWED_TYPE_VALUES.has(typeValue)) {
+      params.delete("type");
+      changed = true;
+    }
+    const sortValue = params.get("sort");
+    if (sortValue && !ALLOWED_SORT_VALUES.has(sortValue)) {
+      params.delete("sort");
+      changed = true;
+    }
     if (changed) {
       const query = params.toString();
       router.replace(`/dashboard/vehicles${query ? `?${query}` : ""}`);
@@ -329,12 +457,20 @@ function VehicleCatalog({
   }, [searchParams, router]);
 
   const applyAdvancedFilters = () => {
+    const [minPriceValue, maxPriceValue] =
+      priceRange[0] <= priceRange[1]
+        ? [priceRange[0], priceRange[1]]
+        : [priceRange[1], priceRange[0]];
+    const [minYearValue, maxYearValue] =
+      yearRange[0] <= yearRange[1]
+        ? [yearRange[0], yearRange[1]]
+        : [yearRange[1], yearRange[0]];
     updateFilters({
-      minPrice: priceRange[0],
-      maxPrice: priceRange[1],
-      minYear: yearRange[0],
-      maxYear: yearRange[1],
-      maxMileage: mileageLimit[0],
+      minPrice: Math.max(0, Math.min(minPriceValue, priceMaxLimit)),
+      maxPrice: Math.max(0, Math.min(maxPriceValue, priceMaxLimit)),
+      minYear: Math.max(minYearLimit, Math.min(minYearValue, maxYearLimit)),
+      maxYear: Math.max(minYearLimit, Math.min(maxYearValue, maxYearLimit)),
+      maxMileage: Math.max(0, Math.min(mileageLimit[0], maxMileageLimit)),
       transmission: selectedTransmission,
     });
     setSheetOpen(false);
@@ -362,19 +498,20 @@ function VehicleCatalog({
     updateFilters({
       currency: next,
       minPrice: convert(currentMinPrice),
-      maxPrice: convert(currentMaxPrice),
+      maxPrice:
+        currentMaxPrice < priceMaxLimit ? convert(currentMaxPrice) : undefined,
     });
   };
 
   const isAuthed = authReady && (isAuthenticated || hasSession);
 
   return (
-    <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+    <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans dark:bg-slate-950 dark:text-slate-100 flex flex-col">
       {/* Grid Background */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50 dark:border-slate-700/70 dark:bg-slate-950/85">
         <div className="cd-container h-16 flex items-center justify-between">
           <Link
             href={isAuthed ? "/dashboard" : "/"}
@@ -383,22 +520,22 @@ function VehicleCatalog({
             <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
             <BrandWordmark />
           </Link>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
+          <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b] dark:text-slate-300">
             <Link
               href="/dashboard"
-              className="hover:text-[#393d3f] transition-colors"
+              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
             >
               Dashboard
             </Link>
             <Link
               href="/dashboard/orders"
-              className="hover:text-[#393d3f] transition-colors"
+              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
             >
               Orders
             </Link>
             <Link
               href="/dashboard/vehicles"
-              className="text-[#393d3f] flex items-center gap-2"
+              className="text-[#393d3f] flex items-center gap-2 dark:text-slate-100"
             >
               Vehicles{" "}
               <Badge
@@ -410,13 +547,13 @@ function VehicleCatalog({
             </Link>
             <Link
               href="/dashboard/kyc"
-              className="hover:text-[#393d3f] transition-colors"
+              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
             >
               KYC
             </Link>
             <Link
               href="/dashboard/profile"
-              className="hover:text-[#393d3f] transition-colors"
+              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
             >
               Profile
             </Link>
@@ -439,7 +576,7 @@ function VehicleCatalog({
                 <Link href="/login">
                   <Button
                     variant="ghost"
-                    className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono h-9"
+                    className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono h-9 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800"
                   >
                     Sign In
                   </Button>
@@ -456,24 +593,19 @@ function VehicleCatalog({
       </nav>
 
       {/* Page Header */}
-      <header className="relative z-10 pt-12 pb-8 border-b border-[#546a7b]/40">
+      <header className="relative z-10 pt-12 pb-8 border-b border-[#546a7b]/40 dark:border-slate-700/60">
         <div className="cd-container">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-[#393d3f] mb-2 tracking-tight">
+              <h1 className="text-4xl md:text-5xl font-bold text-[#393d3f] mb-2 tracking-tight dark:text-slate-100">
                 Vehicle <span className="text-[#62929e]">Catalog</span>
               </h1>
-              <p className="text-[#546a7b] max-w-2xl">
+              <p className="text-[#546a7b] max-w-2xl dark:text-slate-300">
                 Browse live auctions from USS Tokyo, JAA, and CAI.
               </p>
             </div>
 
-            {(currentSearch ||
-              currentFuel !== "All" ||
-              currentStatus !== "All" ||
-              currentType !== "All" ||
-              currentMinPrice > 0 ||
-              hasAdvancedFilters) && (
+            {hasAnyFilters && (
               <Button
                 variant="outline"
                 size="sm"
@@ -490,10 +622,10 @@ function VehicleCatalog({
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#546a7b]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#546a7b] dark:text-slate-400" />
                 <Input
                   placeholder="Search make, model, chassis..."
-                  className="pl-10 h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] hover:bg-[#c6c5b9]/30 transition-colors"
+                  className="pl-10 h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] hover:bg-[#c6c5b9]/30 transition-colors dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-400 dark:hover:bg-slate-800"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -501,14 +633,14 @@ function VehicleCatalog({
 
               {/* Dropdowns & Sheet Trigger */}
               <div className="flex flex-wrap gap-2">
-                <div className="flex items-center gap-1 rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-2 py-1">
+                <div className="flex items-center gap-1 rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-2 py-1 dark:border-slate-600 dark:bg-slate-800/70">
                   <button
                     type="button"
                     onClick={() => handleCurrencyToggle("LKR")}
                     className={`px-2 py-1 text-xs rounded-full transition ${
                       currentCurrency === "LKR"
                         ? "bg-[#62929e] text-[#fdfdff]"
-                        : "text-[#546a7b] hover:text-[#393d3f]"
+                        : "text-[#546a7b] hover:text-[#393d3f] dark:text-slate-300 dark:hover:text-slate-100"
                     }`}
                   >
                     LKR
@@ -519,7 +651,7 @@ function VehicleCatalog({
                     className={`px-2 py-1 text-xs rounded-full transition ${
                       currentCurrency === "JPY"
                         ? "bg-[#62929e] text-[#fdfdff]"
-                        : "text-[#546a7b] hover:text-[#393d3f]"
+                        : "text-[#546a7b] hover:text-[#393d3f] dark:text-slate-300 dark:hover:text-slate-100"
                     }`}
                   >
                     JPY
@@ -530,10 +662,10 @@ function VehicleCatalog({
                   value={currentType}
                   onValueChange={(val) => updateFilters({ type: val })}
                 >
-                  <SelectTrigger className="w-[140px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[140px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
                     <SelectItem value="All">All Types</SelectItem>
                     <SelectItem value="SUV">SUV</SelectItem>
                     <SelectItem value="Sedan">Sedan</SelectItem>
@@ -541,6 +673,10 @@ function VehicleCatalog({
                     <SelectItem value="Van/minivan">Van/Minivan</SelectItem>
                     <SelectItem value="Wagon">Wagon</SelectItem>
                     <SelectItem value="Pickup">Pickup</SelectItem>
+                    <SelectItem value="Coupe">Coupe</SelectItem>
+                    <SelectItem value="Convertible">Convertible</SelectItem>
+                    <SelectItem value="Bikes">Bikes</SelectItem>
+                    <SelectItem value="Machinery">Machinery</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -548,14 +684,17 @@ function VehicleCatalog({
                   value={currentFuel}
                   onValueChange={(val) => updateFilters({ fuel: val })}
                 >
-                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Fuel" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
                     <SelectItem value="All">All Fuels</SelectItem>
                     <SelectItem value="Gasoline">Gasoline</SelectItem>
                     <SelectItem value="Gasoline/Hybrid">
                       Gasoline/Hybrid
+                    </SelectItem>
+                    <SelectItem value="Plugin Hybrid">
+                      Plugin Hybrid
                     </SelectItem>
                     <SelectItem value="Diesel">Diesel</SelectItem>
                     <SelectItem value="Electric">Electric</SelectItem>
@@ -566,12 +705,14 @@ function VehicleCatalog({
                   value={currentStatus}
                   onValueChange={(val) => updateFilters({ status: val })}
                 >
-                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
                     <SelectItem value="All">All Status</SelectItem>
                     <SelectItem value="Available">Available</SelectItem>
+                    <SelectItem value="Upcoming">Upcoming</SelectItem>
+                    <SelectItem value="Sold">Sold</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -579,10 +720,10 @@ function VehicleCatalog({
                   value={currentSort}
                   onValueChange={(val) => updateFilters({ sort: val })}
                 >
-                  <SelectTrigger className="w-[160px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30">
+                  <SelectTrigger className="w-[160px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f]">
+                  <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
                     <SelectItem value="newest">Newest Listed</SelectItem>
                     <SelectItem value="price_asc">
                       Price: Low to High
@@ -600,31 +741,29 @@ function VehicleCatalog({
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-10 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 hover:text-[#62929e]"
+                      className="h-10 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 hover:text-[#62929e] dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-teal-300"
                     >
                       <SlidersHorizontal className="w-4 h-4 mr-2" /> Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] overflow-y-auto">
-                    <SheetHeader className="mb-6">
-                      <SheetTitle className="text-[#393d3f]">
+                  <SheetContent className="w-full sm:max-w-[460px] border-l border-slate-200/80 bg-slate-50 p-0 text-slate-900 shadow-[0_24px_60px_rgba(15,23,42,0.35)] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                    <SheetHeader className="border-b border-slate-200/80 bg-slate-50/95 px-6 py-5 pr-12 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+                      <SheetTitle className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                         Advanced Filters
                       </SheetTitle>
-                      <SheetDescription className="text-[#546a7b]">
+                      <SheetDescription className="text-sm text-slate-600 dark:text-slate-300">
                         Refine your search with detail.
                       </SheetDescription>
                     </SheetHeader>
 
-                    <div className="space-y-8">
-                      {/* Price Range */}
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-sm font-medium">
+                    <div className="max-h-[calc(100vh-188px)] space-y-4 overflow-y-auto px-5 py-5">
+                      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(84,106,123,0.08)] dark:border-slate-700 dark:bg-slate-800/70">
+                        <div className="flex items-center justify-between gap-3">
+                          <Label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             Price Range ({currentCurrency})
                           </Label>
-                          <span className="text-xs text-[#62929e] font-mono">
-                            {formatCompact(priceRange[0])} -{" "}
-                            {formatCompact(priceRange[1])}
+                          <span className="rounded-full border border-teal-400/40 bg-teal-50 px-2.5 py-1 text-[11px] font-mono font-semibold text-teal-800 dark:border-teal-300/35 dark:bg-teal-500/15 dark:text-teal-100">
+                            {formatCompact(priceRange[0])} - {formatCompact(priceRange[1])}
                           </span>
                         </div>
                         <Slider
@@ -633,101 +772,109 @@ function VehicleCatalog({
                           step={currentCurrency === "LKR" ? 1000000 : 100000}
                           value={priceRange}
                           onValueChange={setPriceRange}
-                          className="py-4"
+                          className="py-2 [&_[data-slot=slider-track]]:bg-slate-300 dark:[&_[data-slot=slider-track]]:bg-slate-700 [&_[data-slot=slider-range]]:bg-teal-600 dark:[&_[data-slot=slider-range]]:bg-teal-400 [&_[data-slot=slider-thumb]]:border-teal-700 dark:[&_[data-slot=slider-thumb]]:border-teal-300 [&_[data-slot=slider-thumb]]:bg-white dark:[&_[data-slot=slider-thumb]]:bg-slate-950 [&_[data-slot=slider-thumb]]:shadow-[0_0_0_4px_rgba(13,148,136,0.2)] dark:[&_[data-slot=slider-thumb]]:shadow-[0_0_0_4px_rgba(45,212,191,0.25)]"
                         />
-                        <div className="text-[10px] text-[#546a7b]">
+                        <div className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                           1 JPY = {exchangeRate.toFixed(2)} LKR
-                          {exchangeRateData?.date
-                            ? ` · ${exchangeRateData.date}`
-                            : ""}
+                          {exchangeRateData?.date ? ` | ${exchangeRateData.date}` : ""}
                         </div>
                       </div>
 
-                      <Separator className="bg-[#c6c5b9]/30" />
-
-                      {/* Year Range */}
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-sm font-medium">Year</Label>
-                          <span className="text-xs text-[#62929e] font-mono">
+                      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(84,106,123,0.08)] dark:border-slate-700 dark:bg-slate-800/70">
+                        <div className="flex items-center justify-between gap-3">
+                          <Label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            Year
+                          </Label>
+                          <span className="rounded-full border border-teal-400/40 bg-teal-50 px-2.5 py-1 text-[11px] font-mono font-semibold text-teal-800 dark:border-teal-300/35 dark:bg-teal-500/15 dark:text-teal-100">
                             {yearRange[0]} - {yearRange[1]}
                           </span>
                         </div>
                         <Slider
-                          min={2000}
-                          max={new Date().getFullYear()}
+                          min={minYearLimit}
+                          max={maxYearLimit}
                           step={1}
                           value={yearRange}
                           onValueChange={setYearRange}
-                          className="py-4"
+                          className="py-2 [&_[data-slot=slider-track]]:bg-slate-300 dark:[&_[data-slot=slider-track]]:bg-slate-700 [&_[data-slot=slider-range]]:bg-teal-600 dark:[&_[data-slot=slider-range]]:bg-teal-400 [&_[data-slot=slider-thumb]]:border-teal-700 dark:[&_[data-slot=slider-thumb]]:border-teal-300 [&_[data-slot=slider-thumb]]:bg-white dark:[&_[data-slot=slider-thumb]]:bg-slate-950 [&_[data-slot=slider-thumb]]:shadow-[0_0_0_4px_rgba(13,148,136,0.2)] dark:[&_[data-slot=slider-thumb]]:shadow-[0_0_0_4px_rgba(45,212,191,0.25)]"
                         />
                       </div>
 
-                      <Separator className="bg-[#c6c5b9]/30" />
-
-                      {/* Mileage */}
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <Label className="text-sm font-medium">
+                      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(84,106,123,0.08)] dark:border-slate-700 dark:bg-slate-800/70">
+                        <div className="flex items-center justify-between gap-3">
+                          <Label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             Max Mileage
                           </Label>
-                          <span className="text-xs text-[#62929e] font-mono">
+                          <span className="rounded-full border border-teal-400/40 bg-teal-50 px-2.5 py-1 text-[11px] font-mono font-semibold text-teal-800 dark:border-teal-300/35 dark:bg-teal-500/15 dark:text-teal-100">
                             {mileageLimit[0].toLocaleString()} km
                           </span>
                         </div>
                         <Slider
                           min={0}
-                          max={200000}
+                          max={maxMileageLimit}
                           step={5000}
                           value={mileageLimit}
                           onValueChange={setMileageLimit}
-                          className="py-4"
+                          className="py-2 [&_[data-slot=slider-track]]:bg-slate-300 dark:[&_[data-slot=slider-track]]:bg-slate-700 [&_[data-slot=slider-range]]:bg-teal-600 dark:[&_[data-slot=slider-range]]:bg-teal-400 [&_[data-slot=slider-thumb]]:border-teal-700 dark:[&_[data-slot=slider-thumb]]:border-teal-300 [&_[data-slot=slider-thumb]]:bg-white dark:[&_[data-slot=slider-thumb]]:bg-slate-950 [&_[data-slot=slider-thumb]]:shadow-[0_0_0_4px_rgba(13,148,136,0.2)] dark:[&_[data-slot=slider-thumb]]:shadow-[0_0_0_4px_rgba(45,212,191,0.25)]"
                         />
                       </div>
 
-                      <Separator className="bg-[#c6c5b9]/30" />
-
-                      {/* Transmission */}
-                      <div className="space-y-4">
-                        <Label className="text-sm font-medium">
+                      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(84,106,123,0.08)] dark:border-slate-700 dark:bg-slate-800/70">
+                        <Label className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                           Transmission
                         </Label>
                         <RadioGroup
                           value={selectedTransmission}
                           onValueChange={setSelectedTransmission}
-                          className="flex flex-col space-y-2"
+                          className="grid grid-cols-2 gap-2"
                         >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="All"
-                              id="t-all"
-                              className="border-[#546a7b]/65 text-[#62929e]"
-                            />
-                            <Label htmlFor="t-all" className="text-[#546a7b]">
-                              Any
+                          {[
+                            { value: "All", label: "Any", id: "t-all" },
+                            { value: "Automatic", label: "Automatic", id: "t-at" },
+                            { value: "Manual", label: "Manual", id: "t-mt" },
+                            { value: "CVT", label: "CVT", id: "t-cvt" },
+                          ].map((item) => (
+                            <Label
+                              key={item.id}
+                              htmlFor={item.id}
+                              className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
+                                selectedTransmission === item.value
+                                  ? "border-teal-500/55 bg-teal-50 text-slate-900 dark:border-teal-300/60 dark:bg-teal-500/20 dark:text-slate-100"
+                                  : "border-slate-300 bg-white text-slate-700 hover:border-teal-500/45 hover:bg-teal-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:border-teal-300/45 dark:hover:bg-teal-500/15"
+                              }`}
+                            >
+                              <RadioGroupItem
+                                value={item.value}
+                                id={item.id}
+                                className="border-slate-500/70 text-teal-700 dark:border-slate-400/70 dark:text-teal-300"
+                              />
+                              {item.label}
                             </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="Automatic"
-                              id="t-at"
-                              className="border-[#546a7b]/65 text-[#62929e]"
-                            />
-                            <Label htmlFor="t-at" className="text-[#546a7b]">
-                              Automatic
-                            </Label>
-                          </div>
+                          ))}
                         </RadioGroup>
                       </div>
                     </div>
 
-                    <SheetFooter className="mt-8">
-                      <Button
-                        onClick={applyAdvancedFilters}
-                        className="w-full bg-[#62929e] hover:bg-[#62929e]/90 text-[#fdfdff] font-bold"
-                      >
-                        Apply Filters
-                      </Button>
+                    <SheetFooter className="border-t border-slate-200/90 bg-slate-50 px-5 py-4 dark:border-slate-700 dark:bg-slate-900">
+                      <div className="grid w-full grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setPriceRange([0, priceMaxLimit]);
+                            setYearRange([minYearLimit, maxYearLimit]);
+                            setMileageLimit([maxMileageLimit]);
+                            setSelectedTransmission("All");
+                          }}
+                          className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                        >
+                          Reset
+                        </Button>
+                        <Button
+                          onClick={applyAdvancedFilters}
+                          className="bg-teal-600 font-semibold text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-400"
+                        >
+                          Apply Filters
+                        </Button>
+                      </div>
                     </SheetFooter>
                   </SheetContent>
                 </Sheet>
@@ -740,58 +887,61 @@ function VehicleCatalog({
                 <button
                   key={index}
                   onClick={() => updateFilters(filter.params)}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/40 hover:bg-[#c6c5b9]/30 hover:border-[#62929e]/50 text-xs font-medium text-[#546a7b] transition-all whitespace-nowrap"
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/40 hover:bg-[#c6c5b9]/30 hover:border-[#62929e]/50 text-xs font-medium text-[#546a7b] transition-all whitespace-nowrap dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:border-teal-400/60"
                 >
                   {filter.label}
                 </button>
               ))}
             </div>
 
-            {(currentSearch ||
-              currentFuel !== "All" ||
-              currentStatus !== "All" ||
-              currentType !== "All" ||
-              currentMinPrice > 0 ||
-              hasAdvancedFilters) && (
+            {hasAnyFilters && (
               <div className="flex flex-wrap gap-2 pt-1 text-xs">
                 {currentSearch && (
                   <button
                     onClick={() => updateFilters({ search: "" })}
-                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
                   >
-                    Search: {currentSearch} ✕
+                    Search: {currentSearch} x
                   </button>
                 )}
                 {currentFuel !== "All" && (
                   <button
                     onClick={() => updateFilters({ fuel: "All" })}
-                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
                   >
-                    Fuel: {currentFuel} ✕
+                    Fuel: {currentFuel} x
                   </button>
                 )}
                 {currentStatus !== "All" && (
                   <button
                     onClick={() => updateFilters({ status: "All" })}
-                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
                   >
-                    Status: {currentStatus} ✕
+                    Status: {currentStatus} x
                   </button>
                 )}
                 {currentType !== "All" && (
                   <button
                     onClick={() => updateFilters({ type: "All" })}
-                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
                   >
-                    Type: {currentType} ✕
+                    Type: {currentType} x
                   </button>
                 )}
                 {currentMinPrice > 0 && (
                   <button
                     onClick={() => updateFilters({ minPrice: undefined })}
-                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
                   >
-                    Min Price ✕
+                    Min Price x
+                  </button>
+                )}
+                {currentMaxPrice < priceMaxLimit && (
+                  <button
+                    onClick={() => updateFilters({ maxPrice: undefined })}
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
+                  >
+                    Max Price x
                   </button>
                 )}
                 {hasAdvancedFilters && (
@@ -804,9 +954,9 @@ function VehicleCatalog({
                         transmission: "All",
                       })
                     }
-                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f]"
+                    className="rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-[#546a7b] hover:border-[#62929e]/40 hover:text-[#393d3f] dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-200 dark:hover:border-teal-400/60 dark:hover:text-slate-100"
                   >
-                    Advanced Filters ✕
+                    Advanced Filters x
                   </button>
                 )}
               </div>

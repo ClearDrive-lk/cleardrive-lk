@@ -123,12 +123,20 @@ def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
 def _fuel_filter_values(requested: str) -> list[str]:
     key = _canonical_fuel_key(requested)
     mapping = {
-        "petrol": ["Gasoline"],
-        "gasoline": ["Gasoline"],
-        "hybrid": ["Gasoline/hybrid"],
-        "plugin_hybrid": ["Gasoline/hybrid", "Plugin Hybrid"],
-        "diesel": ["Diesel"],
-        "electric": ["Electric"],
+        "petrol": ["Gasoline", "Petrol", "PETROL"],
+        "gasoline": ["Gasoline", "Petrol", "PETROL"],
+        "hybrid": [
+            "Gasoline/hybrid",
+            "Gasoline/Hybrid",
+            "HYBRID",
+            "Plugin Hybrid",
+            "Plug-in Hybrid",
+            "PLUGIN_HYBRID",
+            "%Hybrid%",
+        ],
+        "plugin_hybrid": ["Plugin Hybrid", "Plug-in Hybrid", "PLUGIN_HYBRID", "%Plugin%Hybrid%"],
+        "diesel": ["Diesel", "DIESEL"],
+        "electric": ["Electric", "ELECTRIC", "%Electric%"],
         "cng": ["CNG"],
     }
     return mapping.get(key, [requested])
@@ -147,18 +155,26 @@ def _canonical_transmission_key(value: str) -> str:
 
 def _canonical_vehicle_type_key(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
-    if normalized in {"suv"}:
+    if normalized in {"suv", "suvs", "sport utility vehicle", "sport utility"}:
         return "suv"
-    if normalized in {"sedan"}:
+    if normalized in {"sedan", "saloon"}:
         return "sedan"
-    if normalized in {"hatchback"}:
+    if normalized in {"hatchback", "hatch"}:
         return "hatchback"
-    if normalized in {"van", "minivan", "van minivan"}:
+    if normalized in {"van", "minivan", "mini van", "van minivan", "mpv"}:
         return "van_minivan"
     if normalized in {"wagon"}:
         return "wagon"
     if normalized in {"pickup", "pick up", "pickup truck"}:
         return "pickup"
+    if normalized in {"coupe"}:
+        return "coupe"
+    if normalized in {"convertible", "cabriolet"}:
+        return "convertible"
+    if normalized in {"bikes", "bike", "motorcycle", "motorbike"}:
+        return "bikes"
+    if normalized in {"machinery", "heavy machinery", "equipment"}:
+        return "machinery"
     return normalized
 
 
@@ -171,8 +187,29 @@ def _resolve_vehicle_type_enum(requested: str) -> VehicleType | None:
         "van_minivan": VehicleType.VAN_MINIVAN,
         "wagon": VehicleType.WAGON,
         "pickup": VehicleType.PICKUP,
+        "coupe": VehicleType.COUPE,
+        "convertible": VehicleType.CONVERTIBLE,
+        "bikes": VehicleType.BIKES,
+        "machinery": VehicleType.MACHINERY,
     }
     return mapping.get(key)
+
+
+def _vehicle_type_filter_values(requested: str) -> list[str]:
+    key = _canonical_vehicle_type_key(requested)
+    mapping = {
+        "suv": ["SUV", "SUVs"],
+        "sedan": ["Sedan", "Saloon"],
+        "hatchback": ["Hatchback", "Hatch"],
+        "van_minivan": ["Van/minivan", "Van", "Minivan", "MPV"],
+        "wagon": ["Wagon", "Estate"],
+        "pickup": ["Pickup", "Pick up", "Pickup Truck", "Truck"],
+        "coupe": ["Coupe"],
+        "convertible": ["Convertible", "Cabriolet"],
+        "bikes": ["Bikes", "Bike", "Motorcycle", "Motorbike"],
+        "machinery": ["Machinery", "Heavy Machinery", "Equipment"],
+    }
+    return mapping.get(key, [requested])
 
 
 def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
@@ -208,9 +245,9 @@ def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
 def _transmission_filter_values(requested: str) -> list[str]:
     key = _canonical_transmission_key(requested)
     mapping = {
-        "automatic": ["Automatic"],
-        "manual": ["Manual"],
-        "cvt": ["CVT"],
+        "automatic": ["Automatic", "AUTOMATIC", "AT", "A/T", "Auto"],
+        "manual": ["Manual", "MANUAL", "MT", "M/T"],
+        "cvt": ["CVT", "Cvt"],
     }
     return mapping.get(key, [requested])
 
@@ -443,9 +480,13 @@ async def get_vehicles(
         search_term = f"%{search}%"
         query = query.filter(
             or_(
+                Vehicle.stock_no.ilike(search_term),
+                Vehicle.chassis.ilike(search_term),
                 Vehicle.make.ilike(search_term),
                 Vehicle.model.ilike(search_term),
+                Vehicle.model_no.ilike(search_term),
                 Vehicle.grade.ilike(search_term),
+                Vehicle.body_type.ilike(search_term),
                 Vehicle.color.ilike(search_term),
                 Vehicle.options.ilike(search_term),
                 Vehicle.other_remarks.ilike(search_term),
@@ -460,10 +501,13 @@ async def get_vehicles(
 
     if vehicle_type:
         resolved_type = _resolve_vehicle_type_enum(vehicle_type)
+        type_candidates = _vehicle_type_filter_values(vehicle_type)
+        clauses = []
         if resolved_type is not None:
-            query = query.filter(Vehicle.vehicle_type == resolved_type)
-        else:
-            query = query.filter(Vehicle.vehicle_type == vehicle_type)
+            clauses.append(Vehicle.vehicle_type == resolved_type)
+        for value in type_candidates:
+            clauses.append(Vehicle.body_type.ilike(f"%{value}%"))
+        query = query.filter(or_(*clauses))
 
     if recent_only and year_min is None:
         year_min = datetime.utcnow().year - 2
