@@ -10,7 +10,7 @@ from uuid import UUID as PyUUID
 
 from app.core.database import Base
 from app.core.models import GUID
-from sqlalchemy import JSON, DateTime, Enum
+from sqlalchemy import JSON, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -41,6 +41,16 @@ class AuditEventType(str, enum.Enum):
     USER_TIER_UPGRADED = "USER_TIER_UPGRADED"
 
 
+class AuditActionType(str, enum.Enum):
+    """Generic data-change action types."""
+
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    UPLOAD = "UPLOAD"
+    SUPERSEDE = "SUPERSEDE"
+
+
 class AuditLog(Base):
     """Audit log for tracking admin actions."""
 
@@ -52,5 +62,14 @@ class AuditLog(Base):
     )
     user_id: Mapped[PyUUID | None] = mapped_column(GUID(), nullable=True, index=True)
     admin_id: Mapped[PyUUID | None] = mapped_column(GUID(), nullable=True, index=True)
+    action_type: Mapped[AuditActionType | None] = mapped_column(
+        Enum(AuditActionType), nullable=True, index=True
+    )
+    table_name: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    record_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    old_value: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    new_value: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    change_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    version: Mapped[int | None] = mapped_column(Integer, nullable=True)
     details: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

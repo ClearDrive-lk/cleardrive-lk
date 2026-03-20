@@ -64,8 +64,10 @@ class Settings(BaseSettings):
     # Gazette Extraction Pipeline (CD-24)
     GOOGLE_CLOUD_PROJECT: str | None = None
     DOCUMENT_AI_PROCESSOR_ID: str | None = None
+    GOOGLE_APPLICATION_CREDENTIALS_PATH: str | None = None
+    GOOGLE_SERVICE_ACCOUNT_JSON: str | None = None
     GEMINI_API_KEY: str | None = None
-    GEMINI_MODEL: str = "gemini-1.5-pro-latest"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     CHATBOT_RATE_LIMIT_PER_MINUTE: int = 10
     CHATBOT_MAX_MESSAGE_LENGTH: int = 500
     CHATBOT_MAX_HISTORY_LENGTH: int = 10

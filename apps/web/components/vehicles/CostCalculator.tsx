@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import apiClient from "@/lib/api-client";
 
 interface CostCalculatorProps {
@@ -32,7 +33,7 @@ type CostBreakdown = {
 
 export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
   const hasPrice = Number.isFinite(priceJPY) && priceJPY > 0;
-  const { data, isLoading, isError } = useQuery<CostBreakdown>({
+  const { data, isLoading, isError, error } = useQuery<CostBreakdown>({
     queryKey: ["vehicle-cost", vehicleId],
     queryFn: async () => {
       const response = await apiClient.get(`/vehicles/${vehicleId}/cost`);
@@ -86,6 +87,10 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
   }
 
   if (isError || !data) {
+    const errorMessage = isAxiosError(error)
+      ? ((error.response?.data as { detail?: string } | undefined)?.detail ??
+        "Unable to load the tax breakdown right now. Try again in a moment.")
+      : "Unable to load the tax breakdown right now. Try again in a moment.";
     return (
       <Card className="border-white/10 bg-[#0F0F0F] sticky top-6">
         <CardHeader className="pb-2 border-b border-white/5">
@@ -103,7 +108,7 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
           </div>
         </CardHeader>
         <CardContent className="pt-4 text-sm text-gray-400">
-          Unable to load the tax breakdown right now. Try again in a moment.
+          {errorMessage}
         </CardContent>
       </Card>
     );

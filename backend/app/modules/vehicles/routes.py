@@ -4,7 +4,7 @@ import json
 import math
 import re
 import threading
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import urljoin
@@ -24,7 +24,11 @@ from app.modules.vehicles.schemas import (
     VehicleResponse,
     VehicleUpdate,
 )
-from app.services.tax_calculator import NoTaxRuleError, calculate_tax
+from app.services.tax_calculator import (
+    InsufficientVehicleDataError,
+    NoTaxRuleError,
+    calculate_tax,
+)
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, case, desc, or_, text
 from sqlalchemy.orm import Session
@@ -40,7 +44,6 @@ from .cost_calculator import (
     calculate_documentation_fee,
     calculate_port_charges,
     calculate_shipping_cost,
-    calculate_total_cost,
 )
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
@@ -296,6 +299,10 @@ def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
 def _map_vehicle_type_to_tax(vehicle: Vehicle) -> str:
     """Map vehicle model type to tax rule enum values."""
     value = vehicle.vehicle_type.value.upper() if vehicle.vehicle_type else ""
+    if _map_fuel_type_to_tax(vehicle) == TaxFuelType.ELECTRIC.value:
+        if value == "PICKUP":
+            return TaxVehicleType.TRUCK.value
+        return TaxVehicleType.ELECTRIC.value
     mapping = {
         "SEDAN": TaxVehicleType.SEDAN.value,
         "SUV": TaxVehicleType.SUV.value,
@@ -324,6 +331,20 @@ def _map_fuel_type_to_tax(vehicle: Vehicle) -> str:
     if "GASOLINE" in value or "PETROL" in value:
         return TaxFuelType.PETROL.value
     return TaxFuelType.OTHER.value
+
+
+def _derive_tax_category_codes(vehicle: Vehicle) -> list[str]:
+    raw_type = vehicle.vehicle_type.value.upper() if vehicle.vehicle_type else ""
+    raw_fuel = str(getattr(vehicle.fuel_type, "value", vehicle.fuel_type) or "").upper()
+    categories: list[str] = []
+
+    if "ELECTRIC" in raw_fuel:
+        if raw_type == "PICKUP":
+            categories.append("GOODS_VEHICLE_ELECTRIC")
+        elif raw_type in {"SEDAN", "SUV", "HATCHBACK", "WAGON", "COUPE", "CONVERTIBLE"}:
+            categories.extend(["PASSENGER_VEHICLE_BEV", "PASSENGER_VEHICLE_ELECTRIC"])
+
+    return categories
 
 
 # ============================================================================
@@ -679,6 +700,9 @@ async def calculate_cost(
     tax_vehicle_type = _map_vehicle_type_to_tax(vehicle)
     tax_fuel_type = _map_fuel_type_to_tax(vehicle)
     engine_cc = int(vehicle.engine_cc or 0)
+    motor_power_kw = float(vehicle.motor_power_kw) if vehicle.motor_power_kw is not None else None
+    vehicle_age_years = max(date.today().year - int(vehicle.year or date.today().year), 0)
+    category_codes = _derive_tax_category_codes(vehicle)
 
     try:
         tax_result = calculate_tax(
@@ -687,11 +711,20 @@ async def calculate_cost(
             fuel_type=tax_fuel_type,
             engine_cc=engine_cc,
             cif_value=float(cif_value),
+            power_kw=motor_power_kw,
+            vehicle_age_years=float(vehicle_age_years),
+            category_codes=category_codes or None,
         )
     except NoTaxRuleError:
-        fallback = calculate_total_cost(vehicle, exchange_rate=rate)
-        fallback["pal_lkr"] = Decimal("0")
-        return CostBreakdown(**fallback)  # type: ignore[arg-type]
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=(
+                "No approved gazette tax rule matches this vehicle yet. "
+                "Review and approve the extracted gazette rules from the admin dashboard."
+            ),
+        )
+    except InsufficientVehicleDataError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -700,10 +733,12 @@ async def calculate_cost(
     documentation_fee_lkr = calculate_documentation_fee()
 
     customs_duty = Decimal(str(tax_result["customs_duty"]))
+    surcharge = Decimal(str(tax_result.get("surcharge", 0)))
     excise_duty = Decimal(str(tax_result["excise_duty"]))
     cess = Decimal(str(tax_result["cess"]))
     vat = Decimal(str(tax_result["vat"]))
     pal = Decimal(str(tax_result["pal"]))
+    luxury_tax = Decimal(str(tax_result.get("luxury_tax", 0)))
 
     total_cost = (
         Decimal(str(tax_result["total_landed_cost"]))
@@ -717,7 +752,7 @@ async def calculate_cost(
             return Decimal("0.0")
         return ((amount / total) * 100).quantize(Decimal("0.1"))
 
-    taxes_total = customs_duty + excise_duty + cess + vat + pal
+    taxes_total = customs_duty + surcharge + excise_duty + cess + vat + pal + luxury_tax
     fees_total = shipping_cost_lkr + port_charges_lkr + clearance_fee_lkr + documentation_fee_lkr
 
     cost_data = {
@@ -726,10 +761,12 @@ async def calculate_cost(
         "exchange_rate": rate,
         "shipping_cost_lkr": shipping_cost_lkr,
         "customs_duty_lkr": customs_duty,
+        "surcharge_lkr": surcharge,
         "excise_duty_lkr": excise_duty,
         "vat_lkr": vat,
         "cess_lkr": cess,
         "pal_lkr": pal,
+        "luxury_tax_lkr": luxury_tax,
         "port_charges_lkr": port_charges_lkr,
         "clearance_fee_lkr": clearance_fee_lkr,
         "documentation_fee_lkr": documentation_fee_lkr,
