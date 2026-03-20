@@ -17,10 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
-import { useLogout } from "@/lib/hooks/useLogout";
 import { normalizeRole } from "@/lib/roles";
-import ThemeToggle from "@/components/ui/theme-toggle";
-import { BrandMark, BrandWordmark } from "@/components/ui/brand";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 import { useRef, useEffect, useState } from "react";
 
 /**
@@ -28,7 +26,6 @@ import { useRef, useEffect, useState } from "react";
  */
 export default function DashboardPage() {
   const { user } = useAppSelector((state) => state.auth);
-  const { logout, isLoading } = useLogout();
   const role = normalizeRole(user?.role);
   const showExporterEntry = role === "EXPORTER" || role === "ADMIN";
   const showShippingTools = role === "EXPORTER" || role === "ADMIN";
@@ -240,74 +237,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] dark:bg-[#0f1417] text-[#1f2937] dark:text-[#edf2f7] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
-        {/* --- NAVIGATION (Same as Homepage) --- */}
-        <nav className="border-b border-[#546a7b]/45 dark:border-[#8fa3b1]/35 bg-[#fdfdff]/80 dark:bg-[#10191e]/80 backdrop-blur-md sticky top-0 z-50">
-          <div className="cd-container h-16 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-bold text-xl tracking-tighter flex items-center gap-2 group text-[#1f2937] dark:text-[#edf2f7]"
-            >
-              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10 group-hover:bg-[#62929e]/20 transition-colors" />
-              <BrandWordmark />
-            </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b] dark:text-[#b8c7d4]">
-              <Link
-                href="/dashboard"
-                className="text-[#1f2937] dark:text-[#edf2f7] transition-colors flex items-center gap-2"
-              >
-                Dashboard{" "}
-                <Badge
-                  variant="outline"
-                  className="text-[10px] border-[#62929e]/30 text-[#3f7480] dark:text-[#88d6e4] h-4 px-1"
-                >
-                  ACTIVE
-                </Badge>
-              </Link>
-              <Link
-                href="/dashboard/orders"
-                className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
-              >
-                Orders
-              </Link>
-              <Link
-                href="/dashboard/vehicles"
-                className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
-              >
-                Vehicles
-              </Link>
-              <Link
-                href="/dashboard/kyc"
-                className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
-              >
-                KYC
-              </Link>
-              {showShippingTools && (
-                <Link
-                  href="/dashboard/shipping"
-                  className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
-                >
-                  Shipping
-                </Link>
-              )}
-              <Link
-                href="/dashboard/profile"
-                className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
-              >
-                Profile
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <Button
-                onClick={logout}
-                disabled={isLoading}
-                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-              >
-                {isLoading ? "Signing Out..." : "Sign Out"}
-              </Button>
-            </div>
-          </div>
-        </nav>
+        <CustomerDashboardNav />
 
         {/* Content Section with Interactive Spotlight */}
         <section

@@ -6,13 +6,9 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/ui/OrderTimeline";
-import ThemeToggle from "@/components/ui/theme-toggle";
 import apiClient from "@/lib/api-client";
-import { useLogout } from "@/lib/hooks/useLogout";
 import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
-import { useAppSelector } from "@/lib/store/store";
-import { normalizeRole } from "@/lib/roles";
-import { BrandMark, BrandWordmark } from "@/components/ui/brand";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 import {
   ArrowRight,
   CheckCircle2,
@@ -32,10 +28,6 @@ type OrderListItem = {
 };
 
 export default function OrdersPage() {
-  const { user } = useAppSelector((state) => state.auth);
-  const role = normalizeRole(user?.role);
-  const showShippingTools = role === "EXPORTER" || role === "ADMIN";
-  const { logout, isLoading } = useLogout();
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -96,73 +88,7 @@ export default function OrdersPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
-        <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-          <div className="cd-container h-16 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-bold text-xl tracking-tighter flex items-center gap-2"
-            >
-              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
-              <BrandWordmark />
-            </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
-              <Link
-                href="/dashboard"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/dashboard/orders"
-                className="text-[#393d3f] transition-colors flex items-center gap-2"
-              >
-                Orders{" "}
-                <Badge
-                  variant="outline"
-                  className="text-[10px] border-[#62929e]/20 text-[#62929e] h-4 px-1"
-                >
-                  ACTIVE
-                </Badge>
-              </Link>
-              <Link
-                href="/dashboard/vehicles"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Vehicles
-              </Link>
-              <Link
-                href="/dashboard/kyc"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                KYC
-              </Link>
-              {showShippingTools && (
-                <Link
-                  href="/dashboard/shipping"
-                  className="hover:text-[#393d3f] transition-colors"
-                >
-                  Shipping
-                </Link>
-              )}
-              <Link
-                href="/dashboard/profile"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Profile
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <Button
-                onClick={logout}
-                disabled={isLoading}
-                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-              >
-                {isLoading ? "Signing Out..." : "Sign Out"}
-              </Button>
-            </div>
-          </div>
-        </nav>
+        <CustomerDashboardNav />
 
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
         <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none" />

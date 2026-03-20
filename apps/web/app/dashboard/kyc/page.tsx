@@ -2,15 +2,11 @@
 
 import { useEffect, useState } from "react";
 import AuthGuard from "@/components/auth/AuthGuard";
-import Link from "next/link";
 import { isAxiosError } from "axios";
 import { ShieldCheck, Upload, FileImage, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
-import { useLogout } from "@/lib/hooks/useLogout";
-import ThemeToggle from "@/components/ui/theme-toggle";
-import { BrandMark, BrandWordmark } from "@/components/ui/brand";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 
 interface KycStatusResponse {
   has_kyc: boolean;
@@ -48,7 +44,6 @@ const initialForm = {
 };
 
 export default function DashboardKycPage() {
-  const { logout, isLoading: logoutLoading } = useLogout();
   const [status, setStatus] = useState<KycStatusResponse | null>(null);
   const [documents, setDocuments] = useState<KycUploadResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -165,24 +160,32 @@ export default function DashboardKycPage() {
       case "APPROVED":
         return {
           label: "Approved",
-          className: "bg-emerald-100 text-emerald-800",
+          className:
+            "border border-emerald-500/30 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100 dark:border-emerald-300/35",
         };
       case "REJECTED":
-        return { label: "Rejected", className: "bg-red-100 text-red-800" };
+        return {
+          label: "Rejected",
+          className:
+            "border border-red-500/30 bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-100 dark:border-red-300/35",
+        };
       case "PENDING_MANUAL_REVIEW":
         return {
           label: "Pending Manual Review",
-          className: "bg-amber-100 text-amber-800",
+          className:
+            "border border-amber-500/30 bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-100 dark:border-amber-300/35",
         };
       case "PENDING":
         return {
           label: "Pending Review",
-          className: "bg-sky-100 text-sky-800",
+          className:
+            "border border-sky-500/30 bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-100 dark:border-sky-300/35",
         };
       default:
         return {
           label: "Not Submitted",
-          className: "bg-slate-200 text-slate-700",
+          className:
+            "border border-[#8fa3b1]/40 bg-[#d8e0e6] text-[#243746] dark:bg-[#2a3d48] dark:text-[#d7e4ee] dark:border-[#9fb8c9]/40",
         };
     }
   })();
@@ -190,65 +193,7 @@ export default function DashboardKycPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
-        <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-          <div className="cd-container h-16 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-bold text-xl tracking-tighter flex items-center gap-2"
-            >
-              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
-              <BrandWordmark />
-            </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
-              <Link
-                href="/dashboard"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/dashboard/orders"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Orders
-              </Link>
-              <Link
-                href="/dashboard/vehicles"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Vehicles
-              </Link>
-              <Link
-                href="/dashboard/kyc"
-                className="text-[#393d3f] transition-colors flex items-center gap-2"
-              >
-                KYC
-                <Badge
-                  variant="outline"
-                  className="text-[10px] border-[#62929e]/20 text-[#62929e] h-4 px-1"
-                >
-                  ACTIVE
-                </Badge>
-              </Link>
-              <Link
-                href="/dashboard/profile"
-                className="hover:text-[#393d3f] transition-colors"
-              >
-                Profile
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <Button
-                onClick={logout}
-                disabled={logoutLoading}
-                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
-              >
-                {logoutLoading ? "Signing out..." : "Sign Out"}
-              </Button>
-            </div>
-          </div>
-        </nav>
+        <CustomerDashboardNav />
 
         <section className="relative pt-20 pb-20 overflow-hidden flex-1">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />

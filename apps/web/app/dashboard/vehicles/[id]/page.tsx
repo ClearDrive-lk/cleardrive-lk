@@ -28,6 +28,7 @@ import { CostCalculator } from "@/components/vehicles/CostCalculator";
 import OrderCreateForm from "@/components/orders/OrderCreateForm";
 import { useAppSelector } from "@/lib/store/store";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 // Fetch single vehicle helper
@@ -138,46 +139,41 @@ function VehicleDetail() {
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="cd-container h-16 flex items-center justify-between">
-          <Link
-            href={isAuthenticated || hasSession ? "/dashboard" : "/"}
-            className="font-bold text-xl tracking-tighter flex items-center gap-2"
-          >
-            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
-            <BrandWordmark />
-          </Link>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
+      {isAuthenticated || hasSession ? (
+        <CustomerDashboardNav />
+      ) : (
+        <nav className="sticky top-0 z-50 border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md">
+          <div className="cd-container h-16 flex items-center justify-between">
             <Link
-              href="/dashboard"
-              className="hover:text-[#393d3f] transition-colors"
+              href="/"
+              className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              Dashboard
+              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+              <BrandWordmark />
             </Link>
-            <Link
-              href="/dashboard/vehicles"
-              className="text-[#393d3f] flex items-center gap-2"
-            >
-              Vehicles{" "}
-              <Badge
-                variant="outline"
-                className="text-[10px] border-[#62929e]/20 text-[#62929e]"
+            <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
+              <Link href="/" className="hover:text-[#393d3f] transition-colors">
+                Home
+              </Link>
+              <Link
+                href="/dashboard/vehicles"
+                className="text-[#393d3f] flex items-center gap-2"
               >
-                LIVE
-              </Badge>
-            </Link>
-            <Link
-              href="/dashboard/kyc"
-              className="hover:text-[#393d3f] transition-colors"
-            >
-              KYC
-            </Link>
+                Vehicles{" "}
+                <Badge
+                  variant="outline"
+                  className="text-[10px] border-[#62929e]/20 text-[#62929e]"
+                >
+                  LIVE
+                </Badge>
+              </Link>
+            </div>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-          </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       <main className="flex-1 relative z-10 cd-container py-8">
         {/* Breadcrumb / Back */}

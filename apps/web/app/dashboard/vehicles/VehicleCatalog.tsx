@@ -34,8 +34,8 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 
-import { useLogout } from "@/lib/hooks/useLogout";
 import { useVehicles } from "@/lib/hooks/useVehicles";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
@@ -122,7 +122,6 @@ function VehicleCatalog({
 }: {
   searchParams?: VehicleSearchParams;
 }) {
-  const { logout, isLoading: isLogoutLoading } = useLogout();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [hasSession, setHasSession] = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -513,65 +512,18 @@ function VehicleCatalog({
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* Navigation */}
-      <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50 dark:border-slate-700/70 dark:bg-slate-950/85">
-        <div className="cd-container h-16 flex items-center justify-between">
-          <Link
-            href={isAuthed ? "/dashboard" : "/"}
-            className="font-bold text-xl tracking-tighter flex items-center gap-2"
-          >
-            <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
-            <BrandWordmark />
-          </Link>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b] dark:text-slate-300">
+      {isAuthed ? (
+        <CustomerDashboardNav />
+      ) : (
+        <nav className="sticky top-0 z-50 border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-950/85">
+          <div className="cd-container h-16 flex items-center justify-between">
             <Link
-              href="/dashboard"
-              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
+              href="/"
+              className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
-              Dashboard
+              <BrandMark className="h-8 w-8 rounded-md border border-[#62929e]/20 bg-[#62929e]/10" />
+              <BrandWordmark />
             </Link>
-            <Link
-              href="/dashboard/orders"
-              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
-            >
-              Orders
-            </Link>
-            <Link
-              href="/dashboard/vehicles"
-              className="text-[#393d3f] flex items-center gap-2 dark:text-slate-100"
-            >
-              Vehicles{" "}
-              <Badge
-                variant="outline"
-                className="text-[10px] border-[#62929e]/20 text-[#62929e]"
-              >
-                LIVE
-              </Badge>
-            </Link>
-            <Link
-              href="/dashboard/kyc"
-              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
-            >
-              KYC
-            </Link>
-            <Link
-              href="/dashboard/profile"
-              className="hover:text-[#393d3f] transition-colors dark:hover:text-slate-100"
-            >
-              Profile
-            </Link>
-          </div>
-          {isAuthed ? (
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <Button
-                onClick={logout}
-                disabled={isLogoutLoading}
-                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-9"
-              >
-                {isLogoutLoading ? "..." : "Sign Out"}
-              </Button>
-            </div>
-          ) : (
             <div className="flex items-center gap-3">
               <ThemeToggle />
               <div className="flex gap-3">
@@ -590,9 +542,9 @@ function VehicleCatalog({
                 </Link>
               </div>
             </div>
-          )}
-        </div>
-      </nav>
+          </div>
+        </nav>
+      )}
 
       {/* Page Header */}
       <header className="relative z-10 pt-12 pb-8 border-b border-[#546a7b]/40 dark:border-slate-700/60">

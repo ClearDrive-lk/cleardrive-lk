@@ -17,9 +17,9 @@ function getSystemPreference() {
 }
 
 const sizeStyles: Record<ThemeToggleSize, string> = {
-  nav: "h-9 px-3 text-[9px] tracking-[0.2em]",
-  sm: "h-8 px-2 text-[8px] tracking-[0.2em]",
-  md: "h-10 px-4 text-[10px] tracking-[0.3em]",
+  nav: "h-9 px-3 text-[10px] tracking-[0.2em] font-semibold",
+  sm: "h-8 px-2 text-[9px] tracking-[0.2em] font-semibold",
+  md: "h-10 px-4 text-[10px] tracking-[0.3em] font-semibold",
 };
 
 const iconStyles: Record<ThemeToggleSize, string> = {
@@ -74,14 +74,14 @@ export default function ThemeToggle({
       onClick={handleToggle}
       aria-label="Toggle color theme"
       className={cn(
-        "group inline-flex items-center gap-2 rounded-full border border-border bg-card/90 text-foreground shadow-[0_10px_22px_rgba(0,0,0,0.15)] backdrop-blur-md transition-[transform,box-shadow,background-color,color] duration-200 hover:bg-accent hover:shadow-[0_14px_28px_rgba(0,0,0,0.22)] hover:-translate-y-[1px] active:translate-y-[1px] dark:bg-card/80",
+        "group inline-flex items-center gap-2 rounded-full border border-[#546a7b]/60 bg-[#fdfdff]/90 text-[#1f2937] shadow-[0_10px_22px_rgba(0,0,0,0.15)] backdrop-blur-md transition-[transform,box-shadow,background-color,color,border-color] duration-200 hover:-translate-y-[1px] hover:bg-[#f7fafc] hover:shadow-[0_14px_28px_rgba(0,0,0,0.22)] active:translate-y-[1px] dark:border-[#8fa3b1]/45 dark:bg-[#132028]/90 dark:text-[#e6eef5] dark:hover:bg-[#1b2b35]",
         sizeStyles[size],
         className,
       )}
     >
       <span
         className={cn(
-          "flex items-center justify-center rounded-full border border-[hsl(var(--steel))] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.7),transparent_60%)] text-[hsl(var(--steel))] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition group-hover:scale-[1.04] dark:border-[hsl(var(--steel-soft))] dark:text-[hsl(var(--steel-soft))]",
+          "flex items-center justify-center rounded-full border border-[hsl(var(--steel))] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.78),transparent_60%)] text-[hsl(var(--steel))] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] transition group-hover:scale-[1.04] dark:border-[#9bb5c4] dark:text-[#cfe0ea]",
           iconStyles[size],
         )}
       >
@@ -91,7 +91,7 @@ export default function ThemeToggle({
           <Moon className="h-4 w-4" />
         )}
       </span>
-      <span className="hidden sm:inline">
+      <span className="hidden sm:inline text-current">
         {theme === "dark" ? "Light Mode" : "Dark Mode"}
       </span>
     </button>
