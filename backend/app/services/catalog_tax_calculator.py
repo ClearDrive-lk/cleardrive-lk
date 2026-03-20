@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from typing import Any
 
 from app.models.tax_rule_catalog import HSCodeMatrixRule
 from app.modules.vehicles.models import Vehicle
@@ -151,7 +152,7 @@ def calculate_catalog_tax(
     vehicle_age_years: float,
     engine_cc: int,
     motor_power_kw: float | None,
-) -> dict[str, float]:
+) -> dict[str, Any]:
     vehicle_type = _map_vehicle_type(vehicle)
     fuel_type = _normalize_fuel_type(vehicle)
 

@@ -55,24 +55,20 @@ class TaxEngine:
         capacity_unit: str | None = None,
     ) -> HSCodeMatrixRule:
         capacity_value = Decimal(str(capacity_input))
-        matches = (
-            self.db.query(HSCodeMatrixRule)
-            .filter(
-                HSCodeMatrixRule.is_active.is_(True),
-                HSCodeMatrixRule.vehicle_type == vehicle_type,
-                HSCodeMatrixRule.fuel_type == fuel_type,
-                HSCodeMatrixRule.age_condition == age_condition,
-                (
-                    HSCodeMatrixRule.capacity_unit == capacity_unit
-                    if capacity_unit is not None
-                    else True
-                ),
-                HSCodeMatrixRule.capacity_min <= capacity_value,
-                HSCodeMatrixRule.capacity_max >= capacity_value,
-            )
-            .order_by(HSCodeMatrixRule.effective_date.desc(), HSCodeMatrixRule.version.desc())
-            .all()
+        query = self.db.query(HSCodeMatrixRule).filter(
+            HSCodeMatrixRule.is_active.is_(True),
+            HSCodeMatrixRule.vehicle_type == vehicle_type,
+            HSCodeMatrixRule.fuel_type == fuel_type,
+            HSCodeMatrixRule.age_condition == age_condition,
+            HSCodeMatrixRule.capacity_min <= capacity_value,
+            HSCodeMatrixRule.capacity_max >= capacity_value,
         )
+        if capacity_unit is not None:
+            query = query.filter(HSCodeMatrixRule.capacity_unit == capacity_unit)
+
+        matches = query.order_by(
+            HSCodeMatrixRule.effective_date.desc(), HSCodeMatrixRule.version.desc()
+        ).all()
         if len(matches) != 1:
             raise TaxEngineLookupError(
                 "Expected exactly one active HS-code rule for "
