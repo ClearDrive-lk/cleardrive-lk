@@ -9,19 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/ui/OrderTimeline";
 import { useAssignedOrders } from "@/lib/hooks/useAssignedOrders";
-
-const statusTone: Record<string, string> = {
-  ASSIGNED_TO_EXPORTER:
-    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
-  AWAITING_SHIPMENT_CONFIRMATION:
-    "border-orange-500/20 bg-orange-500/10 text-orange-200",
-  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
-  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
-  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
-  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
-  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
-};
+import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
 
 export default function ExporterTrackingPage() {
   const searchParams = useSearchParams();
@@ -71,7 +59,7 @@ export default function ExporterTrackingPage() {
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
             {error}
           </div>
         )}
@@ -125,10 +113,7 @@ export default function ExporterTrackingPage() {
                           </p>
                         </div>
                         <Badge
-                          className={
-                            statusTone[order.status] ??
-                            "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
-                          }
+                          className={getOrderStatusBadgeClass(order.status)}
                         >
                           {order.status.replace(/_/g, " ")}
                         </Badge>
@@ -164,10 +149,9 @@ export default function ExporterTrackingPage() {
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
                         <Badge
-                          className={
-                            statusTone[selectedOrder.status] ??
-                            "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
-                          }
+                          className={getOrderStatusBadgeClass(
+                            selectedOrder.status,
+                          )}
                         >
                           {selectedOrder.status.replace(/_/g, " ")}
                         </Badge>

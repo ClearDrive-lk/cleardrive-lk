@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
+import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
 import { AlertCircle, CheckCircle2, Clock3, PackageCheck } from "lucide-react";
 
 interface TimelineEvent {
@@ -20,26 +21,6 @@ interface OrderTimelineProps {
   orderId: string;
   onTimelineUpdate?: () => void;
 }
-
-const statusStyles: Record<string, string> = {
-  CREATED: "border-sky-500/20 bg-sky-500/10 text-sky-200",
-  PAYMENT_CONFIRMED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  LC_REQUESTED: "border-amber-500/20 bg-amber-500/10 text-amber-200",
-  LC_APPROVED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  LC_REJECTED: "border-red-500/20 bg-red-500/10 text-red-200",
-  ASSIGNED_TO_EXPORTER:
-    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
-  SHIPMENT_DOCS_UPLOADED:
-    "border-violet-500/20 bg-violet-500/10 text-violet-200",
-  AWAITING_SHIPMENT_CONFIRMATION:
-    "border-orange-500/20 bg-orange-500/10 text-orange-200",
-  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
-  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
-  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
-  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
-  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
-  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
-};
 
 function getStatusIcon(status: string) {
   const icons: Record<string, ReactNode> = {
@@ -196,7 +177,7 @@ export function OrderTimeline({
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+      <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
         {error}
       </div>
     );
@@ -222,10 +203,7 @@ export function OrderTimeline({
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <Badge
-                      className={
-                        statusStyles[event.to_status] ??
-                        "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
-                      }
+                      className={getOrderStatusBadgeClass(event.to_status)}
                     >
                       {event.to_status.replace(/_/g, " ")}
                     </Badge>

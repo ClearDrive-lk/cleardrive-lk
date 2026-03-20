@@ -13,6 +13,7 @@ import { OrderTimeline } from "@/components/ui/OrderTimeline";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import PaymentButton from "@/components/payment/PaymentButton";
 import apiClient from "@/lib/api-client";
+import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
 import { mapBackendVehicle } from "@/lib/vehicle-mapper";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import type { Vehicle } from "@/types/vehicle";
@@ -27,19 +28,6 @@ interface OrderDetail {
   vehicle_id?: string;
   phone?: string;
 }
-
-const statusTone: Record<string, string> = {
-  CREATED: "border-sky-500/20 bg-sky-500/10 text-sky-200",
-  PAYMENT_CONFIRMED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  ASSIGNED_TO_EXPORTER:
-    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
-  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
-  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
-  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
-  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
-  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
-  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
-};
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -244,17 +232,17 @@ export default function OrderDetailPage() {
               <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
                 {paymentStatus === "COMPLETED" ? (
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-emerald-300 text-sm">
+                    <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-300">
                       <CheckCircle2 className="h-4 w-4" />
                       Payment confirmed. Shipment processing is underway.
                     </div>
-                    <Badge className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
+                    <Badge className="border-emerald-500/30 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200">
                       Paid
                     </Badge>
                   </div>
                 ) : paymentStatus === "FAILED" ? (
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm text-red-200">
+                    <div className="text-sm text-red-700 dark:text-red-200">
                       Payment failed. Please retry to continue processing.
                     </div>
                     <Button
@@ -268,7 +256,7 @@ export default function OrderDetailPage() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm text-amber-200">
+                    <div className="text-sm text-amber-800 dark:text-amber-200">
                       Payment required to move this order forward.
                     </div>
                     <Button
@@ -287,7 +275,7 @@ export default function OrderDetailPage() {
                 Loading order...
               </div>
             ) : error ? (
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
                 {error}
               </div>
             ) : order ? (
@@ -312,10 +300,7 @@ export default function OrderDetailPage() {
                         </button>
                       </div>
                       <Badge
-                        className={
-                          statusTone[order.status] ??
-                          "border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]"
-                        }
+                        className={getOrderStatusBadgeClass(order.status)}
                       >
                         {order.status.replace(/_/g, " ")}
                       </Badge>
@@ -368,7 +353,7 @@ export default function OrderDetailPage() {
                         Loading vehicle details...
                       </div>
                     ) : vehicleError ? (
-                      <div className="mt-3 text-xs text-red-200">
+                      <div className="mt-3 text-xs text-red-700 dark:text-red-200">
                         {vehicleError}
                       </div>
                     ) : vehicle ? (
@@ -441,18 +426,18 @@ export default function OrderDetailPage() {
                   </div>
 
                   {canCancel && (
-                    <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-xs text-red-200">
-                      <p className="text-sm font-semibold text-red-100">
+                    <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-xs text-red-800 dark:text-red-200">
+                      <p className="text-sm font-semibold text-red-900 dark:text-red-100">
                         Cancel this order?
                       </p>
-                      <p className="mt-1 text-xs text-red-200/80">
+                      <p className="mt-1 text-xs text-red-800/80 dark:text-red-200/80">
                         You can cancel before payment is completed. This will
                         release the vehicle back to inventory.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-3">
                         <Button
                           variant="outline"
-                          className="border-red-500/40 text-red-100 hover:bg-red-500/10"
+                          className="border-red-500/40 text-red-800 hover:bg-red-500/10 dark:text-red-100"
                           onClick={() => setShowCancelConfirm((prev) => !prev)}
                         >
                           {showCancelConfirm
@@ -461,7 +446,7 @@ export default function OrderDetailPage() {
                         </Button>
                       </div>
                       {showCancelConfirm && (
-                        <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-100">
+                        <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-800 dark:text-red-100">
                           <p>Are you sure? This action cannot be undone.</p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <Button

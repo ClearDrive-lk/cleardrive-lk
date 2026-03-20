@@ -289,7 +289,7 @@ export default function ExporterShippingDetailsPage() {
           </div>
 
           {ordersError && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-200">
               {ordersError}
             </div>
           )}
@@ -318,7 +318,7 @@ export default function ExporterShippingDetailsPage() {
                 </Badge>
               )}
               {details?.documents_uploaded && (
-                <Badge className="border-emerald-500/20 bg-emerald-500/10 text-emerald-200">
+                <Badge className="border-emerald-500/30 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200">
                   Documents Uploaded
                 </Badge>
               )}
@@ -331,7 +331,9 @@ export default function ExporterShippingDetailsPage() {
             </p>
           )}
           {detailsError && (
-            <p className="text-sm text-red-300">{detailsError}</p>
+            <p className="text-sm text-red-700 dark:text-red-200">
+              {detailsError}
+            </p>
           )}
         </div>
 
@@ -422,8 +424,14 @@ export default function ExporterShippingDetailsPage() {
             />
           </div>
 
-          {error && <div className="text-red-300 text-sm">{error}</div>}
-          {success && <div className="text-green-300 text-sm">{success}</div>}
+          {error && (
+            <div className="text-sm text-red-700 dark:text-red-200">{error}</div>
+          )}
+          {success && (
+            <div className="text-sm text-green-700 dark:text-green-300">
+              {success}
+            </div>
+          )}
 
           <Button
             type="submit"

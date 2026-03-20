@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import apiClient from "@/lib/api-client";
+import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 
 interface OrderDetail {
@@ -118,7 +119,7 @@ export default function OrderConfirmationPage() {
             <Card className="border-[#546a7b]/65 bg-[#fdfdff]">
               <CardHeader className="space-y-2 text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                  <CheckCircle2 className="h-7 w-7 text-emerald-300" />
+                  <CheckCircle2 className="h-7 w-7 text-emerald-700 dark:text-emerald-300" />
                 </div>
                 <CardTitle className="text-2xl text-[#393d3f]">
                   Order Created
@@ -133,7 +134,7 @@ export default function OrderConfirmationPage() {
                     Loading order details...
                   </div>
                 ) : error ? (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
                     {error}
                   </div>
                 ) : order ? (
@@ -157,7 +158,7 @@ export default function OrderConfirmationPage() {
                           </button>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="border-[#546a7b]/65 bg-[#c6c5b9]/20 text-[#393d3f]">
+                          <Badge className={getOrderStatusBadgeClass(order.status)}>
                             {order.status.replace(/_/g, " ")}
                           </Badge>
                           <Badge

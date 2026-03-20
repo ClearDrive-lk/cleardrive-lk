@@ -7,18 +7,19 @@ import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import { useLogout } from "@/lib/hooks/useLogout";
+import { useAppSelector } from "@/lib/store/store";
+import { normalizeRole } from "@/lib/roles";
 
 type NavItem = {
   label: string;
   href: string;
 };
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Orders", href: "/dashboard/orders" },
   { label: "Vehicles", href: "/dashboard/vehicles" },
   { label: "KYC", href: "/dashboard/kyc" },
-  { label: "Shipping", href: "/dashboard/shipping" },
   { label: "Documents", href: "/dashboard/documents" },
   { label: "Profile", href: "/dashboard/profile" },
 ];
@@ -32,7 +33,17 @@ function isItemActive(pathname: string, href: string): boolean {
 
 export default function CustomerDashboardNav() {
   const pathname = usePathname();
+  const { user } = useAppSelector((state) => state.auth);
+  const role = normalizeRole(user?.role);
+  const showShipping = role === "EXPORTER" || role === "ADMIN";
   const { logout, isLoading } = useLogout();
+  const navItems = showShipping
+    ? [
+        ...BASE_NAV_ITEMS.slice(0, 4),
+        { label: "Shipping", href: "/dashboard/shipping" },
+        ...BASE_NAV_ITEMS.slice(4),
+      ]
+    : BASE_NAV_ITEMS;
 
   return (
     <nav className="border-b border-[#546a7b]/45 dark:border-[#8fa3b1]/35 bg-[#fdfdff]/80 dark:bg-[#10191e]/80 backdrop-blur-md sticky top-0 z-50">
@@ -46,7 +57,7 @@ export default function CustomerDashboardNav() {
         </Link>
 
         <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b] dark:text-[#b8c7d4]">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isItemActive(pathname, item.href);
             return (
               <Link

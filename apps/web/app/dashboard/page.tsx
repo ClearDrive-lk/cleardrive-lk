@@ -16,11 +16,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import apiClient from "@/lib/api-client";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { normalizeRole } from "@/lib/roles";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 /**
  * Dashboard Page - Exact homepage template with enhanced interactivity
@@ -30,9 +31,16 @@ export default function DashboardPage() {
   const { logout, isLoading } = useLogout();
   const role = normalizeRole(user?.role);
   const showExporterEntry = role === "EXPORTER" || role === "ADMIN";
+  const showShippingTools = role === "EXPORTER" || role === "ADMIN";
 
   const heroRef = useRef<HTMLElement | null>(null);
   const heroRafRef = useRef<number | null>(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    total: 0,
+    active: 0,
+    completed: 0,
+    avgValue: null as number | null,
+  });
 
   const handleHeroMove = (event: React.MouseEvent<HTMLElement>) => {
     const node = heroRef.current;
@@ -65,6 +73,55 @@ export default function DashboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboardStats = async () => {
+      try {
+        const { data } = await apiClient.get<
+          Array<{
+            status: string;
+            total_cost_lkr: number | null;
+          }>
+        >("/orders");
+
+        if (!mounted) return;
+
+        const total = data.length;
+        const active = data.filter(
+          (order) => !["DELIVERED", "CANCELLED"].includes(order.status),
+        ).length;
+        const completed = data.filter(
+          (order) => order.status === "DELIVERED",
+        ).length;
+        const avgValue =
+          total === 0
+            ? null
+            : Math.round(
+                data.reduce(
+                  (sum, order) => sum + (order.total_cost_lkr ?? 0),
+                  0,
+                ) / total,
+              );
+
+        setDashboardStats({
+          total,
+          active,
+          completed,
+          avgValue,
+        });
+      } catch {
+        // Keep safe defaults when stats cannot be loaded.
+      }
+    };
+
+    void loadDashboardStats();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const quickActions = [
     {
       label: "Upload Pending Docs",
@@ -74,14 +131,23 @@ export default function DashboardPage() {
       toneClass:
         "border-[#62929e]/45 bg-gradient-to-br from-[#62929e]/25 to-[#62929e]/8 hover:border-[#62929e]/70",
     },
-    {
-      label: "Plan Delivery Route",
-      detail: "Set shipment details and destination",
-      href: "/dashboard/shipping",
-      icon: Ship,
-      toneClass:
-        "border-[#7d8fa3]/45 bg-gradient-to-br from-[#7d8fa3]/25 to-[#7d8fa3]/8 hover:border-[#7d8fa3]/70",
-    },
+    showShippingTools
+      ? {
+          label: "Plan Delivery Route",
+          detail: "Set shipment details and destination",
+          href: "/dashboard/shipping",
+          icon: Ship,
+          toneClass:
+            "border-[#7d8fa3]/45 bg-gradient-to-br from-[#7d8fa3]/25 to-[#7d8fa3]/8 hover:border-[#7d8fa3]/70",
+        }
+      : {
+          label: "Track Active Orders",
+          detail: "Review progress and next milestones",
+          href: "/dashboard/orders",
+          icon: Package,
+          toneClass:
+            "border-[#7d8fa3]/45 bg-gradient-to-br from-[#7d8fa3]/25 to-[#7d8fa3]/8 hover:border-[#7d8fa3]/70",
+        },
     {
       label: "Complete Profile Setup",
       detail: "Confirm account and identity details",
@@ -137,17 +203,21 @@ export default function DashboardPage() {
       statusClass:
         "border-[#b8778b]/35 bg-[#b8778b]/14 text-[#6f3f50] dark:text-[#f0bece]",
     },
-    {
-      title: "Shipping",
-      href: "/dashboard/shipping",
-      icon: Package,
-      code: "SHP-SUB",
-      description: "Provide delivery details and shipping instructions.",
-      status: "No Route Confirmed",
-      cta: "Set Delivery Plan",
-      statusClass:
-        "border-[#4d8f8a]/35 bg-[#4d8f8a]/14 text-[#2f5e5a] dark:text-[#93d6d1]",
-    },
+    ...(showShippingTools
+      ? [
+          {
+            title: "Shipping",
+            href: "/dashboard/shipping",
+            icon: Package,
+            code: "SHP-SUB",
+            description: "Provide delivery details and shipping instructions.",
+            status: "No Route Confirmed",
+            cta: "Set Delivery Plan",
+            statusClass:
+              "border-[#4d8f8a]/35 bg-[#4d8f8a]/14 text-[#2f5e5a] dark:text-[#93d6d1]",
+          },
+        ]
+      : []),
     {
       title: "Documents",
       href: "/dashboard/documents",
@@ -160,6 +230,12 @@ export default function DashboardPage() {
         "border-[#7182b5]/35 bg-[#7182b5]/14 text-[#3a4870] dark:text-[#c1cbf0]",
     },
   ];
+
+  const moduleCount = modules.length;
+  const useCenteredModuleLayout = moduleCount <= 5;
+  const moduleGridClass = useCenteredModuleLayout
+    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+    : "grid-cols-1 md:grid-cols-3 lg:grid-cols-4";
 
   return (
     <AuthGuard>
@@ -205,12 +281,14 @@ export default function DashboardPage() {
               >
                 KYC
               </Link>
-              <Link
-                href="/dashboard/shipping"
-                className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
-              >
-                Shipping
-              </Link>
+              {showShippingTools && (
+                <Link
+                  href="/dashboard/shipping"
+                  className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
+                >
+                  Shipping
+                </Link>
+              )}
               <Link
                 href="/dashboard/profile"
                 className="hover:text-[#2f4250] dark:hover:text-[#edf2f7] transition-colors"
@@ -253,15 +331,16 @@ export default function DashboardPage() {
             </div>
 
             <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-[#1f2937] dark:text-[#edf2f7] leading-[0.9] mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-              WELCOME{" "}
+              <span className="block">Vehicle Auction</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9] animate-shimmer bg-[size:200%_auto]">
-                {user?.name?.toUpperCase() || "USER"}.
+                Operations Dashboard
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-[#42596b] dark:text-[#bdcad4] max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200">
-              Your personal import terminal dashboard. Monitor clearances, track
-              shipments, and manage orders in real-time.
+              Welcome back, {user?.name || "Customer"}. Review your selected
+              vehicles, follow order and clearance updates, and track delivery
+              progress from one place.
             </p>
 
             <div className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-250">
@@ -316,16 +395,35 @@ export default function DashboardPage() {
             )}
 
             {/* Quick Links Grid - High Interactivity */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-16 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300">
+            <div
+              className={`grid ${moduleGridClass} gap-6 mb-16 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300`}
+            >
               {modules.map((item, i) => {
                 const Icon = item.icon;
-                const centeredRowClass =
-                  i === 4 ? "lg:col-start-2" : i === 5 ? "lg:col-start-3" : "";
+                let modulePlacementClass = "";
+
+                if (useCenteredModuleLayout) {
+                  modulePlacementClass = "xl:col-span-2";
+                  const remainder = moduleCount % 3;
+                  const isLast = i === moduleCount - 1;
+                  const isSecondLast = i === moduleCount - 2;
+
+                  if (remainder === 2 && isSecondLast) {
+                    modulePlacementClass += " xl:col-start-2";
+                  }
+                  if (remainder === 2 && isLast) {
+                    modulePlacementClass += " xl:col-start-4";
+                  }
+                  if (remainder === 1 && isLast) {
+                    modulePlacementClass += " xl:col-start-3";
+                  }
+                }
+
                 return (
                   <Link
                     key={i}
                     href={item.href}
-                    className={`group relative min-h-[16rem] rounded-2xl border border-[#546a7b]/70 bg-[linear-gradient(140deg,rgba(253,253,255,0.85),rgba(198,197,185,0.35))] dark:bg-[linear-gradient(140deg,rgba(28,38,44,0.92),rgba(15,20,23,0.85))] p-6 flex flex-col justify-between overflow-hidden transition-all duration-300 cursor-pointer hover-tilt shadow-[0_12px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_26px_60px_rgba(15,23,42,0.24)] hover:border-[#62929e]/60 z-10 ${centeredRowClass}`}
+                    className={`group relative min-h-[17rem] rounded-2xl border border-[#546a7b]/70 bg-[linear-gradient(140deg,rgba(253,253,255,0.85),rgba(198,197,185,0.35))] dark:bg-[linear-gradient(140deg,rgba(28,38,44,0.92),rgba(15,20,23,0.85))] p-6 flex flex-col overflow-hidden transition-all duration-300 cursor-pointer hover-tilt shadow-[0_12px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_26px_60px_rgba(15,23,42,0.24)] hover:border-[#62929e]/60 z-10 ${modulePlacementClass}`}
                   >
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.18),transparent_55%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -333,34 +431,36 @@ export default function DashboardPage() {
                       <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.15),transparent)] animate-shimmer" />
                     </div>
 
-                    <div className="relative z-10 flex justify-between items-start">
-                      <Badge
-                        variant="outline"
-                        className="border-[#546a7b]/55 dark:border-[#b4c2ce]/40 text-[#324655] dark:text-[#c8d6e1] font-mono text-[10px] bg-[#fdfdff]/40 dark:bg-[#0f1417]/45 backdrop-blur"
-                      >
-                        {item.code}
-                      </Badge>
-                      <div className="h-10 w-10 rounded-xl border border-[#546a7b]/50 dark:border-[#93a7b8]/45 bg-[#fdfdff]/55 dark:bg-[#0f1417]/45 backdrop-blur flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] group-hover:border-[#62929e]/60 transition-colors">
-                        <Icon className="w-5 h-5 text-[#293d4a] dark:text-[#e2ebf2] group-hover:text-[#1c2f3b] dark:group-hover:text-[#f2f7fb] transition-colors" />
+                    <div className="relative z-10 flex h-full flex-col">
+                      <div className="flex justify-between items-start">
+                        <Badge
+                          variant="outline"
+                          className="border-[#546a7b]/55 dark:border-[#b4c2ce]/40 text-[#2f4a5a] dark:text-[#d7e3ec] font-mono text-[10px] bg-[#fdfdff]/45 dark:bg-[#0f1417]/45 backdrop-blur"
+                        >
+                          {item.code}
+                        </Badge>
+                        <div className="h-10 w-10 rounded-xl border border-[#546a7b]/50 dark:border-[#93a7b8]/45 bg-[#fdfdff]/55 dark:bg-[#0f1417]/45 backdrop-blur flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] group-hover:border-[#62929e]/60 transition-colors">
+                          <Icon className="w-5 h-5 text-[#2a4656] dark:text-[#e6eef5] group-hover:text-[#1c2f3b] dark:group-hover:text-[#f2f7fb] transition-colors" />
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="relative z-10">
-                      <h3 className="text-2xl font-bold text-[#1f2937] dark:text-[#f1f5f9] group-hover:translate-x-1 transition-transform">
-                        {item.title}
-                      </h3>
-                      <p className="mt-2 max-w-[26ch] text-sm leading-relaxed text-[#2e4657] dark:text-[#d2dde6]">
-                        {item.description}
-                      </p>
-                      <div
-                        className={`mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.12em] font-semibold shadow-[0_4px_12px_rgba(15,23,42,0.08)] ${item.statusClass}`}
-                      >
-                        <span className="h-1.5 w-1.5 rounded-full bg-current/80 animate-pulse" />
-                        {item.status}
-                      </div>
-                      <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold text-[#325665] dark:text-[#9edcec]">
-                        {item.cta}
-                        <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      <div className="mt-6 flex flex-1 flex-col">
+                        <h3 className="text-2xl font-bold text-[#1f2937] dark:text-[#f1f5f9] group-hover:translate-x-1 transition-transform">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 min-h-[4.5rem] max-w-[30ch] text-sm leading-relaxed text-[#244050] dark:text-[#dde6ed]">
+                          {item.description}
+                        </p>
+                        <div
+                          className={`mt-3 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.12em] font-semibold shadow-[0_4px_12px_rgba(15,23,42,0.08)] ${item.statusClass}`}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current/80 animate-pulse" />
+                          {item.status}
+                        </div>
+                        <div className="mt-auto pt-5 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold text-[#2f5f73] dark:text-[#b4e9f4]">
+                          {item.cta}
+                          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -373,28 +473,30 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/5 dark:divide-[#546a7b]/30">
                 {[
                   {
-                    label: "Active Orders",
-                    value: "0",
+                    label: "Total Orders",
+                    value: String(dashboardStats.total),
                     icon: Package,
-                    sub: "In Progress",
+                    sub: "All Time",
                   },
                   {
-                    label: "In Transit",
-                    value: "0",
-                    icon: Car,
-                    sub: "En Route",
+                    label: "In Progress",
+                    value: String(dashboardStats.active),
+                    icon: CheckCircle2,
+                    sub: "Active Now",
                   },
                   {
                     label: "Completed",
-                    value: "0",
+                    value: String(dashboardStats.completed),
                     icon: TrendingUp,
-                    sub: "This Month",
+                    sub: "Delivered",
                   },
                   {
-                    label: "Avg. Time",
-                    value: "~14 Days",
-                    icon: CheckCircle2,
-                    sub: "Clearance",
+                    label: "Avg. Value",
+                    value: dashboardStats.avgValue
+                      ? `LKR ${dashboardStats.avgValue.toLocaleString()}`
+                      : "N/A",
+                    icon: Car,
+                    sub: "Per Order",
                   },
                 ].map((stat, i) => (
                   <div
