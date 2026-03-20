@@ -27,6 +27,13 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const formatKm = new Intl.NumberFormat("en-US").format;
 
   const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
+  const isElectric = vehicle.fuel.toLowerCase().includes("electric");
+  const engineLabel =
+    isElectric
+      ? "Electric"
+      : typeof vehicle.engineCC === "number" && vehicle.engineCC > 0
+      ? `${vehicle.engineCC}cc`
+      : "Spec pending";
 
   // Mini Cost Calculator: Est. Duty = 30% of price (placeholder logic)
   const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
@@ -105,7 +112,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
           <div className="flex flex-col items-center gap-1 border-l border-[#546a7b]/40">
             <Fuel className="w-3 h-3 text-[#393d3f]" />
-            {vehicle.engineCC}cc
+            {engineLabel}
           </div>
         </div>
 

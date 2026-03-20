@@ -211,7 +211,10 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
         </div>
 
         {/* Fees */}
-        <div className="p-3 bg-[#141414] rounded-lg space-y-2 border border-[#546a7b]/40 text-xs">
+        <div className="p-3 bg-[hsl(var(--muted))]/25 rounded-lg space-y-2 border border-[hsl(var(--border))] text-xs">
+          <div className="flex items-center gap-2 text-[#62929e] text-xs mb-2">
+            <span>Logistics & Processing (Est.)</span>
+          </div>
           <div className="flex justify-between text-[#546a7b]">
             <span>Port Charges</span>
             <span>{formatLKR(toNumber(data.port_charges_lkr))}</span>
