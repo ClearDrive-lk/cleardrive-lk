@@ -104,7 +104,10 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-[#546a7b]">
               {companyLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="transition hover:text-[#62929e]">
+                  <Link
+                    href={link.href}
+                    className="transition hover:text-[#62929e]"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -175,7 +178,10 @@ export default function Footer() {
             >
               Cookies
             </Link>
-            <a href="#" className="inline-flex items-center gap-1.5 transition hover:text-[#62929e]">
+            <a
+              href="#"
+              className="inline-flex items-center gap-1.5 transition hover:text-[#62929e]"
+            >
               Back to top
               <ArrowUpRight className="h-3.5 w-3.5" />
             </a>
