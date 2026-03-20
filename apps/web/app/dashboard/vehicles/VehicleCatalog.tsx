@@ -106,8 +106,11 @@ function VehicleCatalog({
   const currentSearch = getParam(searchParams, "search", "") || "";
   const currentFuel = getParam(searchParams, "fuel", "All") || "All";
   const rawStatus = getParam(searchParams, "status", "All") || "All";
-  const currentStatus = ALLOWED_STATUS_VALUES.has(rawStatus) ? rawStatus : "All";
-  const currentSort = getParam(searchParams, "sort", "year_desc") || "year_desc";
+  const currentStatus = ALLOWED_STATUS_VALUES.has(rawStatus)
+    ? rawStatus
+    : "All";
+  const currentSort =
+    getParam(searchParams, "sort", "year_desc") || "year_desc";
   const currentType = getParam(searchParams, "type", "All") || "All";
   const currentCurrency =
     (getParam(searchParams, "currency", "LKR") as "LKR" | "JPY") || "LKR";
@@ -126,7 +129,8 @@ function VehicleCatalog({
   const currentMinYear = Number(getParam(searchParams, "minYear")) || 2000;
   const currentMaxYear =
     Number(getParam(searchParams, "maxYear")) || new Date().getFullYear();
-  const currentMaxMileage = Number(getParam(searchParams, "maxMileage")) || 200000;
+  const currentMaxMileage =
+    Number(getParam(searchParams, "maxMileage")) || 200000;
   const currentTransmission =
     getParam(searchParams, "transmission", "All") || "All";
   const hasTypeParam = hasParam(searchParams, "type");

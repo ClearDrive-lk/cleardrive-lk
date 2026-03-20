@@ -9,7 +9,9 @@ type VehiclesPageProps = {
     | Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
+export default async function VehiclesPage({
+  searchParams,
+}: VehiclesPageProps) {
   const resolvedSearchParams = await searchParams;
   return (
     <Suspense
