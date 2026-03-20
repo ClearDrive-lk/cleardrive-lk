@@ -87,10 +87,17 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
   }
 
   if (isError || !data) {
-    const errorMessage = isAxiosError(error)
-      ? ((error.response?.data as { detail?: string } | undefined)?.detail ??
-        "Unable to load the tax breakdown right now. Try again in a moment.")
-      : "Unable to load the tax breakdown right now. Try again in a moment.";
+    const apiDetail = isAxiosError(error)
+      ? (error.response?.data as { detail?: string } | undefined)?.detail
+      : undefined;
+    const errorMessage =
+      apiDetail ??
+      "Unable to load the tax breakdown right now. Try again in a moment.";
+    const isHsMatrixMismatch =
+      isAxiosError(error) &&
+      error.response?.status === 404 &&
+      typeof apiDetail === "string" &&
+      /hs[-\s]?code|hs matrix|hs-code matrix/i.test(apiDetail);
     return (
       <Card className="border-[#546a7b]/65 bg-[#fdfdff] sticky top-6">
         <CardHeader className="pb-2 border-b border-[#546a7b]/40">
@@ -101,14 +108,24 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             </CardTitle>
             <Badge
               variant="outline"
-              className="border-red-500/40 bg-red-500/10 text-red-300 text-[10px]"
+              className={
+                isHsMatrixMismatch
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-300 text-[10px]"
+                  : "border-red-500/40 bg-red-500/10 text-red-300 text-[10px]"
+              }
             >
-              Unavailable
+              {isHsMatrixMismatch ? "Needs HS Rule" : "Unavailable"}
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="pt-4 text-sm text-gray-400">
-          {errorMessage}
+        <CardContent className="pt-4 text-sm text-gray-400 space-y-2">
+          <p>{errorMessage}</p>
+          {isHsMatrixMismatch ? (
+            <p className="text-amber-200/80">
+              Validate the HS matrix entry for this vehicle type, fuel, age, and
+              capacity so the landed cost can be calculated.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
     );

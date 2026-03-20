@@ -52,6 +52,7 @@ class TaxEngine:
         fuel_type: str,
         age_condition: str,
         capacity_input: float | Decimal,
+        capacity_unit: str | None = None,
     ) -> HSCodeMatrixRule:
         capacity_value = Decimal(str(capacity_input))
         matches = (
@@ -61,6 +62,9 @@ class TaxEngine:
                 HSCodeMatrixRule.vehicle_type == vehicle_type,
                 HSCodeMatrixRule.fuel_type == fuel_type,
                 HSCodeMatrixRule.age_condition == age_condition,
+                HSCodeMatrixRule.capacity_unit == capacity_unit
+                if capacity_unit is not None
+                else True,
                 HSCodeMatrixRule.capacity_min <= capacity_value,
                 HSCodeMatrixRule.capacity_max >= capacity_value,
             )
@@ -86,10 +90,12 @@ def resolve_hs_rule(
     fuel_type: str,
     age_condition: str,
     capacity_input: float | Decimal,
+    capacity_unit: str | None = None,
 ) -> HSCodeMatrixRule:
     return TaxEngine(db).resolve_hs_rule(
         vehicle_type=vehicle_type,
         fuel_type=fuel_type,
         age_condition=age_condition,
         capacity_input=capacity_input,
+        capacity_unit=capacity_unit,
     )

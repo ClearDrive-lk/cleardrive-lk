@@ -29,6 +29,7 @@ from app.services.tax_calculator import (
     NoTaxRuleError,
     calculate_tax,
 )
+from app.services.catalog_tax_calculator import calculate_catalog_tax
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, case, desc, or_, text
 from sqlalchemy.orm import Session
@@ -704,29 +705,48 @@ async def calculate_cost(
     vehicle_age_years = max(date.today().year - int(vehicle.year or date.today().year), 0)
     category_codes = _derive_tax_category_codes(vehicle)
 
+    tax_result = None
+    catalog_error: Exception | None = None
     try:
-        tax_result = calculate_tax(
+        tax_result = calculate_catalog_tax(
             db=db,
-            vehicle_type=tax_vehicle_type,
-            fuel_type=tax_fuel_type,
-            engine_cc=engine_cc,
-            cif_value=float(cif_value),
-            power_kw=motor_power_kw,
+            vehicle=vehicle,
+            cif_value_lkr=cif_value,
             vehicle_age_years=float(vehicle_age_years),
-            category_codes=category_codes or None,
+            engine_cc=engine_cc,
+            motor_power_kw=motor_power_kw,
         )
-    except NoTaxRuleError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=(
-                "No approved gazette tax rule matches this vehicle yet. "
-                "Review and approve the extracted gazette rules from the admin dashboard."
-            ),
-        )
-    except InsufficientVehicleDataError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except NoTaxRuleError as exc:
+        catalog_error = exc
+
+    if tax_result is None:
+        try:
+            tax_result = calculate_tax(
+                db=db,
+                vehicle_type=tax_vehicle_type,
+                fuel_type=tax_fuel_type,
+                engine_cc=engine_cc,
+                cif_value=float(cif_value),
+                power_kw=motor_power_kw,
+                vehicle_age_years=float(vehicle_age_years),
+                category_codes=category_codes or None,
+            )
+        except NoTaxRuleError:
+            if catalog_error:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=str(catalog_error)
+                )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    "No approved gazette tax rule matches this vehicle yet. "
+                    "Review and approve the extracted gazette rules from the admin dashboard."
+                ),
+            )
+        except InsufficientVehicleDataError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     port_charges_lkr = calculate_port_charges()
     clearance_fee_lkr = calculate_clearance_fee()
