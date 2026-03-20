@@ -31,7 +31,7 @@ from app.services.tax_calculator import (
 )
 from app.services.catalog_tax_calculator import calculate_catalog_tax
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import asc, case, desc, or_, text
+from sqlalchemy import asc, case, desc, func, or_, text
 from sqlalchemy.orm import Session
 
 try:
@@ -250,6 +250,57 @@ def _transmission_filter_values(requested: str) -> list[str]:
         "cvt": ["CVT", "Cvt"],
     }
     return mapping.get(key, [requested])
+
+
+def _resolve_display_price_jpy(
+    db: Session, vehicle: Vehicle, cache: dict[tuple[str, str], Decimal | None]
+) -> Decimal | None:
+    """
+    Return a non-zero display price for list views.
+
+    Priority:
+    1. Latest non-zero price for same make+model
+    2. Average non-zero price for same make
+    3. Global average non-zero price
+    """
+    if vehicle.price_jpy and Decimal(str(vehicle.price_jpy)) > 0:
+        return Decimal(str(vehicle.price_jpy))
+
+    make_key = (vehicle.make or "").strip()
+    model_key = (vehicle.model or "").strip()
+    cache_key = (make_key.lower(), model_key.lower())
+    if cache_key in cache:
+        return cache[cache_key]
+
+    resolved: Decimal | None = None
+
+    latest_same_model = (
+        db.query(Vehicle.price_jpy)
+        .filter(
+            Vehicle.make == vehicle.make,
+            Vehicle.model == vehicle.model,
+            Vehicle.price_jpy > 0,
+        )
+        .order_by(desc(Vehicle.updated_at))
+        .first()
+    )
+    if latest_same_model and latest_same_model[0] is not None:
+        resolved = Decimal(str(latest_same_model[0]))
+    else:
+        avg_same_make = (
+            db.query(func.avg(Vehicle.price_jpy))
+            .filter(Vehicle.make == vehicle.make, Vehicle.price_jpy > 0)
+            .scalar()
+        )
+        if avg_same_make is not None:
+            resolved = Decimal(str(avg_same_make))
+        else:
+            avg_global = db.query(func.avg(Vehicle.price_jpy)).filter(Vehicle.price_jpy > 0).scalar()
+            if avg_global is not None:
+                resolved = Decimal(str(avg_global))
+
+    cache[cache_key] = resolved
+    return resolved
 
 
 def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
@@ -561,8 +612,18 @@ async def get_vehicles(
     # Calculate total pages
     total_pages = math.ceil(total / limit) if total > 0 else 0
 
+    fallback_price_cache: dict[tuple[str, str], Decimal | None] = {}
+    response_items: list[VehicleResponse] = []
+    for vehicle in vehicles:
+        item = VehicleResponse.model_validate(vehicle)
+        if item.price_jpy <= 0:
+            fallback_price = _resolve_display_price_jpy(db, vehicle, fallback_price_cache)
+            if fallback_price is not None and fallback_price > 0:
+                item.price_jpy = fallback_price
+        response_items.append(item)
+
     response = VehicleListResponse(
-        vehicles=[VehicleResponse.model_validate(v) for v in vehicles],
+        vehicles=response_items,
         pagination=PaginationInfo(page=page, limit=limit, total=total, total_pages=total_pages),
     )
     await cache.set(cache_key, response.model_dump(mode="json"), ttl=300)

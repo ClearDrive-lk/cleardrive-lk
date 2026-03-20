@@ -32,7 +32,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
 
   return (
-    <Card className="group relative overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+    <Card className="group relative flex h-full flex-col overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-900 transition-transform duration-700 group-hover:scale-[1.07] group-hover:translate-x-1">
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -83,7 +83,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
       </div>
 
       {/* Content Section */}
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="flex-1 p-4 space-y-3">
         <div>
           <h3 className="text-lg font-bold text-[#393d3f] truncate">
             {vehicle.year} {vehicle.make} {vehicle.model}
@@ -110,7 +110,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
 
         {/* Price Section */}
-        <div className="space-y-1">
+        <div className="min-h-[100px] space-y-1">
           {hasPrice ? (
             <>
               <div className="flex justify-between items-end">
@@ -136,15 +136,34 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-between text-xs text-[#546a7b]">
-              <span>Price</span>
-              <span className="text-[#546a7b]">Pending</span>
-            </div>
+            <>
+              <div className="flex justify-between items-end">
+                <span className="text-xs text-[#546a7b]">
+                  Current Bid (JPY)
+                </span>
+                <span className="text-sm font-medium text-[#546a7b]">
+                  N/A
+                </span>
+              </div>
+              <div className="flex justify-between items-end">
+                <span className="text-xs text-[#62929e]">
+                  Est. Landed (LKR)
+                </span>
+                <span className="text-lg font-bold text-[#393d3f]">
+                  N/A
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-[#546a7b]">
+                  Est. Duty: N/A
+                </span>
+              </div>
+            </>
           )}
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="mt-auto p-4 pt-0">
         <Link href={`/dashboard/vehicles/${vehicle.id}`} className="w-full">
           <Button className="w-full bg-[#c6c5b9]/20 hover:bg-[#62929e] hover:text-[#fdfdff] text-[#393d3f] border border-[#546a7b]/65 transition-colors font-mono text-xs h-9">
             VIEW DETAILS &gt;

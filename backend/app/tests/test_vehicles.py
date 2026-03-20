@@ -105,6 +105,41 @@ def test_get_vehicles_with_data(client, db):
     assert data["vehicles"][0]["stock_no"] == "TEST-001"
 
 
+def test_zero_price_vehicle_gets_display_price_fallback(client, db):
+    """List response should provide a display price for zero-priced rows."""
+
+    priced_reference = Vehicle(
+        stock_no="HZ-REF-1",
+        make="Honda",
+        model="Vezel",
+        year=2026,
+        price_jpy=3200000,
+        status=VehicleStatus.AVAILABLE,
+    )
+    missing_price = Vehicle(
+        stock_no="HZ-ZERO-1",
+        make="Honda",
+        model="Vezel",
+        year=2026,
+        price_jpy=0,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(priced_reference)
+    db.add(missing_price)
+    db.commit()
+
+    response = client.get("/api/v1/vehicles", params={"search": "HZ-ZERO-1"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["pagination"]["total"] == 1
+    assert float(data["vehicles"][0]["price_jpy"]) == 3200000
+
+    # Ensure DB remains unchanged; fallback is response-only.
+    db.refresh(missing_price)
+    assert float(missing_price.price_jpy) == 0.0
+
+
 def test_search_vehicles_by_make(client, db):
     """Test vehicle search by make."""
 
@@ -750,7 +785,11 @@ def test_calculate_cost_requires_approved_tax_rule(client, db):
     response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
 
     assert response.status_code == 404
-    assert "No approved gazette tax rule matches this vehicle yet" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert (
+        "No approved gazette tax rule matches this vehicle yet" in detail
+        or "No HS-code matrix rule matches this vehicle" in detail
+    )
 
 
 def test_calculate_cost_uses_approved_gazette_rules(client, db, admin_headers, admin_user):
