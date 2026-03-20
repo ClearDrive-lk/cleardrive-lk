@@ -327,32 +327,35 @@ export default function GazetteManagementPage() {
     [historyStatus],
   );
 
-  const loadGazetteDetail = useCallback(async (gazetteId: string) => {
-    setDetailLoading(true);
-    setDetailError(null);
-    try {
-      const response = await apiClient.get<GazetteDetailResponse>(
-        `/gazette/${gazetteId}`,
-      );
-      setSelectedGazette(response.data);
-      setDecisionSuccess(null);
-      setDecisionError(null);
-      setRejectionReason(response.data.rejection_reason ?? "");
-      setEditableEffectiveDate(response.data.effective_date ?? "");
-      setEditableRules(buildRuleDrafts(response.data.preview.rules));
-    } catch (err: unknown) {
-      if (isAxiosError(err)) {
-        setDetailError(
-          (err.response?.data as { detail?: string } | undefined)?.detail ??
-            "Failed to load gazette details.",
+  const loadGazetteDetail = useCallback(
+    async (gazetteId: string) => {
+      setDetailLoading(true);
+      setDetailError(null);
+      try {
+        const response = await apiClient.get<GazetteDetailResponse>(
+          `/gazette/${gazetteId}`,
         );
-      } else {
-        setDetailError("Failed to load gazette details.");
+        setSelectedGazette(response.data);
+        setDecisionSuccess(null);
+        setDecisionError(null);
+        setRejectionReason(response.data.rejection_reason ?? "");
+        setEditableEffectiveDate(response.data.effective_date ?? "");
+        setEditableRules(buildRuleDrafts(response.data.preview.rules));
+      } catch (err: unknown) {
+        if (isAxiosError(err)) {
+          setDetailError(
+            (err.response?.data as { detail?: string } | undefined)?.detail ??
+              "Failed to load gazette details.",
+          );
+        } else {
+          setDetailError("Failed to load gazette details.");
+        }
+      } finally {
+        setDetailLoading(false);
       }
-    } finally {
-      setDetailLoading(false);
-    }
-  }, []);
+    },
+    [buildRuleDrafts],
+  );
 
   useEffect(() => {
     void loadHistory(1);

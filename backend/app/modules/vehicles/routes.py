@@ -295,7 +295,9 @@ def _resolve_display_price_jpy(
         if avg_same_make is not None:
             resolved = Decimal(str(avg_same_make))
         else:
-            avg_global = db.query(func.avg(Vehicle.price_jpy)).filter(Vehicle.price_jpy > 0).scalar()
+            avg_global = (
+                db.query(func.avg(Vehicle.price_jpy)).filter(Vehicle.price_jpy > 0).scalar()
+            )
             if avg_global is not None:
                 resolved = Decimal(str(avg_global))
 

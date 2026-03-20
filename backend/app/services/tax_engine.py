@@ -62,9 +62,11 @@ class TaxEngine:
                 HSCodeMatrixRule.vehicle_type == vehicle_type,
                 HSCodeMatrixRule.fuel_type == fuel_type,
                 HSCodeMatrixRule.age_condition == age_condition,
-                HSCodeMatrixRule.capacity_unit == capacity_unit
-                if capacity_unit is not None
-                else True,
+                (
+                    HSCodeMatrixRule.capacity_unit == capacity_unit
+                    if capacity_unit is not None
+                    else True
+                ),
                 HSCodeMatrixRule.capacity_min <= capacity_value,
                 HSCodeMatrixRule.capacity_max >= capacity_value,
             )

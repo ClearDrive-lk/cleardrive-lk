@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -10,7 +16,6 @@ import {
   X,
   SlidersHorizontal,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ui/theme-toggle";
@@ -75,6 +80,9 @@ const ALLOWED_SORT_VALUES = new Set([
   "year_desc",
   "mileage_asc",
 ]);
+const subscribeHydration = () => () => {};
+const getClientHydratedSnapshot = () => true;
+const getServerHydratedSnapshot = () => false;
 
 const isThenable = (value: unknown): value is Promise<unknown> =>
   Boolean(value) &&
@@ -123,8 +131,13 @@ function VehicleCatalog({
   searchParams?: VehicleSearchParams;
 }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const [hasSession, setHasSession] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
+  const hasHydrated = useSyncExternalStore(
+    subscribeHydration,
+    getClientHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
+  const hasSession =
+    hasHydrated && Boolean(getAccessToken() || getRefreshToken());
   const router = useRouter();
 
   // -- URL STATE --
@@ -247,11 +260,6 @@ function VehicleCatalog({
       currentTransmission,
     ],
   );
-
-  useEffect(() => {
-    setHasSession(Boolean(getAccessToken() || getRefreshToken()));
-    setAuthReady(true);
-  }, []);
 
   const lkrToCurrent = (value: number) =>
     currentCurrency === "LKR" ? value : Math.round(value / exchangeRate);
@@ -504,7 +512,7 @@ function VehicleCatalog({
     });
   };
 
-  const isAuthed = authReady && (isAuthenticated || hasSession);
+  const isAuthed = isAuthenticated || hasSession;
 
   return (
     <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans dark:bg-slate-950 dark:text-slate-100 flex flex-col">

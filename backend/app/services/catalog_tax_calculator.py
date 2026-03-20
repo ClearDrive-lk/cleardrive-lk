@@ -238,9 +238,7 @@ def calculate_catalog_tax(
         luxury_threshold = _get_global_value(
             engine,
             group="LUXURY_TAX",
-            name="THRESHOLD_HYBRID_PETROL"
-            if fuel_type == "PETROL"
-            else "THRESHOLD_HYBRID_DIESEL",
+            name="THRESHOLD_HYBRID_PETROL" if fuel_type == "PETROL" else "THRESHOLD_HYBRID_DIESEL",
             condition="HYBRID",
             default=Decimal("0"),
         )

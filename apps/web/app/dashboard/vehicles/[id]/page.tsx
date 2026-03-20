@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -47,6 +47,9 @@ const formatLKR = new Intl.NumberFormat("en-LK", {
 }).format;
 
 const formatKm = new Intl.NumberFormat("en-US").format;
+const subscribeHydration = () => () => {};
+const getClientHydratedSnapshot = () => true;
+const getServerHydratedSnapshot = () => false;
 
 const useVehicle = (id: string) =>
   useQuery<Vehicle>({
@@ -77,52 +80,46 @@ function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const [hasSession, setHasSession] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
-  const isAuthed = authReady && (isAuthenticated || hasSession);
+  const hasHydrated = useSyncExternalStore(
+    subscribeHydration,
+    getClientHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
+  const hasSession =
+    hasHydrated && Boolean(getAccessToken() || getRefreshToken());
+  const isAuthed = isAuthenticated || hasSession;
 
   const { data: vehicle, isLoading, isError } = useVehicle(id);
   const { data: galleryImages } = useVehicleImages(id);
 
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageOverride, setSelectedImageOverride] = useState<
+    string | null
+  >(null);
   const [shareCopied, setShareCopied] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    setHasSession(Boolean(getAccessToken() || getRefreshToken()));
-    setAuthReady(true);
-  }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 30000);
     return () => window.clearInterval(interval);
   }, []);
 
-  const images = useMemo(() => {
-    if (galleryImages?.length) return galleryImages;
-    if (vehicle?.imageUrl) return [vehicle.imageUrl];
-    return [];
-  }, [galleryImages, vehicle?.imageUrl]);
+  const images = galleryImages?.length
+    ? galleryImages
+    : vehicle?.imageUrl
+      ? [vehicle.imageUrl]
+      : [];
+  const selectedImage =
+    selectedImageOverride && images.includes(selectedImageOverride)
+      ? selectedImageOverride
+      : null;
 
-  useEffect(() => {
-    if (!images.length) {
-      setSelectedImage(null);
-      return;
-    }
-    setSelectedImage((current) =>
-      current && images.includes(current) ? current : images[0],
-    );
-  }, [images]);
+  const auctionEnd = vehicle?.endTime ? new Date(vehicle.endTime) : null;
+  const validAuctionEnd =
+    auctionEnd && !Number.isNaN(auctionEnd.getTime()) ? auctionEnd : null;
 
-  const auctionEnd = useMemo(() => {
-    if (!vehicle?.endTime) return null;
-    const parsed = new Date(vehicle.endTime);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }, [vehicle?.endTime]);
-
-  const timeToEndLabel = useMemo(() => {
-    if (!auctionEnd) return "Schedule unavailable";
-    const diffMs = auctionEnd.getTime() - now;
+  const timeToEndLabel = (() => {
+    if (!validAuctionEnd) return "Schedule unavailable";
+    const diffMs = validAuctionEnd.getTime() - now;
     if (diffMs <= 0) return "Auction closed";
 
     const totalMinutes = Math.floor(diffMs / 60000);
@@ -133,9 +130,9 @@ function VehicleDetail() {
     if (days > 0) return `${days}d ${hours}h remaining`;
     if (hours > 0) return `${hours}h ${minutes}m remaining`;
     return `${minutes}m remaining`;
-  }, [auctionEnd, now]);
+  })();
 
-  const highlightChips = useMemo(() => {
+  const highlightChips = (() => {
     if (!vehicle) return [];
 
     const raw = `${vehicle.options ?? ""}\n${vehicle.otherRemarks ?? ""}`;
@@ -157,15 +154,7 @@ function VehicleDetail() {
           : "Engine spec pending",
       `${vehicle.year} model year`,
     ];
-  }, [
-    vehicle?.engineCC,
-    vehicle?.fuel,
-    vehicle?.options,
-    vehicle?.otherRemarks,
-    vehicle?.transmission,
-    vehicle?.vehicleType,
-    vehicle?.year,
-  ]);
+  })();
 
   const hasPrice = Boolean(
     vehicle && Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0,
@@ -388,7 +377,7 @@ function VehicleDetail() {
                       return (
                         <button
                           key={`${img}-${idx}`}
-                          onClick={() => setSelectedImage(img)}
+                          onClick={() => setSelectedImageOverride(img)}
                           className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg border transition ${
                             active
                               ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))]/30"
@@ -480,7 +469,9 @@ function VehicleDetail() {
                       Auction End
                     </p>
                     <p className="mt-1 text-sm font-semibold">
-                      {auctionEnd ? auctionEnd.toLocaleString() : "N/A"}
+                      {validAuctionEnd
+                        ? validAuctionEnd.toLocaleString()
+                        : "N/A"}
                     </p>
                     <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-[hsl(var(--secondary))]">
                       <Clock3 className="h-3.5 w-3.5" />

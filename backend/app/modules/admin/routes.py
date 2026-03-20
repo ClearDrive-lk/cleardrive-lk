@@ -355,9 +355,9 @@ async def get_user_detail(
         deleted_at=user.deleted_at.isoformat() if user.deleted_at else None,
         kyc_status=kyc_doc.status.value if kyc_doc else None,
         kyc_submitted_at=kyc_doc.created_at.isoformat() if kyc_doc else None,
-        kyc_reviewed_at=kyc_doc.reviewed_at.isoformat()
-        if kyc_doc and kyc_doc.reviewed_at
-        else None,
+        kyc_reviewed_at=(
+            kyc_doc.reviewed_at.isoformat() if kyc_doc and kyc_doc.reviewed_at else None
+        ),
         kyc_rejection_reason=kyc_doc.rejection_reason if kyc_doc else None,
         total_orders=total_orders,
         active_orders=active_orders,
