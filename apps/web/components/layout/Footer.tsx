@@ -47,7 +47,7 @@ export default function Footer() {
               </p>
             </div>
             <a
-              href="mailto:support@cleardrive.lk?subject=Start%20Vehicle%20Import%20Consultation"
+              href="mailto:cleardrivelk@gmail.com?subject=Start%20Vehicle%20Import%20Consultation"
               className="group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/12 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20 md:w-auto"
             >
               Start Import Consultation
@@ -128,15 +128,6 @@ export default function Footer() {
               Support
             </h4>
             <ul className="space-y-3 text-sm text-[#546a7b] dark:text-[#bdcad4]">
-              <li>
-                <a
-                  href="mailto:support@cleardrive.lk"
-                  className="inline-flex items-center gap-2 transition hover:text-[#62929e] dark:hover:text-[#88d6e4]"
-                >
-                  <Mail className="h-4 w-4" />
-                  support@cleardrive.lk
-                </a>
-              </li>
               <li>
                 <a
                   href="mailto:cleardrivelk@gmail.com"
