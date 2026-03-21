@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import urlparse
 
+from app.core.cache import cache
 from app.core.database import SessionLocal
 from app.core.storage import storage
 from app.modules.orders.models import Order
@@ -629,6 +630,10 @@ class ScraperScheduler:
             stats["removed"] += int(unwanted_scraped_rows or 0)
 
             db.commit()
+            try:
+                _run_async(cache.clear_pattern("vehicles:*"))
+            except Exception as exc:
+                logger.warning("Failed to clear vehicle cache after scrape: %s", exc)
             logger.info("CD-23 scrape completed: %s", stats)
             return stats
         except Exception:

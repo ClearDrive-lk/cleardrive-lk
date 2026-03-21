@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 
-def _load_env_file(path: Path) -> None:
+def _load_env_file(path: Path, *, override: bool = False) -> None:
     if not path.exists():
         return
     for raw in path.read_text(encoding="utf-8").splitlines():
@@ -37,7 +37,7 @@ def _load_env_file(path: Path) -> None:
         if value and not (value.startswith("'") or value.startswith('"')):
             value = value.split("#", 1)[0].strip()
         value = value.strip("'").strip('"')
-        if key and key not in os.environ:
+        if key and (override or key not in os.environ):
             os.environ[key] = value
 
 
@@ -62,7 +62,7 @@ def main() -> None:
     # Load env profile before importing app settings.
     mode_env = ROOT / (".env.localdb" if args.mode == "local" else ".env.supabase")
     fallback_env = ROOT / ".env"
-    _load_env_file(mode_env)
+    _load_env_file(mode_env, override=True)
     _load_env_file(fallback_env)
 
     os.environ.setdefault("CD23_SCRAPER_MODE", "live")
