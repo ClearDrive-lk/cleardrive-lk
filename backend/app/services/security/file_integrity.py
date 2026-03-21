@@ -6,6 +6,7 @@ import threading
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
+from uuid import UUID
 
 from app.core.config import settings
 from app.core.security import calculate_file_hash, verify_file_integrity
@@ -101,7 +102,7 @@ class FileIntegrityService:
         integrity.file_size = len(file_bytes)
         integrity.mime_type = mime_type
         integrity.sha256_hash = FileIntegrityService.calculate_sha256(file_bytes)
-        integrity.uploaded_by = uploaded_by_id
+        integrity.uploaded_by = UUID(uploaded_by_id)
         integrity.verification_status = VerificationStatus.VERIFIED
         integrity.verification_error = None
         integrity.last_verified = None
