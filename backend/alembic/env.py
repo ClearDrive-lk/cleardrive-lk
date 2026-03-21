@@ -6,6 +6,7 @@ from pathlib import Path
 
 from alembic import context  # type: ignore
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.engine import make_url
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -44,7 +45,19 @@ config = context.config
 
 # Prefer a dedicated migration URL (direct DB), fallback to app DATABASE_URL.
 alembic_database_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
-config.set_main_option("sqlalchemy.url", alembic_database_url)
+alembic_url = make_url(alembic_database_url)
+alembic_host = (alembic_url.host or "").lower()
+is_supabase = "supabase.co" in alembic_host
+
+# Keep Alembic off psycopg2 for Supabase/pooler connections to avoid the
+# hstore probe path that can fail during SSL negotiation.
+if is_supabase and alembic_url.drivername in {"postgresql", "postgresql+psycopg2"}:
+    alembic_url = alembic_url.set(drivername="postgresql+psycopg")
+
+if settings.DATABASE_SSL_MODE.lower() == "require" and "sslmode" not in alembic_url.query:
+    alembic_url = alembic_url.update_query_dict({"sslmode": "require"})
+
+config.set_main_option("sqlalchemy.url", alembic_url.render_as_string(hide_password=False))
 
 # Interpret the config file for Python logging
 if config.config_file_name is not None:
