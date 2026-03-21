@@ -24,12 +24,13 @@ def upgrade() -> None:
     op.execute("ALTER TYPE auditeventtype ADD VALUE IF NOT EXISTS 'GDPR_DELETION_COMPLETED'")
     op.execute("ALTER TYPE auditeventtype ADD VALUE IF NOT EXISTS 'GDPR_DELETION_REJECTED'")
 
-    gdpr_status_enum = sa.Enum(
+    gdpr_status_enum = postgresql.ENUM(
         "REQUESTED",
         "PROCESSING",
         "COMPLETED",
         "REJECTED",
         name="gdprdeletionstatus",
+        create_type=False,
     )
     gdpr_status_enum.create(op.get_bind(), checkfirst=True)
 
