@@ -29,6 +29,7 @@ if "sqlite" not in str(settings.DATABASE_URL):
 # Create engine
 engine = create_engine(
     db_url,
+    use_native_hstore=False,
     **engine_kwargs,
 )
 
