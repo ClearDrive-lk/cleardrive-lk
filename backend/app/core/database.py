@@ -24,6 +24,10 @@ host = (url.host or "").lower()
 is_sqlite = url.drivername.startswith("sqlite")
 is_supabase = "supabase.co" in host
 
+# Avoid psycopg2's hstore on-connect probe against Supabase/pooler connections.
+if is_supabase and url.drivername in {"postgresql", "postgresql+psycopg2"}:
+    url = url.set(drivername="postgresql+psycopg")
+
 # Ensure SSL is explicitly enabled for managed Postgres when configured outside the URL.
 if not is_sqlite and settings.DATABASE_SSL_MODE.lower() == "require" and "sslmode" not in url.query:
     url = url.update_query_dict({"sslmode": "require"})
