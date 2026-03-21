@@ -28,14 +28,19 @@ import { CostCalculator } from "@/components/vehicles/CostCalculator";
 import OrderCreateForm from "@/components/orders/OrderCreateForm";
 import { useAppSelector } from "@/lib/store/store";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
+import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
 
 // Fetch single vehicle helper
-const useVehicle = (id: string) => {
+const useVehicle = (id: string, exchangeRate?: number | null) => {
   return useQuery<Vehicle>({
-    queryKey: ["vehicle", id],
+    queryKey: [
+      "vehicle",
+      id,
+      exchangeRate ? Number(exchangeRate.toFixed(4)) : "",
+    ],
     queryFn: async () => {
       const response = await apiClient.get(`/vehicles/${id}`);
-      return mapBackendVehicle(response.data);
+      return mapBackendVehicle(response.data, exchangeRate ?? null);
     },
     enabled: !!id,
   });
@@ -62,8 +67,13 @@ function VehicleDetail() {
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const hasSession = Boolean(getAccessToken() || getRefreshToken());
+  const { data: exchangeRateData } = useExchangeRate();
   // Removed unused logout, isLogoutLoading
-  const { data: vehicle, isLoading, isError } = useVehicle(id);
+  const {
+    data: vehicle,
+    isLoading,
+    isError,
+  } = useVehicle(id, exchangeRateData?.rate ?? null);
   const { data: galleryImages } = useVehicleImages(id);
   const [selectedImageOverride, setSelectedImageOverride] = useState<
     string | null
@@ -75,12 +85,14 @@ function VehicleDetail() {
   const formatJPY = new Intl.NumberFormat("ja-JP", {
     style: "currency",
     currency: "JPY",
-    maximumSignificantDigits: 3,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format;
   const formatLKR = new Intl.NumberFormat("en-LK", {
     style: "currency",
     currency: "LKR",
-    maximumSignificantDigits: 3,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format;
   const formatKm = new Intl.NumberFormat("en-US").format;
 
@@ -122,7 +134,11 @@ function VehicleDetail() {
       : [];
 
   const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
-  const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
+  const hasEstimate =
+    Number.isFinite(vehicle.estimatedLandedCostLKR) &&
+    (vehicle.estimatedLandedCostLKR ?? 0) > 0;
+  const estDuty =
+    hasPrice && hasEstimate ? vehicle.estimatedLandedCostLKR! * 0.3 : 0;
 
   const contactAgent = () => {
     const subject = encodeURIComponent(
@@ -272,8 +288,8 @@ function VehicleDetail() {
                     Estimated Landed Cost
                   </span>
                   <span className="text-3xl font-bold text-white">
-                    {hasPrice
-                      ? formatLKR(vehicle.estimatedLandedCostLKR)
+                    {hasPrice && hasEstimate
+                      ? formatLKR(vehicle.estimatedLandedCostLKR!)
                       : "N/A"}
                   </span>
                 </div>
@@ -283,7 +299,8 @@ function VehicleDetail() {
                     {hasPrice ? formatJPY(vehicle.priceJPY) : "N/A"}
                   </span>
                   <span>
-                    Est. Duty: {hasPrice ? formatLKR(estDuty) : "N/A"}
+                    Est. Duty:{" "}
+                    {hasPrice && hasEstimate ? formatLKR(estDuty) : "N/A"}
                   </span>
                 </div>
 
@@ -315,7 +332,7 @@ function VehicleDetail() {
               {isAuthenticated ? (
                 <OrderCreateForm
                   vehicleId={vehicle.id}
-                  estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
+                  estimatedTotalLkr={vehicle.estimatedLandedCostLKR ?? 0}
                 />
               ) : (
                 <Card className="border-white/10 bg-[#0F0F0F]">

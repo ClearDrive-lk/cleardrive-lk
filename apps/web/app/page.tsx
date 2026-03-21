@@ -21,17 +21,30 @@ import {
   ArrowRight,
   Terminal,
 } from "lucide-react";
+import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
 
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const hasSession = Boolean(getAccessToken() || getRefreshToken());
+  const { data: exchangeRateData } = useExchangeRate();
   const [searchTerm, setSearchTerm] = useState("");
   const handleSearch = () => {
     const trimmed = searchTerm.trim();
     if (!trimmed) return;
     router.push(`/dashboard/vehicles?search=${encodeURIComponent(trimmed)}`);
   };
+  const exchangeRateValue =
+    exchangeRateData?.rate && Number.isFinite(exchangeRateData.rate)
+      ? `${exchangeRateData.rate.toFixed(2)} LKR/JPY`
+      : "Rate loading";
+  const exchangeRateSub = exchangeRateData?.date
+    ? `CBSL ${new Date(exchangeRateData.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`
+    : "Central Bank of Sri Lanka";
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
@@ -63,7 +76,10 @@ export default function Home() {
             <Link href="#" className="hover:text-white transition-colors">
               Logistics
             </Link>
-            <Link href="#" className="hover:text-white transition-colors">
+            <Link
+              href="/tax-calculator"
+              className="hover:text-white transition-colors"
+            >
               Tax Calculator
             </Link>
           </div>
@@ -189,9 +205,9 @@ export default function Home() {
             },
             {
               label: "Exchange Rate",
-              value: "2.25 LKR/JPY",
+              value: exchangeRateValue,
               icon: TrendingUp,
-              sub: "Live Bank Rate",
+              sub: exchangeRateSub,
             },
             {
               label: "Active Listings",

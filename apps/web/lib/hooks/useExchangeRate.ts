@@ -9,6 +9,8 @@ export type ExchangeRateResponse = {
   rate: number | null;
   date: string | null;
   provider: string;
+  source?: string | null;
+  rate_type?: string | null;
   fetched_at: string;
 };
 

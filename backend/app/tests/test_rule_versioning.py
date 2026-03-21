@@ -71,6 +71,7 @@ def test_upsert_hs_code_matrix_rule_supersedes_exact_match_and_resolves(db, admi
         pal_pct=0,
         cess_pct=0,
         excise_unit_rate_lkr=18000,
+        min_excise_flat_rate_lkr=990000,
         effective_date=date(2026, 3, 20),
         changed_by=admin_user.id,
         change_reason="initial import",
@@ -89,6 +90,7 @@ def test_upsert_hs_code_matrix_rule_supersedes_exact_match_and_resolves(db, admi
         pal_pct=0,
         cess_pct=0,
         excise_unit_rate_lkr=18100,
+        min_excise_flat_rate_lkr=1992000,
         effective_date=date(2026, 4, 1),
         changed_by=admin_user.id,
         change_reason="gazette supersede",
@@ -110,6 +112,7 @@ def test_upsert_hs_code_matrix_rule_supersedes_exact_match_and_resolves(db, admi
     )
     assert resolved.id == updated.id
     assert float(resolved.excise_unit_rate_lkr) == 18100.0
+    assert float(resolved.min_excise_flat_rate_lkr) == 1992000.0
 
 
 def test_upsert_hs_code_matrix_rule_rejects_overlap(db, admin_user):
@@ -127,6 +130,7 @@ def test_upsert_hs_code_matrix_rule_rejects_overlap(db, admin_user):
         pal_pct=0,
         cess_pct=0,
         excise_unit_rate_lkr=18100,
+        min_excise_flat_rate_lkr=0,
         effective_date=date(2026, 3, 20),
         changed_by=admin_user.id,
         change_reason="initial import",
@@ -146,10 +150,74 @@ def test_upsert_hs_code_matrix_rule_rejects_overlap(db, admin_user):
             pal_pct=0,
             cess_pct=0,
             excise_unit_rate_lkr=24100,
+            min_excise_flat_rate_lkr=0,
             effective_date=date(2026, 4, 1),
             changed_by=admin_user.id,
             change_reason="invalid overlap",
         )
+
+
+def test_supersede_overlapping_hs_code_matrix_rules_allows_range_split(db, admin_user):
+    service = RuleVersioningService(db)
+
+    original = service.upsert_hs_code_matrix_rule(
+        vehicle_type="HYBRID",
+        fuel_type="PETROL",
+        age_condition="<=1",
+        hs_code="8703.40.35",
+        capacity_min=0,
+        capacity_max=1500,
+        capacity_unit="CC",
+        cid_pct=20,
+        pal_pct=0,
+        cess_pct=0,
+        excise_unit_rate_lkr=3450,
+        min_excise_flat_rate_lkr=0,
+        effective_date=date(2025, 5, 1),
+        changed_by=admin_user.id,
+        change_reason="initial import",
+    )
+    db.commit()
+
+    superseded = service.supersede_overlapping_hs_code_matrix_rules(
+        rows=[
+            {
+                "vehicle_type": "HYBRID",
+                "fuel_type": "PETROL",
+                "age_condition": "<=1",
+                "hs_code": "8703.40.35",
+                "capacity_min": 0,
+                "capacity_max": 1000,
+                "capacity_unit": "CC",
+                "cid_pct": 20,
+                "pal_pct": 0,
+                "cess_pct": 0,
+                "excise_unit_rate_lkr": 3450,
+                "min_excise_flat_rate_lkr": 0,
+            },
+            {
+                "vehicle_type": "HYBRID",
+                "fuel_type": "PETROL",
+                "age_condition": "<=1",
+                "hs_code": "8703.40.58",
+                "capacity_min": 1001,
+                "capacity_max": 1500,
+                "capacity_unit": "CC",
+                "cid_pct": 20,
+                "pal_pct": 0,
+                "cess_pct": 0,
+                "excise_unit_rate_lkr": 4450,
+                "min_excise_flat_rate_lkr": 0,
+            },
+        ],
+        changed_by=admin_user.id,
+        change_reason="split range",
+    )
+    db.commit()
+    db.refresh(original)
+
+    assert superseded == 1
+    assert original.is_active is False
 
 
 def test_tax_engine_get_global_param_requires_exact_single_active_row(db, admin_user):

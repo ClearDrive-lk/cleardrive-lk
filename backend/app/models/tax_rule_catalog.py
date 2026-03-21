@@ -107,6 +107,9 @@ class HSCodeMatrixRule(Base):
     pal_pct: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False, default=0)
     cess_pct: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False, default=0)
     excise_unit_rate_lkr: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, default=0)
+    min_excise_flat_rate_lkr: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, default=0
+    )
     effective_date: Mapped[date] = mapped_column(Date, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)

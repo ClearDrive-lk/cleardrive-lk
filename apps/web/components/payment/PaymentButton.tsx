@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { getAccessToken } from "@/lib/auth";
 import apiClient from "@/lib/api-client";
+import { useKycStatus } from "@/lib/hooks/useKycStatus";
 import { useToast } from "@/lib/hooks/use-toast";
 
 interface PaymentButtonProps {
@@ -31,6 +32,7 @@ export default function PaymentButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { isApproved, loading: kycLoading, normalizedStatus } = useKycStatus();
 
   // Prevent double-clicks (idempotency layer 1)
   const [paymentInitiated, setPaymentInitiated] = useState(false);
@@ -46,6 +48,23 @@ export default function PaymentButton({
   };
 
   const initiatePayment = async () => {
+    if (kycLoading) {
+      return;
+    }
+    if (!isApproved) {
+      const message =
+        normalizedStatus === null
+          ? "KYC verification required before payment."
+          : `KYC status is ${normalizedStatus}. Only approved users can proceed to payment.`;
+      setError(message);
+      toast({
+        title: "KYC approval required",
+        description: message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if already initiated
     if (paymentInitiated) {
       console.log("Payment already initiated");
@@ -142,7 +161,7 @@ export default function PaymentButton({
     <div className="space-y-2">
       <Button
         onClick={initiatePayment}
-        disabled={loading || paymentInitiated}
+        disabled={loading || paymentInitiated || kycLoading || !isApproved}
         className={className}
         variant={variant}
         size={size}
@@ -152,6 +171,10 @@ export default function PaymentButton({
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Processing...
           </>
+        ) : kycLoading ? (
+          "Checking KYC..."
+        ) : !isApproved ? (
+          "KYC Approval Required"
         ) : (
           `Pay ${currency} ${amount.toLocaleString()}`
         )}

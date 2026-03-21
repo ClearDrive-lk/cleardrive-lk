@@ -56,6 +56,15 @@ export default function Header() {
             Vehicles
           </Link>
 
+          <Link
+            href="/tax-calculator"
+            className={`transition-colors ${
+              isActive("/tax-calculator") ? "text-white" : "hover:text-white"
+            }`}
+          >
+            Tax Calculator
+          </Link>
+
           {isAuthenticated && (
             <>
               <Link

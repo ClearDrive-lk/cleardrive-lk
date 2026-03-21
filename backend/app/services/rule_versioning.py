@@ -42,6 +42,7 @@ _HS_FIELDS = (
     "pal_pct",
     "cess_pct",
     "excise_unit_rate_lkr",
+    "min_excise_flat_rate_lkr",
     "effective_date",
     "version",
     "is_active",
@@ -177,6 +178,7 @@ class RuleVersioningService:
         pal_pct: float | Decimal,
         cess_pct: float | Decimal,
         excise_unit_rate_lkr: float | Decimal,
+        min_excise_flat_rate_lkr: float | Decimal,
         effective_date,
         changed_by: UUID | None,
         change_reason: str,
@@ -239,6 +241,7 @@ class RuleVersioningService:
             pal_pct=Decimal(str(pal_pct)),
             cess_pct=Decimal(str(cess_pct)),
             excise_unit_rate_lkr=Decimal(str(excise_unit_rate_lkr)),
+            min_excise_flat_rate_lkr=Decimal(str(min_excise_flat_rate_lkr)),
             effective_date=effective_date,
             is_active=True,
             version=previous_version + 1,
@@ -258,6 +261,47 @@ class RuleVersioningService:
             version=record.version,
         )
         return record
+
+    def supersede_overlapping_hs_code_matrix_rules(
+        self,
+        *,
+        rows: list[dict[str, Any]],
+        changed_by: UUID | None,
+        change_reason: str,
+    ) -> int:
+        superseded = 0
+        seen_ids: set[UUID] = set()
+
+        for row in rows:
+            min_value = Decimal(str(row["capacity_min"]))
+            max_value = Decimal(str(row["capacity_max"]))
+            overlaps = (
+                self.db.query(HSCodeMatrixRule)
+                .filter(
+                    HSCodeMatrixRule.is_active.is_(True),
+                    HSCodeMatrixRule.vehicle_type == str(row["vehicle_type"]),
+                    HSCodeMatrixRule.fuel_type == str(row["fuel_type"]),
+                    HSCodeMatrixRule.age_condition == str(row["age_condition"]),
+                    HSCodeMatrixRule.capacity_min <= max_value,
+                    HSCodeMatrixRule.capacity_max >= min_value,
+                )
+                .all()
+            )
+
+            for rule in overlaps:
+                if rule.id in seen_ids:
+                    continue
+                if rule.capacity_min == min_value and rule.capacity_max == max_value:
+                    continue
+                self.deactivate_hs_code_matrix_rule(
+                    record=rule,
+                    changed_by=changed_by,
+                    change_reason=change_reason,
+                )
+                seen_ids.add(rule.id)
+                superseded += 1
+
+        return superseded
 
     def update_global_tax_parameter(
         self,
@@ -318,6 +362,7 @@ class RuleVersioningService:
         pal_pct: float | Decimal,
         cess_pct: float | Decimal,
         excise_unit_rate_lkr: float | Decimal,
+        min_excise_flat_rate_lkr: float | Decimal,
         effective_date,
         changed_by: UUID | None,
         change_reason: str,
@@ -338,6 +383,7 @@ class RuleVersioningService:
             pal_pct=pal_pct,
             cess_pct=cess_pct,
             excise_unit_rate_lkr=excise_unit_rate_lkr,
+            min_excise_flat_rate_lkr=min_excise_flat_rate_lkr,
             effective_date=effective_date,
             changed_by=changed_by,
             change_reason=change_reason,

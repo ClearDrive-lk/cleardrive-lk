@@ -4,6 +4,7 @@ from decimal import Decimal
 from unittest.mock import AsyncMock
 
 from app.core.config import settings
+from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
@@ -42,6 +43,20 @@ class _LockedRedis(_FakeRedis):
         return False
 
 
+def _create_kyc_for_user(db, test_user, status: KYCStatus) -> KYCDocument:
+    kyc = KYCDocument(
+        user_id=test_user.id,
+        nic_front_url="https://example.com/nic-front.jpg",
+        nic_back_url="https://example.com/nic-back.jpg",
+        selfie_url="https://example.com/selfie.jpg",
+        status=status,
+    )
+    db.add(kyc)
+    db.commit()
+    db.refresh(kyc)
+    return kyc
+
+
 def _create_order_for_user(db, test_user, stock_no: str = "STOCK-001") -> Order:
     vehicle = Vehicle(
         stock_no=stock_no,
@@ -71,6 +86,7 @@ def _create_order_for_user(db, test_user, stock_no: str = "STOCK-001") -> Order:
 
 def test_initiate_requires_idempotency_header(client, auth_headers, db, test_user, monkeypatch):
     order = _create_order_for_user(db, test_user, stock_no="STOCK-101")
+    _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
     fake_redis = _FakeRedis()
 
     async def _get_redis():
@@ -92,6 +108,7 @@ def test_initiate_returns_cached_response_for_same_key(
     client, auth_headers, db, test_user, monkeypatch
 ):
     order = _create_order_for_user(db, test_user, stock_no="STOCK-102")
+    _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
     fake_redis = _FakeRedis()
 
     async def _get_redis():
@@ -119,6 +136,7 @@ def test_initiate_returns_409_when_lock_not_acquired(
     client, auth_headers, db, test_user, monkeypatch
 ):
     order = _create_order_for_user(db, test_user, stock_no="STOCK-103")
+    _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
     fake_redis = _LockedRedis()
 
     async def _get_redis():
@@ -139,6 +157,7 @@ def test_initiate_rejects_amount_above_payhere_limit(
     client, auth_headers, db, test_user, monkeypatch
 ):
     order = _create_order_for_user(db, test_user, stock_no="STOCK-103A")
+    _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
     order.total_cost_lkr = Decimal("17201470.00")
     db.commit()
     fake_redis = _FakeRedis()
@@ -161,6 +180,46 @@ def test_initiate_rejects_amount_above_payhere_limit(
     assert "configured PayHere merchant limit" in response.json()["detail"]
     assert "17,201,470.00" in response.json()["detail"]
     assert db.query(Payment).filter(Payment.order_id == order.id).count() == 0
+
+
+def test_initiate_requires_existing_kyc(client, auth_headers, db, test_user, monkeypatch):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-103B")
+    fake_redis = _FakeRedis()
+
+    async def _get_redis():
+        return fake_redis
+
+    monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+
+    headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-44665544000A"}
+    response = client.post(
+        "/api/v1/payments/initiate", headers=headers, json={"order_id": str(order.id)}
+    )
+
+    assert response.status_code == 400
+    assert (
+        response.json()["detail"]
+        == "KYC verification required. Please submit your documents first."
+    )
+
+
+def test_initiate_requires_approved_kyc(client, auth_headers, db, test_user, monkeypatch):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-103C")
+    _create_kyc_for_user(db, test_user, KYCStatus.PENDING)
+    fake_redis = _FakeRedis()
+
+    async def _get_redis():
+        return fake_redis
+
+    monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+
+    headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-44665544000B"}
+    response = client.post(
+        "/api/v1/payments/initiate", headers=headers, json={"order_id": str(order.id)}
+    )
+
+    assert response.status_code == 400
+    assert "Only APPROVED users can initiate payment." in response.json()["detail"]
 
 
 def test_webhook_dedup_returns_already_processed(client, db, test_user):

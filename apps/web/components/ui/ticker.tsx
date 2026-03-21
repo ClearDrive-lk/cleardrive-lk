@@ -1,4 +1,10 @@
+import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
+
 export function AuctionTicker() {
+  const { data } = useExchangeRate();
+  const rateLabel =
+    data?.rate && Number.isFinite(data.rate) ? data.rate.toFixed(2) : "--";
+
   return (
     <div className="w-full bg-[#0F0F0F] border-b border-white/5 overflow-hidden py-2 select-none">
       {/* We use Array(10) to ensure the content is WAY wider than any screen.
@@ -27,7 +33,9 @@ export function AuctionTicker() {
             </span>
             <span className="flex items-center gap-2 mr-12">
               <span className="text-gray-500 font-mono text-xs">JPY/LKR</span>
-              <span className="text-[#FE7743] font-bold text-xs">2.25</span>
+              <span className="text-[#FE7743] font-bold text-xs">
+                {rateLabel}
+              </span>
             </span>
             <span className="flex items-center gap-2 mr-12">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />

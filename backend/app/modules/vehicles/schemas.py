@@ -199,10 +199,39 @@ class VehicleListResponse(BaseModel):
 class CostBreakdown(BaseModel):
     """Detailed cost breakdown for vehicle import."""
 
+    class TaxesSummary(BaseModel):
+        customs_duty_lkr: Decimal
+        surcharge_lkr: Decimal = Decimal("0")
+        excise_duty_lkr: Decimal
+        pal_lkr: Decimal = Decimal("0")
+        vat_lkr: Decimal
+        cess_lkr: Decimal
+        luxury_tax_lkr: Decimal = Decimal("0")
+        vel_lkr: Decimal = Decimal("0")
+        com_exm_sel_lkr: Decimal = Decimal("0")
+        total_lkr: Decimal
+
+    class FeesSummary(BaseModel):
+        shipping_cost_lkr: Decimal
+        port_charges_lkr: Decimal
+        clearance_fee_lkr: Decimal
+        documentation_fee_lkr: Decimal
+        total_lkr: Decimal
+
+    class PlatformFeeSummary(BaseModel):
+        amount: Decimal
+        tier: str
+        description: str
+        percentage_of_total: Decimal
+
     # Base costs
     vehicle_price_jpy: Decimal
     vehicle_price_lkr: Decimal
     exchange_rate: Decimal = Field(..., description="JPY to LKR exchange rate")
+    exchange_rate_source: Optional[str] = Field(None, description="Exchange-rate source label")
+    exchange_rate_date: Optional[str] = Field(None, description="Exchange-rate date")
+    exchange_rate_provider: Optional[str] = Field(None, description="Exchange-rate provider")
+    hs_code: Optional[str] = Field(None, description="Resolved HS code from the tax rule")
 
     # Import costs
     shipping_cost_lkr: Decimal = Field(..., description="Estimated shipping cost")
@@ -213,11 +242,21 @@ class CostBreakdown(BaseModel):
     vat_lkr: Decimal = Field(..., description="Value Added Tax (15%)")
     cess_lkr: Decimal = Field(..., description="Cess (if applicable)")
     luxury_tax_lkr: Decimal = Field(Decimal("0"), description="Luxury tax (if applicable)")
+    vel_lkr: Decimal = Field(Decimal("0"), description="Vehicle entitlement levy")
+    com_exm_sel_lkr: Decimal = Field(
+        Decimal("0"), description="Commercial export examination selection fee"
+    )
     port_charges_lkr: Decimal = Field(..., description="Port and handling charges")
 
     # Service fees
     clearance_fee_lkr: Decimal = Field(..., description="Customs clearance fee")
     documentation_fee_lkr: Decimal = Field(..., description="Documentation fee")
+    platform_fee_lkr: Decimal = Field(Decimal("0"), description="ClearDrive service fee")
+    platform_fee_percentage: Decimal = Field(
+        Decimal("0"), description="Platform fee as % of total cost"
+    )
+    platform_fee_tier: Optional[str] = Field(None, description="Platform fee tier")
+    platform_fee_description: Optional[str] = Field(None, description="Platform fee description")
 
     # Total
     total_cost_lkr: Decimal = Field(..., description="Total landed cost in LKR")
@@ -226,6 +265,9 @@ class CostBreakdown(BaseModel):
     vehicle_percentage: Decimal = Field(..., description="Vehicle cost as % of total")
     taxes_percentage: Decimal = Field(..., description="Taxes as % of total")
     fees_percentage: Decimal = Field(..., description="Fees as % of total")
+    taxes: TaxesSummary = Field(..., description="Structured tax breakdown")
+    fees: FeesSummary = Field(..., description="Structured non-tax fee breakdown")
+    platform_fee: PlatformFeeSummary = Field(..., description="ClearDrive service fee breakdown")
 
 
 class CostCalculatorRequest(BaseModel):

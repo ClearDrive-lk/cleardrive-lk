@@ -17,19 +17,25 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const formatJPY = new Intl.NumberFormat("ja-JP", {
     style: "currency",
     currency: "JPY",
-    maximumSignificantDigits: 3,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format;
   const formatLKR = new Intl.NumberFormat("en-LK", {
     style: "currency",
     currency: "LKR",
-    maximumSignificantDigits: 3,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format;
   const formatKm = new Intl.NumberFormat("en-US").format;
 
   const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
+  const hasEstimate =
+    Number.isFinite(vehicle.estimatedLandedCostLKR) &&
+    (vehicle.estimatedLandedCostLKR ?? 0) > 0;
 
   // Mini Cost Calculator: Est. Duty = 30% of price (placeholder logic)
-  const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
+  const estDuty =
+    hasPrice && hasEstimate ? vehicle.estimatedLandedCostLKR! * 0.3 : 0;
 
   return (
     <Card className="group relative overflow-hidden border-white/10 bg-[#0A0A0A] hover:border-[#FE7743]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(254,119,67,0.1)]">
@@ -120,12 +126,14 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
                   Est. Landed (LKR)
                 </span>
                 <span className="text-lg font-bold text-white">
-                  {formatLKR(vehicle.estimatedLandedCostLKR)}
+                  {hasEstimate
+                    ? formatLKR(vehicle.estimatedLandedCostLKR!)
+                    : "Live rate pending"}
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-gray-500">
-                  Est. Duty: {formatLKR(estDuty)}
+                  Est. Duty: {hasEstimate ? formatLKR(estDuty) : "N/A"}
                 </span>
               </div>
             </>

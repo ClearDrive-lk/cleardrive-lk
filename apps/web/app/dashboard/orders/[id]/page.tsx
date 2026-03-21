@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/ui/OrderTimeline";
 import PaymentButton from "@/components/payment/PaymentButton";
 import apiClient from "@/lib/api-client";
+import { useKycStatus } from "@/lib/hooks/useKycStatus";
 import { mapBackendVehicle } from "@/lib/vehicle-mapper";
 import type { Vehicle } from "@/types/vehicle";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -58,6 +59,7 @@ export default function OrderDetailPage() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const { toast } = useToast();
+  const { isApproved: isKycApproved } = useKycStatus();
 
   const loadOrder = useCallback(
     async ({ silent = false }: { silent?: boolean } = {}) => {
@@ -424,15 +426,25 @@ export default function OrderDetailPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="border-white/10 text-white hover:bg-white/5"
-                    >
-                      <Link href={`/payment?orderId=${order.id}`}>
-                        Open Payment Page
-                      </Link>
-                    </Button>
+                    {isKycApproved ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="border-white/10 text-white hover:bg-white/5"
+                      >
+                        <Link href={`/payment?orderId=${order.id}`}>
+                          Open Payment Page
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        disabled
+                        variant="outline"
+                        className="border-white/10 text-gray-400"
+                      >
+                        KYC Approval Required
+                      </Button>
+                    )}
                     <Button
                       asChild
                       variant="outline"

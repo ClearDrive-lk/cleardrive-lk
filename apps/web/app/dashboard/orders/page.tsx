@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderTimeline } from "@/components/ui/OrderTimeline";
 import apiClient from "@/lib/api-client";
+import { useKycStatus } from "@/lib/hooks/useKycStatus";
 import { useLogout } from "@/lib/hooks/useLogout";
 import {
   ArrowRight,
@@ -44,6 +45,7 @@ export default function OrdersPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
+  const { isApproved: isKycApproved } = useKycStatus();
 
   useEffect(() => {
     void loadOrders();
@@ -95,7 +97,8 @@ export default function OrdersPage() {
     orders.find((order) => order.id === selectedOrderId) ?? null;
   const canPaySelected =
     selectedOrder?.status === "CREATED" &&
-    selectedOrder.payment_status === "PENDING";
+    selectedOrder.payment_status === "PENDING" &&
+    isKycApproved;
 
   return (
     <AuthGuard>
@@ -426,7 +429,11 @@ export default function OrdersPage() {
                               disabled
                               className="bg-white/5 text-gray-400 border border-white/10"
                             >
-                              Payment Unavailable
+                              {selectedOrder?.status === "CREATED" &&
+                              selectedOrder.payment_status === "PENDING" &&
+                              !isKycApproved
+                                ? "KYC Approval Required"
+                                : "Payment Unavailable"}
                             </Button>
                           )}
                           <Button

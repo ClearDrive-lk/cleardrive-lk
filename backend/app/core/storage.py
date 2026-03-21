@@ -60,6 +60,7 @@ class SupabaseStorage:
         file_path: str,
         file_content: bytes,
         content_type: str = "application/octet-stream",
+        upsert: bool = False,
     ) -> Dict:
         """
         Upload file to Supabase Storage.
@@ -79,7 +80,12 @@ class SupabaseStorage:
 
             # Upload to Supabase Storage
             client.storage.from_(bucket).upload(
-                path=file_path, file=file_content, file_options={"content-type": content_type}
+                path=file_path,
+                file=file_content,
+                file_options={
+                    "content-type": content_type,
+                    "upsert": str(upsert).lower(),
+                },
             )
 
             # Get public URL

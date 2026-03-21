@@ -159,18 +159,22 @@ def test_upload_global_tax_parameters_catalog_csv_success(client, admin_headers,
 
     assert response.status_code == 200
     data = response.json()
-    assert data["dataset"] == "global_tax_parameters"
-    assert data["uploaded_rows"] == 2
-    assert data["superseded_rows"] == 0
-    assert len(data["preview_rows"]) == 2
-    assert data["preview_rows"][0]["parameter_group"] == "VALUATION"
+    assert data["status"] == "PENDING"
+    assert data["rules_count"] == 2
+    assert data["preview"]["dataset"] == "global_tax_parameters"
+    assert len(data["preview"]["catalog_rows"]) == 2
+    assert data["preview"]["catalog_rows"][0]["parameter_group"] == "VALUATION"
 
-    saved = db.query(GlobalTaxParameter).filter(GlobalTaxParameter.is_active.is_(True)).all()
-    assert len(saved) == 2
-    assert saved[0].effective_date.isoformat() == "2025-01-01"
+    saved = db.query(Gazette).filter(Gazette.id == data["gazette_id"]).first()
+    assert saved is not None
+    assert saved.status == "PENDING"
+    assert saved.effective_date.isoformat() == "2025-01-01"
+    assert saved.raw_extracted["dataset"] == "global_tax_parameters"
+    assert len(saved.gazette_no) <= 50
+    assert db.query(GlobalTaxParameter).filter(GlobalTaxParameter.is_active.is_(True)).count() == 0
 
 
-def test_upload_hs_code_matrix_catalog_csv_supersedes_existing_rows(client, admin_headers, db):
+def test_catalog_csv_approve_and_history_flow(client, admin_headers, db):
     csv_content = "\n".join(
         [
             '"vehicle_type,fuel_type,age_condition,hs_code,capacity_min,capacity_max,capacity_unit,cid_pct,pal_pct,cess_pct,excise_unit_rate_lkr"',
@@ -178,31 +182,78 @@ def test_upload_hs_code_matrix_catalog_csv_supersedes_existing_rows(client, admi
         ]
     ).encode("utf-8")
 
-    first = client.post(
+    upload = client.post(
         "/api/v1/gazette/upload-hs-code-matrix-csv",
         headers=admin_headers,
         files={"file": ("hs_code_matrix.csv", BytesIO(csv_content), "text/csv")},
         data={"effective_date": "2025-01-01"},
     )
-    second = client.post(
-        "/api/v1/gazette/upload-hs-code-matrix-csv",
-        headers=admin_headers,
-        files={"file": ("hs_code_matrix.csv", BytesIO(csv_content), "text/csv")},
-        data={"effective_date": "2025-02-01"},
-    )
+    assert upload.status_code == 200
+    gazette_id = upload.json()["gazette_id"]
 
-    assert first.status_code == 200
-    assert second.status_code == 200
-    assert second.json()["superseded_rows"] == 1
-    assert second.json()["preview_rows"][0]["vehicle_type"] == "PASSENGER_CAR"
+    history = client.get("/api/v1/gazette/history", headers=admin_headers)
+    assert history.status_code == 200
+    assert any(item["id"] == gazette_id for item in history.json()["items"])
+
+    detail = client.get(f"/api/v1/gazette/{gazette_id}", headers=admin_headers)
+    assert detail.status_code == 200
+    assert detail.json()["rules_count"] == 1
+    assert detail.json()["preview"]["dataset"] == "hs_code_matrix"
+    assert detail.json()["preview"]["catalog_rows"][0]["min_excise_flat_rate_lkr"] == 0.0
+
+    approve = client.post(f"/api/v1/gazette/{gazette_id}/approve", headers=admin_headers)
+    assert approve.status_code == 200
 
     active_rows = db.query(HSCodeMatrixRule).filter(HSCodeMatrixRule.is_active.is_(True)).all()
     assert len(active_rows) == 1
-    assert active_rows[0].version == 2
-    assert active_rows[0].effective_date.isoformat() == "2025-02-01"
+    assert active_rows[0].effective_date.isoformat() == "2025-01-01"
 
 
-def test_edit_and_delete_catalog_rows(client, admin_headers, db):
+def test_hs_code_matrix_csv_accepts_legacy_header_aliases(client, admin_headers):
+    csv_content = "\n".join(
+        [
+            '"Vehicle_Type,Fuel_Type,Age_Condition,HS_Code,Capacity_Min,Capacity_Max,Capacity_Unit,Customs_Percent,PAL_PCT,CESS_PCT,Excise_Rate"',
+            '"passenger_car,petrol,<=1,8703.21,0,1000,cc,20,0,6,2450"',
+        ]
+    ).encode("utf-8")
+
+    upload = client.post(
+        "/api/v1/gazette/upload-hs-code-matrix-csv",
+        headers=admin_headers,
+        files={"file": ("hs_code_matrix.csv", BytesIO(csv_content), "text/csv")},
+        data={"effective_date": "2025-01-01"},
+    )
+
+    assert upload.status_code == 200
+    preview = upload.json()["preview"]["catalog_rows"][0]
+    assert preview["cid_pct"] == 20.0
+    assert preview["excise_unit_rate_lkr"] == 2450.0
+    assert preview["min_excise_flat_rate_lkr"] == 0.0
+
+
+def test_hs_code_matrix_csv_captures_min_excise_flat_rate(client, admin_headers):
+    csv_content = "\n".join(
+        [
+            '"vehicle_type,fuel_type,age_condition,hs_code,capacity_min,capacity_max,capacity_unit,cid_pct,pal_pct,cess_pct,excise_unit_rate_lkr,min_excise_flat_rate_lkr"',
+            '"passenger_car,petrol,<=1,8703.21,0,1000,cc,20,0,6,2450,1992000"',
+        ]
+    ).encode("utf-8")
+
+    upload = client.post(
+        "/api/v1/gazette/upload-hs-code-matrix-csv",
+        headers=admin_headers,
+        files={"file": ("hs_code_matrix.csv", BytesIO(csv_content), "text/csv")},
+        data={"effective_date": "2025-01-01"},
+    )
+
+    assert upload.status_code == 200
+    preview = upload.json()["preview"]["catalog_rows"][0]
+    assert preview["cid_pct"] == 20.0
+    assert preview["excise_unit_rate_lkr"] == 2450.0
+    assert preview["min_excise_flat_rate_lkr"] == 1992000.0
+
+
+def test_update_and_reject_catalog_review(client, admin_headers, db):
     csv_content = "\n".join(
         [
             '"parameter_group,parameter_name,condition_or_type,value,unit,calculation_order,applicability_flag"',
@@ -217,35 +268,37 @@ def test_edit_and_delete_catalog_rows(client, admin_headers, db):
         data={"effective_date": "2025-01-01"},
     )
     assert upload.status_code == 200
-    row_id = upload.json()["preview_rows"][0]["id"]
+    gazette_id = upload.json()["gazette_id"]
 
     update = client.patch(
-        f"/api/v1/gazette/catalog/global_tax_parameters/{row_id}",
+        f"/api/v1/gazette/{gazette_id}/catalog-review",
         headers=admin_headers,
         json={
-            "values": {
-                "parameter_group": "VALUATION",
-                "parameter_name": "DEPRECIATION",
-                "condition_or_type": "<=1",
-                "value": 96,
-                "unit": "%",
-                "calculation_order": 0,
-                "applicability_flag": "USED_ONLY",
-                "effective_date": "2025-02-01",
-            },
+            "effective_date": "2025-02-01",
+            "rows": [
+                {
+                    "parameter_group": "VALUATION",
+                    "parameter_name": "DEPRECIATION",
+                    "condition_or_type": "<=1",
+                    "value": 96,
+                    "unit": "%",
+                    "calculation_order": 0,
+                    "applicability_flag": "USED_ONLY",
+                }
+            ],
             "change_reason": "manual fix",
         },
     )
     assert update.status_code == 200
-    assert update.json()["value"] == 96.0
-    new_row_id = update.json()["id"]
+    assert update.json()["effective_date"] == "2025-02-01"
+    assert update.json()["preview"]["catalog_rows"][0]["value"] == 96
 
-    delete = client.delete(
-        f"/api/v1/gazette/catalog/global_tax_parameters/{new_row_id}",
+    reject = client.post(
+        f"/api/v1/gazette/{gazette_id}/reject",
         headers=admin_headers,
-        params={"change_reason": "remove bad row"},
+        json={"reason": "Rejected because the imported catalog row is wrong"},
     )
-    assert delete.status_code == 200
+    assert reject.status_code == 200
 
     active_rows = db.query(GlobalTaxParameter).filter(GlobalTaxParameter.is_active.is_(True)).all()
     assert active_rows == []

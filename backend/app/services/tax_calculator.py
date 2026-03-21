@@ -8,6 +8,7 @@ Story: CD-22
 from __future__ import annotations
 
 import logging
+from datetime import date
 from decimal import Decimal
 from typing import Any
 
@@ -22,6 +23,8 @@ from app.models.gazette import (
     TaxVehicleType,
     VehicleTaxRule,
 )
+from app.models.tax_rule_catalog import GlobalTaxParameter, HSCodeMatrixRule
+from app.services.tax_engine import TaxEngine, TaxEngineLookupError
 from sqlalchemy.orm import Session, joinedload
 
 logger = logging.getLogger(__name__)
@@ -51,6 +54,10 @@ class TaxCalculator:
         power_kw: float | None = None,
         vehicle_age_years: float | None = None,
         category_codes: list[str] | None = None,
+        catalog_vehicle_type: str | None = None,
+        catalog_fuel_type: str | None = None,
+        vehicle_condition: str | None = None,
+        import_date: date | None = None,
     ) -> dict[str, Any]:
         self._validate_inputs(
             vehicle_type,
@@ -69,7 +76,23 @@ class TaxCalculator:
             category_codes=category_codes,
         )
         if dedicated_result is not None:
-            return dedicated_result
+            return self._augment_result_with_fixed_fees(dedicated_result)
+
+        catalog_result = self._calculate_with_catalog_rules(
+            cif_value=cif_value,
+            vehicle_type=vehicle_type,
+            fuel_type=fuel_type,
+            engine_cc=engine_cc,
+            power_kw=power_kw,
+            vehicle_age_years=vehicle_age_years,
+            category_codes=category_codes,
+            catalog_vehicle_type=catalog_vehicle_type,
+            catalog_fuel_type=catalog_fuel_type,
+            vehicle_condition=vehicle_condition,
+            import_date=import_date,
+        )
+        if catalog_result is not None:
+            return self._augment_result_with_fixed_fees(catalog_result)
 
         rule = self._find_matching_rule(
             vehicle_type,
@@ -119,7 +142,7 @@ class TaxCalculator:
             "apply_on": rule.apply_on,
             "rule_source": "LEGACY_TAX_RULE",
         }
-        return result
+        return self._augment_result_with_fixed_fees(result)
 
     def _calculate_with_dedicated_rules(
         self,
@@ -201,6 +224,365 @@ class TaxCalculator:
             luxury_rule=luxury_rule,
             power_kw=power_kw,
         )
+
+    def _calculate_with_catalog_rules(
+        self,
+        *,
+        cif_value: float,
+        vehicle_type: str,
+        fuel_type: str,
+        engine_cc: int,
+        power_kw: float | None,
+        vehicle_age_years: float | None,
+        category_codes: list[str] | None,
+        catalog_vehicle_type: str | None,
+        catalog_fuel_type: str | None,
+        vehicle_condition: str | None,
+        import_date: date | None,
+    ) -> dict[str, Any] | None:
+        active_catalog_rule_count = (
+            self.db.query(HSCodeMatrixRule).filter(HSCodeMatrixRule.is_active.is_(True)).count()
+        )
+        if active_catalog_rule_count == 0:
+            return None
+
+        if vehicle_age_years is None:
+            raise InsufficientVehicleDataError(
+                "Vehicle age is required to calculate tax for this vehicle"
+            )
+
+        resolved_catalog_vehicle_type, resolved_catalog_fuel_type = self._resolve_catalog_identity(
+            vehicle_type=vehicle_type,
+            fuel_type=fuel_type,
+            category_codes=category_codes,
+            catalog_vehicle_type=catalog_vehicle_type,
+            catalog_fuel_type=catalog_fuel_type,
+        )
+        if resolved_catalog_vehicle_type is None or resolved_catalog_fuel_type is None:
+            return None
+
+        capacity_input = self._resolve_catalog_capacity_input(
+            catalog_vehicle_type=resolved_catalog_vehicle_type,
+            engine_cc=engine_cc,
+            power_kw=power_kw,
+        )
+
+        hs_rule = self._resolve_catalog_hs_rule(
+            vehicle_type=resolved_catalog_vehicle_type,
+            fuel_type=resolved_catalog_fuel_type,
+            vehicle_age_years=vehicle_age_years,
+            capacity_input=capacity_input,
+        )
+        if hs_rule is None:
+            return None
+
+        vat_rate = self._require_global_rate(
+            parameter_group="GENERAL_TAX",
+            parameter_name="VAT",
+            condition_or_type="STANDARD_RATE",
+        )
+        surcharge_rate = self._resolve_surcharge_rate(
+            vehicle_age_years=vehicle_age_years,
+            vehicle_condition=vehicle_condition,
+            import_date=import_date,
+        )
+        luxury_config = self._resolve_luxury_tax_config(
+            catalog_vehicle_type=resolved_catalog_vehicle_type,
+            catalog_fuel_type=resolved_catalog_fuel_type,
+        )
+        statutory_uplift_rate = self._resolve_statutory_uplift_rate()
+
+        return self._calculate_catalog_duties(
+            cif=Decimal(str(cif_value)),
+            hs_rule=hs_rule,
+            capacity_input=capacity_input,
+            surcharge_rate=surcharge_rate,
+            vat_rate=vat_rate,
+            luxury_config=luxury_config,
+            statutory_uplift_rate=statutory_uplift_rate,
+        )
+
+    def _resolve_catalog_identity(
+        self,
+        *,
+        vehicle_type: str,
+        fuel_type: str,
+        category_codes: list[str] | None,
+        catalog_vehicle_type: str | None,
+        catalog_fuel_type: str | None,
+    ) -> tuple[str | None, str | None]:
+        if catalog_vehicle_type and catalog_fuel_type:
+            normalized = self._normalize_catalog_identity(
+                catalog_vehicle_type=catalog_vehicle_type,
+                catalog_fuel_type=catalog_fuel_type,
+            )
+            if normalized != (None, None):
+                return normalized
+
+        if fuel_type == TaxFuelType.ELECTRIC.value:
+            return "ELECTRIC", "ELECTRIC"
+        if fuel_type == TaxFuelType.HYBRID.value:
+            return "HYBRID", "PETROL"
+        if vehicle_type == TaxVehicleType.TRUCK.value:
+            if fuel_type == TaxFuelType.DIESEL.value:
+                return "COMMERCIAL_TRUCK", "DIESEL"
+            if fuel_type == TaxFuelType.PETROL.value:
+                return "COMMERCIAL_TRUCK", "PETROL"
+        if fuel_type == TaxFuelType.DIESEL.value:
+            return "PASSENGER_CAR", "DIESEL"
+        if fuel_type == TaxFuelType.PETROL.value:
+            return "PASSENGER_CAR", "PETROL"
+        if category_codes and any(code == "GOODS_VEHICLE_ELECTRIC" for code in category_codes):
+            return "COMMERCIAL_TRUCK", "ELECTRIC"
+        return None, None
+
+    def _normalize_catalog_identity(
+        self,
+        *,
+        catalog_vehicle_type: str,
+        catalog_fuel_type: str,
+    ) -> tuple[str | None, str | None]:
+        vehicle_value = str(catalog_vehicle_type or "").strip().lower()
+        fuel_value = str(catalog_fuel_type or "").strip().lower()
+
+        if "electric" in fuel_value or "electric" in vehicle_value:
+            return "ELECTRIC", "ELECTRIC"
+        if "hybrid" in fuel_value or "hybrid" in vehicle_value:
+            if "diesel" in fuel_value:
+                return "HYBRID", "DIESEL"
+            return "HYBRID", "PETROL"
+        if "truck" in vehicle_value or "pickup" in vehicle_value or "commercial" in vehicle_value:
+            if "diesel" in fuel_value:
+                return "COMMERCIAL_TRUCK", "DIESEL"
+            if "petrol" in fuel_value or "gasoline" in fuel_value:
+                return "COMMERCIAL_TRUCK", "PETROL"
+        if "diesel" in fuel_value:
+            return "PASSENGER_CAR", "DIESEL"
+        if "petrol" in fuel_value or "gasoline" in fuel_value:
+            return "PASSENGER_CAR", "PETROL"
+        return None, None
+
+    def _resolve_catalog_capacity_input(
+        self,
+        *,
+        catalog_vehicle_type: str,
+        engine_cc: int,
+        power_kw: float | None,
+    ) -> Decimal:
+        if catalog_vehicle_type == "ELECTRIC":
+            if power_kw is None:
+                raise InsufficientVehicleDataError(
+                    "Motor power (kW) is required to calculate tax for this vehicle"
+                )
+            return Decimal(str(power_kw))
+        return Decimal(str(engine_cc))
+
+    def _resolve_catalog_hs_rule(
+        self,
+        *,
+        vehicle_type: str,
+        fuel_type: str,
+        vehicle_age_years: float,
+        capacity_input: Decimal,
+    ) -> HSCodeMatrixRule | None:
+        age_condition_candidates = self._catalog_age_condition_candidates(vehicle_age_years)
+        engine = TaxEngine(self.db)
+        for age_condition in age_condition_candidates:
+            try:
+                return engine.resolve_hs_rule(
+                    vehicle_type=vehicle_type,
+                    fuel_type=fuel_type,
+                    age_condition=age_condition,
+                    capacity_input=capacity_input,
+                )
+            except TaxEngineLookupError:
+                continue
+        return None
+
+    def _catalog_age_condition_candidates(self, vehicle_age_years: float) -> list[str]:
+        if vehicle_age_years <= 1:
+            return ["<=1"]
+        if vehicle_age_years <= 2:
+            return [">1-2", ">1-3"]
+        if vehicle_age_years <= 3:
+            return [">2-3", ">1-3"]
+        if vehicle_age_years <= 5:
+            return [">3-5"]
+        if vehicle_age_years <= 10:
+            return [">5-10"]
+        return [">10"]
+
+    def _require_global_rate(
+        self,
+        *,
+        parameter_group: str,
+        parameter_name: str,
+        condition_or_type: str,
+    ) -> Decimal:
+        try:
+            record = TaxEngine(self.db).get_global_param(
+                parameter_group=parameter_group,
+                parameter_name=parameter_name,
+                condition_or_type=condition_or_type,
+            )
+        except TaxEngineLookupError as exc:
+            raise NoTaxRuleError(
+                "Approved catalog tax parameters are incomplete for this vehicle"
+            ) from exc
+        return Decimal(str(record.value))
+
+    def _find_optional_global_param(
+        self,
+        *,
+        parameter_group: str,
+        parameter_name: str,
+        condition_or_types: list[str],
+    ) -> GlobalTaxParameter | None:
+        engine = TaxEngine(self.db)
+        for condition_or_type in condition_or_types:
+            try:
+                return engine.get_global_param(
+                    parameter_group=parameter_group,
+                    parameter_name=parameter_name,
+                    condition_or_type=condition_or_type,
+                )
+            except TaxEngineLookupError:
+                continue
+        return None
+
+    def _resolve_vehicle_condition(
+        self, *, vehicle_condition: str | None, vehicle_age_years: float | None
+    ) -> str:
+        if vehicle_condition is not None:
+            normalized = vehicle_condition.strip().upper()
+            if normalized in {"BRAND_NEW", "NEW"}:
+                return "BRAND_NEW"
+            if normalized in {"USED", "PREOWNED", "PRE_OWNED"}:
+                return "USED"
+        if vehicle_age_years is not None and vehicle_age_years <= 1:
+            return "BRAND_NEW"
+        return "USED"
+
+    def _resolve_surcharge_rate(
+        self,
+        *,
+        vehicle_age_years: float,
+        vehicle_condition: str | None,
+        import_date: date | None,
+    ) -> Decimal:
+        resolved_condition = self._resolve_vehicle_condition(
+            vehicle_condition=vehicle_condition,
+            vehicle_age_years=vehicle_age_years,
+        )
+        condition_candidates: list[str]
+        reference_date = import_date or date.today()
+        if resolved_condition == "BRAND_NEW":
+            condition_candidates = ["BRAND_NEW"]
+        elif reference_date < date(2026, 4, 1):
+            condition_candidates = ["IMPORT_DATE<2026-04-01", "USED_AND_AFTER_2026-04-01"]
+        else:
+            condition_candidates = ["USED_AND_AFTER_2026-04-01", "IMPORT_DATE<2026-04-01"]
+        record = self._find_optional_global_param(
+            parameter_group="CUSTOMS_RULE",
+            parameter_name="SURCHARGE_RATE",
+            condition_or_types=condition_candidates,
+        )
+        return Decimal(str(record.value)) if record is not None else Decimal("0")
+
+    def _resolve_fixed_fee(self, *, parameter_name: str) -> Decimal:
+        record = self._find_optional_global_param(
+            parameter_group="FIXED_FEES",
+            parameter_name=parameter_name,
+            condition_or_types=["PER_UNIT", "ALL", "DEFAULT"],
+        )
+        if record is None:
+            record = self._find_optional_global_param(
+                parameter_group="GENERAL_TAX",
+                parameter_name=parameter_name,
+                condition_or_types=["ALL", "DEFAULT", "STANDARD_RATE", "FIXED_FEE", "FLAT_RATE"],
+            )
+        return Decimal(str(record.value)) if record is not None else Decimal("0")
+
+    def _resolve_statutory_uplift_rate(self) -> Decimal:
+        record = self._find_optional_global_param(
+            parameter_group="CUSTOMS_RULE",
+            parameter_name="STATUTORY_UPLIFT_BASE",
+            condition_or_types=["ALL", "DEFAULT"],
+        )
+        return Decimal(str(record.value)) if record is not None else Decimal("0")
+
+    def _augment_result_with_fixed_fees(self, result: dict[str, Any]) -> dict[str, Any]:
+        vel = self._resolve_fixed_fee(parameter_name="VEL")
+        com_exm_sel = self._resolve_fixed_fee(parameter_name="COM_EXM_SEL")
+        total_payable_to_customs = Decimal(str(result["total_duty"])) + vel + com_exm_sel
+        total_landed_cost = Decimal(str(result["cif_value"])) + total_payable_to_customs
+        effective_rate = (
+            total_payable_to_customs / Decimal(str(result["cif_value"])) * Decimal("100")
+            if Decimal(str(result["cif_value"])) > 0
+            else Decimal("0")
+        )
+
+        result["vel"] = float(vel)
+        result["com_exm_sel"] = float(com_exm_sel)
+        result["total_payable_to_customs"] = float(total_payable_to_customs)
+        result["total_landed_cost"] = float(total_landed_cost)
+        result["effective_rate_percent"] = float(effective_rate)
+        rule_used = result.get("rule_used")
+        if isinstance(rule_used, dict):
+            rule_used["vel"] = float(vel)
+            rule_used["com_exm_sel"] = float(com_exm_sel)
+        return result
+
+    def _resolve_luxury_tax_config(
+        self,
+        *,
+        catalog_vehicle_type: str,
+        catalog_fuel_type: str,
+    ) -> tuple[Decimal, Decimal] | None:
+        vehicle_value = str(catalog_vehicle_type or "").strip().lower()
+        fuel_value = str(catalog_fuel_type or "").strip().lower()
+
+        if "truck" in vehicle_value or "pickup" in vehicle_value or "commercial" in vehicle_value:
+            return None
+
+        threshold_name: str
+        rate_name: str
+        condition_or_type: str
+        if "electric" in fuel_value or "electric" in vehicle_value:
+            threshold_name = "THRESHOLD_EV"
+            rate_name = "RATE_EV"
+            condition_or_type = "ELECTRIC"
+        elif "hybrid" in fuel_value or "hybrid" in vehicle_value:
+            if "diesel" in fuel_value:
+                threshold_name = "THRESHOLD_HYBRID_DIESEL"
+                rate_name = "RATE_HYBRID_DIESEL"
+                condition_or_type = "HYBRID"
+            else:
+                threshold_name = "THRESHOLD_HYBRID_PETROL"
+                rate_name = "RATE_HYBRID_PETROL"
+                condition_or_type = "HYBRID"
+        elif "diesel" in fuel_value:
+            threshold_name = "THRESHOLD_DIESEL"
+            rate_name = "RATE_DIESEL"
+            condition_or_type = "PASSENGER_CAR"
+        else:
+            threshold_name = "THRESHOLD_PETROL"
+            rate_name = "RATE_PETROL"
+            condition_or_type = "PASSENGER_CAR"
+
+        threshold_record = self._find_optional_global_param(
+            parameter_group="LUXURY_TAX",
+            parameter_name=threshold_name,
+            condition_or_types=[condition_or_type],
+        )
+        rate_record = self._find_optional_global_param(
+            parameter_group="LUXURY_TAX",
+            parameter_name=rate_name,
+            condition_or_types=["ON_EXCESS_VALUE"],
+        )
+        if threshold_record is None or rate_record is None:
+            return None
+        return Decimal(str(threshold_record.value)), Decimal(str(rate_record.value))
 
     def _validate_inputs(
         self,
@@ -441,6 +823,87 @@ class TaxCalculator:
             },
         }
 
+    def _calculate_catalog_duties(
+        self,
+        *,
+        cif: Decimal,
+        hs_rule: HSCodeMatrixRule,
+        capacity_input: Decimal,
+        surcharge_rate: Decimal,
+        vat_rate: Decimal,
+        luxury_config: tuple[Decimal, Decimal] | None,
+        statutory_uplift_rate: Decimal,
+    ) -> dict[str, Any]:
+        customs_percent = Decimal(str(hs_rule.cid_pct)) / Decimal("100")
+        pal_percent = Decimal(str(hs_rule.pal_pct)) / Decimal("100")
+        cess_percent = Decimal(str(hs_rule.cess_pct)) / Decimal("100")
+        surcharge_percent = surcharge_rate / Decimal("100")
+        vat_percent = vat_rate / Decimal("100")
+        uplift_multiplier = Decimal("1") + (statutory_uplift_rate / Decimal("100"))
+
+        customs = cif * customs_percent
+        surcharge = customs * surcharge_percent
+        calculated_cc_excise = capacity_input * Decimal(str(hs_rule.excise_unit_rate_lkr))
+        min_excise_flat_rate = Decimal(str(hs_rule.min_excise_flat_rate_lkr))
+        excise = max(calculated_cc_excise, min_excise_flat_rate)
+        pal = cif * pal_percent
+        cess = cif * cess_percent
+        vat_base = (cif * uplift_multiplier) + customs + surcharge + excise + pal + cess
+        vat = vat_base * vat_percent
+
+        luxury_tax = Decimal("0")
+        threshold_value: Decimal | None = None
+        luxury_rate_percent: Decimal | None = None
+        if luxury_config is not None:
+            threshold_value, luxury_rate_percent = luxury_config
+            if cif > threshold_value:
+                luxury_tax = (cif - threshold_value) * (luxury_rate_percent / Decimal("100"))
+
+        total_duty = customs + surcharge + excise + pal + cess + vat + luxury_tax
+        total_landed_cost = cif + total_duty
+        effective_rate = (total_duty / cif * Decimal("100")) if cif > 0 else Decimal("0")
+
+        return {
+            "cif_value": float(cif),
+            "customs_duty": float(customs),
+            "surcharge": float(surcharge),
+            "excise_duty": float(excise),
+            "cess": float(cess),
+            "vat": float(vat),
+            "pal": float(pal),
+            "luxury_tax": float(luxury_tax),
+            "total_duty": float(total_duty),
+            "total_landed_cost": float(total_landed_cost),
+            "effective_rate_percent": float(effective_rate),
+            "rule_used": {
+                "rule_source": "CATALOG_RULE_TABLES",
+                "vehicle_type": hs_rule.vehicle_type,
+                "fuel_type": hs_rule.fuel_type,
+                "age_condition": hs_rule.age_condition,
+                "hs_code": hs_rule.hs_code,
+                "capacity_min": float(hs_rule.capacity_min),
+                "capacity_max": float(hs_rule.capacity_max),
+                "capacity_unit": hs_rule.capacity_unit,
+                "capacity_input": float(capacity_input),
+                "customs_percent": float(hs_rule.cid_pct),
+                "surcharge_percent": float(surcharge_rate),
+                "excise_rate": float(hs_rule.excise_unit_rate_lkr),
+                "min_excise_flat_rate_lkr": float(hs_rule.min_excise_flat_rate_lkr),
+                "calculated_cc_excise": float(calculated_cc_excise),
+                "statutory_uplift_rate": float(statutory_uplift_rate),
+                "vat_base": float(vat_base),
+                "vat_percent": float(vat_rate),
+                "pal_percent": float(hs_rule.pal_pct),
+                "cess_percent": float(hs_rule.cess_pct),
+                "luxury_tax_threshold": (
+                    float(threshold_value) if threshold_value is not None else None
+                ),
+                "luxury_tax_percent": (
+                    float(luxury_rate_percent) if luxury_rate_percent is not None else None
+                ),
+            },
+        }
+
     def _calculate_duties(
         self, cif: Decimal, rule: TaxRule, *, power_kw: float | None
     ) -> dict[str, Any]:
@@ -520,6 +983,10 @@ def calculate_tax(
     power_kw: float | None = None,
     vehicle_age_years: float | None = None,
     category_codes: list[str] | None = None,
+    catalog_vehicle_type: str | None = None,
+    catalog_fuel_type: str | None = None,
+    vehicle_condition: str | None = None,
+    import_date: date | None = None,
 ) -> dict[str, Any]:
     """Convenience wrapper for tax calculation."""
     calculator = TaxCalculator(db)
@@ -531,6 +998,10 @@ def calculate_tax(
         power_kw=power_kw,
         vehicle_age_years=vehicle_age_years,
         category_codes=category_codes,
+        catalog_vehicle_type=catalog_vehicle_type,
+        catalog_fuel_type=catalog_fuel_type,
+        vehicle_condition=vehicle_condition,
+        import_date=import_date,
     )
     logger.info(
         "Tax calculated: %s %s %scc CIF=%s total_duty=%s",

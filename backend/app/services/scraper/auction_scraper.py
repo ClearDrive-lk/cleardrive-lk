@@ -237,11 +237,16 @@ class AuctionSiteScraper:
             return None
         image_urls = self._images(card, page_url)
         card_text = card.get_text(" ", strip=True)
+        status = self._extract_listing_status(card_text)
+        if status != "AVAILABLE":
+            return None
         price = self._extract_price(
             self._text(card, "strong[id^='span_dummy_price'], .price, .car-price, [class*='price']")
         )
         if price is None:
             price = self._extract_price_from_text(card_text)
+        if price is None or price <= 0:
+            return None
         mileage = self._extract_labeled_number(card_text, "Mileage", "KM")
         engine_cc = self._extract_labeled_number(card_text, "Engine", "CC")
         fuel_type = self._extract_labeled_value(card_text, "Fuel")
@@ -260,12 +265,12 @@ class AuctionSiteScraper:
             "make": make,
             "model": model or "Unknown",
             "year": year,
-            "price_jpy": price or 0,
+            "price_jpy": price,
             "mileage_km": mileage,
             "engine_cc": engine_cc,
             "fuel_type": fuel_type,
             "transmission": transmission,
-            "status": "AVAILABLE",
+            "status": status,
             "vehicle_url": detail_url,
             "image_url": image_urls[0] if image_urls else None,
             "images": image_urls,
@@ -511,6 +516,15 @@ class AuctionSiteScraper:
         if match:
             return int(match.group(1).replace(",", ""))
         return None
+
+    @staticmethod
+    def _extract_listing_status(text: str | None) -> str:
+        normalized = str(text or "").lower()
+        if any(token in normalized for token in ("sold out", "sold", "clearance sold")):
+            return "SOLD"
+        if any(token in normalized for token in ("reserved", "hold", "pending")):
+            return "RESERVED"
+        return "AVAILABLE"
 
     @staticmethod
     def _extract_number(text: str | None) -> int | None:

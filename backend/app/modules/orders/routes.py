@@ -76,6 +76,22 @@ def _exporter_must_be_assigned(order_id: str, current_user: User, db: Session) -
     return True
 
 
+def _ensure_kyc_approved(db: Session, current_user: User) -> None:
+    kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
+    if not kyc:
+        raise HTTPException(
+            status_code=400,
+            detail="KYC verification required. Please submit your documents first.",
+        )
+
+    kyc_status = kyc.status.value if hasattr(kyc.status, "value") else str(kyc.status)
+    if kyc_status != KYCStatus.APPROVED.value:
+        raise HTTPException(
+            status_code=400,
+            detail=f"KYC status is {kyc_status}. Only APPROVED users can create orders.",
+        )
+
+
 @router.post("", response_model=OrderResponse, status_code=201)
 async def create_order(
     request: Request,
@@ -94,22 +110,7 @@ async def create_order(
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     # 1. Verify KYC status (CD-30.3)
-    # TEMP LOCAL BYPASS: set to False immediately after manual API testing.
-    BYPASS_KYC_FOR_LOCAL_TEST = True
-    if not BYPASS_KYC_FOR_LOCAL_TEST:
-        kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
-        if not kyc:
-            raise HTTPException(
-                status_code=400,
-                detail="KYC verification required. Please submit your documents first.",
-            )
-
-        kyc_status = kyc.status.value if hasattr(kyc.status, "value") else kyc.status
-        if kyc_status != KYCStatus.APPROVED.value:
-            raise HTTPException(
-                status_code=400,
-                detail=f"KYC status is {kyc_status}. Only APPROVED users can create orders.",
-            )
+    _ensure_kyc_approved(db, current_user)
 
     # 2. Verify vehicle exists and is available
     vehicle = _get_vehicle_for_order(db, str(order_data.vehicle_id))

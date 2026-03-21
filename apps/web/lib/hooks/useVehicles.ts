@@ -20,10 +20,8 @@ type VehiclesQueryParams = {
   transmission?: string;
   vehicleType?: string;
   priceCurrency?: "LKR" | "JPY";
-  exchangeRate?: number;
+  exchangeRate?: number | null;
 };
-
-const JPY_LKR_RATE = 2.25;
 
 const lkrToJpy = (amount: number | undefined, rate: number) => {
   if (!amount || amount <= 0) return undefined;
@@ -51,10 +49,17 @@ export function useVehicles(params: VehiclesQueryParams) {
       params.exchangeRate ? Number(params.exchangeRate.toFixed(4)) : "",
     ],
     queryFn: async () => {
-      const exchangeRate = params.exchangeRate || JPY_LKR_RATE;
+      const exchangeRate =
+        params.exchangeRate && params.exchangeRate > 0
+          ? params.exchangeRate
+          : undefined;
       const priceCurrency = params.priceCurrency || "LKR";
       const toJpy = (value: number | undefined) =>
-        priceCurrency === "JPY" ? value : lkrToJpy(value, exchangeRate);
+        priceCurrency === "JPY"
+          ? value
+          : exchangeRate
+            ? lkrToJpy(value, exchangeRate)
+            : undefined;
 
       const apiParams = {
         page: params.page,
@@ -112,7 +117,7 @@ export function useVehicles(params: VehiclesQueryParams) {
       const response = await apiClient.get("/vehicles", {
         params: apiParams,
       });
-      return mapBackendVehicleList(response.data);
+      return mapBackendVehicleList(response.data, exchangeRate ?? null);
     },
     staleTime: 0,
     gcTime: 5 * 60_000,

@@ -4,7 +4,7 @@ import json
 import math
 import re
 import threading
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import urljoin
@@ -39,18 +39,21 @@ except Exception:  # pragma: no cover - optional dependency
     BeautifulSoup = None  # type: ignore[assignment]
 
 from .cost_calculator import (
-    DEFAULT_JPY_TO_LKR,
     calculate_clearance_fee,
     calculate_documentation_fee,
+    calculate_platform_fee,
     calculate_port_charges,
     calculate_shipping_cost,
 )
 
 router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
-FX_PROVIDER = "frankfurter"
-FX_ENDPOINT = "https://api.frankfurter.dev/v1/latest"
+FX_PROVIDER = "cbsl_sell_rate"
+CBSL_LOOKUP_URL = "https://www.cbsl.gov.lk/cbsl_custom/exratestt/exratestt.php"
+CBSL_RESULTS_URL = "https://www.cbsl.gov.lk/cbsl_custom/exratestt/exrates_resultstt.php"
+CBSL_SOURCE_LABEL = "Central Bank of Sri Lanka Exchange Rates (Sell Rate)"
 FX_CACHE_TTL_SECONDS = 6 * 60 * 60
+FX_LOOKBACK_DAYS = 10
 
 
 def _canonical_fuel_key(value: str) -> str:
@@ -214,6 +217,115 @@ def _transmission_filter_values(requested: str) -> list[str]:
     return mapping.get(key, [requested])
 
 
+def _fetch_cbsl_currency_map() -> dict[str, str]:
+    if BeautifulSoup is None:
+        raise RuntimeError("BeautifulSoup is required to parse CBSL exchange rates")
+
+    response = requests.get(CBSL_LOOKUP_URL, timeout=10)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    mapping: dict[str, str] = {}
+    for checkbox in soup.select('input[name="chk_cur[]"]'):
+        raw_value = (checkbox.get("value") or "").strip()
+        code, separator, _label = raw_value.partition("~")
+        if separator and code:
+            mapping[code.upper()] = raw_value
+
+    if not mapping:
+        raise RuntimeError("CBSL currency list is unavailable")
+
+    return mapping
+
+
+def _parse_cbsl_rate_result(html: str) -> tuple[str, Decimal] | None:
+    if BeautifulSoup is None:
+        raise RuntimeError("BeautifulSoup is required to parse CBSL exchange rates")
+
+    soup = BeautifulSoup(html, "html.parser")
+    table = soup.select_one("table.rates")
+    if table is None:
+        return None
+
+    row = table.select_one("tbody tr")
+    if row is None:
+        return None
+
+    cells = [cell.get_text(" ", strip=True) for cell in row.find_all("td")]
+    if len(cells) < 3:
+        return None
+
+    rate_date = cells[0]
+    sell_rate = Decimal(cells[2].replace(",", "").strip())
+    return rate_date, sell_rate
+
+
+def _get_live_exchange_rate_payload(base: str, symbols: str) -> dict[str, str | float | None]:
+    base_code = base.upper()
+    target_code = symbols.upper()
+
+    if base_code == target_code:
+        return {
+            "base": base_code,
+            "target": target_code,
+            "rate": 1.0,
+            "date": date.today().isoformat(),
+            "provider": FX_PROVIDER,
+            "source": CBSL_SOURCE_LABEL,
+            "rate_type": "sell",
+            "fetched_at": datetime.utcnow().isoformat(),
+        }
+
+    if target_code != "LKR":
+        raise ValueError("CBSL sell rates currently support conversions into LKR only")
+    if base_code == "LKR":
+        raise ValueError("CBSL sell-rate conversion from LKR is not supported")
+
+    currency_map = _fetch_cbsl_currency_map()
+    currency_value = currency_map.get(base_code)
+    if not currency_value:
+        raise ValueError(f"CBSL does not publish TT sell rates for {base_code}")
+
+    session = requests.Session()
+    session.get(CBSL_LOOKUP_URL, timeout=10).raise_for_status()
+
+    for day_offset in range(FX_LOOKBACK_DAYS + 1):
+        lookup_date = (date.today() - timedelta(days=day_offset)).isoformat()
+        response = session.post(
+            CBSL_RESULTS_URL,
+            data={
+                "lookupPage": "lookup_daily_exchange_rates.php",
+                "startRange": "2006-11-11",
+                "rangeType": "dates",
+                "txtStart": lookup_date,
+                "txtEnd": lookup_date,
+                "chk_cur[]": currency_value,
+                "submit_button": "Submit",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        parsed = _parse_cbsl_rate_result(response.text)
+        if parsed is None:
+            continue
+
+        rate_date, sell_rate = parsed
+        return {
+            "base": base_code,
+            "target": target_code,
+            "rate": float(sell_rate),
+            "date": rate_date,
+            "provider": FX_PROVIDER,
+            "source": CBSL_SOURCE_LABEL,
+            "rate_type": "sell",
+            "fetched_at": datetime.utcnow().isoformat(),
+        }
+
+    raise RuntimeError(
+        f"CBSL did not return a {base_code}/{target_code} sell rate in the last {FX_LOOKBACK_DAYS} days"
+    )
+
+
 def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
     if not vehicle_url:
         return []
@@ -345,6 +457,28 @@ def _derive_tax_category_codes(vehicle: Vehicle) -> list[str]:
             categories.extend(["PASSENGER_VEHICLE_BEV", "PASSENGER_VEHICLE_ELECTRIC"])
 
     return categories
+
+
+def _derive_catalog_tax_identity(vehicle: Vehicle) -> tuple[str | None, str | None]:
+    raw_type = vehicle.vehicle_type.value.upper() if vehicle.vehicle_type else ""
+    raw_fuel = str(getattr(vehicle.fuel_type, "value", vehicle.fuel_type) or "").upper()
+
+    if "ELECTRIC" in raw_fuel:
+        return "ELECTRIC", "ELECTRIC"
+    if "HYBRID" in raw_fuel:
+        if "DIESEL" in raw_fuel:
+            return "HYBRID", "DIESEL"
+        return "HYBRID", "PETROL"
+    if raw_type == "PICKUP":
+        if "DIESEL" in raw_fuel:
+            return "COMMERCIAL_TRUCK", "DIESEL"
+        if "GASOLINE" in raw_fuel or "PETROL" in raw_fuel:
+            return "COMMERCIAL_TRUCK", "PETROL"
+    if "DIESEL" in raw_fuel:
+        return "PASSENGER_CAR", "DIESEL"
+    if "GASOLINE" in raw_fuel or "PETROL" in raw_fuel:
+        return "PASSENGER_CAR", "PETROL"
+    return None, None
 
 
 # ============================================================================
@@ -530,46 +664,32 @@ async def get_exchange_rate(
     symbols: str = Query("LKR", description="Target currency"),
 ):
     """
-    Get latest exchange rate (daily) for currency conversion.
-
-    Uses Frankfurter (ECB reference rates), cached for a few hours.
+    Get the latest CBSL TT sell rate for currency conversion into LKR.
     """
-    cache_key = cache.generate_key("fx_rate", base=base, symbols=symbols, provider=FX_PROVIDER)
+    normalized_base = base.upper()
+    normalized_symbols = symbols.upper()
+    cache_key = cache.generate_key(
+        "fx_rate", base=normalized_base, symbols=normalized_symbols, provider=FX_PROVIDER
+    )
     cached_response = await cache.get(cache_key)
     if cached_response:
         return cached_response
 
     try:
-        response = requests.get(
-            FX_ENDPOINT,
-            params={"base": base, "symbols": symbols},
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        rate = data.get("rates", {}).get(symbols)
-        payload = {
-            "base": data.get("base", base),
-            "target": symbols,
-            "rate": float(rate) if rate is not None else None,
-            "date": data.get("date"),
-            "provider": FX_PROVIDER,
-            "fetched_at": datetime.utcnow().isoformat(),
-        }
+        payload = _get_live_exchange_rate_payload(normalized_base, normalized_symbols)
         await cache.set(cache_key, payload, ttl=FX_CACHE_TTL_SECONDS)
         return payload
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
-        fallback_rate = (
-            float(DEFAULT_JPY_TO_LKR)
-            if base.upper() == "JPY" and symbols.upper() == "LKR"
-            else None
-        )
         return {
-            "base": base,
-            "target": symbols,
-            "rate": fallback_rate,
+            "base": normalized_base,
+            "target": normalized_symbols,
+            "rate": None,
             "date": None,
-            "provider": "fallback",
+            "provider": FX_PROVIDER,
+            "source": CBSL_SOURCE_LABEL,
+            "rate_type": "sell",
             "fetched_at": datetime.utcnow().isoformat(),
             "error": str(exc),
         }
@@ -691,7 +811,29 @@ async def calculate_cost(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Vehicle with ID {vehicle_id} not found"
         )
 
-    rate = exchange_rate or DEFAULT_JPY_TO_LKR
+    exchange_rate_source = "Custom exchange rate" if exchange_rate is not None else None
+    exchange_rate_date = None
+    exchange_rate_provider = "manual" if exchange_rate is not None else None
+
+    if exchange_rate is None:
+        live_rate_payload = _get_live_exchange_rate_payload("JPY", "LKR")
+        live_rate = live_rate_payload.get("rate")
+        if live_rate is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Unable to fetch a live JPY to LKR exchange rate from CBSL.",
+            )
+        rate = Decimal(str(live_rate))
+        exchange_rate_source = str(live_rate_payload.get("source") or CBSL_SOURCE_LABEL)
+        exchange_rate_date = (
+            str(live_rate_payload.get("date"))
+            if live_rate_payload.get("date") is not None
+            else None
+        )
+        exchange_rate_provider = str(live_rate_payload.get("provider") or FX_PROVIDER)
+    else:
+        rate = exchange_rate
+
     vehicle_price_jpy = Decimal(str(vehicle.price_jpy))
     vehicle_price_lkr = vehicle_price_jpy * rate
     shipping_cost_lkr = calculate_shipping_cost(vehicle)
@@ -702,7 +844,9 @@ async def calculate_cost(
     engine_cc = int(vehicle.engine_cc or 0)
     motor_power_kw = float(vehicle.motor_power_kw) if vehicle.motor_power_kw is not None else None
     vehicle_age_years = max(date.today().year - int(vehicle.year or date.today().year), 0)
+    vehicle_condition = "BRAND_NEW" if vehicle_age_years <= 1 else "USED"
     category_codes = _derive_tax_category_codes(vehicle)
+    catalog_vehicle_type, catalog_fuel_type = _derive_catalog_tax_identity(vehicle)
 
     try:
         tax_result = calculate_tax(
@@ -714,13 +858,17 @@ async def calculate_cost(
             power_kw=motor_power_kw,
             vehicle_age_years=float(vehicle_age_years),
             category_codes=category_codes or None,
+            catalog_vehicle_type=catalog_vehicle_type,
+            catalog_fuel_type=catalog_fuel_type,
+            vehicle_condition=vehicle_condition,
+            import_date=date.today(),
         )
     except NoTaxRuleError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=(
-                "No approved gazette tax rule matches this vehicle yet. "
-                "Review and approve the extracted gazette rules from the admin dashboard."
+                "No approved tax rule matches this vehicle yet. "
+                "Review and approve the pending gazette or catalog uploads from the admin dashboard."
             ),
         )
     except InsufficientVehicleDataError as e:
@@ -739,26 +887,36 @@ async def calculate_cost(
     vat = Decimal(str(tax_result["vat"]))
     pal = Decimal(str(tax_result["pal"]))
     luxury_tax = Decimal(str(tax_result.get("luxury_tax", 0)))
-
-    total_cost = (
-        Decimal(str(tax_result["total_landed_cost"]))
-        + port_charges_lkr
-        + clearance_fee_lkr
-        + documentation_fee_lkr
-    )
+    vel = Decimal(str(tax_result.get("vel", 0)))
+    com_exm_sel = Decimal(str(tax_result.get("com_exm_sel", 0)))
 
     def calc_percentage(amount: Decimal, total: Decimal) -> Decimal:
         if total == 0:
             return Decimal("0.0")
         return ((amount / total) * 100).quantize(Decimal("0.1"))
 
-    taxes_total = customs_duty + surcharge + excise_duty + cess + vat + pal + luxury_tax
+    taxes_total = (
+        customs_duty + surcharge + excise_duty + cess + vat + pal + luxury_tax + vel + com_exm_sel
+    )
     fees_total = shipping_cost_lkr + port_charges_lkr + clearance_fee_lkr + documentation_fee_lkr
+    pre_platform_total = vehicle_price_lkr + taxes_total + fees_total
+    platform_fee_lkr = Decimal(str(calculate_platform_fee(float(pre_platform_total))))
+    total_cost = pre_platform_total + platform_fee_lkr
+    if platform_fee_lkr == Decimal("120000"):
+        platform_fee_tier = "LOW"
+    elif platform_fee_lkr == Decimal("180000"):
+        platform_fee_tier = "MID"
+    else:
+        platform_fee_tier = "HIGH"
 
     cost_data = {
         "vehicle_price_jpy": vehicle_price_jpy,
         "vehicle_price_lkr": vehicle_price_lkr,
         "exchange_rate": rate,
+        "exchange_rate_source": exchange_rate_source,
+        "exchange_rate_date": exchange_rate_date,
+        "exchange_rate_provider": exchange_rate_provider,
+        "hs_code": str(tax_result.get("rule_used", {}).get("hs_code") or ""),
         "shipping_cost_lkr": shipping_cost_lkr,
         "customs_duty_lkr": customs_duty,
         "surcharge_lkr": surcharge,
@@ -767,13 +925,44 @@ async def calculate_cost(
         "cess_lkr": cess,
         "pal_lkr": pal,
         "luxury_tax_lkr": luxury_tax,
+        "vel_lkr": vel,
+        "com_exm_sel_lkr": com_exm_sel,
         "port_charges_lkr": port_charges_lkr,
         "clearance_fee_lkr": clearance_fee_lkr,
         "documentation_fee_lkr": documentation_fee_lkr,
+        "platform_fee_lkr": platform_fee_lkr,
+        "platform_fee_percentage": calc_percentage(platform_fee_lkr, total_cost),
+        "platform_fee_tier": platform_fee_tier,
+        "platform_fee_description": "ClearDrive Service Fee",
         "total_cost_lkr": total_cost,
         "vehicle_percentage": calc_percentage(vehicle_price_lkr, total_cost),
         "taxes_percentage": calc_percentage(taxes_total, total_cost),
         "fees_percentage": calc_percentage(fees_total, total_cost),
+        "taxes": {
+            "customs_duty_lkr": customs_duty,
+            "surcharge_lkr": surcharge,
+            "excise_duty_lkr": excise_duty,
+            "pal_lkr": pal,
+            "vat_lkr": vat,
+            "cess_lkr": cess,
+            "luxury_tax_lkr": luxury_tax,
+            "vel_lkr": vel,
+            "com_exm_sel_lkr": com_exm_sel,
+            "total_lkr": taxes_total,
+        },
+        "fees": {
+            "shipping_cost_lkr": shipping_cost_lkr,
+            "port_charges_lkr": port_charges_lkr,
+            "clearance_fee_lkr": clearance_fee_lkr,
+            "documentation_fee_lkr": documentation_fee_lkr,
+            "total_lkr": fees_total,
+        },
+        "platform_fee": {
+            "amount": platform_fee_lkr,
+            "tier": platform_fee_tier,
+            "description": "ClearDrive Service Fee",
+            "percentage_of_total": calc_percentage(platform_fee_lkr, total_cost),
+        },
     }
 
     # Pass Decimals directly; Pydantic handles coercion

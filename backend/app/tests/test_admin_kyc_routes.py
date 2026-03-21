@@ -168,15 +168,31 @@ def test_reject_kyc_requires_reason_and_sends_email(
     client, db, admin_headers, admin_user, test_user, monkeypatch
 ):
     kyc = _create_kyc_document(db, test_user)
+    kyc.nic_front_url = (
+        "https://example.supabase.co/storage/v1/object/public/kyc-documents/user-1/front.jpg"
+    )
+    kyc.nic_back_url = (
+        "https://example.supabase.co/storage/v1/object/public/kyc-documents/user-1/back.jpg"
+    )
+    kyc.selfie_url = (
+        "https://example.supabase.co/storage/v1/object/public/kyc-documents/user-1/selfie.jpg"
+    )
+    db.commit()
     sent_emails: list[tuple[str, str]] = []
+    deleted_paths: list[tuple[str, str]] = []
 
     async def _send_kyc_rejected(email, user_name, rejection_reason):
         sent_emails.append((email, "KYC Rejected - ClearDrive.lk"))
         return "mock_id"
 
+    async def _delete_file(bucket, file_path):
+        deleted_paths.append((bucket, file_path))
+        return True
+
     monkeypatch.setattr(
         "app.modules.kyc.admin_routes.notification_service.send_kyc_rejected", _send_kyc_rejected
     )
+    monkeypatch.setattr("app.modules.kyc.admin_routes.storage.delete_file", _delete_file)
 
     short_reason_response = client.post(
         f"/api/v1/admin/kyc/{kyc.id}/reject",
@@ -197,6 +213,11 @@ def test_reject_kyc_requires_reason_and_sends_email(
     assert kyc.reviewed_by == admin_user.id
     assert kyc.rejection_reason == "NIC images are blurry and unreadable"
     assert sent_emails == [(test_user.email, "KYC Rejected - ClearDrive.lk")]
+    assert deleted_paths == [
+        ("kyc-documents", "user-1/front.jpg"),
+        ("kyc-documents", "user-1/back.jpg"),
+        ("kyc-documents", "user-1/selfie.jpg"),
+    ]
 
     audit = db.query(AuditLog).filter(AuditLog.user_id == test_user.id).first()
     assert audit is not None

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import apiClient from "@/lib/api-client";
+import { useKycStatus } from "@/lib/hooks/useKycStatus";
 
 interface OrderDetail {
   id: string;
@@ -27,6 +28,7 @@ export default function OrderConfirmationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const { isApproved: isKycApproved } = useKycStatus();
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -189,14 +191,23 @@ export default function OrderConfirmationPage() {
                 )}
 
                 <div className="flex flex-wrap gap-3">
-                  <Button
-                    asChild
-                    className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
-                  >
-                    <Link href={`/payment?orderId=${id}`}>
-                      Proceed to Payment
-                    </Link>
-                  </Button>
+                  {isKycApproved ? (
+                    <Button
+                      asChild
+                      className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
+                    >
+                      <Link href={`/payment?orderId=${id}`}>
+                        Proceed to Payment
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled
+                      className="bg-white/5 text-gray-400 border border-white/10"
+                    >
+                      KYC Approval Required
+                    </Button>
+                  )}
                   {order?.vehicle_id && (
                     <Button
                       asChild

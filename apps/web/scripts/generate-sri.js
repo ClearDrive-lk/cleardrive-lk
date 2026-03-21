@@ -9,6 +9,7 @@ const https = require("https");
 const path = require("path");
 
 const SRI_RESOURCE_PATH = path.resolve(__dirname, "..", "sri-resources.json");
+const SRI_MODULE_PATH = path.resolve(__dirname, "..", "sri-resources.ts");
 
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
@@ -40,8 +41,28 @@ function parseSriResourceFile() {
   return JSON.parse(fs.readFileSync(SRI_RESOURCE_PATH, "utf8"));
 }
 
-function writeSriResourceFile(contents) {
-  fs.writeFileSync(SRI_RESOURCE_PATH, `${JSON.stringify(contents, null, 2)}\n`);
+function writeSriModuleFile(contents) {
+  const lines = ["export const sriResources = {", "  resources: ["];
+
+  for (const resource of contents.resources ?? []) {
+    lines.push("    {");
+    lines.push(`      name: ${JSON.stringify(resource.name)},`);
+    lines.push(`      url: ${JSON.stringify(resource.url)},`);
+    lines.push(
+      `      integrity: ${JSON.stringify(resource.integrity)}, // pragma: allowlist secret`,
+    );
+    if (resource.crossorigin) {
+      lines.push(`      crossorigin: ${JSON.stringify(resource.crossorigin)},`);
+    }
+    if (resource.match) {
+      lines.push(`      match: ${JSON.stringify(resource.match)},`);
+    }
+    lines.push("    },");
+  }
+
+  lines.push("  ],");
+  lines.push("} as const;");
+  fs.writeFileSync(SRI_MODULE_PATH, `${lines.join("\n")}\n`);
 }
 
 function resolveFetchUrl(resource) {
@@ -117,7 +138,7 @@ async function refreshSriResourceFile() {
   const sriConfig = parseSriResourceFile();
   const updatedResources = [];
 
-  console.log("Refreshing apps/web/sri-resources.json");
+  console.log("Refreshing apps/web/sri-resources.ts");
 
   for (const resource of sriConfig.resources ?? []) {
     const fetchUrl = resolveFetchUrl(resource);
@@ -146,12 +167,12 @@ async function refreshSriResourceFile() {
     }
   }
 
-  writeSriResourceFile({
+  writeSriModuleFile({
     ...sriConfig,
     resources: updatedResources,
   });
 
-  console.log(`Wrote ${SRI_RESOURCE_PATH}`);
+  console.log(`Wrote ${SRI_MODULE_PATH}`);
   return updatedResources;
 }
 

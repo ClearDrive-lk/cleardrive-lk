@@ -9,13 +9,13 @@ import io
 import logging
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Mapping
 from uuid import UUID
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
-from app.models.audit_log import AuditActionType, AuditEventType, AuditLog
+from app.models.audit_log import AuditEventType, AuditLog
 from app.models.gazette import (
     ApplyOn,
     CessType,
@@ -112,6 +112,12 @@ class GazetteRuleInput(BaseModel):
 class GazetteReviewUpdateRequest(BaseModel):
     effective_date: str | None = None
     rules: list[GazetteRuleInput] = Field(default_factory=list)
+
+
+class CatalogReviewUpdateRequest(BaseModel):
+    effective_date: str | None = None
+    rows: list[dict[str, Any]] = Field(default_factory=list)
+    change_reason: str | None = None
 
 
 class GazetteHistoryItem(BaseModel):
@@ -256,7 +262,6 @@ def _parse_global_tax_parameter_rows(content: bytes) -> list[dict[str, Any]]:
 
 def _parse_hs_code_matrix_rows(content: bytes) -> list[dict[str, Any]]:
     rows = _read_catalog_csv_rows(content)
-    header = rows[0]
     expected = [
         "vehicle_type",
         "fuel_type",
@@ -270,7 +275,18 @@ def _parse_hs_code_matrix_rows(content: bytes) -> list[dict[str, Any]]:
         "cess_pct",
         "excise_unit_rate_lkr",
     ]
-    if header != expected:
+    optional_fields = ["min_excise_flat_rate_lkr"]
+    header_aliases = {
+        "customs_pct": "cid_pct",
+        "customs_percent": "cid_pct",
+        "excise_rate": "excise_unit_rate_lkr",
+        "excise_rate_lkr": "excise_unit_rate_lkr",
+    }
+    header = [
+        header_aliases.get(str(cell or "").strip().lower(), str(cell or "").strip().lower())
+        for cell in rows[0]
+    ]
+    if header[: len(expected)] != expected:
         raise HTTPException(
             status_code=400,
             detail=("Invalid hs_code_matrix CSV header. Expected: " + ", ".join(expected)),
@@ -278,9 +294,12 @@ def _parse_hs_code_matrix_rows(content: bytes) -> list[dict[str, Any]]:
 
     parsed: list[dict[str, Any]] = []
     for index, row in enumerate(rows[1:], start=2):
-        if len(row) != len(expected):
+        if len(row) < len(expected):
             raise HTTPException(status_code=400, detail=f"Invalid CSV shape on row {index}")
-        raw = dict(zip(expected, row, strict=False))
+        field_order = list(expected)
+        if len(header) > len(expected) and header[len(expected)] == optional_fields[0]:
+            field_order.append(optional_fields[0])
+        raw = dict(zip(field_order, row[: len(field_order)], strict=False))
         try:
             parsed.append(
                 {
@@ -295,6 +314,9 @@ def _parse_hs_code_matrix_rows(content: bytes) -> list[dict[str, Any]]:
                     "pal_pct": Decimal(raw["pal_pct"].strip()),
                     "cess_pct": Decimal(raw["cess_pct"].strip()),
                     "excise_unit_rate_lkr": Decimal(raw["excise_unit_rate_lkr"].strip()),
+                    "min_excise_flat_rate_lkr": Decimal(
+                        raw.get("min_excise_flat_rate_lkr", "0").strip() or "0"
+                    ),
                 }
             )
         except Exception as exc:
@@ -334,6 +356,7 @@ def _serialize_catalog_record(record: Any, dataset: str) -> dict[str, Any]:
         "pal_pct": float(record.pal_pct),
         "cess_pct": float(record.cess_pct),
         "excise_unit_rate_lkr": float(record.excise_unit_rate_lkr),
+        "min_excise_flat_rate_lkr": float(record.min_excise_flat_rate_lkr),
         "effective_date": record.effective_date.isoformat(),
         "version": record.version,
         "is_active": record.is_active,
@@ -452,6 +475,27 @@ def _sanitize_extracted_payload(payload: dict[str, Any]) -> dict[str, Any]:
     ]
     sanitized["rules"] = [*electric_rules, *non_vehicle_rules]
     return sanitized
+
+
+def _is_catalog_payload(payload: Mapping[str, Any]) -> bool:
+    return str(payload.get("source") or "").startswith("CATALOG_")
+
+
+def _catalog_rows(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    raw_rows = payload.get("catalog_rows")
+    return [row for row in raw_rows if isinstance(row, dict)] if isinstance(raw_rows, list) else []
+
+
+def _review_item_count(payload: Mapping[str, Any]) -> int:
+    raw_rules = payload.get("rules")
+    if isinstance(raw_rules, list):
+        return len(raw_rules)
+    return len(_catalog_rows(payload))
+
+
+def _catalog_gazette_no(prefix: str, effective_date: date) -> str:
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    return f"CATALOG/{prefix}/{effective_date.isoformat()}/{timestamp}"
 
 
 def _coerce_decimal(value: Any, default: str = "0") -> Decimal:
@@ -1696,13 +1740,13 @@ async def upload_gazette_csv(
     )
 
 
-@router.post("/upload-global-tax-parameters-csv", response_model=CatalogUploadResponse)
+@router.post("/upload-global-tax-parameters-csv", response_model=GazetteUploadResponse)
 async def upload_global_tax_parameters_csv(
     file: UploadFile = File(...),
     effective_date: str | None = Form(None),
     current_user: User = Depends(require_permission(Permission.MANAGE_USERS)),
     db: Session = Depends(get_db),
-) -> CatalogUploadResponse:
+) -> GazetteUploadResponse:
     """Upload the global tax parameters catalog CSV."""
     filename = (file.filename or "").lower()
     if not filename.endswith(".csv"):
@@ -1710,66 +1754,58 @@ async def upload_global_tax_parameters_csv(
 
     rows = _parse_global_tax_parameter_rows(await file.read())
     resolved_effective_date = _parse_effective_date(effective_date) or date.today()
-    versioning_service = RuleVersioningService(db)
-
-    superseded_rows = 0
-    inserted_records: list[GlobalTaxParameter] = []
-    for row in rows:
-        record = versioning_service.upsert_global_tax_parameter(
-            parameter_group=str(row["parameter_group"]),
-            parameter_name=str(row["parameter_name"]),
-            condition_or_type=str(row["condition_or_type"]),
-            value=row["value"],
-            unit=str(row["unit"]),
-            calculation_order=int(row["calculation_order"]),
-            applicability_flag=row["applicability_flag"],
-            effective_date=resolved_effective_date,
-            changed_by=current_user.id,
-            change_reason=f"CSV upload: {file.filename}",
-        )
-        inserted_records.append(record)
-        if record.version > 1:
-            superseded_rows += 1
-
+    payload = {
+        "source": "CATALOG_GLOBAL_TAX_PARAMETERS",
+        "dataset": "global_tax_parameters",
+        "effective_date": resolved_effective_date.isoformat(),
+        "catalog_rows": _json_safe_value(rows),
+        "filename": file.filename,
+    }
+    gazette = Gazette(
+        gazette_no=_catalog_gazette_no("GLOBAL_TAX", resolved_effective_date),
+        effective_date=resolved_effective_date,
+        raw_extracted=payload,
+        status=GazetteStatus.PENDING.value,
+        uploaded_by=current_user.id,
+    )
+    db.add(gazette)
+    db.flush()
     db.add(
         AuditLog(
-            event_type=AuditEventType.TAX_RULES_ACTIVATED,
+            event_type=AuditEventType.GAZETTE_UPLOADED,
             admin_id=current_user.id,
             user_id=current_user.id,
-            action_type=AuditActionType.UPLOAD,
-            table_name="global_tax_parameters",
-            change_reason=f"CSV upload: {file.filename}",
             details={
+                "gazette_id": str(gazette.id),
+                "gazette_no": gazette.gazette_no,
                 "dataset": "global_tax_parameters",
-                "filename": file.filename,
                 "uploaded_rows": len(rows),
-                "superseded_rows": superseded_rows,
                 "effective_date": resolved_effective_date.isoformat(),
             },
         )
     )
     db.commit()
+    db.refresh(gazette)
 
-    return CatalogUploadResponse(
-        dataset="global_tax_parameters",
+    return GazetteUploadResponse(
+        gazette_id=str(gazette.id),
+        gazette_no=gazette.gazette_no,
         effective_date=resolved_effective_date.isoformat(),
-        uploaded_rows=len(rows),
-        superseded_rows=superseded_rows,
-        preview_rows=[
-            _serialize_catalog_record(record, "global_tax_parameters")
-            for record in inserted_records[:100]
-        ],
-        message="Global tax parameters uploaded successfully.",
+        rules_count=len(rows),
+        confidence=1.0,
+        status=GazetteStatus.PENDING.value,
+        preview=payload,
+        message="Global tax parameters uploaded for review.",
     )
 
 
-@router.post("/upload-hs-code-matrix-csv", response_model=CatalogUploadResponse)
+@router.post("/upload-hs-code-matrix-csv", response_model=GazetteUploadResponse)
 async def upload_hs_code_matrix_csv(
     file: UploadFile = File(...),
     effective_date: str | None = Form(None),
     current_user: User = Depends(require_permission(Permission.MANAGE_USERS)),
     db: Session = Depends(get_db),
-) -> CatalogUploadResponse:
+) -> GazetteUploadResponse:
     """Upload the HS code matrix catalog CSV."""
     filename = (file.filename or "").lower()
     if not filename.endswith(".csv"):
@@ -1777,59 +1813,48 @@ async def upload_hs_code_matrix_csv(
 
     rows = _parse_hs_code_matrix_rows(await file.read())
     resolved_effective_date = _parse_effective_date(effective_date) or date.today()
-    versioning_service = RuleVersioningService(db)
-
-    superseded_rows = 0
-    inserted_records: list[HSCodeMatrixRule] = []
-    for row in rows:
-        record = versioning_service.upsert_hs_code_matrix_rule(
-            vehicle_type=str(row["vehicle_type"]),
-            fuel_type=str(row["fuel_type"]),
-            age_condition=str(row["age_condition"]),
-            hs_code=str(row["hs_code"]),
-            capacity_min=row["capacity_min"],
-            capacity_max=row["capacity_max"],
-            capacity_unit=str(row["capacity_unit"]),
-            cid_pct=row["cid_pct"],
-            pal_pct=row["pal_pct"],
-            cess_pct=row["cess_pct"],
-            excise_unit_rate_lkr=row["excise_unit_rate_lkr"],
-            effective_date=resolved_effective_date,
-            changed_by=current_user.id,
-            change_reason=f"CSV upload: {file.filename}",
-        )
-        inserted_records.append(record)
-        if record.version > 1:
-            superseded_rows += 1
-
+    payload = {
+        "source": "CATALOG_HS_CODE_MATRIX",
+        "dataset": "hs_code_matrix",
+        "effective_date": resolved_effective_date.isoformat(),
+        "catalog_rows": _json_safe_value(rows),
+        "filename": file.filename,
+    }
+    gazette = Gazette(
+        gazette_no=_catalog_gazette_no("HS_MATRIX", resolved_effective_date),
+        effective_date=resolved_effective_date,
+        raw_extracted=payload,
+        status=GazetteStatus.PENDING.value,
+        uploaded_by=current_user.id,
+    )
+    db.add(gazette)
+    db.flush()
     db.add(
         AuditLog(
-            event_type=AuditEventType.TAX_RULES_ACTIVATED,
+            event_type=AuditEventType.GAZETTE_UPLOADED,
             admin_id=current_user.id,
             user_id=current_user.id,
-            action_type=AuditActionType.UPLOAD,
-            table_name="hs_code_matrix",
-            change_reason=f"CSV upload: {file.filename}",
             details={
+                "gazette_id": str(gazette.id),
+                "gazette_no": gazette.gazette_no,
                 "dataset": "hs_code_matrix",
-                "filename": file.filename,
                 "uploaded_rows": len(rows),
-                "superseded_rows": superseded_rows,
                 "effective_date": resolved_effective_date.isoformat(),
             },
         )
     )
     db.commit()
+    db.refresh(gazette)
 
-    return CatalogUploadResponse(
-        dataset="hs_code_matrix",
+    return GazetteUploadResponse(
+        gazette_id=str(gazette.id),
+        gazette_no=gazette.gazette_no,
         effective_date=resolved_effective_date.isoformat(),
-        uploaded_rows=len(rows),
-        superseded_rows=superseded_rows,
-        preview_rows=[
-            _serialize_catalog_record(record, "hs_code_matrix") for record in inserted_records[:100]
-        ],
-        message="HS code matrix uploaded successfully.",
+        rules_count=len(rows),
+        confidence=1.0,
+        status=GazetteStatus.PENDING.value,
+        preview=payload,
+        message="HS code matrix uploaded for review.",
     )
 
 
@@ -1915,6 +1940,10 @@ async def update_catalog_row(
             excise_unit_rate_lkr=(
                 _parse_csv_decimal(values.get("excise_unit_rate_lkr"))
                 or hs_record.excise_unit_rate_lkr
+            ),
+            min_excise_flat_rate_lkr=(
+                _parse_csv_decimal(values.get("min_excise_flat_rate_lkr"))
+                or hs_record.min_excise_flat_rate_lkr
             ),
             effective_date=_parse_effective_date(values.get("effective_date"))
             or hs_record.effective_date,
@@ -2003,8 +2032,7 @@ async def list_gazette_history(
     items: list[GazetteHistoryItem] = []
     for record in records:
         payload = _sanitize_extracted_payload(record.raw_extracted or {})
-        raw_rules = payload.get("rules")
-        rules_count = len(raw_rules) if isinstance(raw_rules, list) else 0
+        rules_count = _review_item_count(payload)
         items.append(
             GazetteHistoryItem(
                 id=str(record.id),
@@ -2049,8 +2077,7 @@ async def get_gazette_detail(
         raise HTTPException(status_code=404, detail="Gazette not found")
 
     payload = _sanitize_extracted_payload(gazette.raw_extracted or {})
-    raw_rules = payload.get("rules")
-    rules_count = len(raw_rules) if isinstance(raw_rules, list) else 0
+    rules_count = _review_item_count(payload)
     effective_date = (
         gazette.effective_date.isoformat()
         if gazette.effective_date
@@ -2125,6 +2152,54 @@ async def update_gazette_review(
     )
 
 
+@router.patch("/{gazette_id}/catalog-review", response_model=GazetteDetailResponse)
+async def update_catalog_review(
+    gazette_id: str,
+    payload: CatalogReviewUpdateRequest,
+    current_user: User = Depends(require_permission(Permission.MANAGE_TAX_RULES)),
+    db: Session = Depends(get_db),
+):
+    _ = current_user
+    parsed_gazette_id = _parse_gazette_id(gazette_id)
+    gazette = (
+        db.query(Gazette)
+        .options(joinedload(Gazette.uploader), joinedload(Gazette.approver))
+        .filter(Gazette.id == parsed_gazette_id)
+        .first()
+    )
+    if gazette is None:
+        raise HTTPException(status_code=404, detail="Gazette not found")
+    if gazette.status == GazetteStatus.APPROVED.value:
+        raise HTTPException(status_code=400, detail="Approved gazettes cannot be edited")
+
+    raw_payload = dict(gazette.raw_extracted or {})
+    if not _is_catalog_payload(raw_payload):
+        raise HTTPException(status_code=400, detail="Gazette is not a catalog review item")
+
+    effective_date = _parse_effective_date(payload.effective_date) or gazette.effective_date
+    raw_payload["effective_date"] = effective_date.isoformat() if effective_date else None
+    raw_payload["catalog_rows"] = _json_safe_value(payload.rows)
+    raw_payload["change_reason"] = payload.change_reason
+    gazette.effective_date = effective_date
+    gazette.raw_extracted = raw_payload
+    gazette.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(gazette)
+
+    return GazetteDetailResponse(
+        gazette_id=str(gazette.id),
+        gazette_no=gazette.gazette_no,
+        effective_date=(gazette.effective_date.isoformat() if gazette.effective_date else None),
+        rules_count=_review_item_count(raw_payload),
+        status=gazette.status,
+        preview=raw_payload,
+        rejection_reason=gazette.rejection_reason,
+        uploaded_by=gazette.uploader.email if gazette.uploader else None,
+        approved_by=gazette.approver.email if gazette.approver else None,
+        created_at=gazette.created_at,
+    )
+
+
 @router.post("/{gazette_id}/approve")
 async def approve_gazette(
     gazette_id: str,
@@ -2137,6 +2212,93 @@ async def approve_gazette(
         raise HTTPException(status_code=404, detail="Gazette not found")
     if gazette.status == GazetteStatus.APPROVED.value:
         raise HTTPException(status_code=400, detail="Gazette is already approved")
+
+    payload = dict(gazette.raw_extracted or {})
+    if _is_catalog_payload(payload):
+        versioning_service = RuleVersioningService(db)
+        catalog_rows = _catalog_rows(payload)
+        effective_date = (
+            _parse_effective_date(payload.get("effective_date"))
+            or gazette.effective_date
+            or date.today()
+        )
+        applied_rows = 0
+        superseded_rows = 0
+        dataset = str(payload.get("dataset") or "")
+        if dataset == "hs_code_matrix":
+            superseded_rows += versioning_service.supersede_overlapping_hs_code_matrix_rules(
+                rows=catalog_rows,
+                changed_by=current_user.id,
+                change_reason=str(
+                    payload.get("change_reason") or f"Approved catalog upload: {gazette.gazette_no}"
+                ),
+            )
+        for row in catalog_rows:
+            if dataset == "global_tax_parameters":
+                global_record = versioning_service.upsert_global_tax_parameter(
+                    parameter_group=str(row["parameter_group"]),
+                    parameter_name=str(row["parameter_name"]),
+                    condition_or_type=str(row["condition_or_type"]),
+                    value=row["value"],
+                    unit=str(row["unit"]),
+                    calculation_order=int(row["calculation_order"]),
+                    applicability_flag=row.get("applicability_flag"),
+                    effective_date=effective_date,
+                    changed_by=current_user.id,
+                    change_reason=str(
+                        payload.get("change_reason")
+                        or f"Approved catalog upload: {gazette.gazette_no}"
+                    ),
+                )
+                if global_record.version > 1:
+                    superseded_rows += 1
+            elif dataset == "hs_code_matrix":
+                hs_record = versioning_service.upsert_hs_code_matrix_rule(
+                    vehicle_type=str(row["vehicle_type"]),
+                    fuel_type=str(row["fuel_type"]),
+                    age_condition=str(row["age_condition"]),
+                    hs_code=str(row["hs_code"]),
+                    capacity_min=row["capacity_min"],
+                    capacity_max=row["capacity_max"],
+                    capacity_unit=str(row["capacity_unit"]),
+                    cid_pct=row["cid_pct"],
+                    pal_pct=row["pal_pct"],
+                    cess_pct=row["cess_pct"],
+                    excise_unit_rate_lkr=row["excise_unit_rate_lkr"],
+                    min_excise_flat_rate_lkr=row.get("min_excise_flat_rate_lkr", Decimal("0")),
+                    effective_date=effective_date,
+                    changed_by=current_user.id,
+                    change_reason=str(
+                        payload.get("change_reason")
+                        or f"Approved catalog upload: {gazette.gazette_no}"
+                    ),
+                )
+                if hs_record.version > 1:
+                    superseded_rows += 1
+            else:
+                raise HTTPException(status_code=400, detail="Unsupported catalog dataset")
+            applied_rows += 1
+
+        gazette.status = GazetteStatus.APPROVED.value
+        gazette.approved_by = current_user.id
+        gazette.rejection_reason = None
+        db.add(
+            AuditLog(
+                event_type=AuditEventType.GAZETTE_APPROVED,
+                user_id=gazette.uploaded_by,
+                admin_id=current_user.id,
+                details={
+                    "gazette_id": str(gazette.id),
+                    "gazette_no": gazette.gazette_no,
+                    "approved_by": current_user.email,
+                    "dataset": dataset,
+                    "rows_applied": applied_rows,
+                    "rows_superseded": superseded_rows,
+                },
+            )
+        )
+        db.commit()
+        return {"message": "Catalog upload approved successfully", "gazette_id": str(gazette.id)}
 
     gazette.status = GazetteStatus.APPROVED.value
     gazette.approved_by = current_user.id

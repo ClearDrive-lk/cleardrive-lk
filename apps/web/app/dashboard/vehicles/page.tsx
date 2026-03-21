@@ -64,13 +64,13 @@ function VehicleCatalog() {
     (searchParams.get("currency") as "LKR" | "JPY" | null) || "LKR";
 
   const { data: exchangeRateData } = useExchangeRate();
-  const exchangeRate = exchangeRateData?.rate || 2.25;
+  const exchangeRate = exchangeRateData?.rate ?? null;
 
   // Advanced Filters URL State
   const priceMaxLimit =
     currentCurrency === "LKR"
       ? 50000000
-      : Math.max(1000000, Math.round(50000000 / exchangeRate));
+      : Math.max(1000000, Math.round(50000000 / (exchangeRate || 1)));
   const currentMinPrice = Number(searchParams.get("minPrice")) || 0;
   const currentMaxPrice = Number(searchParams.get("maxPrice")) || priceMaxLimit;
   const currentMinYear = Number(searchParams.get("minYear")) || 2000;
@@ -125,7 +125,9 @@ function VehicleCatalog() {
   );
 
   const lkrToCurrent = (value: number) =>
-    currentCurrency === "LKR" ? value : Math.round(value / exchangeRate);
+    currentCurrency === "LKR" || !exchangeRate
+      ? value
+      : Math.round(value / exchangeRate);
 
   const quickFilters = [
     { label: "Toyota", params: { search: "Toyota" } },
@@ -280,6 +282,7 @@ function VehicleCatalog() {
 
   const handleCurrencyToggle = (next: "LKR" | "JPY") => {
     if (next === currentCurrency) return;
+    if (!exchangeRate || exchangeRate <= 0) return;
     const convert = (value: number | undefined) => {
       if (!value || value <= 0) return undefined;
       return next === "JPY"
@@ -555,7 +558,8 @@ function VehicleCatalog() {
                           className="py-4"
                         />
                         <div className="text-[10px] text-gray-500">
-                          1 JPY = {exchangeRate.toFixed(2)} LKR
+                          1 JPY ={" "}
+                          {exchangeRate ? exchangeRate.toFixed(2) : "--"} LKR
                           {exchangeRateData?.date
                             ? ` · ${exchangeRateData.date}`
                             : ""}

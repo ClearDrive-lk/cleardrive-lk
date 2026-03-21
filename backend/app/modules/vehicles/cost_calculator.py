@@ -227,6 +227,23 @@ def calculate_documentation_fee() -> Decimal:
     return Decimal("15000")  # Documentation fee
 
 
+def calculate_platform_fee(total_landed_cost_lkr: float) -> int:
+    """
+    Calculate ClearDrive service fee based on landed cost before platform fee.
+
+    Tiers:
+    - < 8,000,000 LKR => 120,000
+    - 8,000,000 - 20,000,000 LKR => 180,000
+    - > 20,000,000 LKR => 300,000
+    """
+    total = Decimal(str(total_landed_cost_lkr))
+    if total < Decimal("8000000"):
+        return 120000
+    if total <= Decimal("20000000"):
+        return 180000
+    return 300000
+
+
 # ============================================================================
 # MAIN COST CALCULATOR
 # ============================================================================

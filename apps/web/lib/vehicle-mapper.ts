@@ -83,7 +83,10 @@ function mapStatus(status: BackendVehicle["status"]): Vehicle["status"] {
   return "Live";
 }
 
-export function mapBackendVehicle(v: BackendVehicle): Vehicle {
+export function mapBackendVehicle(
+  v: BackendVehicle,
+  exchangeRate?: number | null,
+): Vehicle {
   const yearNow = new Date().getFullYear();
   const priceJPY = (() => {
     if (typeof v.price_jpy === "number") {
@@ -97,6 +100,11 @@ export function mapBackendVehicle(v: BackendVehicle): Vehicle {
     }
     return 0;
   })();
+
+  const estimatedLandedCostLKR =
+    exchangeRate && Number.isFinite(exchangeRate) && exchangeRate > 0
+      ? Math.round(priceJPY * exchangeRate)
+      : undefined;
 
   return {
     id: v.id,
@@ -112,7 +120,7 @@ export function mapBackendVehicle(v: BackendVehicle): Vehicle {
     imageUrl: normalizeImageUrl(v.image_url),
     lotNumber: v.stock_no,
     grade: v.grade || "-",
-    estimatedLandedCostLKR: Math.round(priceJPY * 2.2),
+    estimatedLandedCostLKR,
     priceJPY,
     trim: v.model,
     chassisCode: v.chassis || "-",
@@ -133,9 +141,12 @@ export function mapBackendVehicle(v: BackendVehicle): Vehicle {
 
 export function mapBackendVehicleList(
   payload: BackendVehicleList,
+  exchangeRate?: number | null,
 ): VehicleResponse {
   return {
-    data: payload.vehicles.map(mapBackendVehicle),
+    data: payload.vehicles.map((vehicle) =>
+      mapBackendVehicle(vehicle, exchangeRate),
+    ),
     total: payload.pagination.total,
     page: payload.pagination.page,
     limit: payload.pagination.limit,

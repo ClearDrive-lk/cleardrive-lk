@@ -21,6 +21,7 @@ from app.core.dependencies import get_current_user
 from app.core.redis_client import get_redis
 from app.core.security import decrypt_field
 from app.modules.auth.models import User
+from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
@@ -180,6 +181,22 @@ def _form_value_str(form_data: Mapping[str, Any], key: str) -> str | None:
     return str(value)
 
 
+def _ensure_kyc_approved(db: Session, current_user: User) -> None:
+    kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
+    if not kyc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="KYC verification required. Please submit your documents first.",
+        )
+
+    kyc_status = kyc.status.value if hasattr(kyc.status, "value") else str(kyc.status)
+    if kyc_status != KYCStatus.APPROVED.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"KYC status is {kyc_status}. Only APPROVED users can initiate payment.",
+        )
+
+
 # ===================================================================
 # ENDPOINT: INITIATE PAYMENT
 # ===================================================================
@@ -216,6 +233,8 @@ async def initiate_payment(
     print(f"\n{LOG_DIVIDER}")
     print("PAYMENT INITIATION")
     print(LOG_DIVIDER)
+
+    _ensure_kyc_approved(db, current_user)
 
     idempotency_key = idempotency_key_header
     if not idempotency_key:

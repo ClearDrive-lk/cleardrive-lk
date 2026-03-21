@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 
 from app.core.database import get_db
 from app.services.tax_calculator import (
@@ -28,8 +29,20 @@ class TaxCalculationRequest(BaseModel):
     vehicle_age_years: float | None = Field(
         None, ge=0, description="Vehicle age in years, if rule matching requires it"
     )
+    vehicle_condition: str | None = Field(
+        None, description="Optional vehicle condition override such as BRAND_NEW or USED"
+    )
+    import_date: date | None = Field(
+        None, description="Optional customs import date used for surcharge rule selection"
+    )
     category_code: str | None = Field(
         None, description="Optional sub-category such as PASSENGER_VEHICLE_BEV"
+    )
+    catalog_vehicle_type: str | None = Field(
+        None, description="Optional catalog vehicle type override such as passenger_car or hybrid"
+    )
+    catalog_fuel_type: str | None = Field(
+        None, description="Optional catalog fuel type override such as gasoline/hybrid"
     )
     cif_value: float = Field(..., gt=0, description="CIF value in LKR")
 
@@ -45,7 +58,10 @@ class TaxCalculationResponse(BaseModel):
     vat: float
     pal: float
     luxury_tax: float
+    vel: float = 0
+    com_exm_sel: float = 0
     total_duty: float
+    total_payable_to_customs: float
     total_landed_cost: float
     effective_rate_percent: float
     rule_used: dict
@@ -66,6 +82,10 @@ async def calculate_vehicle_tax(
             power_kw=request.power_kw,
             vehicle_age_years=request.vehicle_age_years,
             category_codes=[request.category_code] if request.category_code else None,
+            catalog_vehicle_type=request.catalog_vehicle_type,
+            catalog_fuel_type=request.catalog_fuel_type,
+            vehicle_condition=request.vehicle_condition,
+            import_date=request.import_date,
         )
         return TaxCalculationResponse(**result)
     except NoTaxRuleError as exc:
