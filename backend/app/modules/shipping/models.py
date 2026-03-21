@@ -31,13 +31,15 @@ class ShipmentStatus(str, enum.Enum):
 class DocumentType(str, enum.Enum):
     """Shipping document types."""
 
-    # Keep both spellings for backward compatibility across modules/old code paths.
-    BILL_OF_LADING = "BILL_OF_LANDING"
-    BILL_OF_LANDING = "BILL_OF_LANDING"
-    PACKING_LIST = "PACKING_LIST"
-    EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
-    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
-    INSURANCE_CERTIFICATE = "INSURANCE_CERTIFICATE"
+    BILL_OF_LADING = "BILL_OF_LADING"  # Required
+    BILL_OF_LANDING = "BILL_OF_LANDING"  # Legacy support
+    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"  # Required
+    PACKING_LIST = "PACKING_LIST"  # Required
+    EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"  # Required
+    INSURANCE_CERTIFICATE = "INSURANCE_CERTIFICATE"  # Optional
+    CERTIFICATE_OF_ORIGIN = "CERTIFICATE_OF_ORIGIN"  # Optional
+    CONTAINER_PHOTO = "CONTAINER_PHOTO"  # Optional (multiple)
+    OTHER = "OTHER"  # Optional
 
 
 class ShipmentDetails(Base, UUIDMixin, TimestampMixin):
@@ -132,6 +134,9 @@ class ShippingDocument(Base, UUIDMixin, TimestampMixin):
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     file_size: Mapped[int | None] = mapped_column(Integer)
     mime_type: Mapped[str | None] = mapped_column(String(100))
+
+    # File integrity (CD-72.4 / CD-53)
+    sha256_hash: Mapped[str | None] = mapped_column(String(64))
 
     # Upload info
     uploaded_by: Mapped[PyUUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { isAxiosError } from "axios";
 import { apiClient } from "@/lib/api-client";
 
@@ -133,18 +134,19 @@ export default function AdminKycReviewDetailPage() {
     if (detail.needs_manual_extraction) {
       return {
         label: "Manual Review Required",
-        className: "bg-amber-100 text-amber-800",
+        className: "bg-amber-500/10 text-amber-200 border border-amber-500/20",
       };
     }
     if (detail.extraction_method === "manual") {
       return {
         label: "Manually Extracted",
-        className: "bg-sky-100 text-sky-800",
+        className: "bg-sky-500/10 text-sky-200 border border-sky-500/20",
       };
     }
     return {
       label: `Auto Extracted (${detail.extraction_method})`,
-      className: "bg-emerald-100 text-emerald-800",
+      className:
+        "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20",
     };
   }, [detail]);
 
@@ -247,28 +249,36 @@ export default function AdminKycReviewDetailPage() {
   };
 
   if (loading) {
-    return <div className="p-6 text-slate-500">Loading KYC review...</div>;
+    return (
+      <div className="cd-container py-6 text-[#546a7b]">
+        Loading KYC review...
+      </div>
+    );
   }
 
   if (error && !detail) {
-    return <div className="p-6 text-red-600">{error}</div>;
+    return <div className="cd-container py-6 text-red-300">{error}</div>;
   }
 
   if (!detail) {
-    return <div className="p-6 text-slate-500">KYC record not found.</div>;
+    return (
+      <div className="cd-container py-6 text-[#546a7b]">
+        KYC record not found.
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-600">
+    <div className="min-h-screen text-[#393d3f]">
+      <div className="cd-container py-6 space-y-6">
+        <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-52 KYC Admin Review
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+          <h1 className="mt-2 text-3xl font-semibold text-[#393d3f]">
             {detail.user_name}
           </h1>
-          <p className="mt-2 text-sm text-slate-600">{detail.user_email}</p>
+          <p className="mt-2 text-sm text-[#546a7b]">{detail.user_email}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span
               className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${extractionBadge.className}`}
@@ -276,7 +286,7 @@ export default function AdminKycReviewDetailPage() {
               {extractionBadge.label}
             </span>
             {detail.manual_extracted_by ? (
-              <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              <span className="inline-flex rounded-full border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-3 py-1 text-xs font-semibold text-[#393d3f]">
                 Saved by {detail.manual_extracted_by}
               </span>
             ) : null}
@@ -284,72 +294,84 @@ export default function AdminKycReviewDetailPage() {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Status</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Status</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {detail.status}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Extraction</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Extraction</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {detail.extraction_method}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Discrepancies</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Discrepancies</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {mismatchCount}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Submitted</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Submitted</p>
+            <p className="mt-2 text-lg font-semibold text-[#393d3f]">
               {new Date(detail.created_at).toLocaleString()}
             </p>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">NIC Front</h2>
-            <img
-              src={detail.nic_front_url}
-              alt="NIC front"
-              className="mt-4 w-full rounded-2xl border border-slate-200 object-cover"
-            />
+          <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#393d3f]">NIC Front</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#546a7b]/65">
+              <Image
+                src={detail.nic_front_url}
+                alt="NIC front"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            </div>
           </div>
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">NIC Back</h2>
-            <img
-              src={detail.nic_back_url}
-              alt="NIC back"
-              className="mt-4 w-full rounded-2xl border border-slate-200 object-cover"
-            />
+          <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#393d3f]">NIC Back</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#546a7b]/65">
+              <Image
+                src={detail.nic_back_url}
+                alt="NIC back"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            </div>
           </div>
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Selfie</h2>
-            <img
-              src={detail.selfie_url}
-              alt="Selfie"
-              className="mt-4 w-full rounded-2xl border border-slate-200 object-cover"
-            />
+          <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <h2 className="text-lg font-semibold text-[#393d3f]">Selfie</h2>
+            <div className="relative mt-4 h-56 w-full overflow-hidden rounded-2xl border border-[#546a7b]/65">
+              <Image
+                src={detail.selfie_url}
+                alt="Selfie"
+                fill
+                sizes="(max-width: 1024px) 100vw, 33vw"
+                className="object-cover"
+              />
+            </div>
           </div>
         </section>
 
         {detail.needs_manual_extraction ? (
-          <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
+          <section className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-[#393d3f]">
               Manual Extraction Required
             </h2>
-            <p className="mt-2 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-amber-100/80">
               Auto extraction did not complete. Enter the document data from the
               images, save it, then continue with approval or rejection.
             </p>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   NIC Number
                 </label>
                 <input
@@ -361,11 +383,11 @@ export default function AdminKycReviewDetailPage() {
                       nic_number: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Full Name
                 </label>
                 <input
@@ -377,11 +399,11 @@ export default function AdminKycReviewDetailPage() {
                       full_name: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Date of Birth
                 </label>
                 <input
@@ -393,11 +415,11 @@ export default function AdminKycReviewDetailPage() {
                       date_of_birth: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Gender
                 </label>
                 <input
@@ -409,11 +431,11 @@ export default function AdminKycReviewDetailPage() {
                       gender: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Address
                 </label>
                 <textarea
@@ -425,11 +447,11 @@ export default function AdminKycReviewDetailPage() {
                     }))
                   }
                   rows={3}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-[#546a7b]">
                   Issue Date
                 </label>
                 <input
@@ -441,7 +463,7 @@ export default function AdminKycReviewDetailPage() {
                       issue_date: event.target.value,
                     }))
                   }
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900"
+                  className="w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f]"
                 />
               </div>
             </div>
@@ -451,7 +473,7 @@ export default function AdminKycReviewDetailPage() {
                 type="button"
                 onClick={saveManualExtraction}
                 disabled={submitting}
-                className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-[#62929e] px-5 py-3 text-sm font-semibold text-[#fdfdff] transition hover:bg-[#62929e]/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? "Saving..." : "Save Manual Extraction"}
               </button>
@@ -459,54 +481,58 @@ export default function AdminKycReviewDetailPage() {
           </section>
         ) : null}
 
-        <section className="rounded-3xl bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-4">
-            <h2 className="text-xl font-semibold text-slate-900">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="border-b border-[#546a7b]/65 px-6 py-4">
+            <h2 className="text-xl font-semibold text-[#393d3f]">
               Extracted vs Stored Data
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[#546a7b]">
               Mismatches are highlighted to support admin review.
             </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-white/10 text-sm">
+              <thead className="bg-[#c6c5b9]/20">
                 <tr>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Field
                   </th>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Extracted
                   </th>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Stored
                   </th>
-                  <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                     Result
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-white/10">
                 {detail.comparison_rows.map((row) => (
                   <tr
                     key={row.label}
-                    className={row.matches ? "bg-white" : "bg-red-50"}
+                    className={
+                      row.matches
+                        ? "hover:bg-[#c6c5b9]/20"
+                        : "bg-red-500/10 hover:bg-red-500/20"
+                    }
                   >
-                    <td className="px-6 py-4 font-medium text-slate-900">
+                    <td className="px-6 py-4 font-medium text-[#393d3f]">
                       {row.label}
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-6 py-4 text-[#546a7b]">
                       {row.extracted_value || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-6 py-4 text-[#546a7b]">
                       {row.user_value || "N/A"}
                     </td>
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                           row.matches
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-red-100 text-red-700"
+                            ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
+                            : "border border-red-500/20 bg-red-500/10 text-red-200"
                         }`}
                       >
                         {row.matches ? "Match" : "Mismatch"}
@@ -519,26 +545,26 @@ export default function AdminKycReviewDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">Decision</h2>
-          <p className="mt-2 text-sm text-slate-600">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-[#393d3f]">Decision</h2>
+          <p className="mt-2 text-sm text-[#546a7b]">
             Approval sends a notification to the customer. Rejection requires a
             reason and also sends a notification email.
           </p>
 
-          <label className="mt-5 block text-sm font-medium text-slate-700">
+          <label className="mt-5 block text-sm font-medium text-[#546a7b]">
             Rejection Reason
           </label>
           <textarea
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="mt-2 w-full rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-3 text-sm text-[#393d3f] shadow-sm focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
             rows={4}
             placeholder="Explain why this KYC submission should be rejected."
           />
 
           {error ? (
-            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {error}
             </div>
           ) : null}
@@ -548,7 +574,7 @@ export default function AdminKycReviewDetailPage() {
               type="button"
               onClick={approveKyc}
               disabled={submitting || detail.needs_manual_extraction}
-              className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Approve KYC"}
             </button>
@@ -556,14 +582,14 @@ export default function AdminKycReviewDetailPage() {
               type="button"
               onClick={rejectKyc}
               disabled={submitting}
-              className="rounded-xl bg-red-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? "Processing..." : "Reject KYC"}
             </button>
             <button
               type="button"
               onClick={() => router.push("/admin/kyc")}
-              className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border border-[#546a7b]/65 px-5 py-3 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Back to Queue
             </button>

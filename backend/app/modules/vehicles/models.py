@@ -113,6 +113,7 @@ class Vehicle(Base):
     price_jpy: Column[Decimal] = Column(DECIMAL(12, 2), nullable=False)
     mileage_km = Column(Integer, nullable=True)
     engine_cc = Column(Integer, nullable=True)
+    motor_power_kw: Column[Decimal | None] = Column(DECIMAL(8, 2), nullable=True)
     engine_model = Column(String(100), nullable=True)
     fuel_type = Column(String(50), nullable=True)
     transmission = Column(String(50), nullable=True)
@@ -165,6 +166,9 @@ class Vehicle(Base):
             "price_jpy": float(self.price_jpy),
             "mileage_km": self.mileage_km,
             "engine_cc": self.engine_cc,
+            "motor_power_kw": (
+                float(self.motor_power_kw) if self.motor_power_kw is not None else None
+            ),
             "engine_model": self.engine_model,
             "fuel_type": _enum_or_string_value(self.fuel_type),
             "transmission": _enum_or_string_value(self.transmission),

@@ -18,7 +18,7 @@ from typing import Any, cast
 
 import httpx
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from PIL import Image
 
 logger = logging.getLogger("nic_extractor")
@@ -27,21 +27,40 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 INTERNAL_SECRET = os.getenv("INTERNAL_SECRET", "")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "minicpm-v:latest")
+OLLAMA_TIMEOUT_SECONDS = float(os.getenv("OLLAMA_TIMEOUT_SECONDS", "180"))
 
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 
+def _normalize_model_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return str(value).strip()
+
+
 class FrontSchema(BaseModel):
-    nic_number: str = Field(min_length=8, max_length=32)
-    full_name: str = Field(min_length=1, max_length=255)
-    date_of_birth: str = Field(min_length=4, max_length=32)
+    nic_number: str = Field(default="", max_length=32)
+    full_name: str = Field(default="", max_length=255)
+    date_of_birth: str = Field(default="", max_length=32)
+
+    @field_validator("nic_number", "full_name", "date_of_birth", mode="before")
+    @classmethod
+    def _clean_text(cls, value: Any) -> str:
+        return _normalize_model_text(value)
 
 
 class BackSchema(BaseModel):
-    address: str = Field(min_length=1, max_length=500)
-    gender: str = Field(min_length=1, max_length=16)
-    issue_date: str = Field(min_length=4, max_length=32)
+    address: str = Field(default="", max_length=500)
+    gender: str = Field(default="", max_length=16)
+    issue_date: str = Field(default="", max_length=32)
+
+    @field_validator("address", "gender", "issue_date", mode="before")
+    @classmethod
+    def _clean_text(cls, value: Any) -> str:
+        return _normalize_model_text(value)
 
 
 app = FastAPI(title="ClearDrive NIC Extractor", version="1.0.0")
@@ -96,6 +115,14 @@ def _prompt_for(side: str) -> str:
 
 
 async def _extract_with_ollama(image_bytes: bytes, side: str) -> dict[str, Any]:
+    logger.info(
+        "ollama_extract_start side=%s model=%s image_bytes=%s ollama_url=%s timeout=%ss",
+        side,
+        OLLAMA_MODEL,
+        len(image_bytes),
+        OLLAMA_URL,
+        OLLAMA_TIMEOUT_SECONDS,
+    )
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
     payload = {
         "model": OLLAMA_MODEL,
@@ -105,7 +132,8 @@ async def _extract_with_ollama(image_bytes: bytes, side: str) -> dict[str, Any]:
         "options": {"temperature": 0.1, "top_p": 0.9},
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    timeout = httpx.Timeout(OLLAMA_TIMEOUT_SECONDS, connect=10.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(f"{OLLAMA_URL}/api/generate", json=payload)
     if response.status_code != 200:
         raise RuntimeError(f"Ollama error {response.status_code}: {response.text[:500]}")
@@ -124,6 +152,12 @@ async def _extract_with_ollama(image_bytes: bytes, side: str) -> dict[str, Any]:
 
     payload = validated.model_dump()
     payload.update({"confidence": 0.85, "side": side})
+    logger.info(
+        "ollama_extract_success side=%s model=%s extracted_keys=%s",
+        side,
+        OLLAMA_MODEL,
+        sorted(payload.keys()),
+    )
     return payload
 
 
@@ -198,6 +232,13 @@ async def extract_nic(
     except Exception as exc:
         logger.exception("Extraction failed side=%s: %s", side, exc)
         raise HTTPException(status_code=500, detail=f"Extraction failed: {exc}") from exc
+
+    logger.info(
+        "extract_nic_completed side=%s model=%s used_ollama=true confidence=%s",
+        side,
+        OLLAMA_MODEL,
+        data.get("confidence"),
+    )
 
     # Return the flat payload expected by backend and ops guides.
     return data

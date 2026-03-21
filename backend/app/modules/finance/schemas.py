@@ -4,8 +4,8 @@ Author: Parindra Gallage
 Story: CD-33
 """
 
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 

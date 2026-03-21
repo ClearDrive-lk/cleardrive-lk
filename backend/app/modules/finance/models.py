@@ -14,8 +14,9 @@ from uuid import UUID as PyUUID
 
 from app.core.database import Base
 from app.core.models import GUID, TimestampMixin, UUIDMixin
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, Integer
+from sqlalchemy import Boolean, DateTime
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:

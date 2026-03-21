@@ -1,6 +1,5 @@
-# backend/app/core/config.py
-
 import json
+from decimal import Decimal
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -43,6 +42,7 @@ class Settings(BaseSettings):
     PAYHERE_NOTIFY_URL: str = "http://localhost:8000/api/v1/payments/webhook"
     PAYHERE_RETURN_URL: str = "http://localhost:3000/orders/{order_id}/payment-success"
     PAYHERE_CANCEL_URL: str = "http://localhost:3000/orders/{order_id}/payment-cancel"
+    PAYHERE_MAX_PAYMENT_AMOUNT_LKR: Decimal | None = None
 
     # Claude API
     ANTHROPIC_API_KEY: str
@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     SUPABASE_ANON_KEY: str | None = None
     SUPABASE_STORAGE_VEHICLE_BUCKET: str = "Photos"
     SUPABASE_STORAGE_KYC_BUCKET: str = "kyc-documents"
+    SUPABASE_STORAGE_SHIPPING_BUCKET: str = "shipping-documents"
+    SUPABASE_STORAGE_REFERENCE_BUCKET: str = "tax-reference-docs"
 
     # KYC VPS Proxy (CD-50.8/9/10)
     VPS_URL: str | None = None
@@ -63,8 +65,10 @@ class Settings(BaseSettings):
     # Gazette Extraction Pipeline (CD-24)
     GOOGLE_CLOUD_PROJECT: str | None = None
     DOCUMENT_AI_PROCESSOR_ID: str | None = None
+    GOOGLE_APPLICATION_CREDENTIALS_PATH: str | None = None
+    GOOGLE_SERVICE_ACCOUNT_JSON: str | None = None
     GEMINI_API_KEY: str | None = None
-    GEMINI_MODEL: str = "gemini-1.5-pro-latest"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     CHATBOT_RATE_LIMIT_PER_MINUTE: int = 10
     CHATBOT_MAX_MESSAGE_LENGTH: int = 500
     CHATBOT_MAX_HISTORY_LENGTH: int = 10

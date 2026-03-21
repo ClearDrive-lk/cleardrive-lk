@@ -4,22 +4,22 @@ Author: Parindra Gallage
 Story: CD-33.5, CD-33.6
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
 from datetime import datetime, timezone
+from typing import List
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_admin
-from app.modules.finance.models import VehicleInsurance, InsuranceStatus
+from app.core.dependencies import get_current_finance_partner, get_current_user
+from app.modules.auth.models import User
+from app.modules.finance.models import InsuranceStatus, VehicleInsurance
 from app.modules.finance.schemas import (
-    InsuranceQuoteRequest,
     InsuranceApproveRequest,
+    InsuranceQuoteRequest,
     InsuranceRejectRequest,
     InsuranceResponse,
 )
 from app.modules.orders.models import Order
-from app.modules.auth.models import User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/insurance", tags=["vehicle-insurance"])
 
@@ -80,7 +80,7 @@ async def request_insurance_quote(
 async def approve_insurance_quote(
     insurance_id: str,
     request: InsuranceApproveRequest,
-    current_admin: User = Depends(get_current_admin),
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
     db: Session = Depends(get_db),
 ):
     """
@@ -107,7 +107,7 @@ async def approve_insurance_quote(
     insurance.policy_start_date = request.policy_start_date
     insurance.policy_end_date = request.policy_end_date
     insurance.admin_notes = request.admin_notes
-    insurance.reviewed_by = current_admin.id
+    insurance.reviewed_by = current_finance_reviewer.id
     insurance.reviewed_at = datetime.now(timezone.utc)
 
     db.commit()
@@ -125,7 +125,7 @@ async def approve_insurance_quote(
 async def reject_insurance_quote(
     insurance_id: str,
     request: InsuranceRejectRequest,
-    current_admin: User = Depends(get_current_admin),
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
     db: Session = Depends(get_db),
 ):
     """Reject insurance quote."""
@@ -140,7 +140,7 @@ async def reject_insurance_quote(
 
     insurance.status = InsuranceStatus.REJECTED
     insurance.rejection_reason = request.rejection_reason
-    insurance.reviewed_by = current_admin.id
+    insurance.reviewed_by = current_finance_reviewer.id
     insurance.reviewed_at = datetime.now(timezone.utc)
 
     db.commit()
@@ -153,10 +153,12 @@ async def reject_insurance_quote(
 
 @router.get("/pending", response_model=List[InsuranceResponse])
 async def get_pending_insurance_quotes(
-    current_admin: User = Depends(get_current_admin), db: Session = Depends(get_db)
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
+    db: Session = Depends(get_db),
 ):
     """Get pending insurance quotes (admin)."""
 
+    _ = current_finance_reviewer
     quotes = (
         db.query(VehicleInsurance).filter(VehicleInsurance.status == InsuranceStatus.PENDING).all()
     )

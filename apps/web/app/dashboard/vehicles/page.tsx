@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense, useEffect, useCallback } from "react";
-import AuthGuard from "@/components/auth/AuthGuard";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -11,7 +10,7 @@ import {
   Search,
   X,
   SlidersHorizontal,
-} from "lucide-react"; // Removed Filter
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,20 +40,16 @@ import { useVehicles } from "@/lib/hooks/useVehicles";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
 import { VehicleGridSkeleton } from "@/components/vehicles/VehicleCardSkeleton";
+import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
+import { useAppSelector } from "@/lib/store/store";
+import { getAccessToken, getRefreshToken } from "@/lib/auth";
 
 // --- CONSTANTS ---
-const QUICK_FILTERS = [
-  { label: "Toyota", params: { search: "Toyota" } },
-  { label: "Honda", params: { search: "Honda" } },
-  { label: "Under 5M", params: { maxPrice: "5000000" } },
-  { label: "Hybrid", params: { fuel: "Hybrid" } },
-  { label: "SUVs", params: { search: "SUV" } },
-  { label: "Electric", params: { fuel: "Electric" } },
-  { label: "Luxury > 15M", params: { minPrice: "15000000" } },
-];
 
 function VehicleCatalog() {
   const { logout, isLoading: isLogoutLoading } = useLogout();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const hasSession = Boolean(getAccessToken() || getRefreshToken());
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -63,16 +58,36 @@ function VehicleCatalog() {
   const currentSearch = searchParams.get("search") || "";
   const currentFuel = searchParams.get("fuel") || "All";
   const currentStatus = searchParams.get("status") || "All";
-  const currentSort = searchParams.get("sort") || "newest";
+  const currentSort = searchParams.get("sort") || "year_desc";
+  const currentType = searchParams.get("type") || "All";
+  const currentCurrency =
+    (searchParams.get("currency") as "LKR" | "JPY" | null) || "LKR";
+
+  const { data: exchangeRateData } = useExchangeRate();
+  const exchangeRate = exchangeRateData?.rate ?? null;
 
   // Advanced Filters URL State
+  const priceMaxLimit =
+    currentCurrency === "LKR"
+      ? 50000000
+      : Math.max(1000000, Math.round(50000000 / (exchangeRate || 1)));
   const currentMinPrice = Number(searchParams.get("minPrice")) || 0;
-  const currentMaxPrice = Number(searchParams.get("maxPrice")) || 50000000;
+  const currentMaxPrice = Number(searchParams.get("maxPrice")) || priceMaxLimit;
   const currentMinYear = Number(searchParams.get("minYear")) || 2000;
   const currentMaxYear =
     Number(searchParams.get("maxYear")) || new Date().getFullYear();
   const currentMaxMileage = Number(searchParams.get("maxMileage")) || 200000;
   const currentTransmission = searchParams.get("transmission") || "All";
+  const hasTypeParam = searchParams.has("type");
+  const hasMinYearParam = searchParams.has("minYear");
+  const hasMaxYearParam = searchParams.has("maxYear");
+  const hasMaxMileageParam = searchParams.has("maxMileage");
+  const hasTransmissionParam = searchParams.has("transmission");
+  const hasAdvancedFilters =
+    hasMinYearParam ||
+    hasMaxYearParam ||
+    hasMaxMileageParam ||
+    hasTransmissionParam;
 
   // -- LOCAL STATE --
   const [searchTerm, setSearchTerm] = useState(currentSearch);
@@ -109,38 +124,88 @@ function VehicleCatalog() {
     ],
   );
 
+  const lkrToCurrent = (value: number) =>
+    currentCurrency === "LKR" || !exchangeRate
+      ? value
+      : Math.round(value / exchangeRate);
+
+  const quickFilters = [
+    { label: "Toyota", params: { search: "Toyota" } },
+    { label: "Honda", params: { search: "Honda" } },
+    { label: "Under 5M", params: { maxPrice: lkrToCurrent(5000000) } },
+    { label: "Gasoline/Hybrid", params: { fuel: "Gasoline/Hybrid" } },
+    { label: "SUVs", params: { type: "SUV" } },
+    { label: "Electric", params: { fuel: "Electric" } },
+    { label: "Luxury > 15M", params: { minPrice: lkrToCurrent(15000000) } },
+  ];
+
   // -- HANDLERS --
   const updateFilters = useCallback(
     (newParams: Record<string, string | number | undefined>) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const baseParams: Record<string, string | number | undefined> = {
+        page: currentPage,
+        search: currentSearch || undefined,
+        fuel: currentFuel,
+        status: currentStatus,
+        sort: currentSort,
+        currency: currentCurrency,
+        minPrice: currentMinPrice > 0 ? currentMinPrice : undefined,
+        maxPrice: currentMaxPrice !== 50000000 ? currentMaxPrice : undefined,
+        minYear: hasMinYearParam ? currentMinYear : undefined,
+        maxYear: hasMaxYearParam ? currentMaxYear : undefined,
+        maxMileage: hasMaxMileageParam ? currentMaxMileage : undefined,
+        transmission: hasTransmissionParam ? currentTransmission : undefined,
+        type: hasTypeParam ? currentType : undefined,
+      };
 
-      Object.entries(newParams).forEach(([key, value]) => {
+      const mergedParams = { ...baseParams, ...newParams };
+
+      if (!newParams.page) {
+        mergedParams.page = 1;
+      }
+
+      const params = new URLSearchParams();
+      Object.entries(mergedParams).forEach(([key, value]) => {
         if (value !== undefined && value !== "" && value !== "All") {
           params.set(key, String(value));
-        } else {
-          params.delete(key);
         }
       });
 
-      // Reset to page 1 unless page is explicitly changing
-      if (!newParams.page) {
-        params.set("page", "1");
-      }
-
-      router.push(`/dashboard/vehicles?${params.toString()}`);
+      const query = params.toString();
+      router.push(`/dashboard/vehicles${query ? `?${query}` : ""}`);
     },
-    [searchParams, router],
+    [
+      router,
+      currentPage,
+      currentSearch,
+      currentFuel,
+      currentStatus,
+      currentSort,
+      currentMinPrice,
+      currentMaxPrice,
+      currentMinYear,
+      currentMaxYear,
+      currentMaxMileage,
+      currentTransmission,
+      hasMinYearParam,
+      hasMaxYearParam,
+      hasMaxMileageParam,
+      hasTransmissionParam,
+      hasTypeParam,
+      currentType,
+      currentCurrency,
+    ],
   );
 
   // -- SYNC DEBOUNCE WITH URL --
   useEffect(() => {
     if (debouncedSearch !== currentSearch) {
-      updateFilters({ search: debouncedSearch });
+      void updateFilters({ search: debouncedSearch });
     }
   }, [debouncedSearch, currentSearch, updateFilters]);
 
   // -- DATA FETCHING --
-  const { data, isLoading, isError } = useVehicles({
+  const { data, isLoading, isError, error, refetch } = useVehicles({
     page: currentPage,
     limit: 8,
     search: currentSearch,
@@ -149,11 +214,48 @@ function VehicleCatalog() {
     sort: currentSort,
     minPrice: currentMinPrice,
     maxPrice: currentMaxPrice === 50000000 ? undefined : currentMaxPrice,
+    minYear: hasMinYearParam ? currentMinYear : undefined,
+    maxYear: hasMaxYearParam ? currentMaxYear : undefined,
+    maxMileage: hasMaxMileageParam ? currentMaxMileage : undefined,
+    transmission: hasTransmissionParam ? currentTransmission : undefined,
+    vehicleType: currentType === "All" ? undefined : currentType,
+    priceCurrency: currentCurrency,
+    exchangeRate,
   });
 
   const vehicles = data?.data || [];
   const totalItems = data?.total || 0;
   const totalPages = Math.ceil(totalItems / 8);
+
+  useEffect(() => {
+    const allowed = new Set([
+      "page",
+      "search",
+      "fuel",
+      "status",
+      "sort",
+      "currency",
+      "minPrice",
+      "maxPrice",
+      "minYear",
+      "maxYear",
+      "maxMileage",
+      "transmission",
+      "type",
+    ]);
+    const params = new URLSearchParams(searchParams.toString());
+    let changed = false;
+    Array.from(params.keys()).forEach((key) => {
+      if (!allowed.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    });
+    if (changed) {
+      const query = params.toString();
+      router.replace(`/dashboard/vehicles${query ? `?${query}` : ""}`);
+    }
+  }, [searchParams, router]);
 
   const applyAdvancedFilters = () => {
     updateFilters({
@@ -169,13 +271,29 @@ function VehicleCatalog() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    router.push("/dashboard/vehicles");
+    router.push(`/dashboard/vehicles?currency=${currentCurrency}`);
   };
 
-  const formatCurrency = (val: number) => {
+  const formatCompact = (val: number) => {
     if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
     if (val >= 1000) return `${(val / 1000).toFixed(0)}k`;
     return val.toString();
+  };
+
+  const handleCurrencyToggle = (next: "LKR" | "JPY") => {
+    if (next === currentCurrency) return;
+    if (!exchangeRate || exchangeRate <= 0) return;
+    const convert = (value: number | undefined) => {
+      if (!value || value <= 0) return undefined;
+      return next === "JPY"
+        ? Math.round(value / exchangeRate)
+        : Math.round(value * exchangeRate);
+    };
+    updateFilters({
+      currency: next,
+      minPrice: convert(currentMinPrice),
+      maxPrice: convert(currentMaxPrice),
+    });
   };
 
   return (
@@ -187,7 +305,7 @@ function VehicleCatalog() {
       <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
-            href="/"
+            href={isAuthenticated || hasSession ? "/dashboard" : "/"}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
             <Terminal className="w-5 h-5 text-[#FE7743]" />
@@ -231,13 +349,31 @@ function VehicleCatalog() {
               Profile
             </Link>
           </div>
-          <Button
-            onClick={logout}
-            disabled={isLogoutLoading}
-            className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-9"
-          >
-            {isLogoutLoading ? "..." : "Sign Out"}
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              onClick={logout}
+              disabled={isLogoutLoading}
+              className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-9"
+            >
+              {isLogoutLoading ? "..." : "Sign Out"}
+            </Button>
+          ) : (
+            <div className="flex gap-3">
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="text-gray-400 hover:text-white hover:bg-white/5 font-mono h-9"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-9">
+                  Get Access
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -257,7 +393,9 @@ function VehicleCatalog() {
             {(currentSearch ||
               currentFuel !== "All" ||
               currentStatus !== "All" ||
-              currentMinPrice > 0) && (
+              currentType !== "All" ||
+              currentMinPrice > 0 ||
+              hasAdvancedFilters) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -285,6 +423,49 @@ function VehicleCatalog() {
 
               {/* Dropdowns & Sheet Trigger */}
               <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1">
+                  <button
+                    type="button"
+                    onClick={() => handleCurrencyToggle("LKR")}
+                    className={`px-2 py-1 text-xs rounded-full transition ${
+                      currentCurrency === "LKR"
+                        ? "bg-[#FE7743] text-black"
+                        : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    LKR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCurrencyToggle("JPY")}
+                    className={`px-2 py-1 text-xs rounded-full transition ${
+                      currentCurrency === "JPY"
+                        ? "bg-[#FE7743] text-black"
+                        : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    JPY
+                  </button>
+                </div>
+
+                <Select
+                  value={currentType}
+                  onValueChange={(val) => updateFilters({ type: val })}
+                >
+                  <SelectTrigger className="w-[140px] h-10 bg-white/5 border-white/10 text-white hover:bg-white/10">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#111] border-white/10 text-white">
+                    <SelectItem value="All">All Types</SelectItem>
+                    <SelectItem value="SUV">SUV</SelectItem>
+                    <SelectItem value="Sedan">Sedan</SelectItem>
+                    <SelectItem value="Hatchback">Hatchback</SelectItem>
+                    <SelectItem value="Van/minivan">Van/Minivan</SelectItem>
+                    <SelectItem value="Wagon">Wagon</SelectItem>
+                    <SelectItem value="Pickup">Pickup</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <Select
                   value={currentFuel}
                   onValueChange={(val) => updateFilters({ fuel: val })}
@@ -294,8 +475,10 @@ function VehicleCatalog() {
                   </SelectTrigger>
                   <SelectContent className="bg-[#111] border-white/10 text-white">
                     <SelectItem value="All">All Fuels</SelectItem>
-                    <SelectItem value="Petrol">Petrol</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
+                    <SelectItem value="Gasoline">Gasoline</SelectItem>
+                    <SelectItem value="Gasoline/Hybrid">
+                      Gasoline/Hybrid
+                    </SelectItem>
                     <SelectItem value="Diesel">Diesel</SelectItem>
                     <SelectItem value="Electric">Electric</SelectItem>
                   </SelectContent>
@@ -310,9 +493,7 @@ function VehicleCatalog() {
                   </SelectTrigger>
                   <SelectContent className="bg-[#111] border-white/10 text-white">
                     <SelectItem value="All">All Status</SelectItem>
-                    <SelectItem value="Live">Live Auction</SelectItem>
-                    <SelectItem value="Upcoming">Upcoming</SelectItem>
-                    <SelectItem value="Sold">Sold</SelectItem>
+                    <SelectItem value="Available">Available</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -361,21 +542,28 @@ function VehicleCatalog() {
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
                           <Label className="text-sm font-medium">
-                            Price Range (LKR)
+                            Price Range ({currentCurrency})
                           </Label>
                           <span className="text-xs text-[#FE7743] font-mono">
-                            {formatCurrency(priceRange[0])} -{" "}
-                            {formatCurrency(priceRange[1])}
+                            {formatCompact(priceRange[0])} -{" "}
+                            {formatCompact(priceRange[1])}
                           </span>
                         </div>
                         <Slider
                           min={0}
-                          max={50000000}
-                          step={1000000}
+                          max={priceMaxLimit}
+                          step={currentCurrency === "LKR" ? 1000000 : 100000}
                           value={priceRange}
                           onValueChange={setPriceRange}
                           className="py-4"
                         />
+                        <div className="text-[10px] text-gray-500">
+                          1 JPY ={" "}
+                          {exchangeRate ? exchangeRate.toFixed(2) : "--"} LKR
+                          {exchangeRateData?.date
+                            ? ` · ${exchangeRateData.date}`
+                            : ""}
+                        </div>
                       </div>
 
                       <Separator className="bg-white/10" />
@@ -444,32 +632,12 @@ function VehicleCatalog() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem
-                              value="AT"
+                              value="Automatic"
                               id="t-at"
                               className="border-white/20 text-[#FE7743]"
                             />
                             <Label htmlFor="t-at" className="text-gray-300">
-                              Automatic (AT)
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="CVT"
-                              id="t-cvt"
-                              className="border-white/20 text-[#FE7743]"
-                            />
-                            <Label htmlFor="t-cvt" className="text-gray-300">
-                              CVT
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="MT"
-                              id="t-mt"
-                              className="border-white/20 text-[#FE7743]"
-                            />
-                            <Label htmlFor="t-mt" className="text-gray-300">
-                              Manual (MT)
+                              Automatic
                             </Label>
                           </div>
                         </RadioGroup>
@@ -491,7 +659,7 @@ function VehicleCatalog() {
 
             {/* Quick Filter Chips */}
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {QUICK_FILTERS.map((filter, index) => (
+              {quickFilters.map((filter, index) => (
                 <button
                   key={index}
                   onClick={() => updateFilters(filter.params)}
@@ -501,6 +669,71 @@ function VehicleCatalog() {
                 </button>
               ))}
             </div>
+
+            {(currentSearch ||
+              currentFuel !== "All" ||
+              currentStatus !== "All" ||
+              currentType !== "All" ||
+              currentMinPrice > 0 ||
+              hasAdvancedFilters) && (
+              <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                {currentSearch && (
+                  <button
+                    onClick={() => updateFilters({ search: "" })}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300 hover:border-[#FE7743]/40 hover:text-white"
+                  >
+                    Search: {currentSearch} ✕
+                  </button>
+                )}
+                {currentFuel !== "All" && (
+                  <button
+                    onClick={() => updateFilters({ fuel: "All" })}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300 hover:border-[#FE7743]/40 hover:text-white"
+                  >
+                    Fuel: {currentFuel} ✕
+                  </button>
+                )}
+                {currentStatus !== "All" && (
+                  <button
+                    onClick={() => updateFilters({ status: "All" })}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300 hover:border-[#FE7743]/40 hover:text-white"
+                  >
+                    Status: {currentStatus} ✕
+                  </button>
+                )}
+                {currentType !== "All" && (
+                  <button
+                    onClick={() => updateFilters({ type: "All" })}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300 hover:border-[#FE7743]/40 hover:text-white"
+                  >
+                    Type: {currentType} ✕
+                  </button>
+                )}
+                {currentMinPrice > 0 && (
+                  <button
+                    onClick={() => updateFilters({ minPrice: undefined })}
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300 hover:border-[#FE7743]/40 hover:text-white"
+                  >
+                    Min Price ✕
+                  </button>
+                )}
+                {hasAdvancedFilters && (
+                  <button
+                    onClick={() =>
+                      updateFilters({
+                        minYear: undefined,
+                        maxYear: undefined,
+                        maxMileage: undefined,
+                        transmission: "All",
+                      })
+                    }
+                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-gray-300 hover:border-[#FE7743]/40 hover:text-white"
+                  >
+                    Advanced Filters ✕
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -508,14 +741,31 @@ function VehicleCatalog() {
       {/* Main Content */}
       <main className="flex-1 relative z-10 px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          {/* Error State */}
-          {isError && (
-            <div className="mb-8 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-center">
-              Failed to load vehicles. Please try again later.
+          {isError ? (
+            <div className="mb-8 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-center space-y-2">
+              <div>Failed to load vehicles. Please try again later.</div>
+              <div className="text-xs text-red-300/80">
+                {(() => {
+                  const err = error as {
+                    message?: string;
+                    response?: { status?: number; data?: unknown };
+                  };
+                  if (err?.response?.status) {
+                    return `Status: ${err.response.status}`;
+                  }
+                  return err?.message || "Unknown error";
+                })()}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void refetch()}
+                className="border-red-500/30 text-red-200 hover:bg-red-500/10"
+              >
+                Retry
+              </Button>
             </div>
-          )}
-
-          {isLoading ? (
+          ) : isLoading ? (
             <VehicleGridSkeleton />
           ) : vehicles.length > 0 ? (
             <>
@@ -572,6 +822,14 @@ function VehicleCatalog() {
                 We couldn&apos;t find any vehicles matching your search
                 criteria. Try adjusting your filters or search term.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400 mb-6">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                  Try removing fuel/type filters
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                  Increase price range
+                </span>
+              </div>
               <Button
                 onClick={clearFilters}
                 variant="outline"
@@ -596,9 +854,7 @@ export default function VehiclesPage() {
         </div>
       }
     >
-      <AuthGuard>
-        <VehicleCatalog />
-      </AuthGuard>
+      <VehicleCatalog />
     </Suspense>
   );
 }

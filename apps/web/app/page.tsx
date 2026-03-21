@@ -1,4 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useAppSelector } from "@/lib/store/store";
+import { getAccessToken, getRefreshToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,22 +21,48 @@ import {
   ArrowRight,
   Terminal,
 } from "lucide-react";
+import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
 
 export default function Home() {
+  const router = useRouter();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const hasSession = Boolean(getAccessToken() || getRefreshToken());
+  const { data: exchangeRateData } = useExchangeRate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleSearch = () => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+    router.push(`/dashboard/vehicles?search=${encodeURIComponent(trimmed)}`);
+  };
+  const exchangeRateValue =
+    exchangeRateData?.rate && Number.isFinite(exchangeRateData.rate)
+      ? `${exchangeRateData.rate.toFixed(2)} LKR/JPY`
+      : "Rate loading";
+  const exchangeRateSub = exchangeRateData?.date
+    ? `CBSL ${new Date(exchangeRateData.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`
+    : "Central Bank of Sri Lanka";
+
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
       {/* --- NAVIGATION --- */}
       <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-bold text-xl tracking-tighter flex items-center gap-2">
+          <Link
+            href={isAuthenticated || hasSession ? "/dashboard" : "/"}
+            className="font-bold text-xl tracking-tighter flex items-center gap-2"
+          >
             <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
               <Terminal className="w-4 h-4 text-[#FE7743]" />
             </div>
             ClearDrive<span className="text-[#FE7743]">.lk</span>
-          </div>
+          </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
             <Link
-              href="#"
+              href="/dashboard/vehicles"
               className="hover:text-white transition-colors flex items-center gap-2"
             >
               Auctions{" "}
@@ -44,7 +76,10 @@ export default function Home() {
             <Link href="#" className="hover:text-white transition-colors">
               Logistics
             </Link>
-            <Link href="#" className="hover:text-white transition-colors">
+            <Link
+              href="/tax-calculator"
+              className="hover:text-white transition-colors"
+            >
               Tax Calculator
             </Link>
           </div>
@@ -105,24 +140,35 @@ export default function Home() {
               <Search className="w-5 h-5 text-gray-500 ml-4" />
               <Input
                 className="border-0 bg-transparent text-white placeholder:text-gray-600 focus-visible:ring-0 h-12 text-lg font-mono"
-                placeholder="Search Chassis ID (e.g. CBA-ZE2-102030)..."
+                placeholder="Search make, model, or chassis..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleSearch();
+                  }
+                }}
               />
               <div className="hidden md:flex items-center gap-2 pr-4">
                 <Badge
                   variant="secondary"
                   className="bg-[#1A1A1A] text-gray-500 hover:bg-[#1A1A1A]"
                 >
-                  VIN
+                  Make/Model
                 </Badge>
                 <Badge
                   variant="secondary"
                   className="bg-[#1A1A1A] text-gray-500 hover:bg-[#1A1A1A]"
                 >
-                  Lot #
+                  Chassis
                 </Badge>
               </div>
-              <Button className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-11 px-8 rounded-md">
-                Track Vehicle
+              <Button
+                onClick={handleSearch}
+                className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold h-11 px-8 rounded-md"
+              >
+                Search Vehicles
               </Button>
             </div>
           </div>
@@ -159,9 +205,9 @@ export default function Home() {
             },
             {
               label: "Exchange Rate",
-              value: "2.25 LKR/JPY",
+              value: exchangeRateValue,
               icon: TrendingUp,
-              sub: "Live Bank Rate",
+              sub: exchangeRateSub,
             },
             {
               label: "Active Listings",
@@ -212,10 +258,13 @@ export default function Home() {
               </p>
             </div>
             <Button
+              asChild
               variant="outline"
               className="border-white/10 hover:bg-white/5 hover:text-white gap-2"
             >
-              View All 45,000+ Units <ArrowRight className="w-4 h-4" />
+              <Link href="/dashboard/vehicles">
+                View All 45,000+ Units <ArrowRight className="w-4 h-4" />
+              </Link>
             </Button>
           </div>
 

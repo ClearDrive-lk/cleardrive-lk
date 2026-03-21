@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 
 {% block content %}
@@ -27,4 +28,63 @@
 </div>
 <p>If you have any questions, please contact our support team.</p>
 <p>Best regards,<br>The ClearDrive.lk Team</p>
+=======
+{% extends "base.html" %} {% block content %}
+<h2>Order Confirmation</h2>
+<p>Dear {{ user_name }},</p>
+<p>
+  Thank you for choosing ClearDrive.lk! Your order
+  <strong>#{{ order_id }}</strong> has been successfully placed.
+</p>
+<div
+  style="
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+  "
+>
+  <h3 style="margin-top: 0">Order Details</h3>
+  <table style="width: 100%; border-collapse: collapse">
+    <tr>
+      <td style="padding: 5px 0"><strong>Vehicle:</strong></td>
+      <td style="text-align: right">{{ vehicle_name }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0"><strong>Chassis No:</strong></td>
+      <td style="text-align: right">{{ chassis_no }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0"><strong>Stock No:</strong></td>
+      <td style="text-align: right">{{ stock_no }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0"><strong>Tracking Number:</strong></td>
+      <td style="text-align: right">{{ tracking_number }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0"><strong>Delivery Address:</strong></td>
+      <td style="text-align: right">{{ address }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 5px 0; border-top: 1px solid #ddd; margin-top: 5px">
+        <strong>Total Price:</strong>
+      </td>
+      <td
+        style="text-align: right; border-top: 1px solid #ddd; font-weight: bold"
+      >
+        {{ total_price }}
+      </td>
+    </tr>
+  </table>
+</div>
+<p>You can track the status of your order in your dashboard.</p>
+<div style="text-align: center">
+  <a href="{{ frontend_url }}/dashboard/orders/{{ order_id }}" class="button"
+    >View Order</a
+  >
+</div>
+<p>If you have any questions, please contact our support team.</p>
+<p>Best regards,<br />The ClearDrive.lk Team</p>
+>>>>>>> 30667a35a7861077ee957a7d67fe52d3998f5caa
 {% endblock %}

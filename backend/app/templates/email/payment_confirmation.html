@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 
 {% block content %}
@@ -18,4 +19,39 @@
 </div>
 <p>Thank you for your business!</p>
 <p>Best regards,<br>The ClearDrive.lk Team</p>
+=======
+{% extends "base.html" %} {% block content %}
+<h2>Payment Confirmation</h2>
+<p>Dear {{ user_name }},</p>
+<p>
+  We have successfully received your payment of
+  <strong>{{ amount }}</strong> for order <strong>#{{ order_id }}</strong>.
+</p>
+
+<div
+  style="
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+  "
+>
+  <h3 style="margin-top: 0">Payment Details</h3>
+  <p><strong>Receipt Number:</strong> {{ receipt_id }}</p>
+  <p><strong>Date:</strong> {{ payment_date }}</p>
+  <p><strong>Payment Method:</strong> {{ payment_method }}</p>
+</div>
+
+<p>
+  Your order is now being processed for the next steps. We will keep you updated
+  on the progress.
+</p>
+<div style="text-align: center">
+  <a href="{{ frontend_url }}/dashboard/orders/{{ order_id }}" class="button"
+    >Track Progress</a
+  >
+</div>
+<p>Thank you for your business!</p>
+<p>Best regards,<br />The ClearDrive.lk Team</p>
+>>>>>>> 30667a35a7861077ee957a7d67fe52d3998f5caa
 {% endblock %}

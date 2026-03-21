@@ -5,20 +5,30 @@ Story: CD-70 - Exporter Assignment
 """
 
 import logging
+from datetime import datetime
+from uuid import UUID, uuid4
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.modules.auth.models import Role, User
 from app.modules.notifications.service import send_status_change_notification
-from app.modules.orders.models import Order, OrderStatus
-from app.modules.shipping.models import ShipmentDetails
+from app.modules.orders.models import (
+    Order,
+    OrderStatus,
+)
+from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
+from app.modules.payments.models import Payment
+from app.modules.payments.models import PaymentStatus as PaymentStatus
+from app.modules.shipping.models import DocumentType, ShipmentDetails, ShipmentStatus
 from app.modules.shipping.schemas import (
     AssignableOrderItem,
     ExporterAssignment,
     ShippingDetailsResponse,
 )
 from app.modules.vehicles.models import Vehicle
+from app.services.notification_service import notification_service
 from app.services.orders.status_history import status_history_service
+from app.services.payment_notifications import send_payment_confirmation_email
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
@@ -49,7 +59,8 @@ async def get_assignable_orders(
 
         if user is None or vehicle is None:
             logger.warning(
-                "Skipping assignable order with missing relations order_id=%s user_id=%s vehicle_id=%s",
+                "Skipping assignable order with missing relations order_id=%s "
+                "user_id=%s vehicle_id=%s",
                 order.id,
                 order.user_id,
                 order.vehicle_id,
@@ -74,6 +85,200 @@ async def get_assignable_orders(
         )
 
     return items
+
+
+@router.get("/pending-payments", response_model=list[AssignableOrderItem])
+async def get_pending_payment_orders(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """List orders awaiting payment confirmation."""
+    _ = current_user
+    orders = (
+        db.query(Order)
+        .filter(Order.status == OrderStatus.CREATED)
+        .filter(Order.payment_status != OrderPaymentStatus.COMPLETED)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    items: list[AssignableOrderItem] = []
+    for order in orders:
+        user = db.query(User).filter(User.id == order.user_id).first()
+        vehicle = db.query(Vehicle).filter(Vehicle.id == order.vehicle_id).first()
+
+        if user is None or vehicle is None:
+            logger.warning(
+                "Skipping pending payment order with missing relations order_id=%s "
+                "user_id=%s vehicle_id=%s",
+                order.id,
+                order.user_id,
+                order.vehicle_id,
+            )
+            continue
+
+        items.append(
+            AssignableOrderItem(
+                id=order.id,
+                user_id=order.user_id,
+                vehicle_id=order.vehicle_id,
+                customer_name=user.name or user.email,
+                customer_email=user.email,
+                vehicle_label=f"{vehicle.make} {vehicle.model} ({vehicle.year})",
+                status=order.status.value,
+                payment_status=order.payment_status.value,
+                total_cost_lkr=(
+                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
+                ),
+                created_at=order.created_at,
+            )
+        )
+
+    return items
+
+
+@router.post("/{order_id}/confirm-payment", response_model=AssignableOrderItem)
+async def confirm_payment_for_order(
+    order_id: str,
+    request: Request,
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Manually confirm payment for an order (admin action)."""
+    _ = current_user
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order {order_id} not found",
+        )
+
+    if order.status == OrderStatus.CANCELLED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot confirm payment for a cancelled order",
+        )
+
+    if order.status not in {OrderStatus.CREATED, OrderStatus.PAYMENT_CONFIRMED}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Order status must be CREATED or PAYMENT_CONFIRMED. " f"Current: {order.status}"
+            ),
+        )
+
+    if (
+        order.payment_status == OrderPaymentStatus.COMPLETED
+        and order.status == OrderStatus.PAYMENT_CONFIRMED
+    ):
+        user = db.query(User).filter(User.id == order.user_id).first()
+        vehicle = db.query(Vehicle).filter(Vehicle.id == order.vehicle_id).first()
+        if user and vehicle:
+            return AssignableOrderItem(
+                id=order.id,
+                user_id=order.user_id,
+                vehicle_id=order.vehicle_id,
+                customer_name=user.name or user.email,
+                customer_email=user.email,
+                vehicle_label=f"{vehicle.make} {vehicle.model} ({vehicle.year})",
+                status=order.status.value,
+                payment_status=order.payment_status.value,
+                total_cost_lkr=(
+                    float(order.total_cost_lkr) if order.total_cost_lkr is not None else None
+                ),
+                created_at=order.created_at,
+            )
+
+    if order.total_cost_lkr is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order total is missing; cannot confirm payment",
+        )
+
+    payment = (
+        db.query(Payment)
+        .filter(Payment.order_id == order.id)
+        .order_by(Payment.created_at.desc())
+        .first()
+    )
+    if not payment:
+        payment = Payment(
+            order_id=order.id,
+            user_id=order.user_id,
+            idempotency_key=f"admin-manual-{uuid4()}",
+            amount=order.total_cost_lkr,
+            currency="LKR",
+            status=PaymentStatus.COMPLETED,
+            payment_method="ADMIN_MANUAL",
+            completed_at=datetime.utcnow(),
+        )
+        db.add(payment)
+    else:
+        payment.status = PaymentStatus.COMPLETED
+        payment.payment_method = payment.payment_method or "ADMIN_MANUAL"
+        payment.completed_at = datetime.utcnow()
+
+    old_status = order.status
+    order.payment_status = OrderPaymentStatus.COMPLETED
+    if order.status != OrderStatus.PAYMENT_CONFIRMED:
+        order.status = OrderStatus.PAYMENT_CONFIRMED
+        status_history_service.create_history_entry(
+            db=db,
+            order=order,
+            from_status=old_status,
+            to_status=OrderStatus.PAYMENT_CONFIRMED,
+            changed_by=current_user,
+            notes="Payment confirmed by admin",
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+
+    db.commit()
+    db.refresh(order)
+    db.refresh(payment)
+
+    if order.status == OrderStatus.PAYMENT_CONFIRMED and old_status != order.status:
+        try:
+            await send_status_change_notification(
+                order=order,
+                old_status=old_status,
+                new_status=OrderStatus.PAYMENT_CONFIRMED,
+            )
+        except Exception:
+            logger.exception(
+                "Status change notification failed for payment confirmation order_id=%s",
+                order.id,
+            )
+
+    try:
+        await send_payment_confirmation_email(payment, order)
+    except Exception:
+        logger.exception(
+            "Payment confirmation email failed for order_id=%s payment_id=%s",
+            order.id,
+            payment.id,
+        )
+
+    user = db.query(User).filter(User.id == order.user_id).first()
+    vehicle = db.query(Vehicle).filter(Vehicle.id == order.vehicle_id).first()
+    if not user or not vehicle:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Order relations missing after confirmation",
+        )
+
+    return AssignableOrderItem(
+        id=order.id,
+        user_id=order.user_id,
+        vehicle_id=order.vehicle_id,
+        customer_name=user.name or user.email,
+        customer_email=user.email,
+        vehicle_label=f"{vehicle.make} {vehicle.model} ({vehicle.year})",
+        status=order.status.value,
+        payment_status=order.payment_status.value,
+        total_cost_lkr=(float(order.total_cost_lkr) if order.total_cost_lkr is not None else None),
+        created_at=order.created_at,
+    )
 
 
 @router.post("/{order_id}/assign", response_model=ShippingDetailsResponse)
@@ -106,7 +311,7 @@ async def assign_exporter_to_order(
     if order.status != OrderStatus.PAYMENT_CONFIRMED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order must be in PAYMENT_CONFIRMED status. Current: {order.status}",
+            detail=("Order must be in PAYMENT_CONFIRMED status. " f"Current: {order.status}"),
         )
 
     existing_shipment = (
@@ -133,7 +338,7 @@ async def assign_exporter_to_order(
     if exporter.role != Role.EXPORTER:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"User {exporter.email} is not an exporter. Role: {exporter.role}",
+            detail=(f"User {exporter.email} is not an exporter. " f"Role: {exporter.role}"),
         )
 
     shipment = ShipmentDetails(order_id=order.id, assigned_exporter_id=exporter.id)
@@ -203,9 +408,153 @@ async def get_all_shipments(
     }
 
 
+@router.get("/pending", response_model=list[ShippingDetailsResponse])
+async def get_pending_shipments(
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Get shipments that are ready for admin approval (CD-73.1)."""
+    _ = current_user
+    shipments = (
+        db.query(ShipmentDetails)
+        .filter(ShipmentDetails.submitted_at.isnot(None))
+        .filter(ShipmentDetails.documents_uploaded.is_(True))
+        .filter(ShipmentDetails.approved.is_(False))
+        .filter(ShipmentDetails.status == ShipmentStatus.AWAITING_ADMIN_APPROVAL)
+        .order_by(ShipmentDetails.submitted_at.asc())
+        .all()
+    )
+    return shipments
+
+
+@router.post("/{shipment_id}/approve", response_model=ShippingDetailsResponse)
+async def approve_shipment(
+    shipment_id: UUID,
+    request: Request,
+    current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
+    db: Session = Depends(get_db),
+):
+    """Approve shipment and update order status (CD-73.2 - CD-73.4)."""
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment {shipment_id} not found",
+        )
+
+    if shipment.approved:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipment already approved",
+        )
+
+    if shipment.submitted_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipping details have not been submitted",
+        )
+
+    if not shipment.documents_uploaded:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Shipping documents have not been uploaded",
+        )
+
+    missing_docs = _get_missing_required_documents(shipment)
+    if missing_docs:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Missing required documents: {', '.join(missing_docs)}",
+        )
+
+    order = shipment.order
+    if order is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order for shipment {shipment_id} not found",
+        )
+
+    shipment.approved = True
+    shipment.admin_approved_at = datetime.utcnow()
+    shipment.admin_approved_by = current_user.id
+    shipment.status = ShipmentStatus.CONFIRMED_SHIPPED
+    shipment.updated_at = datetime.utcnow()
+
+    old_status = order.status
+    order.status = OrderStatus.SHIPPED
+
+    status_history_service.create_history_entry(
+        db=db,
+        order=order,
+        from_status=old_status,
+        to_status=OrderStatus.SHIPPED,
+        changed_by=current_user,
+        notes="Shipment approved by admin",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    db.commit()
+    db.refresh(shipment)
+
+    try:
+        await send_status_change_notification(order, old_status, OrderStatus.SHIPPED)
+    except Exception:
+        logger.exception(
+            "Failed to send customer shipment notification for order_id=%s",
+            order.id,
+        )
+
+    exporter = getattr(shipment, "exporter", None)
+    exporter_email = getattr(exporter, "email", None)
+    exporter_name = exporter.name if exporter and exporter.name else "Exporter"
+    if exporter_email:
+        eta_label = (
+            shipment.estimated_arrival_date.strftime("%Y-%m-%d")
+            if shipment.estimated_arrival_date
+            else "TBD"
+        )
+        try:
+            await notification_service._enqueue_template(
+                to_email=exporter_email,
+                subject=f"Shipment Approved for Order #{order.id}",
+                template_name="status_change.html",
+                context={
+                    "user_name": exporter_name,
+                    "order_id": str(order.id),
+                    "new_status": "Shipment Approved",
+                    "status_message": (
+                        "Shipment approved by admin. "
+                        f"Vessel: {shipment.vessel_name or 'TBD'}, ETA: {eta_label}."
+                    ),
+                },
+                priority=4,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to send exporter shipment approval for order_id=%s",
+                order.id,
+            )
+    return shipment
+
+
+def _get_missing_required_documents(shipment: ShipmentDetails) -> list[str]:
+    required_types = {
+        DocumentType.BILL_OF_LADING,
+        DocumentType.COMMERCIAL_INVOICE,
+        DocumentType.PACKING_LIST,
+        DocumentType.EXPORT_CERTIFICATE,
+    }
+    uploaded_types = {doc.document_type for doc in shipment.documents}
+    if DocumentType.BILL_OF_LANDING in uploaded_types:
+        uploaded_types.add(DocumentType.BILL_OF_LADING)
+    missing = required_types - uploaded_types
+    return [doc_type.value for doc_type in sorted(missing, key=lambda item: item.value)]
+
+
 @router.get("/{shipment_id}", response_model=ShippingDetailsResponse)
 async def get_shipment_details(
-    shipment_id: str,
+    shipment_id: UUID,
     current_user: User = Depends(require_permission(Permission.MANAGE_ORDERS)),
     db: Session = Depends(get_db),
 ):

@@ -11,180 +11,387 @@ import {
   ShieldCheck,
   TrendingUp,
   CheckCircle2,
-  Terminal,
+  Ship,
+  ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useLogout } from "@/lib/hooks/useLogout";
+import apiClient from "@/lib/api-client";
+import { normalizeRole } from "@/lib/roles";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
+import { useRef, useEffect, useState } from "react";
 
 /**
- * Dashboard Page - Exact homepage template
+ * Dashboard Page - Exact homepage template with enhanced interactivity
  */
 export default function DashboardPage() {
   const { user } = useAppSelector((state) => state.auth);
-  const { logout, isLoading } = useLogout();
+  const role = normalizeRole(user?.role);
+  const showExporterEntry = role === "EXPORTER" || role === "ADMIN";
+  const showShippingTools = role === "EXPORTER" || role === "ADMIN";
+
+  const heroRef = useRef<HTMLElement | null>(null);
+  const heroRafRef = useRef<number | null>(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    total: 0,
+    active: 0,
+    completed: 0,
+    avgValue: null as number | null,
+  });
+
+  const handleHeroMove = (event: React.MouseEvent<HTMLElement>) => {
+    const node = heroRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    if (heroRafRef.current !== null) {
+      cancelAnimationFrame(heroRafRef.current);
+    }
+    heroRafRef.current = requestAnimationFrame(() => {
+      node.style.setProperty("--mx", `${x}%`);
+      node.style.setProperty("--my", `${y}%`);
+    });
+  };
+
+  const resetHeroSpotlight = () => {
+    const node = heroRef.current;
+    if (!node) return;
+    node.style.setProperty("--mx", "50%");
+    node.style.setProperty("--my", "20%");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (heroRafRef.current !== null) {
+        cancelAnimationFrame(heroRafRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboardStats = async () => {
+      try {
+        const { data } = await apiClient.get<
+          Array<{
+            status: string;
+            total_cost_lkr: number | null;
+          }>
+        >("/orders");
+
+        if (!mounted) return;
+
+        const total = data.length;
+        const active = data.filter(
+          (order) => !["DELIVERED", "CANCELLED"].includes(order.status),
+        ).length;
+        const completed = data.filter(
+          (order) => order.status === "DELIVERED",
+        ).length;
+        const avgValue =
+          total === 0
+            ? null
+            : Math.round(
+                data.reduce(
+                  (sum, order) => sum + (order.total_cost_lkr ?? 0),
+                  0,
+                ) / total,
+              );
+
+        setDashboardStats({
+          total,
+          active,
+          completed,
+          avgValue,
+        });
+      } catch {
+        // Keep safe defaults when stats cannot be loaded.
+      }
+    };
+
+    void loadDashboardStats();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const quickActions = [
+    {
+      label: "Upload Pending Docs",
+      detail: "Finish clearance paperwork first",
+      href: "/dashboard/documents",
+      icon: FileText,
+      toneClass:
+        "border-[#62929e]/45 bg-gradient-to-br from-[#62929e]/25 to-[#62929e]/8 hover:border-[#62929e]/70",
+    },
+    showShippingTools
+      ? {
+          label: "Plan Delivery Route",
+          detail: "Set shipment details and destination",
+          href: "/dashboard/shipping",
+          icon: Ship,
+          toneClass:
+            "border-[#7d8fa3]/45 bg-gradient-to-br from-[#7d8fa3]/25 to-[#7d8fa3]/8 hover:border-[#7d8fa3]/70",
+        }
+      : {
+          label: "Track Active Orders",
+          detail: "Review progress and next milestones",
+          href: "/dashboard/orders",
+          icon: Package,
+          toneClass:
+            "border-[#7d8fa3]/45 bg-gradient-to-br from-[#7d8fa3]/25 to-[#7d8fa3]/8 hover:border-[#7d8fa3]/70",
+        },
+    {
+      label: "Complete Profile Setup",
+      detail: "Confirm account and identity details",
+      href: "/dashboard/profile",
+      icon: User,
+      toneClass:
+        "border-[#c18f55]/45 bg-gradient-to-br from-[#c18f55]/25 to-[#c18f55]/8 hover:border-[#c18f55]/70",
+    },
+  ];
+
+  const modules = [
+    {
+      title: "Orders",
+      href: "/dashboard/orders",
+      icon: Package,
+      code: "ORD-SYS",
+      description: "View payments, milestones, and shipment readiness.",
+      status: "3 Milestones",
+      cta: "Review Timeline",
+      statusClass:
+        "border-[#62929e]/35 bg-[#62929e]/12 text-[#2f5862] dark:text-[#8fdae8]",
+    },
+    {
+      title: "Vehicles",
+      href: "/dashboard/vehicles",
+      icon: Car,
+      code: "VEH-TRK",
+      description: "Search inventory and shortlist eligible imports.",
+      status: "Inventory Live",
+      cta: "Explore Catalog",
+      statusClass:
+        "border-[#6b8fa9]/35 bg-[#6b8fa9]/14 text-[#36536a] dark:text-[#b6d5eb]",
+    },
+    {
+      title: "Profile",
+      href: "/dashboard/profile",
+      icon: User,
+      code: "USR-ACC",
+      description: "Manage account details and identity information.",
+      status: "2 Fields Pending",
+      cta: "Finish Profile",
+      statusClass:
+        "border-[#c18f55]/35 bg-[#c18f55]/15 text-[#6b4a23] dark:text-[#f0cf9e]",
+    },
+    {
+      title: "KYC",
+      href: "/dashboard/kyc",
+      icon: ShieldCheck,
+      code: "KYC-ID",
+      description: "Submit documents and monitor verification status.",
+      status: "Verification Needed",
+      cta: "Start Verification",
+      statusClass:
+        "border-[#b8778b]/35 bg-[#b8778b]/14 text-[#6f3f50] dark:text-[#f0bece]",
+    },
+    ...(showShippingTools
+      ? [
+          {
+            title: "Shipping",
+            href: "/dashboard/shipping",
+            icon: Package,
+            code: "SHP-SUB",
+            description: "Provide delivery details and shipping instructions.",
+            status: "No Route Confirmed",
+            cta: "Set Delivery Plan",
+            statusClass:
+              "border-[#4d8f8a]/35 bg-[#4d8f8a]/14 text-[#2f5e5a] dark:text-[#93d6d1]",
+          },
+        ]
+      : []),
+    {
+      title: "Documents",
+      href: "/dashboard/documents",
+      icon: FileText,
+      code: "DOC-MGT",
+      description: "Upload and review required clearance paperwork.",
+      status: "1 File Missing",
+      cta: "Upload Documents",
+      statusClass:
+        "border-[#7182b5]/35 bg-[#7182b5]/14 text-[#3a4870] dark:text-[#c1cbf0]",
+    },
+  ];
+
+  const moduleCount = modules.length;
+  const useCenteredModuleLayout = moduleCount <= 5;
+  const moduleGridClass = useCenteredModuleLayout
+    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+    : "grid-cols-1 md:grid-cols-3 lg:grid-cols-4";
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#050505] text-white selection:bg-[#FE7743] selection:text-black font-sans flex flex-col">
-        {/* --- NAVIGATION (Same as Homepage) --- */}
-        <nav className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-bold text-xl tracking-tighter flex items-center gap-2"
-            >
-              <div className="w-8 h-8 bg-[#FE7743]/10 border border-[#FE7743]/20 rounded-md flex items-center justify-center">
-                <Terminal className="w-4 h-4 text-[#FE7743]" />
-              </div>
-              ClearDrive<span className="text-[#FE7743]">.lk</span>
-            </Link>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
-              <Link
-                href="/dashboard"
-                className="text-white transition-colors flex items-center gap-2"
-              >
-                Dashboard{" "}
-                <Badge
-                  variant="outline"
-                  className="text-[10px] border-[#FE7743]/20 text-[#FE7743] h-4 px-1"
-                >
-                  ACTIVE
-                </Badge>
-              </Link>
-              <Link
-                href="/dashboard/orders"
-                className="hover:text-white transition-colors"
-              >
-                Orders
-              </Link>
-              <Link
-                href="/dashboard/vehicles"
-                className="hover:text-white transition-colors"
-              >
-                Vehicles
-              </Link>
-              <Link
-                href="/dashboard/kyc"
-                className="hover:text-white transition-colors"
-              >
-                KYC
-              </Link>
-              <Link
-                href="/dashboard/shipping"
-                className="hover:text-white transition-colors"
-              >
-                Shipping
-              </Link>
-              <Link
-                href="/dashboard/profile"
-                className="hover:text-white transition-colors"
-              >
-                Profile
-              </Link>
-            </div>
-            <Button
-              onClick={logout}
-              disabled={isLoading}
-              className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
-            >
-              {isLoading ? "Signing Out..." : "Sign Out"}
-            </Button>
-          </div>
-        </nav>
+      <div className="min-h-screen bg-[#fdfdff] dark:bg-[#0f1417] text-[#1f2937] dark:text-[#edf2f7] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+        <CustomerDashboardNav />
 
-        {/* Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#FE7743]/5 rounded-[100%] blur-[120px] pointer-events-none" />
+        {/* Content Section with Interactive Spotlight */}
+        <section
+          ref={heroRef}
+          onMouseMove={handleHeroMove}
+          onMouseLeave={resetHeroSpotlight}
+          className="relative pt-20 pb-20 overflow-hidden flex-1 flex flex-col group"
+        >
+          {/* Spotlight & Background Effects */}
+          <div className="hero-spotlight absolute inset-0 pointer-events-none" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+          <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-[#62929e]/5 rounded-[100%] blur-[120px] pointer-events-none animate-float-slower transition-transform duration-500 group-hover:scale-[1.02]" />
 
-        {/* Content */}
-        <section className="relative pt-20 pb-20 px-6 overflow-hidden flex-1">
-          <div className="relative z-10 max-w-7xl mx-auto">
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#FE7743] mb-8">
+          <div className="relative z-10 cd-container">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#c6c5b9]/20 border border-[#546a7b]/65 text-xs font-mono text-[#62929e] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 shadow-sm backdrop-blur-sm">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FE7743] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FE7743]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#62929e] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#62929e]"></span>
               </span>
               DASHBOARD TERMINAL :: {new Date().toLocaleDateString()}
             </div>
 
-            <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9] mb-6">
-              WELCOME{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FE7743] to-orange-200">
-                {user?.name?.toUpperCase() || "USER"}.
+            <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-[#1f2937] dark:text-[#edf2f7] leading-[0.9] mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+              <span className="block">Vehicle Auction</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9] animate-shimmer bg-[size:200%_auto]">
+                Operations Dashboard
               </span>
             </h1>
 
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mb-12">
-              Your personal import terminal dashboard. Monitor clearances, track
-              shipments, and manage orders in real-time.
+            <p className="text-lg md:text-xl text-[#42596b] dark:text-[#bdcad4] max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200">
+              Welcome back, {user?.name || "Customer"}. Review your selected
+              vehicles, follow order and clearance updates, and track delivery
+              progress from one place.
             </p>
 
-            {/* Quick Links Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-              {[
-                {
-                  title: "Orders",
-                  href: "/dashboard/orders",
-                  icon: Package,
-                  code: "ORD-SYS",
-                },
-                {
-                  title: "Vehicles",
-                  href: "/dashboard/vehicles",
-                  icon: Car,
-                  code: "VEH-TRK",
-                },
-                {
-                  title: "Profile",
-                  href: "/dashboard/profile",
-                  icon: User,
-                  code: "USR-ACC",
-                },
-                {
-                  title: "KYC",
-                  href: "/dashboard/kyc",
-                  icon: ShieldCheck,
-                  code: "KYC-ID",
-                },
-                {
-                  title: "Shipping",
-                  href: "/dashboard/shipping",
-                  icon: Package,
-                  code: "SHP-SUB",
-                },
-                {
-                  title: "Documents",
-                  href: "/dashboard/documents",
-                  icon: FileText,
-                  code: "DOC-MGT",
-                },
-              ].map((item, i) => {
+            <div className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-250">
+              {quickActions.map((action) => {
+                const ActionIcon = action.icon;
+                return (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className={`group rounded-xl border px-4 py-3 backdrop-blur-sm shadow-[0_6px_18px_rgba(0,0,0,0.06)] transition-all dark:shadow-[0_8px_20px_rgba(0,0,0,0.28)] ${action.toneClass}`}
+                  >
+                    <span className="flex items-start justify-between gap-3">
+                      <span>
+                        <span className="block text-sm font-semibold text-[#1f2937] dark:text-[#edf2f7]">
+                          {action.label}
+                        </span>
+                        <span className="mt-1 block text-xs text-[#4f6576] dark:text-[#b6c4cf]">
+                          {action.detail}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#fdfdff]/35 bg-[#fdfdff]/35 dark:bg-[#0f1417]/30">
+                        <ActionIcon className="h-4 w-4 text-[#1f2937] dark:text-[#e6edf3]" />
+                      </span>
+                    </span>
+                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] font-semibold text-[#1f2937] dark:text-[#e6edf3]">
+                      Continue
+                      <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {showExporterEntry && (
+              <div className="mb-10 flex flex-wrap items-center gap-4 animate-in fade-in duration-1000 delay-300">
+                <Button
+                  asChild
+                  className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold gap-2 shadow-[0_8px_20px_rgba(98,146,158,0.25)] hover:shadow-[0_12px_28px_rgba(98,146,158,0.4)] transition-all"
+                >
+                  <Link href="/exporter">
+                    <Ship className="w-4 h-4" />
+                    Open Exporter Terminal
+                  </Link>
+                </Button>
+                <Badge
+                  variant="outline"
+                  className="border-[#62929e]/30 text-[#62929e] font-mono bg-[#62929e]/5"
+                >
+                  EXPORTER ACCESS
+                </Badge>
+              </div>
+            )}
+
+            {/* Quick Links Grid - High Interactivity */}
+            <div
+              className={`grid ${moduleGridClass} gap-6 mb-16 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300`}
+            >
+              {modules.map((item, i) => {
                 const Icon = item.icon;
+                let modulePlacementClass = "";
+
+                if (useCenteredModuleLayout) {
+                  modulePlacementClass = "xl:col-span-2";
+                  const remainder = moduleCount % 3;
+                  const isLast = i === moduleCount - 1;
+                  const isSecondLast = i === moduleCount - 2;
+
+                  if (remainder === 2 && isSecondLast) {
+                    modulePlacementClass += " xl:col-start-2";
+                  }
+                  if (remainder === 2 && isLast) {
+                    modulePlacementClass += " xl:col-start-4";
+                  }
+                  if (remainder === 1 && isLast) {
+                    modulePlacementClass += " xl:col-start-3";
+                  }
+                }
+
                 return (
                   <Link
                     key={i}
                     href={item.href}
-                    className="group relative h-72 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02] p-6 flex flex-col justify-between overflow-hidden hover:border-[#FE7743]/50 transition-all cursor-pointer"
+                    className={`group relative min-h-[17rem] rounded-2xl border border-[#546a7b]/70 bg-[linear-gradient(140deg,rgba(253,253,255,0.85),rgba(198,197,185,0.35))] dark:bg-[linear-gradient(140deg,rgba(28,38,44,0.92),rgba(15,20,23,0.85))] p-6 flex flex-col overflow-hidden transition-all duration-300 cursor-pointer hover-tilt shadow-[0_12px_28px_rgba(0,0,0,0.08)] hover:shadow-[0_26px_60px_rgba(15,23,42,0.24)] hover:border-[#62929e]/60 z-10 ${modulePlacementClass}`}
                   >
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-500" />
-                    <div className="relative z-10 flex justify-between items-start">
-                      <Badge
-                        variant="outline"
-                        className="border-white/20 text-white/50 font-mono text-[10px]"
-                      >
-                        {item.code}
-                      </Badge>
-                      <Icon className="w-8 h-8 text-white/40 group-hover:text-white transition-colors" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.18),transparent_55%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.15),transparent)] animate-shimmer" />
                     </div>
-                    <div className="relative z-10">
-                      <h3 className="text-2xl font-bold text-white group-hover:translate-x-1 transition-transform">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 mt-1 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#FE7743] animate-pulse" />
-                        Live Access
-                      </p>
+
+                    <div className="relative z-10 flex h-full flex-col">
+                      <div className="flex justify-between items-start">
+                        <Badge
+                          variant="outline"
+                          className="border-[#546a7b]/55 dark:border-[#b4c2ce]/40 text-[#2f4a5a] dark:text-[#d7e3ec] font-mono text-[10px] bg-[#fdfdff]/45 dark:bg-[#0f1417]/45 backdrop-blur"
+                        >
+                          {item.code}
+                        </Badge>
+                        <div className="h-10 w-10 rounded-xl border border-[#546a7b]/50 dark:border-[#93a7b8]/45 bg-[#fdfdff]/55 dark:bg-[#0f1417]/45 backdrop-blur flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.05)] group-hover:border-[#62929e]/60 transition-colors">
+                          <Icon className="w-5 h-5 text-[#2a4656] dark:text-[#e6eef5] group-hover:text-[#1c2f3b] dark:group-hover:text-[#f2f7fb] transition-colors" />
+                        </div>
+                      </div>
+
+                      <div className="mt-6 flex flex-1 flex-col">
+                        <h3 className="text-2xl font-bold text-[#1f2937] dark:text-[#f1f5f9] group-hover:translate-x-1 transition-transform">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 min-h-[4.5rem] max-w-[30ch] text-sm leading-relaxed text-[#244050] dark:text-[#dde6ed]">
+                          {item.description}
+                        </p>
+                        <div
+                          className={`mt-3 inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.12em] font-semibold shadow-[0_4px_12px_rgba(15,23,42,0.08)] ${item.statusClass}`}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current/80 animate-pulse" />
+                          {item.status}
+                        </div>
+                        <div className="mt-auto pt-5 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-semibold text-[#2f5f73] dark:text-[#b4e9f4]">
+                          {item.cta}
+                          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 );
@@ -192,49 +399,54 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats Bar */}
-            <div className="border-b border-white/10 bg-[#0A0A0A]">
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+            <div className="border-y border-[#546a7b]/55 dark:border-[#8ea3b4]/35 bg-[#fdfdff] dark:bg-[#111b21] rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.35)] animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
+              <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/5 dark:divide-[#546a7b]/30">
                 {[
                   {
-                    label: "Active Orders",
-                    value: "0",
+                    label: "Total Orders",
+                    value: String(dashboardStats.total),
                     icon: Package,
-                    sub: "In Progress",
+                    sub: "All Time",
                   },
                   {
-                    label: "In Transit",
-                    value: "0",
-                    icon: Car,
-                    sub: "En Route",
+                    label: "In Progress",
+                    value: String(dashboardStats.active),
+                    icon: CheckCircle2,
+                    sub: "Active Now",
                   },
                   {
                     label: "Completed",
-                    value: "0",
+                    value: String(dashboardStats.completed),
                     icon: TrendingUp,
-                    sub: "This Month",
+                    sub: "Delivered",
                   },
                   {
-                    label: "Avg. Time",
-                    value: "~14 Days",
-                    icon: CheckCircle2,
-                    sub: "Clearance",
+                    label: "Avg. Value",
+                    value: dashboardStats.avgValue
+                      ? `LKR ${dashboardStats.avgValue.toLocaleString()}`
+                      : "N/A",
+                    icon: Car,
+                    sub: "Per Order",
                   },
                 ].map((stat, i) => (
                   <div
                     key={i}
-                    className="p-8 flex items-start gap-4 group hover:bg-white/5 transition-colors cursor-default"
+                    className="relative p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 group hover-glow bg-transparent transition-all duration-300 cursor-default"
                   >
-                    <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
+                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(98,146,158,0.12),transparent_70%)]" />
+                    </div>
+                    <div className="relative z-10 p-2.5 rounded-xl bg-[#62929e]/10 border border-[#62929e]/20 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] group-hover:scale-110 transition-all shadow-sm">
                       <stat.icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <div className="text-xl font-bold text-white tracking-tight">
+                    <div className="relative z-10">
+                      <div className="text-2xl font-bold text-[#1f2937] dark:text-[#eef3f8] tracking-tight group-hover:text-[#62929e] dark:group-hover:text-[#88d6e4] transition-colors">
                         {stat.value}
                       </div>
-                      <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
+                      <div className="text-[10px] text-[#4f6576] dark:text-[#b4c3cf] font-semibold uppercase tracking-widest mt-0.5">
                         {stat.label}
                       </div>
-                      <div className="text-[10px] text-gray-600 font-mono mt-1">
+                      <div className="text-[9px] text-[#2a3e4b] dark:text-[#d7e2ea] font-mono mt-1 bg-[#c6c5b9]/20 dark:bg-[#2a353d] px-2 py-0.5 rounded-sm w-fit">
                         {stat.sub}
                       </div>
                     </div>
@@ -244,58 +456,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
-
-        {/* Footer (Same as Homepage) */}
-        <footer className="border-t border-white/10 py-16 bg-[#050505]">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="space-y-6">
-              <div className="font-bold text-xl tracking-tighter text-white flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-[#FE7743]" />
-                ClearDrive<span className="text-[#FE7743]">.lk</span>
-              </div>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                The first tech-enabled vehicle import platform in Sri Lanka.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6">Quick Links</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Dashboard
-                </li>
-                <li className="hover:text-[#FE7743] cursor-pointer">Orders</li>
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Vehicles
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6">Company</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  About Us
-                </li>
-                <li className="hover:text-[#FE7743] cursor-pointer">
-                  Terms of Service
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6">Support</h4>
-              <ul className="space-y-3 text-sm text-gray-500">
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" /> Systems
-                  Operational
-                </li>
-                <li>support@cleardrive.lk</li>
-              </ul>
-            </div>
-          </div>
-          <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 font-mono">
-            <p>© 2026 CLEARDRIVE INC. ALL RIGHTS RESERVED.</p>
-            <p>DESIGNED FOR HIGH-FREQUENCY TRADING</p>
-          </div>
-        </footer>
       </div>
     </AuthGuard>
   );

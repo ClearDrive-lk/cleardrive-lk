@@ -60,24 +60,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#050505] relative overflow-hidden font-sans selection:bg-[#FE7743] selection:text-black p-6">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
-      <div className="absolute top-[20%] right-[20%] w-[600px] h-[600px] bg-[#FE7743]/5 rounded-full blur-[120px]" />
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#fdfdff] relative overflow-hidden font-sans selection:bg-[#62929e] selection:text-[#fdfdff] p-6">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px]" />
+      <div className="absolute top-[20%] right-[20%] w-[600px] h-[600px] bg-[#62929e]/5 rounded-full blur-[120px]" />
 
-      <div className="w-full max-w-md bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl shadow-2xl relative z-10">
+      <div className="w-full max-w-md bg-[#fdfdff] border border-[#546a7b]/65 p-8 rounded-2xl shadow-2xl relative z-10">
         <div className="mb-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs text-gray-500 hover:text-white transition-colors font-mono mb-6"
+            className="inline-flex items-center gap-2 text-xs text-[#546a7b] hover:text-[#393d3f] transition-colors font-mono mb-6"
           >
             <ArrowLeft className="w-3 h-3" />
             RETURN HOME
           </Link>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-[#FE7743]" />
+          <h1 className="text-2xl font-bold text-[#393d3f] tracking-tight flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-[#62929e]" />
             Create Account
           </h1>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-sm text-[#546a7b] mt-2">
             Enter your email and password to start registration.
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <Label
               htmlFor="email"
-              className="text-xs font-mono text-gray-400 uppercase"
+              className="text-xs font-mono text-[#546a7b] uppercase"
             >
               Dealer Email
             </Label>
@@ -97,14 +97,14 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="dealer@company.com"
               required
-              className="bg-black/40 border-white/10 text-white placeholder:text-gray-700 focus:border-[#FE7743] focus:ring-1 focus:ring-[#FE7743]/50 h-12 font-mono transition-all"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] placeholder:text-gray-700 focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all"
             />
           </div>
 
           <div className="space-y-2 relative">
             <Label
               htmlFor="password"
-              className="text-xs font-mono text-gray-400 uppercase"
+              className="text-xs font-mono text-[#546a7b] uppercase"
             >
               Password
             </Label>
@@ -114,12 +114,12 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-black/40 border-white/10 text-white focus:border-[#FE7743] focus:ring-1 focus:ring-[#FE7743]/50 h-12 font-mono transition-all pr-12"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all pr-12"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-[38px] text-gray-500 hover:text-white transition-colors"
+              className="absolute right-3 top-[38px] text-[#546a7b] hover:text-[#393d3f] transition-colors"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -133,7 +133,7 @@ export default function RegisterPage() {
           <div className="space-y-2 relative">
             <Label
               htmlFor="confirm-password"
-              className="text-xs font-mono text-gray-400 uppercase"
+              className="text-xs font-mono text-[#546a7b] uppercase"
             >
               Confirm Password
             </Label>
@@ -143,12 +143,12 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="bg-black/40 border-white/10 text-white focus:border-[#FE7743] focus:ring-1 focus:ring-[#FE7743]/50 h-12 font-mono transition-all pr-12"
+              className="bg-[#fdfdff]/40 border-[#546a7b]/65 text-[#393d3f] focus:border-[#62929e] focus:ring-1 focus:ring-[#62929e]/50 h-12 font-mono transition-all pr-12"
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword((v) => !v)}
-              className="absolute right-3 top-[38px] text-gray-500 hover:text-white transition-colors"
+              className="absolute right-3 top-[38px] text-[#546a7b] hover:text-[#393d3f] transition-colors"
               aria-label={
                 showConfirmPassword
                   ? "Hide confirm password"
@@ -168,17 +168,17 @@ export default function RegisterPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#FE7743] hover:bg-[#FE7743]/90 text-black font-bold h-12"
+            className="w-full bg-[#62929e] hover:bg-[#62929e]/90 text-[#fdfdff] font-bold h-12"
           >
             {loading ? <Loader2 className="animate-spin" /> : "Continue to OTP"}
           </Button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-white/5 text-center text-sm text-gray-500">
+        <div className="mt-8 pt-6 border-t border-[#546a7b]/40 text-center text-sm text-[#546a7b]">
           Already registered?{" "}
           <Link
             href="/login"
-            className="text-white hover:text-[#FE7743] font-medium transition-colors"
+            className="text-[#393d3f] hover:text-[#62929e] font-medium transition-colors"
           >
             Sign in
           </Link>

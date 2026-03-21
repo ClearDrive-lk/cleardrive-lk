@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/lib/store/store";
 import { setCredentials } from "@/lib/store/features/auth/authSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  getAccessToken,
+  getPersistAccessPreference,
+  getRefreshToken,
+  removeTokens,
+  saveTokens,
+} from "@/lib/auth";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
 
 /**
  * AuthGuard Component
@@ -13,44 +21,150 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const checkAuth = () => {
+    let isCancelled = false;
+    const checkAuth = async () => {
       // 1. If Redux says we are authenticated, we are good
       if (isAuthenticated) {
-        setIsChecking(false);
+        if (!isCancelled) {
+          setIsChecking(false);
+        }
         return;
       }
 
-      // 2. If Redux checks fail, check for cookie (persistence)
-      const hasCookie = document.cookie.includes("refresh_token=");
+      const accessToken = getAccessToken();
+      const refreshToken = getRefreshToken();
 
-      if (hasCookie) {
-        // Restore session (Hydration)
-        // In a real app, you would fetch /me endpoint here
-        // For now, we restore from what we have or a placeholder
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
+        if (accessToken) {
+          const statusResponse = await fetch(`${baseUrl}/auth/status`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          if (statusResponse.ok) {
+            const data = (await statusResponse.json()) as {
+              authenticated: boolean;
+              user: { id: string; email: string; name: string; role: string };
+            };
+
+            const role = normalizeRole(data.user.role);
+            dispatch(
+              setCredentials({
+                user: {
+                  id: data.user.id,
+                  email: data.user.email,
+                  name: data.user.name || "User",
+                  role,
+                },
+                token: accessToken,
+              }),
+            );
+
+            if (pathname.startsWith("/dashboard")) {
+              const destination = roleHomePath(role);
+              if (destination !== "/dashboard") {
+                router.replace(destination);
+                return;
+              }
+            }
+            if (
+              pathname.startsWith("/exporter") &&
+              role !== "EXPORTER" &&
+              role !== "ADMIN"
+            ) {
+              router.replace(roleHomePath(role));
+              return;
+            }
+            if (!isCancelled) {
+              setIsChecking(false);
+            }
+            return;
+          }
+        }
+
+        if (!refreshToken) {
+          router.push("/login");
+          return;
+        }
+
+        const response = await fetch(`${baseUrl}/auth/refresh`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Session refresh failed");
+        }
+
+        const data = (await response.json()) as {
+          access_token: string;
+          refresh_token: string;
+          user: { id: string; email: string; name: string; role: string };
+        };
+
+        saveTokens(
+          {
+            access_token: data.access_token,
+            refresh_token: data.refresh_token,
+          },
+          { persistAccess: getPersistAccessPreference() },
+        );
+
+        const role = normalizeRole(data.user.role);
         dispatch(
           setCredentials({
             user: {
-              id: "USR-8829-XJ",
-              email: "agent@cleardrive.lk",
-              name: "Agent",
-              role: "admin",
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name || "User",
+              role,
             },
-            token: "restored-session",
+            token: data.access_token,
           }),
         );
-        setIsChecking(false);
-      } else {
-        // No cookie, no state -> Redirect
+
+        if (pathname.startsWith("/dashboard")) {
+          const destination = roleHomePath(role);
+          if (destination !== "/dashboard") {
+            router.replace(destination);
+            return;
+          }
+        }
+        if (
+          pathname.startsWith("/exporter") &&
+          role !== "EXPORTER" &&
+          role !== "ADMIN"
+        ) {
+          router.replace(roleHomePath(role));
+          return;
+        }
+      } catch {
+        removeTokens();
         router.push("/login");
+      } finally {
+        if (!isCancelled) {
+          setIsChecking(false);
+        }
       }
     };
 
-    checkAuth();
-  }, [isAuthenticated, dispatch, router]);
+    void checkAuth();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isAuthenticated, dispatch, router, pathname]);
 
   // Don't render anything while checking to avoid flash
   if (isChecking) {

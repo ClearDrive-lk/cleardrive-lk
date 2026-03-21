@@ -33,7 +33,7 @@ function PaymentCancelContent() {
         <CardContent className="space-y-4">
           {orderId && (
             <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="text-sm text-[#393d3f]">Order ID</p>
               <p className="font-mono font-semibold">{orderId}</p>
             </div>
           )}
@@ -52,19 +52,29 @@ function PaymentCancelContent() {
             >
               Try Again
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard")}
-              className="w-full"
-            >
-              View My Orders
-            </Button>
+            {orderId ? (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/dashboard/orders/${orderId}`)}
+                className="w-full"
+              >
+                View Order Tracking
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard/orders")}
+                className="w-full"
+              >
+                View My Orders
+              </Button>
+            )}
             <Button
               variant="ghost"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/dashboard/orders")}
               className="w-full"
             >
-              Return to Home
+              Go to Orders Dashboard
             </Button>
           </div>
         </CardContent>

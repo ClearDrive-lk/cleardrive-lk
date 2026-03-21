@@ -17,13 +17,15 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 class DocumentType(str, Enum):
     """Shipping document types."""
 
-    # Keep both spellings for backward compatibility across modules/old code paths.
-    BILL_OF_LADING = "BILL_OF_LANDING"
+    BILL_OF_LADING = "BILL_OF_LADING"
     BILL_OF_LANDING = "BILL_OF_LANDING"
+    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
     PACKING_LIST = "PACKING_LIST"
     EXPORT_CERTIFICATE = "EXPORT_CERTIFICATE"
-    COMMERCIAL_INVOICE = "COMMERCIAL_INVOICE"
     INSURANCE_CERTIFICATE = "INSURANCE_CERTIFICATE"
+    CERTIFICATE_OF_ORIGIN = "CERTIFICATE_OF_ORIGIN"
+    CONTAINER_PHOTO = "CONTAINER_PHOTO"
+    OTHER = "OTHER"
 
 
 # ============== SHIPMENT SCHEMAS ==============
@@ -96,14 +98,18 @@ class ShippingDetailsResponse(BaseModel):
     assigned_exporter_id: Optional[UUID] = None  # Alias for backward compatibility
     vessel_name: Optional[str] = None
     vessel_registration: Optional[str] = None
+    voyage_number: Optional[str] = None
     departure_port: Optional[str] = None
     arrival_port: Optional[str] = None
+    departure_date: Optional[date] = None
     estimated_departure_date: Optional[date] = None
     actual_departure_date: Optional[date] = None
     estimated_arrival_date: Optional[date] = None
     actual_arrival_date: Optional[date] = None
     container_number: Optional[str] = None
     bill_of_landing_number: Optional[str] = None
+    seal_number: Optional[str] = None
+    tracking_number: Optional[str] = None
     documents_uploaded: bool = False
     approved: bool = False
     status: Optional[str] = None

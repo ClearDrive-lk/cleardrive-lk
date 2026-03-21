@@ -4,22 +4,22 @@ Author: Parindra Gallage
 Story: CD-33.1, CD-33.2
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
 from datetime import datetime, timezone
+from typing import List
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_admin
-from app.modules.finance.models import LetterOfCredit, LCStatus
+from app.core.dependencies import get_current_finance_partner, get_current_user
+from app.modules.auth.models import User
+from app.modules.finance.models import LCStatus, LetterOfCredit
 from app.modules.finance.schemas import (
-    LCCreateRequest,
     LCApproveRequest,
+    LCCreateRequest,
     LCRejectRequest,
     LCResponse,
 )
 from app.modules.orders.models import Order
-from app.modules.auth.models import User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/lc", tags=["letter-of-credit"])
 
@@ -86,7 +86,7 @@ async def request_letter_of_credit(
 async def approve_letter_of_credit(
     lc_id: str,
     request: LCApproveRequest,
-    current_admin: User = Depends(get_current_admin),
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
     db: Session = Depends(get_db),
 ):
     """
@@ -114,7 +114,7 @@ async def approve_letter_of_credit(
     lc.issue_date = request.issue_date
     lc.expiry_date = request.expiry_date
     lc.admin_notes = request.admin_notes
-    lc.reviewed_by = current_admin.id
+    lc.reviewed_by = current_finance_reviewer.id
     lc.reviewed_at = datetime.now(timezone.utc)
 
     db.commit()
@@ -131,7 +131,7 @@ async def approve_letter_of_credit(
 async def reject_letter_of_credit(
     lc_id: str,
     request: LCRejectRequest,
-    current_admin: User = Depends(get_current_admin),
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
     db: Session = Depends(get_db),
 ):
     """
@@ -153,7 +153,7 @@ async def reject_letter_of_credit(
     # Reject LC
     lc.status = LCStatus.REJECTED
     lc.rejection_reason = request.rejection_reason
-    lc.reviewed_by = current_admin.id
+    lc.reviewed_by = current_finance_reviewer.id
     lc.reviewed_at = datetime.utcnow()
 
     db.commit()
@@ -168,7 +168,8 @@ async def reject_letter_of_credit(
 
 @router.get("/pending", response_model=List[LCResponse])
 async def get_pending_lc_requests(
-    current_admin: User = Depends(get_current_admin), db: Session = Depends(get_db)
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
+    db: Session = Depends(get_db),
 ):
     """
     Get all pending LC requests (admin only).
@@ -176,6 +177,7 @@ async def get_pending_lc_requests(
     **Story**: CD-33.7
     """
 
+    _ = current_finance_reviewer
     lcs = db.query(LetterOfCredit).filter(LetterOfCredit.status == LCStatus.PENDING).all()
 
     return lcs

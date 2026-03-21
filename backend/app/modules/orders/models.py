@@ -13,10 +13,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.modules.auth.models import User
+    from app.modules.finance.models import (
+        LetterOfCredit,
+        VehicleFinance,
+        VehicleInsurance,
+    )
     from app.modules.payments.models import Payment
     from app.modules.shipping.models import ShipmentDetails
     from app.modules.vehicles.models import Vehicle
-    from app.modules.finance.models import LetterOfCredit, VehicleFinance, VehicleInsurance
 
 
 class OrderStatus(str, enum.Enum):

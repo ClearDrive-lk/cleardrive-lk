@@ -14,11 +14,11 @@ export interface Vehicle {
   // New fields for detailed view & cards
   lotNumber: string;
   grade: string;
-  estimatedLandedCostLKR: number;
+  estimatedLandedCostLKR?: number;
   priceJPY: number;
   trim: string;
   chassisCode: string;
-  engineCC: number;
+  engineCC: number | null;
   endTime: string | Date;
   firstRegistrationDate?: string | Date;
   color?: string;

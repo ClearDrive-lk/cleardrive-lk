@@ -15,7 +15,7 @@ export default function LogoutButton() {
     <Button
       onClick={logout}
       disabled={isLoading}
-      className="min-w-[120px] bg-[#D65A31] hover:bg-[#c14a28] text-white transition-colors"
+      className="min-w-[120px] bg-[#D65A31] hover:bg-[#c14a28] text-[#393d3f] transition-colors"
     >
       {isLoading ? (
         <>

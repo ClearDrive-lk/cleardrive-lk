@@ -69,6 +69,9 @@ export default function DashboardKycPage() {
     nic_back: null,
     selfie: null,
   });
+  const isResubmittableRejected = status?.status === "REJECTED";
+  const isSubmissionLocked =
+    Boolean(status?.has_kyc) && !isResubmittableRejected;
 
   useEffect(() => {
     const loadKyc = async () => {
@@ -340,7 +343,7 @@ export default function DashboardKycPage() {
                         }))
                       }
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
-                      disabled={Boolean(status?.has_kyc)}
+                      disabled={isSubmissionLocked}
                     />
                   </div>
                   <div>
@@ -356,7 +359,7 @@ export default function DashboardKycPage() {
                         }))
                       }
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
-                      disabled={Boolean(status?.has_kyc)}
+                      disabled={isSubmissionLocked}
                     />
                   </div>
                   <div>
@@ -373,7 +376,7 @@ export default function DashboardKycPage() {
                         }))
                       }
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
-                      disabled={Boolean(status?.has_kyc)}
+                      disabled={isSubmissionLocked}
                     />
                   </div>
                   <div>
@@ -389,7 +392,7 @@ export default function DashboardKycPage() {
                         }))
                       }
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
-                      disabled={Boolean(status?.has_kyc)}
+                      disabled={isSubmissionLocked}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -406,7 +409,7 @@ export default function DashboardKycPage() {
                         }))
                       }
                       className="w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white"
-                      disabled={Boolean(status?.has_kyc)}
+                      disabled={isSubmissionLocked}
                     />
                   </div>
                 </div>
@@ -431,7 +434,7 @@ export default function DashboardKycPage() {
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
                         className="mt-4 block w-full text-xs text-gray-300"
-                        disabled={Boolean(status?.has_kyc)}
+                        disabled={isSubmissionLocked}
                         onChange={(event) =>
                           setFiles((current) => ({
                             ...current,
@@ -460,15 +463,17 @@ export default function DashboardKycPage() {
                 <div className="mt-6">
                   <Button
                     onClick={handleUpload}
-                    disabled={submitting || Boolean(status?.has_kyc)}
+                    disabled={submitting || isSubmissionLocked}
                     className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold"
                   >
                     <Upload className="mr-2 h-4 w-4" />
                     {submitting
                       ? "Submitting..."
-                      : status?.has_kyc
-                        ? "Already Submitted"
-                        : "Submit KYC"}
+                      : isResubmittableRejected
+                        ? "Resubmit KYC"
+                        : status?.has_kyc
+                          ? "Already Submitted"
+                          : "Submit KYC"}
                   </Button>
                 </div>
               </section>

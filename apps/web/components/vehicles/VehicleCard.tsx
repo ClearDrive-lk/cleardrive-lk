@@ -17,17 +17,25 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const formatJPY = new Intl.NumberFormat("ja-JP", {
     style: "currency",
     currency: "JPY",
-    maximumSignificantDigits: 3,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format;
   const formatLKR = new Intl.NumberFormat("en-LK", {
     style: "currency",
     currency: "LKR",
-    maximumSignificantDigits: 3,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format;
   const formatKm = new Intl.NumberFormat("en-US").format;
 
+  const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
+  const hasEstimate =
+    Number.isFinite(vehicle.estimatedLandedCostLKR) &&
+    (vehicle.estimatedLandedCostLKR ?? 0) > 0;
+
   // Mini Cost Calculator: Est. Duty = 30% of price (placeholder logic)
-  const estDuty = vehicle.estimatedLandedCostLKR * 0.3;
+  const estDuty =
+    hasPrice && hasEstimate ? vehicle.estimatedLandedCostLKR! * 0.3 : 0;
 
   return (
     <Card className="group relative overflow-hidden border-white/10 bg-[#0A0A0A] hover:border-[#FE7743]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(254,119,67,0.1)]">
@@ -105,23 +113,36 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Price Section */}
         <div className="space-y-1">
-          <div className="flex justify-between items-end">
-            <span className="text-xs text-gray-500">Current Bid (JPY)</span>
-            <span className="text-sm font-medium text-gray-300">
-              {formatJPY(vehicle.priceJPY)}
-            </span>
-          </div>
-          <div className="flex justify-between items-end">
-            <span className="text-xs text-[#FE7743]">Est. Landed (LKR)</span>
-            <span className="text-lg font-bold text-white">
-              {formatLKR(vehicle.estimatedLandedCostLKR)}
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="text-[10px] text-gray-500">
-              Est. Duty: {formatLKR(estDuty)}
-            </span>
-          </div>
+          {hasPrice ? (
+            <>
+              <div className="flex justify-between items-end">
+                <span className="text-xs text-gray-500">Current Bid (JPY)</span>
+                <span className="text-sm font-medium text-gray-300">
+                  {formatJPY(vehicle.priceJPY)}
+                </span>
+              </div>
+              <div className="flex justify-between items-end">
+                <span className="text-xs text-[#FE7743]">
+                  Est. Landed (LKR)
+                </span>
+                <span className="text-lg font-bold text-white">
+                  {hasEstimate
+                    ? formatLKR(vehicle.estimatedLandedCostLKR!)
+                    : "Live rate pending"}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-gray-500">
+                  Est. Duty: {hasEstimate ? formatLKR(estDuty) : "N/A"}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Price</span>
+              <span className="text-gray-400">Pending</span>
+            </div>
+          )}
         </div>
       </CardContent>
 

@@ -2,13 +2,25 @@
 GDPR compliance endpoints including policy pages.
 Author: Kalidu
 Story: CD-460 - Privacy & Cookie Policies
+Story: CD-102 - GDPR Data Export
 """
 
+import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import markdown  # type: ignore[import-untyped]
-from fastapi import APIRouter, HTTPException
+from app.core.database import get_db
+from app.core.dependencies import get_current_active_user, get_current_user
+from app.modules.auth.models import User
+from app.modules.gdpr.models import GDPRDeletion, GDPRExport
+from app.services.gdpr.data_deletion_service import data_deletion_service
+from app.services.gdpr.data_export_service import data_export_service
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/gdpr", tags=["gdpr"])
 
@@ -428,3 +440,209 @@ async def get_cookie_policy():
     """
 
     return full_html
+
+
+# ===================================================================
+# ENDPOINT: GDPR DATA EXPORT (CD-102)
+# ===================================================================
+
+
+@router.get("/export")
+async def export_user_data(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Export all user data (GDPR Article 15).
+
+    **Story**: CD-102.1, CD-102.3, CD-102.4, CD-102.6
+    """
+
+    logger.info(
+        "GDPR export request user=%s ip=%s",
+        current_user.id,
+        request.client.host if request.client else "unknown",
+    )
+
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    recent_exports = (
+        db.query(GDPRExport)
+        .filter(
+            GDPRExport.user_id == current_user.id,
+            GDPRExport.requested_at >= twenty_four_hours_ago,
+        )
+        .count()
+    )
+
+    if recent_exports >= 3:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Maximum 3 data exports per day. Please try again later.",
+        )
+
+    export_record = GDPRExport(
+        user_id=current_user.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(export_record)
+    db.commit()
+    db.refresh(export_record)
+
+    try:
+        user_data = data_export_service.collect_user_data(current_user, db)
+        json_export = data_export_service.generate_json_export(user_data)
+
+        filename = (
+            "cleardrive_data_export_"
+            f"{current_user.id}_{datetime.utcnow().strftime('%Y%m%d')}.json"
+        )
+
+        export_record.export_file_path = filename
+        export_record.file_size_bytes = len(json_export.encode("utf-8"))
+        export_record.completed_at = datetime.utcnow()
+        export_record.downloaded_at = datetime.utcnow()
+        db.commit()
+
+        return Response(
+            content=json_export,
+            media_type="application/json",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Content-Type": "application/json; charset=utf-8",
+            },
+        )
+    except Exception:
+        logger.exception("GDPR export failed for user=%s", current_user.id)
+        export_record.completed_at = datetime.utcnow()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Data export failed. Please contact support.",
+        )
+
+
+@router.get("/export/history")
+async def get_export_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get user's data export history.
+
+    **Story**: CD-102.6
+    """
+
+    exports = (
+        db.query(GDPRExport)
+        .filter(GDPRExport.user_id == current_user.id)
+        .order_by(GDPRExport.requested_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    recent_count = (
+        db.query(GDPRExport)
+        .filter(
+            GDPRExport.user_id == current_user.id,
+            GDPRExport.requested_at >= twenty_four_hours_ago,
+        )
+        .count()
+    )
+
+    return {
+        "daily_limit": 3,
+        "used_today": recent_count,
+        "remaining_today": max(0, 3 - recent_count),
+        "export_history": [
+            {
+                "id": str(export.id),
+                "requested_at": export.requested_at.isoformat(),
+                "completed_at": export.completed_at.isoformat() if export.completed_at else None,
+                "file_size_bytes": export.file_size_bytes,
+            }
+            for export in exports
+        ],
+    }
+
+
+@router.get("/deletion-check")
+async def check_deletion_blockers(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Check if account deletion can proceed for the current user."""
+    blocker = data_deletion_service.check_deletion_blockers(current_user, db)
+    if blocker.blocked:
+        return {"can_delete": False, "blocked": True, "reason": blocker.reason}
+    return {
+        "can_delete": True,
+        "blocked": False,
+        "message": "Your account can be deleted. All checks passed.",
+    }
+
+
+@router.get("/deletion-status")
+async def get_deletion_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return latest GDPR deletion status for the current user."""
+    deletion = (
+        db.query(GDPRDeletion)
+        .filter(GDPRDeletion.user_id == current_user.id)
+        .order_by(GDPRDeletion.requested_at.desc())
+        .first()
+    )
+
+    if not deletion:
+        return {"has_deletion_request": False, "can_delete": True}
+
+    return {
+        "has_deletion_request": True,
+        "status": deletion.status.value,
+        "requested_at": deletion.requested_at.isoformat(),
+        "processed_at": deletion.processed_at.isoformat() if deletion.processed_at else None,
+        "rejection_reason": deletion.rejection_reason,
+    }
+
+
+@router.delete("/delete")
+async def delete_user_data(
+    request: Request,
+    confirmation: str = Query(..., description="Type 'DELETE MY ACCOUNT' to confirm"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """GDPR Article 17 account deletion implemented as anonymization plus revocation."""
+    if confirmation != "DELETE MY ACCOUNT":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid confirmation. Type exactly: DELETE MY ACCOUNT",
+        )
+
+    success, message, deletion_record = await data_deletion_service.process_deletion(
+        user=current_user,
+        ip_address=request.client.host if request.client else "unknown",
+        user_agent=request.headers.get("user-agent", ""),
+        db=db,
+    )
+
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+    return {
+        "message": message,
+        "deletion_id": str(deletion_record.id),
+        "processed_at": (
+            deletion_record.processed_at.isoformat() if deletion_record.processed_at else None
+        ),
+        "details": {
+            "data_anonymized": deletion_record.data_anonymized,
+            "kyc_deleted": deletion_record.kyc_deleted,
+            "sessions_revoked": deletion_record.sessions_revoked,
+        },
+        "note": "This action is permanent and cannot be undone.",
+    }

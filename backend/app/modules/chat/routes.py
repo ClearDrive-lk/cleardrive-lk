@@ -135,28 +135,36 @@ def _fallback_chat_response(vehicle_context: list[dict[str, object]]) -> dict[st
     if not vehicle_context:
         return {
             "message": (
-                "I could not find a strong vehicle match right now. "
-                "Try a body type, budget, or fuel preference like SUV, hybrid, or sedan."
+                "I could not find a strong vehicle match yet.\n"
+                "Try adding two details so I can narrow it faster:\n"
+                "- Budget range (for example: under JPY 2,000,000)\n"
+                "- Body or fuel preference (SUV, sedan, hybrid, electric)\n"
+                "Would you like city-focused options or family-focused options?"
             ),
             "vehicle_ids": [],
             "suggested_action": None,
         }
 
     shortlisted = vehicle_context[:3]
-    vehicle_labels = [
-        f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})" for vehicle in shortlisted
-    ]
-    if len(vehicle_labels) == 1:
-        summary = vehicle_labels[0]
-    elif len(vehicle_labels) == 2:
-        summary = f"{vehicle_labels[0]} and {vehicle_labels[1]}"
-    else:
-        summary = f"{vehicle_labels[0]}, {vehicle_labels[1]}, and {vehicle_labels[2]}"
+    lines = []
+    for vehicle in shortlisted:
+        price_value = vehicle.get("price_jpy")
+        price = "N/A"
+        if isinstance(price_value, (int, float)):
+            price = f"JPY {price_value:,.0f}"
+        vehicle_type = str(vehicle.get("vehicle_type") or "vehicle")
+        fuel = str(vehicle.get("fuel_type") or "unknown fuel")
+        lines.append(
+            f"- {vehicle['make']} {vehicle['model']} ({vehicle['year']}) - {price}: "
+            f"{vehicle_type}, {fuel}"
+        )
 
     return {
         "message": (
-            f"Here are a few vehicles that fit your request: {summary}. "
-            "Open a vehicle card to compare the details more closely."
+            "Here are a few vehicles that fit your request:\n"
+            f"{chr(10).join(lines)}\n"
+            "Open any vehicle card to compare more details. "
+            "Do you want me to narrow this to lower running cost, newer year, or more cabin space?"
         ),
         "vehicle_ids": [str(vehicle["id"]) for vehicle in shortlisted],
         "suggested_action": None,

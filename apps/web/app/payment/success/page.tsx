@@ -40,32 +40,41 @@ function PaymentSuccessContent() {
         <CardContent className="space-y-4">
           {orderId && (
             <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="text-sm text-[#393d3f]">Order ID</p>
               <p className="font-mono font-semibold">{orderId}</p>
             </div>
           )}
 
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">Payment confirmed</p>
-            <p className="text-sm text-gray-600">Order is being processed</p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#393d3f]">Payment confirmed</p>
+            <p className="text-sm text-[#393d3f]">Order is being processed</p>
+            <p className="text-sm text-[#393d3f]">
               Confirmation email will be sent shortly
             </p>
           </div>
 
           <div className="space-y-2 pt-4">
-            <Button
-              onClick={() => router.push("/dashboard")}
-              className="w-full"
-            >
-              View My Orders
-            </Button>
+            {orderId ? (
+              <Button
+                onClick={() => router.push(`/dashboard/orders/${orderId}`)}
+                className="w-full"
+              >
+                View Order Tracking
+              </Button>
+            ) : (
+              <Button
+                onClick={() => router.push("/dashboard/orders")}
+                className="w-full"
+              >
+                View My Orders
+              </Button>
+            )}
             <Button
               variant="outline"
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/dashboard/orders")}
               className="w-full"
             >
-              Return to Home
+              Go to Orders Dashboard
             </Button>
           </div>
         </CardContent>

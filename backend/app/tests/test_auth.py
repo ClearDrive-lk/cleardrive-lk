@@ -15,6 +15,7 @@ from app.core.security import create_access_token, create_refresh_token, hash_to
 from app.modules.auth.models import Role
 from app.modules.auth.models import Session as UserSession
 from app.modules.auth.models import User
+from app.modules.security.models import SecurityEvent, SecurityEventType
 from jose import jwt
 
 
@@ -138,5 +139,70 @@ async def test_refresh_token_rotation_and_reuse_detection(async_client, db, mock
         sessions = db.query(UserSession).filter(UserSession.user_id == user.id).all()
         assert sessions, "Expected at least one session to exist"
         assert all(not s.is_active for s in sessions)
+
+        event = (
+            db.query(SecurityEvent)
+            .filter(
+                SecurityEvent.user_id == user.id,
+                SecurityEvent.event_type == SecurityEventType.TOKEN_REUSE,
+            )
+            .first()
+        )
+        assert event is not None
+    finally:
+        await delete_otp(email)
+
+
+@pytest.mark.asyncio
+async def test_impossible_travel_creates_security_event(async_client, db, mocker):
+    mocker.patch(
+        "app.modules.auth.routes.check_otp_rate_limit",
+        return_value=True,
+        new_callable=AsyncMock,
+    )
+    mocker.patch(
+        "app.modules.auth.routes.get_user_sessions",
+        return_value=[],
+        new_callable=AsyncMock,
+    )
+    mocker.patch(
+        "app.modules.auth.routes.detect_suspicious_activity",
+        return_value={
+            "is_suspicious": True,
+            "reasons": ["impossible_travel"],
+            "details": {
+                "impossible_travel": {
+                    "from_country": "United States",
+                    "to_country": "Sri Lanka",
+                    "time_diff_hours": 0.5,
+                }
+            },
+        },
+    )
+
+    email = "travel@example.com"
+    user = User(email=email, name="Travel User", role=Role.CUSTOMER)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    otp = "123456"
+    await store_otp(email, otp)
+
+    try:
+        response = await async_client.post(
+            "/api/v1/auth/verify-otp", json={"email": email, "otp": otp}
+        )
+        assert response.status_code == 200
+
+        event = (
+            db.query(SecurityEvent)
+            .filter(
+                SecurityEvent.user_id == user.id,
+                SecurityEvent.event_type == SecurityEventType.IMPOSSIBLE_TRAVEL,
+            )
+            .first()
+        )
+        assert event is not None
     finally:
         await delete_otp(email)

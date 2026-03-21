@@ -20,7 +20,7 @@ repos:
         exclude: ^apps/mobile/|^packages/shared/
       - id: check-added-large-files
         name: Check for large files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
       - id: check-merge-conflict
         name: Check for merge conflicts
       - id: detect-private-key
@@ -32,7 +32,7 @@ repos:
   # PYTHON - BACKEND
   # ============================================================================
   - repo: https://github.com/psf/black
-    rev: 26.1.0  # Latest (v1 uses v26.x versioning)
+    rev: 26.1.0 # Latest (v1 uses v26.x versioning)
     hooks:
       - id: black
         name: Format Python code (Black)
@@ -56,7 +56,7 @@ repos:
           - backend/app
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0  # Newer than v2's 7.0.0
+    rev: 7.3.0 # Newer than v2's 7.0.0
     hooks:
       - id: flake8
         name: Lint Python code (Flake8)
@@ -87,7 +87,7 @@ repos:
           - pydantic
           - sqlalchemy
           - types-redis
-          - types-Markdown  # Added from v2
+          - types-Markdown # Added from v2
 
   # Bandit as a proper pre-commit repo hook (from v2) — cleaner than local entry
   - repo: https://github.com/PyCQA/bandit
@@ -140,14 +140,14 @@ repos:
     hooks:
       - id: detect-secrets
         name: Detect secrets
-        args: ['--baseline', '.secrets.baseline']
+        args: ["--baseline", ".secrets.baseline"]
         exclude: package-lock.json|^apps/web/.vercel/project.json$|^apps/web/tsconfig.tsbuildinfo$|^backend/alembic/versions/
 
   # ============================================================================
   # COMMIT MESSAGE VALIDATION
   # ============================================================================
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.13.7  # Newer than v2's v3.13.0
+    rev: v4.13.7 # Newer than v2's v3.13.0
     hooks:
       - id: commitizen
         name: Check commit message format
@@ -175,25 +175,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      - id: pytest
-        name: Run Tests
-        entry: python backend/scripts/run_local_ci_pytest.py --skip-coverage  # Skip coverage to keep hook under timeout
-        language: system
-        # TEMPORARY: Run on pre-push/manual to avoid blocking commits locally.
-        # Re-enable on commit by changing back to `stages: [pre-commit]`.
-        stages: [pre-push, manual]
-        always_run: true
-        pass_filenames: false
-        verbose: true  # Show pytest output even when tests pass
-
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 default_language_version:
-  python: python3.12  # Explicit minor version from v2 is better practice
+  python: python3.12 # Explicit minor version from v2 is better practice
   node: "20.0.0"
 
-fail_fast: false  # Run all hooks even if one fails
+fail_fast: false # Run all hooks even if one fails
 default_stages: [pre-commit, pre-push]
 
 exclude: |

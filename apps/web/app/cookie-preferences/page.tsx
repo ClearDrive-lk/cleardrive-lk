@@ -1,6 +1,7 @@
 // frontend/app/cookie-preferences/page.tsx
 
 import CookiePreferences from "@/components/cookie/cookiePreferences";
+import Header from "@/components/layout/Header";
 
 export const metadata = {
   title: "Cookie Preferences - ClearDrive.lk",
@@ -9,8 +10,11 @@ export const metadata = {
 
 export default function CookiePreferencesPage() {
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
-      <CookiePreferences />
-    </main>
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-10 dark:bg-[#0f1417]">
+        <CookiePreferences />
+      </main>
+    </>
   );
 }

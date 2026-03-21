@@ -4,15 +4,14 @@ Author: Parindra Gallage
 Story: CD-33.3, CD-33.4
 """
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
-from decimal import Decimal
 from datetime import datetime, timezone
+from decimal import Decimal
+from typing import List
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_admin
-from app.modules.finance.models import VehicleFinance, FinanceStatus
+from app.core.dependencies import get_current_finance_partner, get_current_user
+from app.modules.auth.models import User
+from app.modules.finance.models import FinanceStatus, VehicleFinance
 from app.modules.finance.schemas import (
     FinanceApplicationRequest,
     FinanceApproveRequest,
@@ -20,7 +19,8 @@ from app.modules.finance.schemas import (
     FinanceResponse,
 )
 from app.modules.orders.models import Order
-from app.modules.auth.models import User
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/finance", tags=["vehicle-finance"])
 
@@ -89,7 +89,7 @@ async def apply_for_finance(
 async def approve_finance(
     finance_id: str,
     request: FinanceApproveRequest,
-    current_admin: User = Depends(get_current_admin),
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
     db: Session = Depends(get_db),
 ):
     """
@@ -130,7 +130,7 @@ async def approve_finance(
     finance.loan_period_months = request.loan_period_months
     finance.monthly_payment = Decimal(str(round(monthly_payment, 2)))
     finance.admin_notes = request.admin_notes
-    finance.reviewed_by = current_admin.id
+    finance.reviewed_by = current_finance_reviewer.id
     finance.reviewed_at = datetime.now(timezone.utc)
 
     db.commit()
@@ -151,7 +151,7 @@ async def approve_finance(
 async def reject_finance(
     finance_id: str,
     request: FinanceRejectRequest,
-    current_admin: User = Depends(get_current_admin),
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
     db: Session = Depends(get_db),
 ):
     """Reject finance application."""
@@ -166,7 +166,7 @@ async def reject_finance(
 
     finance.status = FinanceStatus.REJECTED
     finance.rejection_reason = request.rejection_reason
-    finance.reviewed_by = current_admin.id
+    finance.reviewed_by = current_finance_reviewer.id
     finance.reviewed_at = datetime.utcnow()
 
     db.commit()
@@ -179,10 +179,12 @@ async def reject_finance(
 
 @router.get("/pending", response_model=List[FinanceResponse])
 async def get_pending_finance_applications(
-    current_admin: User = Depends(get_current_admin), db: Session = Depends(get_db)
+    current_finance_reviewer: User = Depends(get_current_finance_partner),
+    db: Session = Depends(get_db),
 ):
     """Get pending finance applications (admin)."""
 
+    _ = current_finance_reviewer
     applications = (
         db.query(VehicleFinance).filter(VehicleFinance.status == FinanceStatus.PENDING).all()
     )

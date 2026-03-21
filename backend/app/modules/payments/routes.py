@@ -11,6 +11,7 @@ import hashlib
 import json
 import secrets
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Mapping
 from urllib.parse import urlencode
 
@@ -20,6 +21,7 @@ from app.core.dependencies import get_current_user
 from app.core.redis_client import get_redis
 from app.core.security import decrypt_field
 from app.modules.auth.models import User
+from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.payments.models import Payment, PaymentStatus
@@ -143,12 +145,56 @@ def build_payhere_checkout_response(payment: Payment, order: Order, current_user
     }
 
 
+def _format_lkr_amount(amount: Decimal) -> str:
+    return f"{amount:,.2f}"
+
+
+def _validate_payhere_payment_amount(order: Order) -> None:
+    if order.total_cost_lkr is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order total is missing, payment cannot be initiated",
+        )
+
+    max_amount = settings.PAYHERE_MAX_PAYMENT_AMOUNT_LKR
+    if max_amount is None:
+        return
+
+    order_amount = Decimal(str(order.total_cost_lkr))
+    if order_amount > max_amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Payment amount exceeds the configured PayHere merchant limit. "
+                f"Order amount: LKR {_format_lkr_amount(order_amount)}. "
+                f"Current limit: LKR {_format_lkr_amount(max_amount)}. "
+                "Please contact support to complete this payment."
+            ),
+        )
+
+
 def _form_value_str(form_data: Mapping[str, Any], key: str) -> str | None:
     """Safely normalize form values to strings."""
     value = form_data.get(key)
     if value is None or isinstance(value, UploadFile):
         return None
     return str(value)
+
+
+def _ensure_kyc_approved(db: Session, current_user: User) -> None:
+    kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
+    if not kyc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="KYC verification required. Please submit your documents first.",
+        )
+
+    kyc_status = kyc.status.value if hasattr(kyc.status, "value") else str(kyc.status)
+    if kyc_status != KYCStatus.APPROVED.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"KYC status is {kyc_status}. Only APPROVED users can initiate payment.",
+        )
 
 
 # ===================================================================
@@ -187,6 +233,8 @@ async def initiate_payment(
     print(f"\n{LOG_DIVIDER}")
     print("PAYMENT INITIATION")
     print(LOG_DIVIDER)
+
+    _ensure_kyc_approved(db, current_user)
 
     idempotency_key = idempotency_key_header
     if not idempotency_key:
@@ -280,6 +328,7 @@ async def initiate_payment(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
 
     print(f"Order verified: {order.id}")
+    _validate_payhere_payment_amount(order)
 
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD

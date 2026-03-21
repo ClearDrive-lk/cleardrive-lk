@@ -50,6 +50,12 @@ def main() -> None:
         default=None,
         help="Number of listings to scrape. In local mode, defaults to 100; use 0 for all pages.",
     )
+    parser.add_argument(
+        "--pages",
+        type=int,
+        default=None,
+        help="Limit the live scraper to the first N paginated listing pages.",
+    )
     parser.add_argument("--years", type=int, default=3)
     args = parser.parse_args()
 
@@ -64,6 +70,8 @@ def main() -> None:
     scrape_count = default_count if args.count is None else max(0, args.count)
     os.environ["CD23_SCRAPE_COUNT"] = str(scrape_count)
     os.environ["CD23_KEEP_LAST_YEARS"] = str(max(1, args.years))
+    if args.pages is not None:
+        os.environ["CD23_MAX_PAGES"] = str(max(1, args.pages))
 
     if args.mode == "supabase":
         os.environ["CD23_UPLOAD_IMAGES_SUPABASE"] = "true"

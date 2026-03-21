@@ -18,6 +18,7 @@ import {
   getStoredConsent,
 } from "@/lib/cookies/utils";
 import { CookieConsent } from "@/lib/cookies/types";
+import { getSriAttributes } from "@/lib/sri";
 
 interface CookieBannerProps {
   onConsentChange?: (consent: CookieConsent) => void;
@@ -25,6 +26,41 @@ interface CookieBannerProps {
 
 export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
   const [visible, setVisible] = useState(false);
+
+  // ===============================================================
+  // LOAD ANALYTICS IF ACCEPTED (CD-101.4)
+  // ===============================================================
+  const loadAnalytics = () => {
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+    if (typeof window === "undefined" || !gaId) return;
+
+    // Prevent duplicate script injection on repeated renders/navigation.
+    if (document.getElementById("ga-script")) {
+      window.gtag?.("config", gaId);
+      return;
+    }
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag =
+      window.gtag ||
+      ((...args: unknown[]) => {
+        window.dataLayer?.push(args);
+      });
+
+    window.gtag("js", new Date());
+    window.gtag("config", gaId);
+
+    const script = document.createElement("script");
+    script.id = "ga-script";
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    const { integrity, crossOrigin } = getSriAttributes(script.src);
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = crossOrigin ?? "anonymous";
+    }
+    script.async = true;
+    document.head.appendChild(script);
+  };
 
   // ===============================================================
   // SHOW BANNER ONLY IF USER HASN'T CONSENTED YET
@@ -88,36 +124,6 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     }
   };
 
-  // ===============================================================
-  // LOAD ANALYTICS IF ACCEPTED (CD-101.4)
-  // ===============================================================
-  const loadAnalytics = () => {
-    const gaId = process.env.NEXT_PUBLIC_GA_ID;
-    if (typeof window === "undefined" || !gaId) return;
-
-    // Prevent duplicate script injection on repeated renders/navigation.
-    if (document.getElementById("ga-script")) {
-      window.gtag?.("config", gaId);
-      return;
-    }
-
-    window.dataLayer = window.dataLayer || [];
-    window.gtag =
-      window.gtag ||
-      ((...args: unknown[]) => {
-        window.dataLayer?.push(args);
-      });
-
-    window.gtag("js", new Date());
-    window.gtag("config", gaId);
-
-    const script = document.createElement("script");
-    script.id = "ga-script";
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-    script.async = true;
-    document.head.appendChild(script);
-  };
-
   // Don't render if user already consented
   if (!visible) return null;
 
@@ -126,7 +132,7 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
       {/* ============================================================
           BACKDROP (subtle overlay)
           ============================================================ */}
-      <div className="fixed inset-0 bg-black/20 z-40 pointer-events-none" />
+      <div className="fixed inset-0 bg-[#c6c5b9]/40 z-40 pointer-events-none" />
 
       {/* ============================================================
           COOKIE BANNER
@@ -134,7 +140,7 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
       <div
         className="
           fixed bottom-0 left-0 right-0 z-50
-          bg-white border-t-2 border-gray-200
+          bg-[#fdfdff] border-t-2 border-gray-200
           shadow-2xl
           animate-in slide-in-from-bottom
           duration-300
@@ -158,7 +164,7 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
                 <h2 className="text-base font-semibold text-gray-900">
                   We use cookies
                 </h2>
-                <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">
+                <p className="text-sm text-[#393d3f] mt-0.5 leading-relaxed">
                   We use cookies to improve your experience, analyse traffic,
                   and show relevant content. Essential cookies are always
                   active.{" "}
@@ -205,7 +211,7 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
               <Button
                 size="sm"
                 onClick={handleAcceptAll}
-                className="text-sm bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-[#393d3f] whitespace-nowrap"
               >
                 Accept All
               </Button>

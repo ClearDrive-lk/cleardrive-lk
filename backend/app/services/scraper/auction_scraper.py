@@ -5,6 +5,7 @@ CD-23 live scraper using requests + BeautifulSoup with Selenium fallback.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -97,12 +98,27 @@ class AuctionSiteScraper:
         self._http = requests.Session()
         self._http.headers.update(self._HEADERS)
 
+    @staticmethod
+    def _resolve_max_pages() -> int | None:
+        raw_value = os.getenv("CD23_MAX_PAGES", "").strip().lower()
+        if not raw_value:
+            return None
+        if raw_value in {"all", "full", "unlimited"}:
+            return None
+        try:
+            parsed = int(raw_value)
+        except ValueError:
+            logger.warning("Invalid CD23_MAX_PAGES value %r; ignoring", raw_value)
+            return None
+        return parsed if parsed > 0 else None
+
     def scrape(self, count: int = 10) -> list[dict[str, Any]]:
         if not BS4_AVAILABLE:
             logger.warning("BeautifulSoup is not installed. Live scraper disabled for this run.")
             return []
 
         unlimited = count < 1
+        max_pages = self._resolve_max_pages()
         rows: list[dict[str, Any]] = []
         seen_stock: set[str] = set()
 
@@ -128,6 +144,8 @@ class AuctionSiteScraper:
                 if "search_by_usual.php" in page_url:
                     empty_pages = 0
                     for page in range(1, 200):
+                        if max_pages is not None and page > max_pages:
+                            break
                         if not unlimited and len(rows) >= count:
                             return rows[:count]
 
@@ -237,11 +255,16 @@ class AuctionSiteScraper:
             return None
         image_urls = self._images(card, page_url)
         card_text = card.get_text(" ", strip=True)
+        status = self._extract_listing_status(card_text)
+        if status != "AVAILABLE":
+            return None
         price = self._extract_price(
             self._text(card, "strong[id^='span_dummy_price'], .price, .car-price, [class*='price']")
         )
         if price is None:
             price = self._extract_price_from_text(card_text)
+        if price is None or price <= 0:
+            return None
         mileage = self._extract_labeled_number(card_text, "Mileage", "KM")
         engine_cc = self._extract_labeled_number(card_text, "Engine", "CC")
         fuel_type = self._extract_labeled_value(card_text, "Fuel")
@@ -260,12 +283,12 @@ class AuctionSiteScraper:
             "make": make,
             "model": model or "Unknown",
             "year": year,
-            "price_jpy": price or 0,
+            "price_jpy": price,
             "mileage_km": mileage,
             "engine_cc": engine_cc,
             "fuel_type": fuel_type,
             "transmission": transmission,
-            "status": "AVAILABLE",
+            "status": status,
             "vehicle_url": detail_url,
             "image_url": image_urls[0] if image_urls else None,
             "images": image_urls,
@@ -511,6 +534,15 @@ class AuctionSiteScraper:
         if match:
             return int(match.group(1).replace(",", ""))
         return None
+
+    @staticmethod
+    def _extract_listing_status(text: str | None) -> str:
+        normalized = str(text or "").lower()
+        if any(token in normalized for token in ("sold out", "sold", "clearance sold")):
+            return "SOLD"
+        if any(token in normalized for token in ("reserved", "hold", "pending")):
+            return "RESERVED"
+        return "AVAILABLE"
 
     @staticmethod
     def _extract_number(text: str | None) -> int | None:

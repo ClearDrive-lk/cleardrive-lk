@@ -15,7 +15,7 @@ from app.core.permissions import (
     require_permission_decorator,
     verify_resource_ownership,
 )
-from app.core.security import encrypt_field
+from app.core.security import decrypt_field, encrypt_field
 from app.modules.auth.models import Role, User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.notifications.service import send_status_change_notification
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 def _get_vehicle_for_order(db: Session, vehicle_id: str):
     """Fetch only required vehicle fields in a DB-schema-compatible way."""
     query = text("""
-        SELECT id, price_jpy, status
+        SELECT id, price_jpy, status, make, model, year, chassis, stock_no
         FROM vehicles
         WHERE id = :vehicle_id
         """)
@@ -59,6 +59,37 @@ def _get_vehicle_for_order(db: Session, vehicle_id: str):
 
 def _customer_must_own_order(order: Order, current_user: User) -> bool:
     return current_user.role == Role.CUSTOMER and order.user_id != current_user.id
+
+
+def _exporter_must_be_assigned(order_id: str, current_user: User, db: Session) -> bool:
+    if current_user.role != Role.EXPORTER:
+        return False
+
+    from app.modules.shipping.models import ShipmentDetails
+
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
+    if not shipment or shipment.exporter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only access orders assigned to you",
+        )
+    return True
+
+
+def _ensure_kyc_approved(db: Session, current_user: User) -> None:
+    kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
+    if not kyc:
+        raise HTTPException(
+            status_code=400,
+            detail="KYC verification required. Please submit your documents first.",
+        )
+
+    kyc_status = kyc.status.value if hasattr(kyc.status, "value") else str(kyc.status)
+    if kyc_status != KYCStatus.APPROVED.value:
+        raise HTTPException(
+            status_code=400,
+            detail=f"KYC status is {kyc_status}. Only APPROVED users can create orders.",
+        )
 
 
 @router.post("", response_model=OrderResponse, status_code=201)
@@ -79,29 +110,15 @@ async def create_order(
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     # 1. Verify KYC status (CD-30.3)
-    # TEMP LOCAL BYPASS: set to False immediately after manual API testing.
-    BYPASS_KYC_FOR_LOCAL_TEST = True
-    if not BYPASS_KYC_FOR_LOCAL_TEST:
-        kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
-        if not kyc:
-            raise HTTPException(
-                status_code=400,
-                detail="KYC verification required. Please submit your documents first.",
-            )
-
-        kyc_status = kyc.status.value if hasattr(kyc.status, "value") else kyc.status
-        if kyc_status != KYCStatus.APPROVED.value:
-            raise HTTPException(
-                status_code=400,
-                detail=f"KYC status is {kyc_status}. Only APPROVED users can create orders.",
-            )
+    _ensure_kyc_approved(db, current_user)
 
     # 2. Verify vehicle exists and is available
     vehicle = _get_vehicle_for_order(db, str(order_data.vehicle_id))
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    if str(vehicle["status"]) != "AVAILABLE":
+    status_value = str(vehicle["status"]).upper() if vehicle.get("status") is not None else ""
+    if status_value != "AVAILABLE":
         raise HTTPException(status_code=400, detail="Vehicle is not available")
 
     # 3. Calculate total cost
@@ -154,12 +171,22 @@ async def create_order(
     db.commit()
 
     # 7. Send confirmation email (CD-30.7)
-    vehicle_name = (
-        f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})"
-        if "make" in vehicle
-        else "Selected Vehicle"
+    stock_no = vehicle.get("stock_no", "N/A")
+    chassis_no = vehicle.get("chassis", "N/A")
+    if vehicle.get("make") and vehicle.get("model") and vehicle.get("year"):
+        vehicle_name = f"{vehicle['make']} {vehicle['model']} ({vehicle['year']})"
+    elif stock_no and stock_no != "N/A":
+        vehicle_name = f"Stock {stock_no}"
+    else:
+        vehicle_name = "Selected Vehicle"
+    decrypted_address = decrypt_field(new_order.shipping_address) or "N/A"
+    customer_address = decrypted_address.strip() if decrypted_address else "N/A"
+    shipment_details = new_order.shipment_details
+    tracking_number = (
+        shipment_details.tracking_number
+        if shipment_details and shipment_details.tracking_number
+        else "Pending"
     )
-    chassis_no = vehicle.get("chassis_no", "N/A")
 
     email_sent_id = await notification_service.send_order_confirmation(
         email=current_user.email,
@@ -167,6 +194,9 @@ async def create_order(
         order_id=str(new_order.id),
         vehicle_name=vehicle_name,
         chassis_no=chassis_no,
+        stock_no=stock_no,
+        address=customer_address,
+        tracking_number=tracking_number,
         total_price=f"LKR {new_order.total_cost_lkr:,.2f}" if new_order.total_cost_lkr else "N/A",
     )
 
@@ -179,7 +209,11 @@ async def create_order(
 
 
 @router.get("", response_model=list[OrderListItem])
-@require_permission_decorator(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
+@require_permission_decorator(
+    Permission.VIEW_OWN_ORDERS,
+    Permission.VIEW_ALL_ORDERS,
+    Permission.VIEW_ASSIGNED_ORDERS,
+)
 async def list_orders(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -189,13 +223,22 @@ async def list_orders(
 
     if current_user.role == Role.CUSTOMER:
         query = query.filter(Order.user_id == current_user.id)
+    elif current_user.role == Role.EXPORTER:
+        from app.modules.shipping.models import ShipmentDetails
+
+        query = query.join(ShipmentDetails, ShipmentDetails.order_id == Order.id).filter(
+            ShipmentDetails.exporter_id == current_user.id
+        )
 
     return query.order_by(Order.created_at.desc()).all()
 
 
 @router.get("/{order_id}")
-# @require_permission(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
-@require_permission_decorator(Permission.VIEW_OWN_ORDERS, Permission.VIEW_ALL_ORDERS)
+@require_permission_decorator(
+    Permission.VIEW_OWN_ORDERS,
+    Permission.VIEW_ALL_ORDERS,
+    Permission.VIEW_ASSIGNED_ORDERS,
+)
 async def get_order(
     order_id: str,
     current_user: User = Depends(get_current_active_user),
@@ -214,7 +257,11 @@ async def get_order(
     if has_permission(current_user, Permission.VIEW_ALL_ORDERS):
         return order
 
-    # Otherwise, verify ownership
+    if current_user.role == Role.EXPORTER:
+        _exporter_must_be_assigned(order_id, current_user, db)
+        return order
+
+    # Otherwise, verify ownership (customer path)
     verify_resource_ownership(current_user, order.user_id)
 
     return order
@@ -431,6 +478,74 @@ async def update_order_status(
 
 
 # ===================================================================
+# ENDPOINT: CANCEL ORDER (CUSTOMER)
+# ===================================================================
+
+
+@router.patch("/{order_id}/cancel")
+@require_permission_decorator(Permission.CANCEL_OWN_ORDER)
+async def cancel_order(
+    request: Request,
+    order_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Cancel an order before payment is completed.
+
+    Rules:
+    - Only order owner can cancel
+    - Only if status is CREATED and payment_status is PENDING
+    """
+    order = db.query(Order).filter(Order.id == order_id).first()
+
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    if _customer_must_own_order(order, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    if order.status != OrderStatus.CREATED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only orders in CREATED status can be cancelled",
+        )
+
+    if order.payment_status != PaymentStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order cannot be cancelled after payment has started",
+        )
+
+    old_status = order.status
+    order.status = OrderStatus.CANCELLED
+    order.payment_status = PaymentStatus.FAILED
+
+    status_history_service.create_history_entry(
+        db=db,
+        order=order,
+        from_status=old_status,
+        to_status=OrderStatus.CANCELLED,
+        changed_by=current_user,
+        notes="Order cancelled by customer",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    db.commit()
+    db.refresh(order)
+
+    # Release vehicle back to AVAILABLE
+    db.execute(
+        text("UPDATE vehicles SET status = :status WHERE id = :vehicle_id"),
+        {"status": "AVAILABLE", "vehicle_id": str(order.vehicle_id)},
+    )
+    db.commit()
+
+    return {"message": "Order cancelled", "order_id": str(order.id)}
+
+
+# ===================================================================
 # ENDPOINT: GET TIMELINE
 # ===================================================================
 
@@ -477,9 +592,10 @@ async def get_order_timeline(
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
-    # Customers can only see their own orders. Staff roles can view all orders.
+    # Customers can only see their own orders. Exporters can see assigned orders.
     if _customer_must_own_order(order, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    _exporter_must_be_assigned(order_id, current_user, db)
 
     # Get timeline
     history_records = status_history_service.get_order_timeline(db, order_id)
@@ -538,6 +654,7 @@ async def stream_order_timeline(
 
     if _customer_must_own_order(order, current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    _exporter_must_be_assigned(order_id, current_user, db)
 
     def snapshot() -> dict[str, str | int]:
         history_count = (
@@ -608,12 +725,13 @@ async def get_order_allowed_transitions(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found"
         )
 
-    # Customers can only inspect their own orders. Staff roles can inspect all.
+    # Customers can only inspect their own orders. Exporters can inspect assigned orders.
     if _customer_must_own_order(order, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to view this order",
         )
+    _exporter_must_be_assigned(order_id, current_user, db)
 
     # Get allowed next states
     allowed_states = get_allowed_next_states(order.status)

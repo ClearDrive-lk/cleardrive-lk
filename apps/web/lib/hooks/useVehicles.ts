@@ -18,28 +18,71 @@ type VehiclesQueryParams = {
   maxYear?: number;
   maxMileage?: number;
   transmission?: string;
+  vehicleType?: string;
+  priceCurrency?: "LKR" | "JPY";
+  exchangeRate?: number | null;
+};
+
+const lkrToJpy = (amount: number | undefined, rate: number) => {
+  if (!amount || amount <= 0) return undefined;
+  return Math.round(amount / rate);
 };
 
 export function useVehicles(params: VehiclesQueryParams) {
   return useQuery<VehicleResponse>({
-    queryKey: ["vehicles", params],
+    queryKey: [
+      "vehicles",
+      params.page,
+      params.limit,
+      params.search ?? "",
+      params.fuel ?? "",
+      params.status ?? "",
+      params.sort ?? "",
+      params.minPrice ?? "",
+      params.maxPrice ?? "",
+      params.minYear ?? "",
+      params.maxYear ?? "",
+      params.maxMileage ?? "",
+      params.transmission ?? "",
+      params.vehicleType ?? "",
+      params.priceCurrency ?? "",
+      params.exchangeRate ? Number(params.exchangeRate.toFixed(4)) : "",
+    ],
     queryFn: async () => {
+      const exchangeRate =
+        params.exchangeRate && params.exchangeRate > 0
+          ? params.exchangeRate
+          : undefined;
+      const priceCurrency = params.priceCurrency || "LKR";
+      const toJpy = (value: number | undefined) =>
+        priceCurrency === "JPY"
+          ? value
+          : exchangeRate
+            ? lkrToJpy(value, exchangeRate)
+            : undefined;
+
       const apiParams = {
         page: params.page,
         limit: params.limit,
-        search: params.search,
+        search: params.search || undefined,
         fuel_type:
           params.fuel === "Petrol"
             ? "Gasoline"
-            : params.fuel === "All"
-              ? undefined
-              : params.fuel,
+            : params.fuel === "Gasoline"
+              ? "Gasoline"
+              : params.fuel === "Gasoline/Hybrid"
+                ? "Gasoline/hybrid"
+                : params.fuel === "Hybrid"
+                  ? "Gasoline/hybrid"
+                  : params.fuel === "All"
+                    ? undefined
+                    : params.fuel,
         status:
           params.status === "Sold"
             ? "SOLD"
             : params.status === "Upcoming"
               ? "RESERVED"
-              : params.status === "Live"
+              : params.status === "Live" || params.status === "Available"
                 ? "AVAILABLE"
                 : undefined,
         sort_by:
@@ -54,26 +97,37 @@ export function useVehicles(params: VehiclesQueryParams) {
           params.sort === "price_asc" || params.sort === "mileage_asc"
             ? "asc"
             : "desc",
-        price_min: params.minPrice,
-        price_max: params.maxPrice,
+        price_min: toJpy(params.minPrice),
+        price_max: toJpy(params.maxPrice),
         year_min: params.minYear,
         year_max: params.maxYear,
-        recent_only: params.minYear === undefined ? true : undefined,
         mileage_max: params.maxMileage,
         transmission:
-          params.transmission === "AT"
+          params.transmission === "Automatic" || params.transmission === "AT"
             ? "Automatic"
             : params.transmission === "MT"
               ? "Manual"
               : params.transmission === "All"
                 ? undefined
                 : params.transmission,
+        vehicle_type:
+          params.vehicleType === "All" ? undefined : params.vehicleType,
       };
 
       const response = await apiClient.get("/vehicles", {
         params: apiParams,
       });
-      return mapBackendVehicleList(response.data);
+      return mapBackendVehicleList(response.data, exchangeRate ?? null);
+    },
+    staleTime: 0,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    retry: (failureCount, error) => {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      if (status === 429) return false;
+      return failureCount < 1;
     },
   });
 }

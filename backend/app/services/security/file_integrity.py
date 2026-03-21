@@ -6,6 +6,7 @@ import threading
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
+from uuid import UUID
 
 from app.core.config import settings
 from app.core.security import calculate_file_hash, verify_file_integrity
@@ -92,16 +93,21 @@ class FileIntegrityService:
         mime_type: str,
         uploaded_by_id: str,
     ) -> FileIntegrity:
-        integrity = FileIntegrity(
-            file_url=file_url,
-            file_name=file_name,
-            file_size=len(file_bytes),
-            mime_type=mime_type,
-            sha256_hash=FileIntegrityService.calculate_sha256(file_bytes),
-            uploaded_by=uploaded_by_id,
-            verification_status=VerificationStatus.VERIFIED,
-        )
-        db.add(integrity)
+        integrity = db.query(FileIntegrity).filter(FileIntegrity.file_url == file_url).first()
+        if integrity is None:
+            integrity = FileIntegrity(file_url=file_url)
+            db.add(integrity)
+
+        integrity.file_name = file_name
+        integrity.file_size = len(file_bytes)
+        integrity.mime_type = mime_type
+        integrity.sha256_hash = FileIntegrityService.calculate_sha256(file_bytes)
+        integrity.uploaded_by = UUID(uploaded_by_id)
+        integrity.verification_status = VerificationStatus.VERIFIED
+        integrity.verification_error = None
+        integrity.last_verified = None
+        integrity.tampering_detected = False
+        integrity.tampering_detected_at = None
         return integrity
 
     @staticmethod

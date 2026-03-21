@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from urllib.parse import urlparse
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
+from app.core.storage import storage
 from app.models.audit_log import AuditEventType, AuditLog
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
@@ -192,6 +194,14 @@ def _get_kyc_or_404(db: Session, kyc_id: str) -> KYCDocument:
     return kyc
 
 
+def _extract_storage_file_path(public_url: str, bucket: str) -> str | None:
+    parsed = urlparse(public_url)
+    marker = f"/storage/v1/object/public/{bucket}/"
+    if marker in parsed.path:
+        return parsed.path.split(marker, 1)[1]
+    return None
+
+
 @router.get("/pending", response_model=list[KYCAdminPendingItem])
 async def get_pending_kyc_documents(
     status_filter: str | None = Query(
@@ -355,12 +365,33 @@ async def reject_kyc(
     kyc.reviewed_at = now
     kyc.rejection_reason = reason
 
+    deleted_media_paths: list[str] = []
+    failed_media_deletions: list[str] = []
+    for public_url in [kyc.nic_front_url, kyc.nic_back_url, kyc.selfie_url]:
+        file_path = _extract_storage_file_path(public_url, "kyc-documents")
+        if not file_path:
+            logger.warning("Unable to derive storage path for rejected KYC media: %s", public_url)
+            failed_media_deletions.append(public_url)
+            continue
+        try:
+            await storage.delete_file("kyc-documents", file_path)
+            deleted_media_paths.append(file_path)
+        except Exception:
+            logger.exception("Failed to delete rejected KYC media path=%s", file_path)
+            failed_media_deletions.append(file_path)
+
     db.add(
         AuditLog(
             event_type=AuditEventType.KYC_REJECTED,
             user_id=kyc.user_id,
             admin_id=current_user.id,
-            details={"kyc_id": str(kyc.id), "rejected_by": current_user.email, "reason": reason},
+            details={
+                "kyc_id": str(kyc.id),
+                "rejected_by": current_user.email,
+                "reason": reason,
+                "deleted_media_paths": deleted_media_paths,
+                "failed_media_deletions": failed_media_deletions,
+            },
         )
     )
     db.commit()

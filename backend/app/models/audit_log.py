@@ -9,8 +9,8 @@ from typing import Any
 from uuid import UUID as PyUUID
 
 from app.core.database import Base
-from sqlalchemy import JSON, DateTime, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from app.core.models import GUID
+from sqlalchemy import JSON, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -39,6 +39,19 @@ class AuditEventType(str, enum.Enum):
     PASSWORD_CHANGED = "PASSWORD_CHANGED"  # pragma: allowlist secret
     USER_TIER_DOWNGRADED = "USER_TIER_DOWNGRADED"
     USER_TIER_UPGRADED = "USER_TIER_UPGRADED"
+    GDPR_DELETION_REQUESTED = "GDPR_DELETION_REQUESTED"
+    GDPR_DELETION_COMPLETED = "GDPR_DELETION_COMPLETED"
+    GDPR_DELETION_REJECTED = "GDPR_DELETION_REJECTED"
+
+
+class AuditActionType(str, enum.Enum):
+    """Generic data-change action types."""
+
+    CREATE = "CREATE"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    UPLOAD = "UPLOAD"
+    SUPERSEDE = "SUPERSEDE"
 
 
 class AuditLog(Base):
@@ -46,11 +59,20 @@ class AuditLog(Base):
 
     __tablename__ = "audit_logs"
 
-    id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[PyUUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
     event_type: Mapped[AuditEventType] = mapped_column(
         Enum(AuditEventType), nullable=False, index=True
     )
-    user_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
-    admin_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    user_id: Mapped[PyUUID | None] = mapped_column(GUID(), nullable=True, index=True)
+    admin_id: Mapped[PyUUID | None] = mapped_column(GUID(), nullable=True, index=True)
+    action_type: Mapped[AuditActionType | None] = mapped_column(
+        Enum(AuditActionType), nullable=True, index=True
+    )
+    table_name: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    record_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
+    old_value: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    new_value: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    change_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    version: Mapped[int | None] = mapped_column(Integer, nullable=True)
     details: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

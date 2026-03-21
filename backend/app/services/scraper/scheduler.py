@@ -191,27 +191,38 @@ class ScraperScheduler:
                 return existing
 
         chassis = vehicle_data.get("chassis") or vehicle_data.get("chassis_number")
-        if chassis:
+        if self._is_meaningful_identity_value(chassis):
             existing = db.query(Vehicle).filter(Vehicle.chassis == chassis).first()
             if existing:
                 return existing
 
-        make = vehicle_data.get("make")
-        model = vehicle_data.get("model")
-        year = _to_int(vehicle_data.get("year"))
-        price = vehicle_data.get("price_jpy")
-        if all([make, model, year, price]):
-            return (
-                db.query(Vehicle)
-                .filter(
-                    Vehicle.make == make,
-                    Vehicle.model == model,
-                    Vehicle.year == year,
-                    Vehicle.price_jpy == Decimal(str(price)),
-                )
-                .first()
-            )
+        vehicle_url = vehicle_data.get("vehicle_url")
+        if self._is_meaningful_identity_value(vehicle_url):
+            existing = db.query(Vehicle).filter(Vehicle.vehicle_url == str(vehicle_url)).first()
+            if existing:
+                return existing
         return None
+
+    @staticmethod
+    def _is_meaningful_identity_value(value: Any) -> bool:
+        text = str(value or "").strip()
+        if not text:
+            return False
+        normalized = text.lower()
+        if normalized in {"****", "***", "**", "*", "-", "--", "n/a", "na", "unknown"}:
+            return False
+        return any(char.isalnum() for char in text)
+
+    @staticmethod
+    def _should_import_row(row: dict[str, Any]) -> bool:
+        price = row.get("price_jpy")
+        try:
+            if price is None or Decimal(str(price)) <= 0:
+                return False
+        except Exception:
+            return False
+        status = str(row.get("status") or VehicleStatus.AVAILABLE.value).upper()
+        return status == VehicleStatus.AVAILABLE.value
 
     def _should_update_vehicle(
         self, existing: Vehicle, new_data: dict[str, Any]
@@ -242,6 +253,9 @@ class ScraperScheduler:
             changed_fields.append("image_url")
 
         enrich_fields = [
+            "make",
+            "model",
+            "year",
             "stock_no",
             "chassis",
             "reg_year",
@@ -278,6 +292,8 @@ class ScraperScheduler:
         for field in changed_fields:
             if field == "price_jpy":
                 setattr(existing, field, Decimal(str(new_data[field])))
+            elif field == "year":
+                setattr(existing, field, _to_int(new_data[field]))
             elif field == "status":
                 setattr(existing, field, VehicleStatus(new_data[field]))
             elif field == "mileage_km":
@@ -561,6 +577,9 @@ class ScraperScheduler:
 
                     # Normalize scraper values before both update/insert paths.
                     _normalize_row_enums(row)
+                    if not self._should_import_row(row):
+                        stats["skipped"] += 1
+                        continue
 
                     downloaded_images = self._download_and_store_images(row)
                     if downloaded_images:
@@ -597,6 +616,17 @@ class ScraperScheduler:
                     .delete(synchronize_session=False)
                 )
                 stats["removed"] = int(removed_count or 0)
+
+            unwanted_scraped_rows = (
+                db.query(Vehicle)
+                .filter(Vehicle.vehicle_url.ilike("%ramadbk.com%"))
+                .filter(~exists().where(Order.vehicle_id == Vehicle.id))
+                .filter(
+                    (Vehicle.price_jpy <= 0) | (Vehicle.status != VehicleStatus.AVAILABLE.value)
+                )
+                .delete(synchronize_session=False)
+            )
+            stats["removed"] += int(unwanted_scraped_rows or 0)
 
             db.commit()
             logger.info("CD-23 scrape completed: %s", stats)

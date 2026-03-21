@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
+import { getSriAttributes } from "@/lib/sri";
 declare global {
   interface Window {
     google?: {
@@ -24,20 +25,62 @@ declare global {
 }
 
 const GSI_SRC = "https://accounts.google.com/gsi/client";
+let gsiLoader: Promise<void> | null = null;
 
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve();
+function ensureGoogleScript(src: string): Promise<void> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Google script unavailable on server"));
+  }
+  if (window.google?.accounts?.id) {
+    return Promise.resolve();
+  }
+  if (gsiLoader) {
+    return gsiLoader;
+  }
+
+  const loader = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${src}"]`,
+    );
+    if (existing) {
+      const waitUntilReady = () => {
+        if (window.google?.accounts?.id) {
+          resolve();
+          return;
+        }
+        window.setTimeout(waitUntilReady, 100);
+      };
+      waitUntilReady();
       return;
     }
+
     const script = document.createElement("script");
     script.src = src;
+    const { integrity, crossOrigin } = getSriAttributes(src);
+    if (integrity) {
+      script.integrity = integrity;
+      script.crossOrigin = crossOrigin ?? "anonymous";
+    }
     script.async = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      const waitUntilReady = () => {
+        if (window.google?.accounts?.id) {
+          resolve();
+          return;
+        }
+        window.setTimeout(waitUntilReady, 100);
+      };
+      waitUntilReady();
+    };
     script.onerror = () => reject(new Error("Failed to load Google script"));
     document.head.appendChild(script);
+  }).catch((err) => {
+    gsiLoader = null;
+    throw err;
   });
+
+  gsiLoader = loader;
+  return loader;
 }
 
 export function GoogleLoginButton() {
@@ -106,7 +149,7 @@ export function GoogleLoginButton() {
 
   useEffect(() => {
     if (!clientId || typeof window === "undefined") return;
-    loadScript(GSI_SRC)
+    ensureGoogleScript(GSI_SRC)
       .then(() => {
         if (window.google?.accounts?.id) {
           window.google.accounts.id.initialize({
@@ -114,6 +157,7 @@ export function GoogleLoginButton() {
             callback: (response) => handleCredential(response.credential),
             auto_select: false,
           });
+          setError(null);
         }
       })
       .catch(() => setError("Could not load Google Sign-In"));
@@ -127,13 +171,15 @@ export function GoogleLoginButton() {
       );
       return;
     }
-    if (typeof window === "undefined" || !window.google?.accounts?.id) {
-      setError("Google Sign-In is still loading. Try again in a moment.");
-      return;
-    }
     setLoading(true);
     try {
-      window.google.accounts.id.prompt((notification: unknown) => {
+      await ensureGoogleScript(GSI_SRC);
+      window.google?.accounts?.id?.initialize({
+        client_id: clientId,
+        callback: (response) => handleCredential(response.credential),
+        auto_select: false,
+      });
+      window.google?.accounts?.id?.prompt((notification: unknown) => {
         const n = notification as {
           isNotDisplayed?: () => boolean;
           isSkippedMoment?: () => boolean;
@@ -159,7 +205,7 @@ export function GoogleLoginButton() {
         }
       });
     } catch {
-      setError("Google Sign-In failed");
+      setError("Could not load Google Sign-In");
       setLoading(false);
     }
   };
@@ -170,7 +216,7 @@ export function GoogleLoginButton() {
         onClick={handleLogin}
         disabled={loading}
         variant="outline"
-        className="w-full bg-white text-black hover:bg-gray-200 border-0 h-11 font-medium transition-all"
+        className="w-full bg-[#fdfdff] text-[#393d3f] hover:bg-gray-200 border-0 h-11 font-medium transition-all"
       >
         {loading ? (
           <>

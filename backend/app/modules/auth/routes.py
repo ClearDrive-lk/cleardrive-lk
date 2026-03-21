@@ -37,7 +37,9 @@ from app.core.security import (
     hash_token,
     verify_password,
 )
+from app.modules.security.models import SecurityEventType, Severity
 from app.services.email import send_otp_email
+from app.services.security.event_logger import log_security_event
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -61,6 +63,7 @@ from .models import Session as UserSession
 from .models import User
 from .schemas import (
     AllSessionsRevokeResponse,
+    AuthStatusResponse,
     DevEnsureUserRequest,
     ForgotPasswordRequest,
     GoogleAuthRequest,
@@ -133,6 +136,8 @@ async def google_auth(
             detail="Invalid Google token payload",
         )
 
+    email = email.strip().lower()
+
     if not email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -149,12 +154,10 @@ async def google_auth(
             role=Role.CUSTOMER,
         )
 
-        admin_emails = [e.strip() for e in settings.ADMIN_EMAILS.split(",")]
+        admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
         if email in admin_emails:
-            existing_admin = db.query(User).filter(User.role == Role.ADMIN).first()
-            if not existing_admin:
-                user.role = Role.ADMIN
-                logger.info(f"Auto-promoted first admin: {email}")
+            user.role = Role.ADMIN
+            logger.info("Auto-promoted admin by ADMIN_EMAILS allowlist: %s", email)
 
         db.add(user)
         db.commit()
@@ -163,7 +166,11 @@ async def google_auth(
     else:
         if not user.google_id:
             user.google_id = google_id
-            db.commit()
+        admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
+        if email in admin_emails and user.role != Role.ADMIN:
+            user.role = Role.ADMIN
+            logger.info("Promoted existing user to admin by ADMIN_EMAILS allowlist: %s", email)
+        db.commit()
         logger.info(f"Existing user logged in: {email}")
 
     otp = generate_otp()
@@ -334,6 +341,13 @@ async def verify_otp(
         logger.error(f"User not found after OTP verification: {verify_request.email}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
+    if user.email.lower() in admin_emails and user.role != Role.ADMIN:
+        user.role = Role.ADMIN
+        db.commit()
+        db.refresh(user)
+        logger.info("Promoted user to admin by ADMIN_EMAILS allowlist: %s", user.email)
+
     await clear_failed_login_state(user, db)
 
     # ========================================================================
@@ -387,6 +401,18 @@ async def verify_otp(
                     "details": suspicious.get("details"),
                 },
             )
+            if "impossible_travel" in suspicious.get("reasons", []):
+                log_security_event(
+                    db,
+                    event_type=SecurityEventType.IMPOSSIBLE_TRAVEL,
+                    severity=Severity.HIGH,
+                    user=user,
+                    request=request,
+                    details={
+                        "reason": "impossible_travel",
+                        "details": suspicious.get("details", {}),
+                    },
+                )
             # Optional: await send_security_alert_email(...)
             # Optional: raise HTTPException(403, "Suspicious activity detected.")
 
@@ -855,6 +881,14 @@ async def refresh_token(
                     "security_event": "token_reuse",
                 },
             )
+            log_security_event(
+                db,
+                event_type=SecurityEventType.TOKEN_REUSE,
+                severity=Severity.HIGH,
+                user_id=str(user_id),
+                request=request,
+                details={"token_jti": token_jti, "reason": "refresh_token_reuse"},
+            )
 
             revoked_count = await delete_all_user_sessions(user_id)
             (
@@ -1246,6 +1280,20 @@ async def logout(
         "message": "Logged out successfully",
         "sessions_cleared": deleted_redis_sessions + db_sessions_updated,
     }
+
+
+# ========================================================================
+# AUTH STATUS
+# ========================================================================
+
+
+@router.get("/status", response_model=AuthStatusResponse)
+async def auth_status(current_user: User = Depends(get_current_active_user)):
+    """Return current authentication status and user profile."""
+    return AuthStatusResponse(
+        authenticated=True,
+        user=UserResponse.model_validate(current_user),
+    )
 
 
 # ============================================================================

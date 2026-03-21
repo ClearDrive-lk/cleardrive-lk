@@ -4,8 +4,14 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
-from app.modules.finance.models import FinanceStatus, InsuranceStatus, LCStatus
-from app.modules.finance.models import LetterOfCredit, VehicleFinance, VehicleInsurance
+from app.modules.finance.models import (
+    FinanceStatus,
+    InsuranceStatus,
+    LCStatus,
+    LetterOfCredit,
+    VehicleFinance,
+    VehicleInsurance,
+)
 from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.models import PaymentStatus as OrderPaymentStatus
 from app.modules.vehicles.models import Vehicle, VehicleStatus
@@ -232,3 +238,103 @@ def test_admin_pending_endpoints_return_only_pending_items(
     assert len(pending_lc.json()) >= 1
     assert len(pending_finance.json()) >= 1
     assert len(pending_insurance.json()) >= 1
+
+
+def test_finance_partner_can_run_review_workflows(
+    client, db, test_user, auth_headers, finance_partner_headers
+):
+    order_lc = _create_order_for_user(db, test_user.id)
+    order_finance = _create_order_for_user(db, test_user.id)
+    order_insurance = _create_order_for_user(db, test_user.id)
+
+    lc_response = client.post(
+        "/api/v1/lc/request",
+        headers=auth_headers,
+        json={
+            "order_id": str(order_lc.id),
+            "bank_name": "Bank of Ceylon",
+            "bank_branch": "Colombo Main",
+            "account_number": "123456789",
+            "amount": 500000.00,
+        },
+    )
+    finance_response = client.post(
+        "/api/v1/finance/apply",
+        headers=auth_headers,
+        json={
+            "order_id": str(order_finance.id),
+            "vehicle_price": 5000000.00,
+            "down_payment": 1000000.00,
+            "monthly_income": 200000.00,
+            "employment_type": "Permanent",
+            "employer_name": "ABC Company",
+            "years_employed": 5.0,
+        },
+    )
+    insurance_response = client.post(
+        "/api/v1/insurance/quote",
+        headers=auth_headers,
+        json={
+            "order_id": str(order_insurance.id),
+            "insurance_type": "Comprehensive",
+            "vehicle_value": 5000000.00,
+            "driver_age": 30,
+            "driver_experience_years": 8,
+            "license_number": "B1234567",
+            "previous_claims": 0,
+        },
+    )
+
+    assert lc_response.status_code == 200
+    assert finance_response.status_code == 200
+    assert insurance_response.status_code == 200
+
+    pending_lc = client.get("/api/v1/lc/pending", headers=finance_partner_headers)
+    pending_finance = client.get("/api/v1/finance/pending", headers=finance_partner_headers)
+    pending_insurance = client.get("/api/v1/insurance/pending", headers=finance_partner_headers)
+
+    assert pending_lc.status_code == 200
+    assert pending_finance.status_code == 200
+    assert pending_insurance.status_code == 200
+
+    approve_lc = client.post(
+        f"/api/v1/lc/{lc_response.json()['id']}/approve",
+        headers=finance_partner_headers,
+        json={
+            "lc_number": "LC2026-002",
+            "beneficiary_name": "Tokyo Exports Ltd",
+            "beneficiary_bank": "MUFG Bank",
+            "beneficiary_account": "JP-987654321",
+            "issue_date": datetime.utcnow().isoformat(),
+            "expiry_date": (datetime.utcnow() + timedelta(days=90)).isoformat(),
+            "admin_notes": "Approved by finance partner",
+        },
+    )
+    approve_finance = client.post(
+        f"/api/v1/finance/{finance_response.json()['id']}/approve",
+        headers=finance_partner_headers,
+        json={
+            "loan_number": "LOAN2026-002",
+            "interest_rate": 12.5,
+            "loan_period_months": 60,
+            "admin_notes": "Approved by finance partner",
+        },
+    )
+    approve_insurance = client.post(
+        f"/api/v1/insurance/{insurance_response.json()['id']}/approve",
+        headers=finance_partner_headers,
+        json={
+            "policy_number": "POL2026-002",
+            "coverage_amount": 5000000.00,
+            "annual_premium": 150000.00,
+            "deductible": 50000.00,
+            "payment_frequency": "Annual",
+            "policy_start_date": datetime.utcnow().isoformat(),
+            "policy_end_date": (datetime.utcnow() + timedelta(days=365)).isoformat(),
+            "admin_notes": "Approved by finance partner",
+        },
+    )
+
+    assert approve_lc.status_code == 200
+    assert approve_finance.status_code == 200
+    assert approve_insurance.status_code == 200

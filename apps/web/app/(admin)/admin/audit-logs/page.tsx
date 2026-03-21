@@ -51,7 +51,7 @@ function formatTimestamp(value: string) {
 
 function renderDetailValue(value: unknown) {
   if (value === null || value === undefined || value === "") {
-    return "—";
+    return "N/A";
   }
   if (typeof value === "string" || typeof value === "number") {
     return String(value);
@@ -196,18 +196,18 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <header className="rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-600">
+    <div className="min-h-screen text-[#393d3f]">
+      <div className="cd-container py-6 space-y-6">
+        <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-62 Admin Audit Logs
           </p>
           <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900">
+              <h1 className="text-3xl font-semibold text-[#393d3f]">
                 Audit Log Viewer
               </h1>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-[#546a7b]">
                 Review privileged actions across KYC, gazettes, user changes,
                 and other operational events.
               </p>
@@ -216,7 +216,7 @@ export default function AuditLogsPage() {
               type="button"
               onClick={() => void exportCsv()}
               disabled={exporting}
-              className="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="inline-flex rounded-xl bg-[#62929e] px-4 py-2 text-sm font-semibold text-[#fdfdff] transition hover:bg-[#62929e]/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {exporting ? "Exporting..." : "Export CSV"}
             </button>
@@ -224,48 +224,48 @@ export default function AuditLogsPage() {
         </header>
 
         <section className="grid gap-4 lg:grid-cols-6">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Total Logs</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Total Logs</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {logsResponse?.total ?? 0}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Current Page</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Current Page</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {logsResponse?.page ?? 1}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Total Pages</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Total Pages</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {logsResponse?.total_pages ?? 0}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Page Size</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Page Size</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {limit}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Active Event Filter</p>
-            <p className="mt-2 text-base font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Active Event Filter</p>
+            <p className="mt-2 text-base font-semibold text-[#393d3f]">
               {filters.eventType || "All"}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Search</p>
-            <p className="mt-2 text-base font-semibold text-slate-900">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Search</p>
+            <p className="mt-2 text-base font-semibold text-[#393d3f]">
               {filters.search || "None"}
             </p>
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-[#546a7b]">
                 Event Type
               </span>
               <select
@@ -273,7 +273,7 @@ export default function AuditLogsPage() {
                 onChange={(event) =>
                   handleDraftChange("eventType", event.target.value)
                 }
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               >
                 <option value="">All event types</option>
                 {eventTypes.map((eventType) => (
@@ -285,7 +285,7 @@ export default function AuditLogsPage() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-[#546a7b]">
                 User ID
               </span>
               <input
@@ -294,12 +294,12 @@ export default function AuditLogsPage() {
                   handleDraftChange("userId", event.target.value)
                 }
                 placeholder="Filter by affected user UUID"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-[#546a7b]">
                 Admin ID
               </span>
               <input
@@ -308,12 +308,12 @@ export default function AuditLogsPage() {
                   handleDraftChange("adminId", event.target.value)
                 }
                 placeholder="Filter by acting admin UUID"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-[#546a7b]">
                 Start Date
               </span>
               <input
@@ -322,12 +322,12 @@ export default function AuditLogsPage() {
                 onChange={(event) =>
                   handleDraftChange("startDate", event.target.value)
                 }
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-[#546a7b]">
                 End Date
               </span>
               <input
@@ -336,19 +336,19 @@ export default function AuditLogsPage() {
                 onChange={(event) =>
                   handleDraftChange("endDate", event.target.value)
                 }
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Search</span>
+              <span className="text-sm font-medium text-[#546a7b]">Search</span>
               <input
                 value={draftFilters.search}
                 onChange={(event) =>
                   handleDraftChange("search", event.target.value)
                 }
                 placeholder="Search details JSON"
-                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/30 px-4 py-2.5 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus:border-[#62929e]/60 focus:outline-none focus:ring-2 focus:ring-[#62929e]/60"
               />
             </label>
           </div>
@@ -357,111 +357,111 @@ export default function AuditLogsPage() {
             <button
               type="button"
               onClick={applyFilters}
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+              className="rounded-xl bg-[#62929e] px-4 py-2 text-sm font-semibold text-[#fdfdff] transition hover:bg-[#62929e]/90"
             >
               Apply Filters
             </button>
             <button
               type="button"
               onClick={resetFilters}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Reset
             </button>
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">
+              <h2 className="text-xl font-semibold text-[#393d3f]">
                 Audit Events
               </h2>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-[#546a7b]">
                 Showing newest events first.
               </p>
             </div>
             <button
               type="button"
               onClick={() => void loadLogs(currentPage)}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>
           </div>
 
           {loading ? (
-            <div className="px-6 py-16 text-center text-slate-500">
+            <div className="px-6 py-16 text-center text-[#546a7b]">
               Loading audit logs...
             </div>
           ) : error ? (
-            <div className="px-6 py-16 text-center text-red-600">{error}</div>
+            <div className="px-6 py-16 text-center text-red-300">{error}</div>
           ) : !logsResponse || logsResponse.logs.length === 0 ? (
-            <div className="px-6 py-16 text-center text-slate-500">
+            <div className="px-6 py-16 text-center text-[#546a7b]">
               No audit logs matched the selected filters.
             </div>
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                  <thead className="bg-slate-50">
+                <table className="min-w-full divide-y divide-white/10 text-sm">
+                  <thead className="bg-[#c6c5b9]/20">
                     <tr>
-                      <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                         Time
                       </th>
-                      <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                         Event
                       </th>
-                      <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                         Admin
                       </th>
-                      <th className="px-6 py-3 text-left font-medium uppercase tracking-wide text-slate-500">
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                         Details
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-white/10">
                     {logsResponse.logs.map((log) => (
                       <tr
                         key={log.id}
-                        className="align-top hover:bg-slate-50/80"
+                        className="align-top hover:bg-[#c6c5b9]/20"
                       >
-                        <td className="px-6 py-4 text-slate-700">
+                        <td className="px-6 py-4 text-[#546a7b]">
                           {formatTimestamp(log.created_at)}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                          <span className="inline-flex rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-200">
                             {log.event_type}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">
-                          <div className="font-medium text-slate-900">
-                            {log.user_email || "—"}
+                        <td className="px-6 py-4 text-[#546a7b]">
+                          <div className="font-medium text-[#393d3f]">
+                            {log.user_email || "N/A"}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[#546a7b]">
                             {log.user_id || "No linked user"}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">
-                          <div className="font-medium text-slate-900">
-                            {log.admin_email || "—"}
+                        <td className="px-6 py-4 text-[#546a7b]">
+                          <div className="font-medium text-[#393d3f]">
+                            {log.admin_email || "N/A"}
                           </div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[#546a7b]">
                             {log.admin_id || "System"}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-slate-700">
+                        <td className="px-6 py-4 text-[#546a7b]">
                           <dl className="space-y-1">
                             {Object.entries(log.details || {}).length === 0 ? (
-                              <div>—</div>
+                              <div>N/A</div>
                             ) : (
                               Object.entries(log.details || {}).map(
                                 ([key, value]) => (
                                   <div key={`${log.id}-${key}`}>
-                                    <dt className="inline font-medium text-slate-900">
+                                    <dt className="inline font-medium text-[#393d3f]">
                                       {key}:
                                     </dt>{" "}
                                     <dd className="inline">
@@ -479,8 +479,8 @@ export default function AuditLogsPage() {
                 </table>
               </div>
 
-              <div className="flex flex-col gap-4 border-t border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-slate-500">
+              <div className="flex flex-col gap-4 border-t border-[#546a7b]/65 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-[#546a7b]">
                   Page {logsResponse.page} of{" "}
                   {Math.max(logsResponse.total_pages, 1)}
                 </p>
@@ -489,7 +489,7 @@ export default function AuditLogsPage() {
                     type="button"
                     disabled={logsResponse.page <= 1}
                     onClick={() => void loadLogs(logsResponse.page - 1)}
-                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Previous
                   </button>
@@ -497,7 +497,7 @@ export default function AuditLogsPage() {
                     type="button"
                     disabled={logsResponse.page >= logsResponse.total_pages}
                     onClick={() => void loadLogs(logsResponse.page + 1)}
-                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Next
                   </button>

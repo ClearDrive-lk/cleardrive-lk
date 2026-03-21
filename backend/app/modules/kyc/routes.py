@@ -133,7 +133,7 @@ async def upload_kyc_documents(
     logger.info("KYC upload started for user_id=%s", current_user.id)
 
     existing_kyc = db.query(KYCDocument).filter(KYCDocument.user_id == current_user.id).first()
-    if existing_kyc:
+    if existing_kyc and existing_kyc.status != KYCStatus.REJECTED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"KYC already submitted. Status: {existing_kyc.status}",
@@ -190,6 +190,7 @@ async def upload_kyc_documents(
                 file_path=file_path,
                 file_content=file_data["content"],
                 content_type=file_data["mime_type"],
+                upsert=True,
             )
             uploaded_urls[file_name] = cast(str, upload_result["url"])
         except Exception as exc:
@@ -239,21 +240,38 @@ async def upload_kyc_documents(
             "extraction_method": "vps_ollama",
             "extracted_at": datetime.now(UTC).isoformat(),
         }
+        logger.info(
+            "KYC extraction succeeded for user_id=%s via extraction_method=%s front_keys=%s back_keys=%s",
+            current_user.id,
+            "vps_ollama",
+            sorted(front_extracted.keys()) if isinstance(front_extracted, dict) else [],
+            sorted(back_extracted.keys()) if isinstance(back_extracted, dict) else [],
+        )
+    else:
+        logger.warning(
+            "KYC extraction fell back to manual review for user_id=%s front_success=%s back_success=%s",
+            current_user.id,
+            front_extracted is not None,
+            back_extracted is not None,
+        )
 
-    kyc_document = KYCDocument(
-        user_id=current_user.id,
-        nic_number=user_provided_data["nic_number"],
-        full_name=user_provided_data["full_name"],
-        date_of_birth=_parse_optional_date(user_provided_data["date_of_birth"]),
-        address=user_provided_data["address"],
-        gender=user_provided_data["gender"],
-        nic_front_url=uploaded_urls["nic_front"],
-        nic_back_url=uploaded_urls["nic_back"],
-        selfie_url=uploaded_urls["selfie"],
-        user_provided_data=user_provided_data,
-        extracted_data=extracted_payload,
-        status=(KYCStatus.PENDING_MANUAL_REVIEW if manual_review_required else KYCStatus.PENDING),
+    kyc_document = existing_kyc or KYCDocument(user_id=current_user.id)
+    kyc_document.nic_number = user_provided_data["nic_number"]
+    kyc_document.full_name = user_provided_data["full_name"]
+    kyc_document.date_of_birth = _parse_optional_date(user_provided_data["date_of_birth"])
+    kyc_document.address = user_provided_data["address"]
+    kyc_document.gender = user_provided_data["gender"]
+    kyc_document.nic_front_url = uploaded_urls["nic_front"]
+    kyc_document.nic_back_url = uploaded_urls["nic_back"]
+    kyc_document.selfie_url = uploaded_urls["selfie"]
+    kyc_document.user_provided_data = user_provided_data
+    kyc_document.extracted_data = extracted_payload
+    kyc_document.status = (
+        KYCStatus.PENDING_MANUAL_REVIEW if manual_review_required else KYCStatus.PENDING
     )
+    kyc_document.reviewed_at = None
+    kyc_document.reviewed_by = None
+    kyc_document.rejection_reason = None
 
     db.add(kyc_document)
     db.commit()

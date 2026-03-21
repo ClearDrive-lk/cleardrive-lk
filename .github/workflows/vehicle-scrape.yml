@@ -1,0 +1,106 @@
+name: Vehicle Scrape
+
+on:
+  schedule:
+    # 02:00 Asia/Colombo (20:30 UTC previous day)
+    - cron: "30 20 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Scrape target"
+        required: true
+        default: "supabase"
+        type: choice
+        options:
+          - supabase
+          - local
+      count:
+        description: "Listings to scrape (0 = all, blank = mode default)"
+        required: false
+        default: ""
+        type: string
+      years:
+        description: "Keep listings from the last N years"
+        required: false
+        default: "3"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vehicle-scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    name: Run Scheduled Vehicle Scrape
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      ENVIRONMENT: production
+      DATABASE_URL: ${{ secrets.SCRAPER_DATABASE_URL }}
+      REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET_KEY: github-actions-scraper-jwt-placeholder-32-chars #pragma: allowlist secret
+      ENCRYPTION_KEY: github-actions-scraper-encryption-key #pragma: allowlist secret
+      GOOGLE_CLIENT_ID: github-actions-placeholder-client-id #pragma: allowlist secret
+      GOOGLE_CLIENT_SECRET: github-actions-placeholder-client-secret #pragma: allowlist secret
+      PAYHERE_MERCHANT_ID: github-actions-placeholder-merchant-id #pragma: allowlist secret
+      PAYHERE_MERCHANT_SECRET: github-actions-placeholder-merchant-secret #pragma: allowlist secret
+      ANTHROPIC_API_KEY: github-actions-placeholder-anthropic-key #pragma: allowlist secret
+      SUPABASE_URL: ${{ secrets.SCRAPER_SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SCRAPER_SUPABASE_KEY }}
+      SMTP_HOST: localhost
+      SMTP_PORT: "25"
+      SMTP_USERNAME: github-actions-placeholder-smtp-user #pragma: allowlist secret
+      SMTP_PASSWORD: github-actions-placeholder-smtp-password #pragma: allowlist secret
+      ADMIN_EMAILS: admin@cleardrive.lk #pragma: allowlist secret
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Resolve scrape arguments
+        id: args
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.mode }}"
+            COUNT="${{ inputs.count }}"
+            YEARS="${{ inputs.years }}"
+          else
+            MODE="supabase"
+            COUNT=""
+            YEARS="3"
+          fi
+
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "years=$YEARS" >> "$GITHUB_OUTPUT"
+
+      - name: Run scrape
+        shell: bash
+        run: |
+          cd backend
+
+          CMD=(python scripts/scrape_runner.py --mode "${{ steps.args.outputs.mode }}" --years "${{ steps.args.outputs.years }}")
+          if [ -n "${{ steps.args.outputs.count }}" ]; then
+            CMD+=(--count "${{ steps.args.outputs.count }}")
+          fi
+
+          printf 'Running: %s\n' "${CMD[*]}"
+          "${CMD[@]}"

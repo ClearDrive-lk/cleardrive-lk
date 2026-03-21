@@ -1,0 +1,134 @@
+"""Add shipping documents table (CD-72)
+
+Revision ID: 3b8c44dc50d6
+Revises: 90e76850653b
+Create Date: 2026-03-10 20:42:23.831101
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '3b8c44dc50d6'
+down_revision: Union[str, None] = '90e76850653b'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    # This revision duplicates the finance tables added in e22d44f5a757.
+    # Keep it idempotent so databases that already ran that branch can still
+    # advance this head safely.
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+
+    if not inspector.has_table("letters_of_credit"):
+        op.create_table('letters_of_credit',
+    sa.Column('order_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('lc_number', sa.String(length=50), nullable=True),
+    sa.Column('bank_name', sa.String(length=255), nullable=False),
+    sa.Column('bank_branch', sa.String(length=255), nullable=True),
+    sa.Column('account_number', sa.String(length=50), nullable=False),
+    sa.Column('amount', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('currency', sa.String(length=3), nullable=False),
+    sa.Column('beneficiary_name', sa.String(length=255), nullable=True),
+    sa.Column('beneficiary_bank', sa.String(length=255), nullable=True),
+    sa.Column('beneficiary_account', sa.String(length=100), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'APPROVED', 'REJECTED', 'ISSUED', 'EXPIRED', name='lcstatus'), nullable=False),
+    sa.Column('reviewed_by', sa.UUID(), nullable=True),
+    sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('rejection_reason', sa.Text(), nullable=True),
+    sa.Column('admin_notes', sa.Text(), nullable=True),
+    sa.Column('issue_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('expiry_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('documents_required', sa.Text(), nullable=True),
+    sa.Column('documents_submitted', sa.Boolean(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['reviewed_by'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('lc_number'),
+    sa.UniqueConstraint('order_id')
+    )
+
+    if not inspector.has_table("vehicle_finance"):
+        op.create_table('vehicle_finance',
+    sa.Column('order_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('loan_number', sa.String(length=50), nullable=True),
+    sa.Column('vehicle_price', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('down_payment', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('loan_amount', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('monthly_income', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('employment_type', sa.String(length=50), nullable=True),
+    sa.Column('employer_name', sa.String(length=255), nullable=True),
+    sa.Column('years_employed', sa.Numeric(precision=4, scale=1), nullable=True),
+    sa.Column('interest_rate', sa.Numeric(precision=5, scale=2), nullable=True),
+    sa.Column('loan_period_months', sa.Integer(), nullable=True),
+    sa.Column('monthly_payment', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'APPROVED', 'REJECTED', 'DISBURSED', 'COMPLETED', name='financestatus'), nullable=False),
+    sa.Column('reviewed_by', sa.UUID(), nullable=True),
+    sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('rejection_reason', sa.Text(), nullable=True),
+    sa.Column('admin_notes', sa.Text(), nullable=True),
+    sa.Column('disbursed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('disbursement_reference', sa.String(length=100), nullable=True),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['reviewed_by'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('loan_number'),
+    sa.UniqueConstraint('order_id')
+    )
+
+    if not inspector.has_table("vehicle_insurance"):
+        op.create_table('vehicle_insurance',
+    sa.Column('order_id', sa.UUID(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('policy_number', sa.String(length=50), nullable=True),
+    sa.Column('insurance_type', sa.String(length=50), nullable=True),
+    sa.Column('vehicle_value', sa.Numeric(precision=12, scale=2), nullable=False),
+    sa.Column('coverage_amount', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('deductible', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('annual_premium', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('payment_frequency', sa.String(length=20), nullable=True),
+    sa.Column('driver_age', sa.Integer(), nullable=False),
+    sa.Column('driver_experience_years', sa.Integer(), nullable=False),
+    sa.Column('license_number', sa.String(length=50), nullable=True),
+    sa.Column('previous_claims', sa.Integer(), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'QUOTED', 'APPROVED', 'REJECTED', 'ACTIVE', 'EXPIRED', name='insurancestatus'), nullable=False),
+    sa.Column('reviewed_by', sa.UUID(), nullable=True),
+    sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('rejection_reason', sa.Text(), nullable=True),
+    sa.Column('admin_notes', sa.Text(), nullable=True),
+    sa.Column('policy_start_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('policy_end_date', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['reviewed_by'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('order_id'),
+    sa.UniqueConstraint('policy_number')
+    )
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('vehicle_insurance')
+    op.drop_table('vehicle_finance')
+    op.drop_table('letters_of_credit')
+    # ### end Alembic commands ###

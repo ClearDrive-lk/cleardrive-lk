@@ -10,7 +10,7 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
-from app.models.audit_log import AuditEventType, AuditLog
+from app.models.audit_log import AuditActionType, AuditEventType, AuditLog
 from app.modules.auth.models import User
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -25,6 +25,13 @@ logger = logging.getLogger(__name__)
 class AuditLogItem(BaseModel):
     id: str
     event_type: str
+    action_type: str | None = None
+    table_name: str | None = None
+    record_id: str | None = None
+    old_value: dict | None = None
+    new_value: dict | None = None
+    change_reason: str | None = None
+    version: int | None = None
     user_id: str | None = None
     user_email: str | None = None
     admin_id: str | None = None
@@ -68,6 +75,8 @@ def _build_audit_query(
     event_type: str | None,
     user_id: str | None,
     admin_id: str | None,
+    action_type: str | None,
+    table_name: str | None,
     start_date: str | None,
     end_date: str | None,
     search: str | None,
@@ -92,6 +101,19 @@ def _build_audit_query(
     parsed_admin_id = _parse_optional_uuid(admin_id, "admin_id")
     if parsed_admin_id is not None:
         filters.append(AuditLog.admin_id == parsed_admin_id)
+
+    if action_type:
+        try:
+            filters.append(AuditLog.action_type == AuditActionType(action_type))
+        except ValueError as exc:
+            valid = [item.value for item in AuditActionType]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid action_type: {action_type}. Valid values: {valid}",
+            ) from exc
+
+    if table_name:
+        filters.append(AuditLog.table_name == table_name)
 
     parsed_start = _parse_optional_datetime(start_date, "start_date")
     if parsed_start is not None:
@@ -135,6 +157,13 @@ def _serialize_audit_log(
     return AuditLogItem(
         id=str(log.id),
         event_type=log.event_type.value,
+        action_type=log.action_type.value if log.action_type else None,
+        table_name=log.table_name,
+        record_id=log.record_id,
+        old_value=log.old_value,
+        new_value=log.new_value,
+        change_reason=log.change_reason,
+        version=log.version,
         user_id=user_key,
         user_email=user_email_map.get(user_key) if user_key else None,
         admin_id=admin_key,
@@ -151,6 +180,8 @@ async def get_audit_logs(
     event_type: Optional[str] = Query(None),
     user_id: Optional[str] = Query(None),
     admin_id: Optional[str] = Query(None),
+    action_type: Optional[str] = Query(None),
+    table_name: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
@@ -162,6 +193,8 @@ async def get_audit_logs(
         event_type=event_type,
         user_id=user_id,
         admin_id=admin_id,
+        action_type=action_type,
+        table_name=table_name,
         start_date=start_date,
         end_date=end_date,
         search=search,
@@ -192,6 +225,8 @@ async def export_audit_logs_csv(
     event_type: Optional[str] = Query(None),
     user_id: Optional[str] = Query(None),
     admin_id: Optional[str] = Query(None),
+    action_type: Optional[str] = Query(None),
+    table_name: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
@@ -204,6 +239,8 @@ async def export_audit_logs_csv(
             event_type=event_type,
             user_id=user_id,
             admin_id=admin_id,
+            action_type=action_type,
+            table_name=table_name,
             start_date=start_date,
             end_date=end_date,
             search=search,
@@ -219,10 +256,17 @@ async def export_audit_logs_csv(
         [
             "id",
             "event_type",
+            "action_type",
+            "table_name",
+            "record_id",
+            "change_reason",
+            "version",
             "user_id",
             "user_email",
             "admin_id",
             "admin_email",
+            "old_value",
+            "new_value",
             "details",
             "created_at",
         ]
@@ -234,10 +278,17 @@ async def export_audit_logs_csv(
             [
                 str(log.id),
                 log.event_type.value,
+                log.action_type.value if log.action_type else "",
+                log.table_name or "",
+                log.record_id or "",
+                log.change_reason or "",
+                str(log.version or ""),
                 user_key or "",
                 user_email_map.get(user_key, "") if user_key else "",
                 admin_key or "",
                 admin_email_map.get(admin_key, "") if admin_key else "",
+                json.dumps(log.old_value or {}, ensure_ascii=True),
+                json.dumps(log.new_value or {}, ensure_ascii=True),
                 json.dumps(log.details or {}, ensure_ascii=True),
                 log.created_at.isoformat(),
             ]
