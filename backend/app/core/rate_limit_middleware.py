@@ -5,11 +5,8 @@ Global tiered rate-limit middleware.
 from __future__ import annotations
 
 import logging
-from collections.abc import Generator
-from typing import Callable, cast
 
 from app.core.config import settings
-from app.core.database import get_db
 from app.core.rate_limit import (
     UserTier,
     apply_rate_limit_headers,
@@ -19,10 +16,8 @@ from app.core.rate_limit import (
 )
 from app.core.redis import is_token_blacklisted
 from app.core.security import decode_access_token
-from app.modules.auth.models import User
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
@@ -66,12 +61,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             "hour_remaining": default_limits["hour"],
         }
 
-        db_generator = self._get_db_generator(request)
-        db = next(db_generator)
-
         try:
-            user = await self._resolve_user(request, db)
-            await check_rate_limit(request, user, endpoint_type, db=db)
+            await self._resolve_token(request)
+            await check_rate_limit(request, None, endpoint_type, db=None)
             response = await call_next(request)
             apply_rate_limit_headers(response, request)
             return response
@@ -86,38 +78,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             apply_rate_limit_headers(response, request)
             return response
-        finally:
-            self._close_db_generator(db_generator)
 
-    async def _resolve_user(self, request: Request, db: Session) -> User | None:
+    async def _resolve_token(self, request: Request) -> None:
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            return None
+            return
 
         token = auth_header.split(" ", 1)[1].strip()
         payload = decode_access_token(token)
         if payload is None:
-            return None
+            return
 
         token_jti = payload.get("jti")
         if token_jti and await is_token_blacklisted(str(token_jti)):
-            return None
-
-        user_id = payload.get("sub")
-        if not user_id:
-            return None
-
-        return cast(User | None, db.query(User).filter(User.id == user_id).first())
-
-    def _get_db_generator(self, request: Request) -> Generator[Session, None, None]:
-        db_dependency = cast(
-            Callable[[], Generator[Session, None, None]],
-            request.app.dependency_overrides.get(get_db, get_db),
-        )
-        return cast(Generator[Session, None, None], db_dependency())
-
-    def _close_db_generator(self, generator: Generator[Session, None, None]) -> None:
-        try:
-            next(generator)
-        except StopIteration:
             return

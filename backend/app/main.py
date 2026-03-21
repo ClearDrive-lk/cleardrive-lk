@@ -93,10 +93,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to start: {e}")
 
-    try:
-        email_scheduler.start()
-    except Exception as e:
-        logger.warning(f"CD-120 email scheduler failed to start: {e}")
+    if settings.ENVIRONMENT != "production":
+        try:
+            email_scheduler.start()
+        except Exception as e:
+            logger.warning(f"CD-120 email scheduler failed to start: {e}")
+    else:
+        logger.info("CD-120 email scheduler disabled in production web runtime")
 
     yield
 
@@ -114,10 +117,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"CD-23 scheduler failed to stop cleanly: {e}")
 
-    try:
-        email_scheduler.stop()
-    except Exception as e:
-        logger.warning(f"CD-120 email scheduler failed to stop cleanly: {e}")
+    if settings.ENVIRONMENT != "production":
+        try:
+            email_scheduler.stop()
+        except Exception as e:
+            logger.warning(f"CD-120 email scheduler failed to stop cleanly: {e}")
 
 
 app = FastAPI(
