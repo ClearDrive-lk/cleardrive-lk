@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.permissions import Permission, require_permission
 from app.core.storage import storage
-from app.modules.auth.models import User
+from app.modules.auth.models import Role, User
 from app.modules.orders.models import Order, OrderStatus
 from app.modules.orders.state_machine import validate_state_transition
 from app.modules.shipping.models import (
@@ -69,6 +69,45 @@ def _get_shipment_for_exporter(
             detail="Only the assigned exporter can manage documents for this shipment.",
         )
     return shipment
+
+
+def _get_shipment_for_document_access(
+    order_id: str,
+    current_user: User,
+    db: Session,
+) -> ShipmentDetails:
+    """Allow document access for assigned exporter or order owner."""
+    shipment = db.query(ShipmentDetails).filter(ShipmentDetails.order_id == order_id).first()
+    if not shipment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment for order {order_id} not found.",
+        )
+
+    if current_user.role == Role.ADMIN:
+        return shipment
+
+    if current_user.role == Role.EXPORTER:
+        if shipment.exporter_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the assigned exporter can manage documents for this shipment.",
+            )
+        return shipment
+
+    if current_user.role == Role.CUSTOMER:
+        order = db.query(Order).filter(Order.id == shipment.order_id).first()
+        if not order or order.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only manage shipping documents for your own orders.",
+            )
+        return shipment
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Only assigned exporters or order owners can manage documents for this shipment.",
+    )
 
 
 def _missing_required_docs(shipment: ShipmentDetails) -> list[str]:
@@ -210,7 +249,7 @@ async def upload_shipping_document(
     db: Session = Depends(get_db),
 ):
     """
-    Upload a shipping document (Exporter only).
+    Upload a shipping document (assigned exporter or order owner).
 
     **Story**: CD-72.1
 
@@ -242,7 +281,7 @@ async def upload_shipping_document(
     )
 
     # 1. Shipment & access
-    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+    shipment = _get_shipment_for_document_access(order_id, current_user, db)
 
     # 2. Validate document type (CD-72.2)
     try:
@@ -388,11 +427,11 @@ async def list_shipping_documents(
     db: Session = Depends(get_db),
 ):
     """
-    List all uploaded documents for a shipment (Exporter only).
+    List all uploaded documents for a shipment.
 
     **Story**: CD-72
     """
-    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+    shipment = _get_shipment_for_document_access(order_id, current_user, db)
 
     return [
         DocumentListItem(
@@ -432,7 +471,7 @@ async def check_required_documents(
     - PACKING_LIST
     - EXPORT_CERTIFICATE
     """
-    shipment = _get_shipment_for_exporter(order_id, current_user, db)
+    shipment = _get_shipment_for_document_access(order_id, current_user, db)
 
     uploaded_types = [doc.document_type.value for doc in shipment.documents]
     missing = _missing_required_docs(shipment)

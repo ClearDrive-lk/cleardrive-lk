@@ -4,17 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold tracking-wide ring-offset-background transition-[transform,box-shadow,background-color,color,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 relative overflow-hidden hover:-translate-y-[1px] active:translate-y-[1px]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "border border-[hsl(var(--bronze))] bg-[linear-gradient(135deg,hsl(var(--steel-soft))_0%,hsl(var(--primary))_45%,hsl(var(--bronze))_100%)] text-primary-foreground shadow-[0_16px_32px_rgba(57,61,63,0.28)] before:absolute before:inset-0 before:bg-[linear-gradient(180deg,rgba(255,255,255,0.4),transparent_55%)] before:opacity-70 before:content-[''] after:absolute after:inset-0 after:bg-[radial-gradient(140%_120%_at_10%_0%,rgba(255,255,255,0.45),transparent_60%)] after:opacity-70 after:content-[''] hover:shadow-[0_20px_40px_rgba(57,61,63,0.35)]",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-[hsl(var(--steel))] bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border border-[hsl(var(--steel))] bg-[linear-gradient(135deg,hsl(var(--secondary))_0%,hsl(var(--steel))_100%)] text-secondary-foreground hover:opacity-90",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },

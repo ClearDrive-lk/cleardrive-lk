@@ -85,17 +85,17 @@ export function GDPRDataExport() {
   };
 
   return (
-    <div className="border border-white/10 bg-[#0A0A0A] rounded-2xl p-6">
+    <div className="border border-[#546a7b]/65 bg-[#fdfdff] rounded-2xl p-6">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <div className="inline-flex items-center gap-2 text-xs font-mono text-[#FE7743] mb-3">
+          <div className="inline-flex items-center gap-2 text-xs font-mono text-[#62929e] mb-3">
             <ShieldCheck className="w-4 h-4" />
             GDPR DATA EXPORT
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2">
+          <h3 className="text-2xl font-bold text-[#393d3f] mb-2">
             Download Your Data
           </h3>
-          <p className="text-sm text-gray-400 max-w-xl">
+          <p className="text-sm text-[#546a7b] max-w-xl">
             Under GDPR Article 15, you can export all personal data stored in
             ClearDrive in a machine-readable JSON format.
           </p>
@@ -103,7 +103,7 @@ export function GDPRDataExport() {
       </div>
 
       {quota && (
-        <div className="mt-4 text-xs font-mono text-gray-400">
+        <div className="mt-4 text-xs font-mono text-[#546a7b]">
           Daily limit: {quota.used_today}/{quota.daily_limit} used -{" "}
           {quota.remaining_today} remaining today
         </div>
@@ -119,7 +119,7 @@ export function GDPRDataExport() {
         <Button
           onClick={exportData}
           disabled={loading || quota?.remaining_today === 0}
-          className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-bold gap-2"
+          className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold gap-2"
         >
           <Download className="w-4 h-4" />
           {loading ? "Preparing Export..." : "Download My Data"}

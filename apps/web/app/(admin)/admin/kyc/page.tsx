@@ -67,87 +67,89 @@ export default function AdminKycPage() {
   }, [loadItems]);
 
   return (
-    <div className="min-h-screen p-6 text-white">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#FE7743]">
+    <div className="min-h-screen text-[#393d3f]">
+      <div className="cd-container py-6 space-y-6">
+        <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#62929e]">
             CD-52 KYC Admin Review
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-white">
+          <h1 className="mt-2 text-3xl font-semibold text-[#393d3f]">
             Pending KYC Reviews
           </h1>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-[#546a7b]">
             Review pending KYC submissions, compare extracted fields, and
             approve or reject with a reason when needed.
           </p>
         </header>
 
         <section className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Queue Size</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Queue Size</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {items.length}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Auto Extracted</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Auto Extracted</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {items.filter((item) => item.auto_extracted).length}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm">
-            <p className="text-sm text-gray-400">Manual Review Needed</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
+          <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5 shadow-sm">
+            <p className="text-sm text-[#546a7b]">Manual Review Needed</p>
+            <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
               {items.filter((item) => item.needs_manual_extraction).length}
             </p>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 shadow-sm">
-          <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 shadow-sm">
+          <div className="flex items-center justify-between border-b border-[#546a7b]/65 px-6 py-4">
             <div>
-              <h2 className="text-xl font-semibold text-white">Review Queue</h2>
-              <p className="text-sm text-gray-400">
+              <h2 className="text-xl font-semibold text-[#393d3f]">
+                Review Queue
+              </h2>
+              <p className="text-sm text-[#546a7b]">
                 Oldest submissions are shown first.
               </p>
             </div>
             <button
               type="button"
               onClick={() => void loadItems()}
-              className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-white/10"
+              className="rounded-xl border border-[#546a7b]/65 px-4 py-2 text-sm font-medium text-[#393d3f] transition hover:bg-[#c6c5b9]/30"
             >
               Refresh
             </button>
           </div>
 
           {loading ? (
-            <div className="px-6 py-16 text-center text-gray-400">
+            <div className="px-6 py-16 text-center text-[#546a7b]">
               Loading KYC queue...
             </div>
           ) : error ? (
             <div className="px-6 py-16 text-center text-red-300">{error}</div>
           ) : items.length === 0 ? (
-            <div className="px-6 py-16 text-center text-gray-400">
+            <div className="px-6 py-16 text-center text-[#546a7b]">
               No KYC submissions are waiting for review.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-white/10 text-sm">
-                <thead className="bg-white/5">
+                <thead className="bg-[#c6c5b9]/20">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                       Extraction
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                       Submitted
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-[#546a7b]">
                       Action
                     </th>
                   </tr>
@@ -156,12 +158,12 @@ export default function AdminKycPage() {
                   {items.map((item) => {
                     const badge = extractionBadge(item);
                     return (
-                      <tr key={item.id} className="hover:bg-white/5">
+                      <tr key={item.id} className="hover:bg-[#c6c5b9]/20">
                         <td className="px-6 py-4">
-                          <div className="font-medium text-white">
+                          <div className="font-medium text-[#393d3f]">
                             {item.user_name}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-[#546a7b]">
                             {item.user_email}
                           </div>
                         </td>
@@ -170,20 +172,20 @@ export default function AdminKycPage() {
                             {item.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-300">
+                        <td className="px-6 py-4 text-[#546a7b]">
                           <span
                             className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badge.className}`}
                           >
                             {badge.label}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-300">
+                        <td className="px-6 py-4 text-[#546a7b]">
                           {new Date(item.created_at).toLocaleString()}
                         </td>
                         <td className="px-6 py-4">
                           <a
                             href={`/admin/kyc/${item.id}`}
-                            className="inline-flex rounded-xl bg-[#FE7743] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#FE7743]/90"
+                            className="inline-flex rounded-xl bg-[#62929e] px-4 py-2 text-sm font-semibold text-[#fdfdff] transition hover:bg-[#62929e]/90"
                           >
                             Review
                           </a>

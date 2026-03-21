@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   ClipboardList,
   Package,
@@ -14,249 +15,288 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ExporterEmptyState,
+  ExporterPageShell,
+  ExporterPanel,
+} from "@/components/exporter/ExporterPageShell";
 import { useAssignedOrders } from "@/lib/hooks/useAssignedOrders";
-
-const statusTone: Record<string, string> = {
-  ASSIGNED_TO_EXPORTER:
-    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
-  AWAITING_SHIPMENT_CONFIRMATION:
-    "border-orange-500/20 bg-orange-500/10 text-orange-200",
-  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
-  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
-  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
-  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
-  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
-};
+import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
+import {
+  EXPORTER_TERMS,
+  type ExporterOrderFilter,
+} from "@/lib/exporter-phrases";
 
 export default function ExporterDashboardPage() {
   const { orders, loading, error, reload, stats } = useAssignedOrders();
+  const [filter, setFilter] = useState<ExporterOrderFilter>("all");
+
+  const filteredOrders = useMemo(() => {
+    if (filter === "action_required") {
+      return orders.filter((order) =>
+        ["ASSIGNED_TO_EXPORTER", "AWAITING_SHIPMENT_CONFIRMATION"].includes(
+          order.status,
+        ),
+      );
+    }
+    if (filter === "in_transit") {
+      return orders.filter((order) =>
+        [
+          "SHIPPED",
+          "IN_TRANSIT",
+          "ARRIVED_AT_PORT",
+          "CUSTOMS_CLEARANCE",
+        ].includes(order.status),
+      );
+    }
+    if (filter === "delivered") {
+      return orders.filter((order) => order.status === "DELIVERED");
+    }
+    return orders;
+  }, [filter, orders]);
+
+  const filterMeta = [
+    { key: "all" as const, label: "All Queue", count: orders.length },
+    {
+      key: "action_required" as const,
+      label: EXPORTER_TERMS.actionRequired,
+      count: orders.filter((order) =>
+        ["ASSIGNED_TO_EXPORTER", "AWAITING_SHIPMENT_CONFIRMATION"].includes(
+          order.status,
+        ),
+      ).length,
+    },
+    {
+      key: "in_transit" as const,
+      label: "Transit",
+      count: orders.filter((order) =>
+        [
+          "SHIPPED",
+          "IN_TRANSIT",
+          "ARRIVED_AT_PORT",
+          "CUSTOMS_CLEARANCE",
+        ].includes(order.status),
+      ).length,
+    },
+    {
+      key: "delivered" as const,
+      label: "Delivered",
+      count: orders.filter((order) => order.status === "DELIVERED").length,
+    },
+  ];
 
   return (
-    <section className="relative pt-16 pb-20 px-6 overflow-hidden flex-1">
-      <div className="relative z-10 max-w-7xl mx-auto space-y-12">
-        <div>
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#FE7743] mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FE7743] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FE7743]"></span>
-            </span>
-            EXPORTER TERMINAL :: ASSIGNED ORDERS
-          </div>
+    <ExporterPageShell
+      eyebrow={EXPORTER_TERMS.opsBadge}
+      title="Assigned"
+      accent="Orders."
+      description="Review assigned orders, complete shipment tasks, and keep every vehicle export moving on time."
+      icon={ClipboardList}
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => void reload()}
+          className="border-[#546a7b]/45 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/35 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
+        >
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          Refresh Orders
+        </Button>
+      }
+    >
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        {[
+          {
+            label: "Total Assigned",
+            value: String(stats.total),
+            icon: ClipboardList,
+            sub: "Current queue",
+          },
+          {
+            label: "Awaiting Details",
+            value: String(stats.awaitingDetails),
+            icon: Clock,
+            sub: "Shipping form",
+          },
+          {
+            label: "Awaiting Approval",
+            value: String(stats.awaitingApproval),
+            icon: Ship,
+            sub: "Admin review",
+          },
+          {
+            label: "In Transit",
+            value: String(stats.inTransit),
+            icon: Radar,
+            sub: "Live voyages",
+          },
+          {
+            label: "Delivered",
+            value: String(stats.delivered),
+            icon: CheckCircle2,
+            sub: "Completed",
+          },
+        ].map((stat) => (
+          <ExporterPanel key={stat.label} className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl border border-[#62929e]/25 bg-[#62929e]/10 p-2 text-[#62929e] dark:border-[#88d6e4]/30 dark:bg-[#88d6e4]/12 dark:text-[#88d6e4]">
+                <stat.icon className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xl font-semibold text-[#1f2937] dark:text-[#edf2f7]">
+                  {stat.value}
+                </p>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-[#546a7b] dark:text-[#bdcad4]">
+                  {stat.label}
+                </p>
+                <p className="mt-1 text-[11px] text-[#546a7b] dark:text-[#bdcad4]">
+                  {stat.sub}
+                </p>
+              </div>
+            </div>
+          </ExporterPanel>
+        ))}
+      </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-6">
-            <div>
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white leading-[0.95]">
-                ASSIGNED{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FE7743] to-orange-200">
-                  ORDERS.
+      {error ? (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
+          {error}
+        </div>
+      ) : null}
+
+      <ExporterPanel className="p-4">
+        <div className="flex flex-wrap gap-2">
+          {filterMeta.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setFilter(item.key)}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] transition ${
+                filter === item.key
+                  ? "border-[#62929e]/40 bg-[#62929e]/12 text-[#1f2937] dark:border-[#88d6e4]/40 dark:bg-[#88d6e4]/14 dark:text-[#edf2f7]"
+                  : "border-[#546a7b]/35 bg-[#c6c5b9]/15 text-[#546a7b] hover:text-[#1f2937] dark:border-[#8fa3b1]/25 dark:bg-[#22313c]/65 dark:text-[#bdcad4] dark:hover:text-[#edf2f7]"
+              }`}
+            >
+              <span>{item.label}</span>
+              <span className="rounded-full bg-[#fdfdff]/80 px-1.5 py-0.5 text-[10px] dark:bg-[#10191e]/80">
+                {item.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </ExporterPanel>
+
+      {loading ? (
+        <ExporterPanel className="p-12 text-center text-[#546a7b] dark:text-[#bdcad4]">
+          Loading assigned orders...
+        </ExporterPanel>
+      ) : filteredOrders.length === 0 ? (
+        <ExporterEmptyState
+          icon={Package}
+          title="No matching orders"
+          description="Try another filter or refresh. Assigned shipments will appear as soon as operations dispatches them."
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          {filteredOrders.map((order) => (
+            <ExporterPanel key={order.id} className="space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-[#546a7b] dark:text-[#bdcad4]">
+                    Order ID
+                  </p>
+                  <p className="mt-2 break-all font-mono text-sm text-[#1f2937] dark:text-[#edf2f7]">
+                    {order.id}
+                  </p>
+                </div>
+                <Badge className={getOrderStatusBadgeClass(order.status)}>
+                  {order.status.replace(/_/g, " ")}
+                </Badge>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#546a7b]/30 bg-[#c6c5b9]/15 px-3 py-2 text-sm text-[#546a7b] dark:border-[#8fa3b1]/25 dark:bg-[#22313c]/65 dark:text-[#bdcad4]">
+                <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                <span>
+                  {order.total_cost_lkr != null
+                    ? `LKR ${order.total_cost_lkr.toLocaleString()}`
+                    : "Value pending"}
                 </span>
-              </h1>
-              <p className="mt-4 text-lg text-gray-400 max-w-2xl">
-                Monitor vehicle export tasks, submit shipping details, and keep
-                every shipment moving on schedule.
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  asChild
+                  className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90"
+                >
+                  <Link href={`/exporter/shipping?orderId=${order.id}`}>
+                    Shipping Details
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-[#546a7b]/45 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/35 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
+                >
+                  <Link href={`/exporter/documents?orderId=${order.id}`}>
+                    Documents
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-[#546a7b]/45 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/35 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
+                >
+                  <Link href={`/exporter/tracking?orderId=${order.id}`}>
+                    Tracking
+                  </Link>
+                </Button>
+              </div>
+            </ExporterPanel>
+          ))}
+        </div>
+      )}
+
+      <ExporterPanel>
+        <h2 className="text-lg font-semibold text-[#1f2937] dark:text-[#edf2f7]">
+          Workflow Guide
+        </h2>
+        <p className="mt-1 text-sm text-[#546a7b] dark:text-[#bdcad4]">
+          Complete these steps for each shipment to keep operations smooth.
+        </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {[
+            {
+              title: "Shipping Details",
+              desc: "Submit vessel, route, and container data.",
+              icon: Ship,
+            },
+            {
+              title: "Documents",
+              desc: "Upload required files for review.",
+              icon: UploadCloud,
+            },
+            {
+              title: "Tracking",
+              desc: "Monitor timeline and status transitions.",
+              icon: Radar,
+            },
+          ].map((step) => (
+            <div
+              key={step.title}
+              className="rounded-2xl border border-[#546a7b]/35 bg-[#c6c5b9]/15 p-4 dark:border-[#8fa3b1]/25 dark:bg-[#22313c]/65"
+            >
+              <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#62929e]/25 bg-[#62929e]/10 text-[#62929e] dark:border-[#88d6e4]/30 dark:bg-[#88d6e4]/12 dark:text-[#88d6e4]">
+                <step.icon className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-semibold text-[#1f2937] dark:text-[#edf2f7]">
+                {step.title}
+              </h3>
+              <p className="mt-1 text-xs text-[#546a7b] dark:text-[#bdcad4]">
+                {step.desc}
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => void reload()}
-              className="border-white/10 text-white hover:bg-white/5"
-            >
-              <RefreshCcw className="w-4 h-4 mr-2" />
-              Refresh Orders
-            </Button>
-          </div>
+          ))}
         </div>
-
-        <div className="border-b border-white/10 bg-[#0A0A0A]">
-          <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-white/10">
-            {[
-              {
-                label: "Total Assigned",
-                value: String(stats.total),
-                icon: ClipboardList,
-                sub: "Exporter Queue",
-              },
-              {
-                label: "Awaiting Details",
-                value: String(stats.awaitingDetails),
-                icon: Clock,
-                sub: "Shipping Form",
-              },
-              {
-                label: "Awaiting Approval",
-                value: String(stats.awaitingApproval),
-                icon: Ship,
-                sub: "Admin Review",
-              },
-              {
-                label: "In Transit",
-                value: String(stats.inTransit),
-                icon: Radar,
-                sub: "Live Voyages",
-              },
-              {
-                label: "Delivered",
-                value: String(stats.delivered),
-                icon: CheckCircle2,
-                sub: "Completed",
-              },
-            ].map((stat, index) => (
-              <div
-                key={stat.label}
-                className={`p-6 flex items-start gap-3 group hover:bg-white/5 transition-colors ${
-                  index === 0 ? "col-span-2 md:col-span-1" : ""
-                }`}
-              >
-                <div className="mt-1 p-2 rounded-md bg-[#FE7743]/10 text-[#FE7743] group-hover:bg-[#FE7743] group-hover:text-black transition-colors">
-                  <stat.icon className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-white tracking-tight">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-1">
-                    {stat.label}
-                  </div>
-                  <div className="text-[10px] text-gray-600 font-mono mt-1">
-                    {stat.sub}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {error && (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-12 text-center text-gray-400">
-            Loading assigned orders...
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-12 text-center text-gray-400">
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
-              <Package className="h-6 w-6 text-[#FE7743]" />
-            </div>
-            <h2 className="text-2xl font-semibold text-white mb-2">
-              No assigned orders yet
-            </h2>
-            <p className="text-sm text-gray-400 max-w-xl mx-auto">
-              Assigned orders will appear here as soon as the admin team assigns
-              shipments to your exporter account.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-gray-500">
-                      Order ID
-                    </p>
-                    <p className="mt-2 font-mono text-sm text-white break-all">
-                      {order.id}
-                    </p>
-                  </div>
-                  <Badge
-                    className={
-                      statusTone[order.status] ??
-                      "border-white/10 bg-white/5 text-white"
-                    }
-                  >
-                    {order.status.replace(/_/g, " ")}
-                  </Badge>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-400">
-                  <span>{new Date(order.created_at).toLocaleDateString()}</span>
-                  <span>
-                    {order.total_cost_lkr != null
-                      ? `LKR ${order.total_cost_lkr.toLocaleString()}`
-                      : "Value pending"}
-                  </span>
-                </div>
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <Button
-                    asChild
-                    className="bg-[#FE7743] text-black hover:bg-[#FE7743]/90 font-semibold"
-                  >
-                    <Link href={`/exporter/shipping?orderId=${order.id}`}>
-                      Shipping Details
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="border-white/10 text-white hover:bg-white/5"
-                  >
-                    <Link href={`/exporter/documents?orderId=${order.id}`}>
-                      Upload Docs
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="border-white/10 text-white hover:bg-white/5"
-                  >
-                    <Link href={`/exporter/tracking?orderId=${order.id}`}>
-                      Track Status
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="rounded-[24px] border border-white/10 bg-[#0A0A0A] p-6">
-          <h2 className="text-lg font-semibold text-white mb-2">
-            Exporter Workflow
-          </h2>
-          <p className="text-sm text-gray-400 mb-4">
-            Follow the workflow for every assigned shipment.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            {[
-              {
-                title: "Submit Shipping Details",
-                desc: "Capture vessel, port, and container details.",
-                icon: Ship,
-              },
-              {
-                title: "Upload Documents",
-                desc: "Provide required PDFs for admin approval.",
-                icon: UploadCloud,
-              },
-              {
-                title: "Monitor Timeline",
-                desc: "Track order status updates in real-time.",
-                icon: Radar,
-              },
-            ].map((step) => (
-              <div
-                key={step.title}
-                className="rounded-2xl border border-white/10 bg-white/[0.02] p-4"
-              >
-                <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#FE7743]/10 text-[#FE7743]">
-                  <step.icon className="h-4 w-4" />
-                </div>
-                <h3 className="text-white font-semibold">{step.title}</h3>
-                <p className="mt-1 text-xs text-gray-500">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
+      </ExporterPanel>
+    </ExporterPageShell>
   );
 }

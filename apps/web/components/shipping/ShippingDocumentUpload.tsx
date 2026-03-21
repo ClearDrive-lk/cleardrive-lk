@@ -166,8 +166,8 @@ function InlinePreview({
   const isImage = document.mime_type.startsWith("image/");
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#fdfdff]/70 p-4">
+      <div className="w-full max-w-5xl overflow-hidden rounded-2xl bg-[#fdfdff] shadow-2xl">
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold text-slate-900">
@@ -201,16 +201,16 @@ function InlinePreview({
             <iframe
               src={document.file_url}
               title={document.file_name}
-              className="h-[70vh] w-full rounded-lg border border-slate-200 bg-white"
+              className="h-[70vh] w-full rounded-lg border border-slate-200 bg-[#fdfdff]"
             />
           ) : isImage ? (
             <img
               src={document.file_url}
               alt={document.file_name}
-              className="mx-auto max-h-[70vh] rounded-lg border border-slate-200 bg-white object-contain"
+              className="mx-auto max-h-[70vh] rounded-lg border border-slate-200 bg-[#fdfdff] object-contain"
             />
           ) : (
-            <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+            <div className="rounded-lg border border-slate-200 bg-[#fdfdff] p-8 text-center text-sm text-slate-600">
               This file type cannot be previewed inline. Use &quot;Open in new
               tab&quot;.
             </div>
@@ -298,7 +298,7 @@ function UploadRow({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+    <div className="rounded-xl border border-slate-200 bg-[#fdfdff] p-4 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ function UploadRow({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-[#393d3f] transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {uploading ? "Uploading..." : "Upload"}
           </button>
@@ -555,7 +555,7 @@ export function ShippingDocumentUpload({
       </div>
 
       {check && (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-[#fdfdff] p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-sm font-medium text-slate-700">
               Upload Progress

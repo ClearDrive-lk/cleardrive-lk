@@ -33,7 +33,7 @@ function PaymentCancelContent() {
         <CardContent className="space-y-4">
           {orderId && (
             <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="text-sm text-[#393d3f]">Order ID</p>
               <p className="font-mono font-semibold">{orderId}</p>
             </div>
           )}

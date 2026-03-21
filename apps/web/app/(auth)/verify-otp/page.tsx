@@ -180,15 +180,15 @@ function OTPForm() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-[#050505] relative overflow-hidden font-sans selection:bg-[#FE7743] selection:text-black">
-      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 z-10 border-r border-white/5">
+    <div className="min-h-screen w-full flex bg-[#fdfdff] relative overflow-hidden font-sans selection:bg-[#62929e] selection:text-[#fdfdff]">
+      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 z-10 border-r border-[#546a7b]/40">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[20%] left-[20%] w-[600px] h-[600px] bg-[#FE7743]/5 rounded-full blur-[120px]" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]" />
+          <div className="absolute top-[20%] left-[20%] w-[600px] h-[600px] bg-[#62929e]/5 rounded-full blur-[120px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px]" />
         </div>
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-white tracking-tighter flex items-center gap-2">
-            <ShieldCheck className="text-[#FE7743]" />
+          <h1 className="text-2xl font-bold text-[#393d3f] tracking-tighter flex items-center gap-2">
+            <ShieldCheck className="text-[#62929e]" />
             Security Gateway
           </h1>
           <Badge
@@ -200,26 +200,26 @@ function OTPForm() {
         </div>
 
         <div className="relative z-10 space-y-6 max-w-lg">
-          <h2 className="text-4xl font-bold text-white leading-tight">
+          <h2 className="text-4xl font-bold text-[#393d3f] leading-tight">
             Banking-Grade <br />
             Identity Verification.
           </h2>
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-gray-400 group">
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#FE7743] border border-white/10 group-hover:bg-[#FE7743]/10 transition-colors">
+            <div className="flex items-center gap-3 text-[#546a7b] group">
+              <div className="w-10 h-10 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center text-[#62929e] border border-[#546a7b]/65 group-hover:bg-[#62929e]/10 transition-colors">
                 <Zap className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-white font-medium">Instant Validation</p>
+                <p className="text-[#393d3f] font-medium">Instant Validation</p>
                 <p className="text-xs">Code sent via SMS/Email Gateway</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-gray-400 group">
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#FE7743] border border-white/10 group-hover:bg-[#FE7743]/10 transition-colors">
+            <div className="flex items-center gap-3 text-[#546a7b] group">
+              <div className="w-10 h-10 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center text-[#62929e] border border-[#546a7b]/65 group-hover:bg-[#62929e]/10 transition-colors">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-white font-medium">Session Protection</p>
+                <p className="text-[#393d3f] font-medium">Session Protection</p>
                 <p className="text-xs">
                   Prevents unauthorized account takeover
                 </p>
@@ -228,7 +228,7 @@ function OTPForm() {
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-gray-600 font-mono">
+        <div className="relative z-10 text-xs text-[#393d3f] font-mono">
           ID: AUTH-8829-XJ // 256-BIT ENCRYPTION
         </div>
       </div>
@@ -238,9 +238,9 @@ function OTPForm() {
         <div className="absolute top-8 left-8 z-20">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors group"
+            className="flex items-center gap-2 text-sm text-[#546a7b] hover:text-[#393d3f] transition-colors group"
           >
-            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#FE7743]/10 group-hover:text-[#FE7743] transition-all">
+            <div className="w-8 h-8 rounded-full bg-[#c6c5b9]/20 flex items-center justify-center group-hover:bg-[#62929e]/10 group-hover:text-[#62929e] transition-all">
               <ArrowLeft className="w-4 h-4" />
             </div>
             <span className="font-mono hidden sm:inline-block">
@@ -249,22 +249,22 @@ function OTPForm() {
           </Link>
         </div>
 
-        <div className="w-full max-w-md bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl shadow-2xl relative z-10">
+        <div className="w-full max-w-md bg-[#fdfdff] border border-[#546a7b]/65 p-8 rounded-2xl shadow-2xl relative z-10">
           <div className="mb-8 text-center">
-            <div className="mx-auto w-16 h-16 bg-[#FE7743]/10 rounded-full flex items-center justify-center mb-6 border border-[#FE7743]/20 relative">
-              <div className="absolute inset-0 bg-[#FE7743]/20 blur-md rounded-full animate-pulse" />
+            <div className="mx-auto w-16 h-16 bg-[#62929e]/10 rounded-full flex items-center justify-center mb-6 border border-[#62929e]/20 relative">
+              <div className="absolute inset-0 bg-[#62929e]/20 blur-md rounded-full animate-pulse" />
               {success ? (
                 <CheckCircle2 className="text-green-500 w-8 h-8 relative z-10" />
               ) : (
-                <Key className="text-[#FE7743] w-8 h-8 relative z-10" />
+                <Key className="text-[#62929e] w-8 h-8 relative z-10" />
               )}
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">
+            <h3 className="text-2xl font-bold text-[#393d3f] mb-2">
               Two-Factor Authentication
             </h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-[#546a7b] text-sm">
               Enter the 6-digit security code sent to <br />
-              <span className="text-[#FE7743] font-mono">{email}</span>
+              <span className="text-[#62929e] font-mono">{email}</span>
             </p>
           </div>
 
@@ -282,7 +282,7 @@ function OTPForm() {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={(e) => handlePaste(index, e)}
-                  className="w-12 h-14 text-center text-xl bg-black/40 border-white/10 focus:border-[#FE7743] focus:ring-[#FE7743]/20 transition-all text-white font-mono rounded-lg"
+                  className="w-12 h-14 text-center text-xl bg-[#fdfdff]/40 border-[#546a7b]/65 focus:border-[#62929e] focus:ring-[#62929e]/20 transition-all text-[#393d3f] font-mono rounded-lg"
                 />
               ))}
             </div>
@@ -292,8 +292,8 @@ function OTPForm() {
               disabled={loading || otp.some((d) => !d) || success}
               className={`w-full font-bold h-12 transition-all shadow-lg ${
                 success
-                  ? "bg-green-500 hover:bg-green-600 text-black"
-                  : "bg-[#FE7743] hover:bg-[#FE7743]/90 text-black shadow-[0_0_15px_rgba(254,119,67,0.15)]"
+                  ? "bg-green-500 hover:bg-green-600 text-[#393d3f]"
+                  : "bg-[#62929e] hover:bg-[#62929e]/90 text-[#fdfdff] shadow-[0_0_15px_rgba(98,146,158,0.15)]"
               }`}
             >
               {loading ? (
@@ -305,22 +305,22 @@ function OTPForm() {
               )}
             </Button>
 
-            <label className="flex items-center justify-center gap-2 text-xs text-gray-400 font-mono">
+            <label className="flex items-center justify-center gap-2 text-xs text-[#546a7b] font-mono">
               <input
                 type="checkbox"
                 checked={keepSignedIn}
                 onChange={(e) => setKeepSignedIn(e.target.checked)}
-                className="h-4 w-4 accent-[#FE7743]"
+                className="h-4 w-4 accent-[#62929e]"
               />
               Keep me signed in on this device
             </label>
 
-            <div className="text-center text-xs text-gray-500 font-mono">
+            <div className="text-center text-xs text-[#546a7b] font-mono">
               Didn&apos;t receive code?{" "}
               <button
                 onClick={handleResend}
                 disabled={resendSeconds > 0 || resendLoading}
-                className="hover:text-white disabled:text-gray-600 disabled:no-underline transition-colors underline decoration-[#FE7743]"
+                className="hover:text-[#393d3f] disabled:text-[#393d3f] disabled:no-underline transition-colors underline decoration-[#62929e]"
               >
                 {resendLoading
                   ? "Resending..."
@@ -341,10 +341,10 @@ function OTPForm() {
             )}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
+          <div className="mt-8 pt-6 border-t border-[#546a7b]/40 text-center">
             <Link
               href="/login"
-              className="text-xs text-gray-400 hover:text-white flex items-center justify-center gap-2 group"
+              className="text-xs text-[#546a7b] hover:text-[#393d3f] flex items-center justify-center gap-2 group"
             >
               <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
               Back to Login
@@ -360,7 +360,7 @@ export default function OTPPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
+        <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] flex items-center justify-center">
           Loading Security Gateway...
         </div>
       }

@@ -25,7 +25,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-white/10 bg-[#0F0F0F] p-4 pr-10 text-white shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:fade-in data-[state=open]:slide-in-from-top-full",
+  "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff] p-4 pr-10 text-[#393d3f] shadow-lg transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:fade-in data-[state=open]:slide-in-from-top-full",
   {
     variants: {
       variant: {
@@ -71,7 +71,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-xs text-white/70", className)}
+    className={cn("text-xs text-[#393d3f]/70", className)}
     {...props}
   />
 ));
@@ -84,7 +84,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-3 top-3 rounded-md text-white/60 opacity-0 transition-opacity hover:text-white focus:opacity-100 group-hover:opacity-100",
+      "absolute right-3 top-3 rounded-md text-[#393d3f]/60 opacity-0 transition-opacity hover:text-[#393d3f] focus:opacity-100 group-hover:opacity-100",
       className,
     )}
     toast-close=""
@@ -102,7 +102,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex items-center rounded-md border border-white/20 px-2 py-1 text-xs text-white hover:bg-white/10",
+      "inline-flex items-center rounded-md border border-[#546a7b]/65 px-2 py-1 text-xs text-[#393d3f] hover:bg-[#c6c5b9]/30",
       className,
     )}
     {...props}

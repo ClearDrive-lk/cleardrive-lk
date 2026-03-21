@@ -9,7 +9,15 @@ import { useAppSelector } from "@/lib/store/store";
 import { mapBackendVehicle } from "@/lib/vehicle-mapper";
 import { Vehicle } from "@/types/vehicle";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
-import { MessageCircle, Send, Sparkles, X } from "lucide-react";
+import {
+  Gauge,
+  ListFilter,
+  MessageCircle,
+  RefreshCw,
+  Send,
+  Sparkles,
+  X,
+} from "lucide-react";
 
 type ChatRole = "user" | "assistant";
 
@@ -18,6 +26,7 @@ type ChatMessage = {
   content: string;
   vehicleIds?: string[];
   suggestedAction?: string | null;
+  quickReplies?: string[];
 };
 
 type ChatApiResponse = {
@@ -26,10 +35,36 @@ type ChatApiResponse = {
   suggested_action?: string | null;
 };
 
-const STARTER_PROMPTS = [
-  "Find me a hybrid SUV",
-  "Best family car under JPY 2,000,000",
-  "Show practical city cars",
+const INITIAL_ASSISTANT_MESSAGE: ChatMessage = {
+  role: "assistant",
+  content:
+    "I can shortlist vehicles by budget, body style, fuel type, and use case.\n" +
+    "Share your priorities, and I will narrow options with clear trade-offs.\n" +
+    "I do not handle tax or document questions in chat.",
+  quickReplies: [
+    "Find me a hybrid SUV",
+    "Best family car under JPY 2,000,000",
+    "Show practical city cars",
+  ],
+};
+
+const DISCOVERY_PROMPTS = [
+  {
+    label: "Hybrid SUV",
+    prompt: "Find me a hybrid SUV with low running cost",
+  },
+  {
+    label: "Family 7-Seater",
+    prompt: "Show 7-seater family vehicles under JPY 3,000,000",
+  },
+  {
+    label: "City Commute",
+    prompt: "Recommend compact city cars with good fuel economy",
+  },
+  {
+    label: "Value Picks",
+    prompt: "Give me the best value vehicles under JPY 2,000,000",
+  },
 ];
 
 function buildHistory(messages: ChatMessage[]) {
@@ -37,6 +72,46 @@ function buildHistory(messages: ChatMessage[]) {
     role: message.role,
     content: message.content,
   }));
+}
+
+function buildQuickReplies(message: string, hasVehicles: boolean): string[] {
+  const lowered = message.toLowerCase();
+
+  if (lowered.includes("tax calculator")) {
+    return [
+      "Show vehicles under JPY 2,000,000",
+      "Hybrid options for family use",
+      "City-friendly hatchbacks",
+    ];
+  }
+
+  if (hasVehicles) {
+    return [
+      "Show cheaper options",
+      "Only 2020 or newer",
+      "Prioritize fuel efficiency",
+      "Compare family comfort",
+    ];
+  }
+
+  if (
+    lowered.includes("could not find") ||
+    lowered.includes("no vehicles") ||
+    lowered.includes("no matching")
+  ) {
+    return [
+      "SUV under JPY 2,000,000",
+      "Hybrid sedan for city use",
+      "Family vehicle with more space",
+      "Low-maintenance daily driver",
+    ];
+  }
+
+  return [
+    "Recommend practical hybrids",
+    "Best family SUV options",
+    "Show compact city cars",
+  ];
 }
 
 export default function FloatingChatbot() {
@@ -47,11 +122,7 @@ export default function FloatingChatbot() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      content:
-        "I can help you shortlist vehicles by budget, body type, and general preferences. I do not handle documents or tax calculations.",
-    },
+    INITIAL_ASSISTANT_MESSAGE,
   ]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const vehicleIds = useMemo(() => {
@@ -106,6 +177,12 @@ export default function FloatingChatbot() {
     return null;
   }
 
+  function resetChat() {
+    setMessages([INITIAL_ASSISTANT_MESSAGE]);
+    setInput("");
+    setError(null);
+  }
+
   async function sendMessage(rawMessage?: string) {
     const message = (rawMessage ?? input).trim();
     if (!message || isSending) {
@@ -131,6 +208,10 @@ export default function FloatingChatbot() {
         conversation_history: buildHistory(nextMessages).slice(-10),
       });
 
+      const quickReplies = buildQuickReplies(
+        data.message,
+        Boolean(data.vehicle_ids?.length),
+      );
       setMessages((current) => [
         ...current,
         {
@@ -138,6 +219,7 @@ export default function FloatingChatbot() {
           content: data.message,
           vehicleIds: data.vehicle_ids,
           suggestedAction: data.suggested_action ?? null,
+          quickReplies,
         },
       ]);
     } catch (requestError: unknown) {
@@ -154,51 +236,80 @@ export default function FloatingChatbot() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[70]">
+    <div className="fixed bottom-2 right-2 z-[70] sm:bottom-5 sm:right-5">
       {isOpen ? (
-        <div className="w-[min(24rem,calc(100vw-1.5rem))] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#0a0a0a]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <div className="relative overflow-hidden border-b border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(254,119,67,0.22),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.01))] p-4">
-            <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-[#FE7743]/10 blur-2xl" />
-            <div className="relative flex items-start justify-between gap-4">
+        <div className="flex max-h-[calc(100dvh-1rem)] w-[min(28rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-[1.5rem] border border-[#5d7385]/70 bg-[#0c1116]/95 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:max-h-[calc(100dvh-2.5rem)] sm:w-[min(28rem,calc(100vw-2.5rem))]">
+          <div className="relative overflow-hidden border-b border-[#5d7385]/70 bg-[radial-gradient(circle_at_top_left,rgba(98,146,158,0.28),transparent_45%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.01))] p-3 sm:p-4">
+            <div className="absolute right-0 top-0 h-20 w-20 rounded-full bg-[#62929e]/15 blur-2xl" />
+            <div className="relative flex items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-[#FE7743]">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-[#62929e]">
                   <Sparkles className="h-3.5 w-3.5" />
                   Vehicle Assistant
                 </div>
-                <p className="mt-2 max-w-[16rem] text-sm text-gray-300">
-                  Ask about vehicle types, budget, or preferences. Tax and
-                  document questions are intentionally blocked.
+                <p className="mt-1 text-xs text-[#9cb1be]">
+                  Live inventory guidance
+                </p>
+                <p className="mt-2 max-w-[18rem] text-sm leading-6 text-[#d7e1e8]">
+                  Tell me your budget, use case, and preferences. I will
+                  shortlist and refine options quickly.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="rounded-full border border-white/10 bg-white/5 p-2 text-gray-300 transition hover:bg-white/10 hover:text-white"
-                aria-label="Close chat"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={resetChat}
+                  className="inline-flex items-center gap-1 rounded-full border border-[#5d7385]/65 bg-[#c6c5b9]/15 px-2.5 py-1 text-[11px] text-[#d7e1e8] transition hover:bg-[#c6c5b9]/25"
+                  aria-label="Start new chat"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  New chat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-full border border-[#5d7385]/65 bg-[#c6c5b9]/15 p-2 text-[#9cb1be] transition hover:bg-[#c6c5b9]/25 hover:text-[#d7e1e8]"
+                  aria-label="Close chat"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative mt-3 grid grid-cols-3 gap-2 text-[11px] text-[#b6c6d1]">
+              <div className="flex items-center gap-1.5 rounded-lg border border-[#5d7385]/50 bg-[#0b151d]/50 px-2 py-1.5">
+                <Gauge className="h-3.5 w-3.5 text-[#8ac2d2]" />
+                Budget fit
+              </div>
+              <div className="flex items-center gap-1.5 rounded-lg border border-[#5d7385]/50 bg-[#0b151d]/50 px-2 py-1.5">
+                <ListFilter className="h-3.5 w-3.5 text-[#8ac2d2]" />
+                Use-case match
+              </div>
+              <div className="flex items-center gap-1.5 rounded-lg border border-[#5d7385]/50 bg-[#0b151d]/50 px-2 py-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-[#8ac2d2]" />
+                Smart follow-ups
+              </div>
             </div>
           </div>
 
           <div
             ref={scrollRef}
-            className="max-h-[24rem] space-y-3 overflow-y-auto p-4"
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 sm:p-4"
           >
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div className="max-w-[85%] space-y-3">
+                <div className="max-w-[90%] space-y-2.5">
                   <div
                     className={`rounded-2xl px-4 py-3 text-sm leading-6 ${
                       message.role === "user"
-                        ? "bg-[#FE7743] text-black"
-                        : "border border-white/10 bg-white/5 text-gray-100"
+                        ? "bg-[linear-gradient(135deg,#62929e,#4f7583)] text-[#f8fbff]"
+                        : "border border-[#5d7385]/65 bg-[#15212b]/70 text-[#e8eff4]"
                     }`}
                   >
-                    <p>{message.content}</p>
+                    <p className="whitespace-pre-line">{message.content}</p>
                     {message.suggestedAction === "open_tax_calculator" ? (
                       <Link
                         href={
@@ -206,12 +317,28 @@ export default function FloatingChatbot() {
                             ? `/dashboard/vehicles/${message.vehicleIds[0]}#cost-calculator`
                             : "/dashboard/vehicles"
                         }
-                        className="mt-3 inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
+                        className="mt-3 inline-flex rounded-full border border-[#62929e]/35 bg-[#62929e]/15 px-3 py-1 text-xs font-medium text-[#8fd0e0] transition hover:bg-[#62929e]/20"
                       >
                         Calculate Tax
                       </Link>
                     ) : null}
                   </div>
+
+                  {message.role === "assistant" &&
+                  message.quickReplies?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {message.quickReplies.map((reply) => (
+                        <button
+                          key={`${index}-${reply}`}
+                          type="button"
+                          onClick={() => void sendMessage(reply)}
+                          className="rounded-full border border-[#5d7385]/65 bg-[#c6c5b9]/10 px-3 py-1.5 text-xs text-[#b9ccd8] transition hover:border-[#62929e]/50 hover:bg-[#62929e]/15 hover:text-[#dbeaf2]"
+                        >
+                          {reply}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
 
                   {message.vehicleIds?.length ? (
                     <div className="space-y-3">
@@ -221,7 +348,7 @@ export default function FloatingChatbot() {
                           return (
                             <div
                               key={vehicleId}
-                              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-gray-400"
+                              className="rounded-2xl border border-[#5d7385]/65 bg-[#c6c5b9]/15 px-4 py-3 text-xs text-[#9cb1be]"
                             >
                               Loading vehicle details...
                             </div>
@@ -232,7 +359,7 @@ export default function FloatingChatbot() {
                             <VehicleCard vehicle={vehicle} />
                             <Link
                               href={`/dashboard/vehicles/${vehicleId}#cost-calculator`}
-                              className="inline-flex rounded-full border border-[#FE7743]/30 bg-[#FE7743]/10 px-3 py-1 text-xs font-medium text-[#FE7743] transition hover:bg-[#FE7743]/15"
+                              className="inline-flex rounded-full border border-[#62929e]/35 bg-[#62929e]/15 px-3 py-1 text-xs font-medium text-[#8fd0e0] transition hover:bg-[#62929e]/20"
                             >
                               Calculate Tax
                             </Link>
@@ -246,24 +373,31 @@ export default function FloatingChatbot() {
             ))}
             {isSending ? (
               <div className="flex justify-start">
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-400">
-                  Thinking...
+                <div className="rounded-2xl border border-[#5d7385]/65 bg-[#15212b]/70 px-4 py-3 text-sm text-[#c7d6e0]">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8fd0e0]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8fd0e0] [animation-delay:0.12s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8fd0e0] [animation-delay:0.24s]" />
+                    </span>
+                    Matching inventory and preparing recommendations...
+                  </div>
                 </div>
               </div>
             ) : null}
           </div>
 
-          <div className="border-t border-white/10 p-4">
+          <div className="border-t border-[#5d7385]/65 p-3 sm:p-4">
             {messages.length === 1 ? (
               <div className="mb-3 flex flex-wrap gap-2">
-                {STARTER_PROMPTS.map((prompt) => (
+                {DISCOVERY_PROMPTS.map((prompt) => (
                   <button
-                    key={prompt}
+                    key={prompt.label}
                     type="button"
-                    onClick={() => void sendMessage(prompt)}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition hover:border-[#FE7743]/30 hover:text-white"
+                    onClick={() => void sendMessage(prompt.prompt)}
+                    className="rounded-full border border-[#5d7385]/65 bg-[#c6c5b9]/10 px-3 py-1.5 text-xs text-[#c5d6df] transition hover:border-[#62929e]/45 hover:bg-[#62929e]/15 hover:text-[#e4edf3]"
                   >
-                    {prompt}
+                    {prompt.label}
                   </button>
                 ))}
               </div>
@@ -286,30 +420,36 @@ export default function FloatingChatbot() {
                 rows={1}
                 maxLength={500}
                 placeholder="Ask about family SUVs, hybrids, or budget..."
-                className="min-h-11 flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-500 focus:border-[#FE7743]/40"
+                className="min-h-11 flex-1 resize-none rounded-2xl border border-[#5d7385]/65 bg-[#0f1b24] px-4 py-3 text-sm text-[#ebf3f8] outline-none placeholder:text-[#8ea2b0] focus:border-[#62929e]/40"
               />
               <button
                 type="button"
                 onClick={() => void sendMessage()}
                 disabled={isSending || !input.trim()}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FE7743] text-black transition hover:bg-[#ff885a] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#62929e] text-[#fdfdff] transition hover:bg-[#546a7b] disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
               </button>
             </div>
+            <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-[#8ea2b0]">
+              <span>Press Enter to send, Shift+Enter for a new line</span>
+              <span>{input.length}/500</span>
+            </div>
           </div>
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((current) => !current)}
-        className="ml-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#FE7743]/30 bg-[radial-gradient(circle_at_30%_30%,#ffb08f,#FE7743_55%,#a63f12)] text-black shadow-[0_20px_50px_rgba(254,119,67,0.35)] transition hover:scale-[1.03]"
-        aria-label="Open vehicle assistant"
-      >
-        <MessageCircle className="h-7 w-7" />
-      </button>
+      {!isOpen ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen((current) => !current)}
+          className="ml-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#62929e]/30 bg-[radial-gradient(circle_at_30%_30%,#fdfdff,#62929e_55%,#546a7b)] text-[#393d3f] shadow-[0_20px_50px_rgba(98,146,158,0.35)] transition hover:scale-[1.03] hover:shadow-[0_24px_58px_rgba(98,146,158,0.45)]"
+          aria-label="Open vehicle assistant"
+        >
+          <MessageCircle className="h-7 w-7" />
+        </button>
+      ) : null}
     </div>
   );
 }

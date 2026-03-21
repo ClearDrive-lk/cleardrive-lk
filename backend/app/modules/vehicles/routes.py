@@ -24,13 +24,14 @@ from app.modules.vehicles.schemas import (
     VehicleResponse,
     VehicleUpdate,
 )
+from app.services.catalog_tax_calculator import calculate_catalog_tax
 from app.services.tax_calculator import (
     InsufficientVehicleDataError,
     NoTaxRuleError,
     calculate_tax,
 )
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import asc, case, desc, or_, text
+from sqlalchemy import asc, case, desc, func, or_, text
 from sqlalchemy.orm import Session
 
 try:
@@ -125,12 +126,20 @@ def _resolve_fuel_enum_label(db: Session, requested: str) -> str | None:
 def _fuel_filter_values(requested: str) -> list[str]:
     key = _canonical_fuel_key(requested)
     mapping = {
-        "petrol": ["Gasoline"],
-        "gasoline": ["Gasoline"],
-        "hybrid": ["Gasoline/hybrid"],
-        "plugin_hybrid": ["Gasoline/hybrid", "Plugin Hybrid"],
-        "diesel": ["Diesel"],
-        "electric": ["Electric"],
+        "petrol": ["Gasoline", "Petrol", "PETROL"],
+        "gasoline": ["Gasoline", "Petrol", "PETROL"],
+        "hybrid": [
+            "Gasoline/hybrid",
+            "Gasoline/Hybrid",
+            "HYBRID",
+            "Plugin Hybrid",
+            "Plug-in Hybrid",
+            "PLUGIN_HYBRID",
+            "%Hybrid%",
+        ],
+        "plugin_hybrid": ["Plugin Hybrid", "Plug-in Hybrid", "PLUGIN_HYBRID", "%Plugin%Hybrid%"],
+        "diesel": ["Diesel", "DIESEL"],
+        "electric": ["Electric", "ELECTRIC", "%Electric%"],
         "cng": ["CNG"],
     }
     return mapping.get(key, [requested])
@@ -149,18 +158,26 @@ def _canonical_transmission_key(value: str) -> str:
 
 def _canonical_vehicle_type_key(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", " ", value.strip().lower()).strip()
-    if normalized in {"suv"}:
+    if normalized in {"suv", "suvs", "sport utility vehicle", "sport utility"}:
         return "suv"
-    if normalized in {"sedan"}:
+    if normalized in {"sedan", "saloon"}:
         return "sedan"
-    if normalized in {"hatchback"}:
+    if normalized in {"hatchback", "hatch"}:
         return "hatchback"
-    if normalized in {"van", "minivan", "van minivan"}:
+    if normalized in {"van", "minivan", "mini van", "van minivan", "mpv"}:
         return "van_minivan"
     if normalized in {"wagon"}:
         return "wagon"
     if normalized in {"pickup", "pick up", "pickup truck"}:
         return "pickup"
+    if normalized in {"coupe"}:
+        return "coupe"
+    if normalized in {"convertible", "cabriolet"}:
+        return "convertible"
+    if normalized in {"bikes", "bike", "motorcycle", "motorbike"}:
+        return "bikes"
+    if normalized in {"machinery", "heavy machinery", "equipment"}:
+        return "machinery"
     return normalized
 
 
@@ -173,8 +190,29 @@ def _resolve_vehicle_type_enum(requested: str) -> VehicleType | None:
         "van_minivan": VehicleType.VAN_MINIVAN,
         "wagon": VehicleType.WAGON,
         "pickup": VehicleType.PICKUP,
+        "coupe": VehicleType.COUPE,
+        "convertible": VehicleType.CONVERTIBLE,
+        "bikes": VehicleType.BIKES,
+        "machinery": VehicleType.MACHINERY,
     }
     return mapping.get(key)
+
+
+def _vehicle_type_filter_values(requested: str) -> list[str]:
+    key = _canonical_vehicle_type_key(requested)
+    mapping = {
+        "suv": ["SUV", "SUVs"],
+        "sedan": ["Sedan", "Saloon"],
+        "hatchback": ["Hatchback", "Hatch"],
+        "van_minivan": ["Van/minivan", "Van", "Minivan", "MPV"],
+        "wagon": ["Wagon", "Estate"],
+        "pickup": ["Pickup", "Pick up", "Pickup Truck", "Truck"],
+        "coupe": ["Coupe"],
+        "convertible": ["Convertible", "Cabriolet"],
+        "bikes": ["Bikes", "Bike", "Motorcycle", "Motorbike"],
+        "machinery": ["Machinery", "Heavy Machinery", "Equipment"],
+    }
+    return mapping.get(key, [requested])
 
 
 def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
@@ -210,9 +248,9 @@ def _resolve_transmission_enum_label(db: Session, requested: str) -> str | None:
 def _transmission_filter_values(requested: str) -> list[str]:
     key = _canonical_transmission_key(requested)
     mapping = {
-        "automatic": ["Automatic"],
-        "manual": ["Manual"],
-        "cvt": ["CVT"],
+        "automatic": ["Automatic", "AUTOMATIC", "AT", "A/T", "Auto"],
+        "manual": ["Manual", "MANUAL", "MT", "M/T"],
+        "cvt": ["CVT", "Cvt"],
     }
     return mapping.get(key, [requested])
 
@@ -324,6 +362,59 @@ def _get_live_exchange_rate_payload(base: str, symbols: str) -> dict[str, str | 
     raise RuntimeError(
         f"CBSL did not return a {base_code}/{target_code} sell rate in the last {FX_LOOKBACK_DAYS} days"
     )
+
+
+def _resolve_display_price_jpy(
+    db: Session, vehicle: Vehicle, cache: dict[tuple[str, str], Decimal | None]
+) -> Decimal | None:
+    """
+    Return a non-zero display price for list views.
+
+    Priority:
+    1. Latest non-zero price for same make+model
+    2. Average non-zero price for same make
+    3. Global average non-zero price
+    """
+    if vehicle.price_jpy and Decimal(str(vehicle.price_jpy)) > 0:
+        return Decimal(str(vehicle.price_jpy))
+
+    make_key = (vehicle.make or "").strip()
+    model_key = (vehicle.model or "").strip()
+    cache_key = (make_key.lower(), model_key.lower())
+    if cache_key in cache:
+        return cache[cache_key]
+
+    resolved: Decimal | None = None
+
+    latest_same_model = (
+        db.query(Vehicle.price_jpy)
+        .filter(
+            Vehicle.make == vehicle.make,
+            Vehicle.model == vehicle.model,
+            Vehicle.price_jpy > 0,
+        )
+        .order_by(desc(Vehicle.updated_at))
+        .first()
+    )
+    if latest_same_model and latest_same_model[0] is not None:
+        resolved = Decimal(str(latest_same_model[0]))
+    else:
+        avg_same_make = (
+            db.query(func.avg(Vehicle.price_jpy))
+            .filter(Vehicle.make == vehicle.make, Vehicle.price_jpy > 0)
+            .scalar()
+        )
+        if avg_same_make is not None:
+            resolved = Decimal(str(avg_same_make))
+        else:
+            avg_global = (
+                db.query(func.avg(Vehicle.price_jpy)).filter(Vehicle.price_jpy > 0).scalar()
+            )
+            if avg_global is not None:
+                resolved = Decimal(str(avg_global))
+
+    cache[cache_key] = resolved
+    return resolved
 
 
 def _scrape_vehicle_gallery_images(vehicle_url: str) -> list[str]:
@@ -576,9 +667,13 @@ async def get_vehicles(
         search_term = f"%{search}%"
         query = query.filter(
             or_(
+                Vehicle.stock_no.ilike(search_term),
+                Vehicle.chassis.ilike(search_term),
                 Vehicle.make.ilike(search_term),
                 Vehicle.model.ilike(search_term),
+                Vehicle.model_no.ilike(search_term),
                 Vehicle.grade.ilike(search_term),
+                Vehicle.body_type.ilike(search_term),
                 Vehicle.color.ilike(search_term),
                 Vehicle.options.ilike(search_term),
                 Vehicle.other_remarks.ilike(search_term),
@@ -593,10 +688,13 @@ async def get_vehicles(
 
     if vehicle_type:
         resolved_type = _resolve_vehicle_type_enum(vehicle_type)
+        type_candidates = _vehicle_type_filter_values(vehicle_type)
+        clauses = []
         if resolved_type is not None:
-            query = query.filter(Vehicle.vehicle_type == resolved_type)
-        else:
-            query = query.filter(Vehicle.vehicle_type == vehicle_type)
+            clauses.append(Vehicle.vehicle_type == resolved_type)
+        for value in type_candidates:
+            clauses.append(Vehicle.body_type.ilike(f"%{value}%"))
+        query = query.filter(or_(*clauses))
 
     if recent_only and year_min is None:
         year_min = datetime.utcnow().year - 2
@@ -650,8 +748,18 @@ async def get_vehicles(
     # Calculate total pages
     total_pages = math.ceil(total / limit) if total > 0 else 0
 
+    fallback_price_cache: dict[tuple[str, str], Decimal | None] = {}
+    response_items: list[VehicleResponse] = []
+    for vehicle in vehicles:
+        item = VehicleResponse.model_validate(vehicle)
+        if item.price_jpy <= 0:
+            fallback_price = _resolve_display_price_jpy(db, vehicle, fallback_price_cache)
+            if fallback_price is not None and fallback_price > 0:
+                item.price_jpy = fallback_price
+        response_items.append(item)
+
     response = VehicleListResponse(
-        vehicles=[VehicleResponse.model_validate(v) for v in vehicles],
+        vehicles=response_items,
         pagination=PaginationInfo(page=page, limit=limit, total=total, total_pages=total_pages),
     )
     await cache.set(cache_key, response.model_dump(mode="json"), ttl=300)
@@ -844,37 +952,55 @@ async def calculate_cost(
     engine_cc = int(vehicle.engine_cc or 0)
     motor_power_kw = float(vehicle.motor_power_kw) if vehicle.motor_power_kw is not None else None
     vehicle_age_years = max(date.today().year - int(vehicle.year or date.today().year), 0)
-    vehicle_condition = "BRAND_NEW" if vehicle_age_years <= 1 else "USED"
     category_codes = _derive_tax_category_codes(vehicle)
     catalog_vehicle_type, catalog_fuel_type = _derive_catalog_tax_identity(vehicle)
 
+    tax_result = None
+    catalog_error: Exception | None = None
     try:
-        tax_result = calculate_tax(
+        tax_result = calculate_catalog_tax(
             db=db,
-            vehicle_type=tax_vehicle_type,
-            fuel_type=tax_fuel_type,
-            engine_cc=engine_cc,
-            cif_value=float(cif_value),
-            power_kw=motor_power_kw,
+            vehicle=vehicle,
+            cif_value_lkr=cif_value,
             vehicle_age_years=float(vehicle_age_years),
-            category_codes=category_codes or None,
-            catalog_vehicle_type=catalog_vehicle_type,
-            catalog_fuel_type=catalog_fuel_type,
-            vehicle_condition=vehicle_condition,
-            import_date=date.today(),
-        )
-    except NoTaxRuleError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=(
-                "No approved tax rule matches this vehicle yet. "
-                "Review and approve the pending gazette or catalog uploads from the admin dashboard."
-            ),
+            engine_cc=engine_cc,
+            motor_power_kw=motor_power_kw,
         )
     except InsufficientVehicleDataError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except NoTaxRuleError as exc:
+        catalog_error = exc
+
+    if tax_result is None:
+        try:
+            tax_result = calculate_tax(
+                db=db,
+                vehicle_type=tax_vehicle_type,
+                fuel_type=tax_fuel_type,
+                engine_cc=engine_cc,
+                cif_value=float(cif_value),
+                power_kw=motor_power_kw,
+                vehicle_age_years=float(vehicle_age_years),
+                category_codes=category_codes or None,
+            )
+        except NoTaxRuleError:
+            if catalog_error:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail=str(catalog_error)
+                )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    "No approved gazette tax rule matches this vehicle yet. "
+                    "Review and approve the extracted gazette rules from the admin dashboard."
+                ),
+            )
+        except InsufficientVehicleDataError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     port_charges_lkr = calculate_port_charges()
     clearance_fee_lkr = calculate_clearance_fee()

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
 import { getAccessToken } from "@/lib/auth";
+import { getOrderStatusBadgeClass } from "@/lib/order-status-badge";
 import { AlertCircle, CheckCircle2, Clock3, PackageCheck } from "lucide-react";
 
 interface TimelineEvent {
@@ -20,26 +21,6 @@ interface OrderTimelineProps {
   orderId: string;
   onTimelineUpdate?: () => void;
 }
-
-const statusStyles: Record<string, string> = {
-  CREATED: "border-sky-500/20 bg-sky-500/10 text-sky-200",
-  PAYMENT_CONFIRMED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  LC_REQUESTED: "border-amber-500/20 bg-amber-500/10 text-amber-200",
-  LC_APPROVED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-  LC_REJECTED: "border-red-500/20 bg-red-500/10 text-red-200",
-  ASSIGNED_TO_EXPORTER:
-    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-200",
-  SHIPMENT_DOCS_UPLOADED:
-    "border-violet-500/20 bg-violet-500/10 text-violet-200",
-  AWAITING_SHIPMENT_CONFIRMATION:
-    "border-orange-500/20 bg-orange-500/10 text-orange-200",
-  SHIPPED: "border-indigo-500/20 bg-indigo-500/10 text-indigo-200",
-  IN_TRANSIT: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
-  ARRIVED_AT_PORT: "border-teal-500/20 bg-teal-500/10 text-teal-200",
-  CUSTOMS_CLEARANCE: "border-yellow-500/20 bg-yellow-500/10 text-yellow-200",
-  DELIVERED: "border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
-  CANCELLED: "border-red-500/20 bg-red-500/10 text-red-200",
-};
 
 function getStatusIcon(status: string) {
   const icons: Record<string, ReactNode> = {
@@ -188,7 +169,7 @@ export function OrderTimeline({
 
   if (loading) {
     return (
-      <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-8 text-sm text-gray-400">
+      <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-8 text-sm text-[#546a7b]">
         Loading timeline...
       </div>
     );
@@ -196,50 +177,49 @@ export function OrderTimeline({
 
   if (error) {
     return (
-      <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">
+      <div className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
         {error}
       </div>
     );
   }
 
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-6">
-      <h3 className="mb-6 text-xl font-semibold text-white">Order Timeline</h3>
+    <div className="rounded-[24px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
+      <h3 className="mb-6 text-xl font-semibold text-[#393d3f]">
+        Order Timeline
+      </h3>
 
       <div className="relative">
-        <div className="absolute bottom-0 left-4 top-0 w-px bg-white/10"></div>
+        <div className="absolute bottom-0 left-4 top-0 w-px bg-[#c6c5b9]/30"></div>
 
         <div className="space-y-6">
           {timeline.map((event) => (
             <div key={event.id} className="relative pl-10">
-              <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border border-[#FE7743]/20 bg-[#111111] text-[#FE7743]">
+              <div className="absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border border-[#62929e]/20 bg-[#fdfdff] text-[#62929e]">
                 {getStatusIcon(event.to_status)}
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-[#0D0D0D] p-4">
+              <div className="rounded-2xl border border-[#546a7b]/65 bg-[#fdfdff] p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <Badge
-                      className={
-                        statusStyles[event.to_status] ??
-                        "border-white/10 bg-white/5 text-white"
-                      }
+                      className={getOrderStatusBadgeClass(event.to_status)}
                     >
                       {event.to_status.replace(/_/g, " ")}
                     </Badge>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-[#546a7b]">
                     {formatDate(event.created_at)}
                   </span>
                 </div>
 
                 {event.notes && (
-                  <p className="mb-2 text-sm text-gray-300">{event.notes}</p>
+                  <p className="mb-2 text-sm text-[#546a7b]">{event.notes}</p>
                 )}
 
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#546a7b]">
                   Changed by{" "}
-                  <span className="font-medium text-white">
+                  <span className="font-medium text-[#393d3f]">
                     {event.changed_by_name}
                   </span>
                   {" · "}
@@ -252,7 +232,9 @@ export function OrderTimeline({
       </div>
 
       {timeline.length === 0 && (
-        <p className="py-8 text-center text-gray-500">No timeline events yet</p>
+        <p className="py-8 text-center text-[#546a7b]">
+          No timeline events yet
+        </p>
       )}
     </div>
   );

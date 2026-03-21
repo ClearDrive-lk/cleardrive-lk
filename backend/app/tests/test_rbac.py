@@ -41,6 +41,7 @@ class TestRolePermissions:
         assert Permission.VIEW_VEHICLES in perms
         assert Permission.CREATE_ORDER in perms
         assert Permission.SUBMIT_KYC in perms
+        assert Permission.UPLOAD_SHIPMENT_DOCUMENTS in perms
 
         # Should NOT have admin permissions
         assert Permission.MANAGE_USERS not in perms
@@ -184,6 +185,7 @@ class TestPermissionMatrix:
         # Verify key permissions
         # CUSTOMER can create orders
         assert matrix["CUSTOMER"]["create_order"] is True
+        assert matrix["CUSTOMER"]["upload_shipment_documents"] is True
 
         # CUSTOMER cannot manage users
         assert matrix["CUSTOMER"]["manage_users"] is False

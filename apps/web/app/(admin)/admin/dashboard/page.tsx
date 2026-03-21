@@ -1,46 +1,42 @@
 "use client";
 
-/**
- * CD-61: Admin Dashboard Analytics
- * File: apps/web/app/(admin)/admin/dashboard/page.tsx
- *
- * Displays KPI cards, trend charts, and platform health metrics.
- * Auto-refreshes every 30 seconds.
- *
- * Dependencies (run once):
- *   npm install recharts@3 date-fns@4
- */
-
-import { useMemo, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 import { isAxiosError } from "axios";
-import { apiClient } from "@/lib/api-client";
 import {
-  LineChart,
-  Line,
-  BarChart,
+  Activity,
+  CalendarRange,
+  CircleAlert,
+  CircleDollarSign,
+  Download,
+  FileText,
+  RefreshCcw,
+  ShieldCheck,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
+import {
   Bar,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  LabelList,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
-import { format } from "date-fns";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
+import { apiClient } from "@/lib/api-client";
 
 interface DashboardStats {
   total_users: number;
   active_users: number;
   new_users_today: number;
-  new_users_this_week: number;
-  new_users_this_month: number;
   total_orders: number;
   pending_orders: number;
   in_progress_orders: number;
@@ -48,44 +44,25 @@ interface DashboardStats {
   cancelled_orders: number;
   total_revenue: number;
   revenue_today: number;
-  revenue_this_week: number;
-  revenue_this_month: number;
   avg_order_value: number;
   kyc_pending: number;
   kyc_approved: number;
   kyc_rejected: number;
 }
-
 interface DailyCount {
   date: string;
   count: number;
 }
-
 interface UserAnalytics {
   daily_registrations: DailyCount[];
   role_distribution: Record<string, number>;
   kyc_status_distribution: Record<string, number>;
-  active_users_trend: DailyCount[];
-  top_registration_days: DailyCount[];
 }
-
 interface OrderAnalytics {
   status_distribution: Record<string, number>;
-  daily_orders: DailyCount[];
-  avg_processing_time_days: number;
-  completion_rate: number;
-  cancellation_rate: number;
-  orders_by_vehicle_type: Record<string, number>;
 }
-
-interface RevenueDataPoint {
-  date: string;
-  amount: number;
-}
-
 interface RevenueAnalytics {
-  daily_revenue: RevenueDataPoint[];
-  monthly_revenue: Array<{ month: string; amount: number }>;
+  daily_revenue: Array<{ date: string; amount: number }>;
   payment_method_breakdown: Record<string, number>;
   top_revenue_sources: Array<{
     source: string;
@@ -95,80 +72,45 @@ interface RevenueAnalytics {
   revenue_growth_rate: number;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CHART_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
-const REFRESH_INTERVAL_MS = 30_000; // 30 seconds
+const REFRESH_INTERVAL_MS = 30_000;
 const CUSTOM_RANGE = "custom";
-const TOOLTIP_STYLE = {
-  backgroundColor: "rgba(15, 23, 42, 0.9)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  borderRadius: "8px",
-  color: "#E5E7EB",
-};
-const TOOLTIP_LABEL_STYLE = { color: "#F9FAFB" };
-const TOOLTIP_ITEM_STYLE = { color: "#E5E7EB" };
+const QUICK_RANGES = [7, 30, 90, 365] as const;
+const CHART_COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+const COMPACT_NUMBER = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface KpiCardProps {
-  title: string;
-  value: string | number;
-  subtitle: string;
-  icon: string;
-  iconColor?: string;
+function formatCompact(value: number) {
+  return COMPACT_NUMBER.format(value);
 }
 
-function KpiCard({
+function KPI({
   title,
   value,
   subtitle,
-  icon,
-  iconColor = "text-blue-600",
-}: KpiCardProps) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-400 text-sm">{title}</p>
-          <p className="text-3xl font-bold mt-1 text-white">{value}</p>
-          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-        </div>
-        <div className={`text-4xl ${iconColor}`}>{icon}</div>
-      </div>
-    </div>
-  );
-}
-
-interface MetricCardProps {
+  icon: Icon,
+}: {
   title: string;
   value: string;
   subtitle: string;
-  valueColor?: string;
-}
-
-function MetricCard({
-  title,
-  value,
-  subtitle,
-  valueColor = "text-white",
-}: MetricCardProps) {
+  icon: React.ComponentType<{ className?: string }>;
+}) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
-      <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
-      <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
-    </div>
+    <article className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#546a7b]">
+          {title}
+        </p>
+        <span className="rounded-lg border border-[#546a7b]/65 bg-[#fdfdff]/70 p-2 text-[#393d3f]">
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="text-3xl font-semibold text-[#393d3f]">{value}</p>
+      <p className="mt-1 text-sm text-[#546a7b]">{subtitle}</p>
+    </article>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Page
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -181,170 +123,88 @@ export default function AdminDashboard() {
   const [revenueAnalytics, setRevenueAnalytics] =
     useState<RevenueAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [days, setDays] = useState(30);
   const [selectedRange, setSelectedRange] = useState<string>("30");
-  const [customStartDate, setCustomStartDate] = useState<string>("");
-  const [customEndDate, setCustomEndDate] = useState<string>("");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const getEffectiveDays = () => {
-    if (selectedRange !== CUSTOM_RANGE) {
-      return Number(selectedRange);
-    }
-    if (!customStartDate || !customEndDate) {
-      return days;
-    }
-
-    const start = new Date(customStartDate);
-    const end = new Date(customEndDate);
-    const diffMs = end.getTime() - start.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    return Math.min(365, Math.max(1, diffDays));
+  const getDays = () => {
+    if (selectedRange !== CUSTOM_RANGE) return Number(selectedRange);
+    if (!customStartDate || !customEndDate) return 30;
+    const diff =
+      new Date(customEndDate).getTime() - new Date(customStartDate).getTime();
+    return Math.max(1, Math.min(365, Math.floor(diff / 86400000) + 1));
   };
 
-  // ── Data fetching ──────────────────────────────────────────────────────────
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (silent = false) => {
+    if (silent) setRefreshing(true);
+    else setLoading(true);
     try {
       setError(null);
-      const effectiveDays = getEffectiveDays();
+      const days = getDays();
       const [statsRes, userRes, orderRes, revenueRes] = await Promise.all([
         apiClient.get<DashboardStats>("/admin/dashboard/stats"),
-        apiClient.get<UserAnalytics>(
-          `/admin/dashboard/users?days=${effectiveDays}`,
-        ),
-        apiClient.get<OrderAnalytics>(
-          `/admin/dashboard/orders?days=${effectiveDays}`,
-        ),
+        apiClient.get<UserAnalytics>(`/admin/dashboard/users?days=${days}`),
+        apiClient.get<OrderAnalytics>(`/admin/dashboard/orders?days=${days}`),
         apiClient.get<RevenueAnalytics>(
-          `/admin/dashboard/revenue?days=${effectiveDays}`,
+          `/admin/dashboard/revenue?days=${days}`,
         ),
       ]);
-
       setStats(statsRes.data);
       setUserAnalytics(userRes.data);
       setOrderAnalytics(orderRes.data);
       setRevenueAnalytics(revenueRes.data);
+      setLastUpdated(new Date());
     } catch (err: unknown) {
-      console.error("Failed to load dashboard data:", err);
-      if (isAxiosError(err)) {
-        setError(
-          (err.response?.data as { detail?: string } | undefined)?.detail ??
-            "Failed to load dashboard data.",
-        );
-      } else {
-        setError("Failed to load dashboard data.");
-      }
+      setError(
+        isAxiosError(err)
+          ? ((err.response?.data as { detail?: string } | undefined)?.detail ??
+              "Failed to load dashboard data.")
+          : "Failed to load dashboard data.",
+      );
     } finally {
-      setLoading(false);
+      if (silent) setRefreshing(false);
+      else setLoading(false);
     }
   };
 
   useEffect(() => {
-    setLoading(true);
-    loadDashboardData();
-
-    // Auto-refresh every 30 s
-    const interval = setInterval(loadDashboardData, REFRESH_INTERVAL_MS);
+    void loadDashboardData();
+    const interval = setInterval(
+      () => void loadDashboardData(true),
+      REFRESH_INTERVAL_MS,
+    );
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, selectedRange, customStartDate, customEndDate]);
+  }, [selectedRange, customStartDate, customEndDate]);
 
-  const exportCsv = () => {
-    if (!stats) return;
-
-    const rows: string[] = [];
-    rows.push("section,key,value");
-    rows.push(`stats,total_users,${stats.total_users}`);
-    rows.push(`stats,active_users,${stats.active_users}`);
-    rows.push(`stats,total_orders,${stats.total_orders}`);
-    rows.push(`stats,total_revenue,${stats.total_revenue}`);
-    rows.push(`stats,avg_order_value,${stats.avg_order_value}`);
-
-    (userAnalytics?.daily_registrations ?? []).forEach((point) => {
-      rows.push(`user_daily_registrations,${point.date},${point.count}`);
-    });
-    (orderAnalytics?.daily_orders ?? []).forEach((point) => {
-      rows.push(`order_daily_volume,${point.date},${point.count}`);
-    });
-    (revenueAnalytics?.daily_revenue ?? []).forEach((point) => {
-      rows.push(`revenue_daily,${point.date},${point.amount}`);
-    });
-
-    const blob = new Blob([rows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `admin-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportPdf = () => {
-    window.print();
-  };
-
-  // ── Memoised chart data (avoids expensive re-computation on every render) ──
-  const roleChartData = useMemo(
-    () =>
-      userAnalytics
-        ? Object.entries(userAnalytics.role_distribution).map(
-            ([name, value]) => ({
-              name,
-              value,
-            }),
-          )
-        : [],
-    [userAnalytics],
-  );
-
-  const statusChartData = useMemo(
+  const orderStatusData = useMemo(
     () =>
       orderAnalytics
         ? Object.entries(orderAnalytics.status_distribution).map(
-            ([name, value]) => ({
-              name,
-              value,
-            }),
+            ([name, value]) => ({ name, value }),
           )
         : [],
     [orderAnalytics],
   );
-
-  const kycChartData = useMemo(
-    () =>
-      userAnalytics
-        ? Object.entries(userAnalytics.kyc_status_distribution).map(
-            ([name, value]) => ({
-              name,
-              value,
-            }),
-          )
-        : [],
-    [userAnalytics],
-  );
-
-  const paymentChartData = useMemo(
+  const paymentData = useMemo(
     () =>
       revenueAnalytics
         ? Object.entries(revenueAnalytics.payment_method_breakdown).map(
-            ([name, amount]) => ({
-              name,
-              amount,
-            }),
+            ([name, amount]) => ({ name, amount }),
           )
         : [],
     [revenueAnalytics],
   );
 
-  // ── Loading / error states ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <p className="text-xl text-gray-400">Loading dashboard…</p>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 text-center text-[#393d3f]">
+          <RefreshCcw className="mx-auto mb-3 h-8 w-8 animate-spin text-[#62929e]" />
+          Loading admin analytics...
         </div>
       </div>
     );
@@ -352,13 +212,18 @@ export default function AdminDashboard() {
 
   if (error || !stats) {
     return (
-      <div className="flex items-center justify-center h-screen text-white">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <p className="text-xl text-red-400">{error ?? "Unknown error"}</p>
+      <div className="flex min-h-[70vh] items-center justify-center p-6">
+        <div className="rounded-3xl border border-red-500/35 bg-red-500/10 p-6 text-center">
+          <CircleAlert className="mx-auto mb-3 h-9 w-9 text-red-500" />
+          <p className="text-lg font-semibold text-[#393d3f]">
+            Dashboard failed to load
+          </p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-300">
+            {error ?? "Unknown error"}
+          </p>
           <button
-            onClick={loadDashboardData}
-            className="mt-4 px-6 py-2 bg-[#FE7743] text-black rounded hover:bg-[#FE7743]/90"
+            onClick={() => void loadDashboardData()}
+            className="mt-4 rounded-xl bg-[#62929e] px-4 py-2 text-sm font-semibold text-[#fdfdff]"
           >
             Retry
           </button>
@@ -367,401 +232,350 @@ export default function AdminDashboard() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6 text-white">
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Platform overview and analytics</p>
+    <div className="cd-container space-y-6 py-6 text-[#393d3f]">
+      <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#62929e]">
+              Admin Intelligence
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-[#393d3f]">
+              Platform Operations Dashboard
+            </h1>
+            <p className="mt-2 text-sm text-[#546a7b]">
+              Auto-refresh every 30 seconds. Last update:{" "}
+              {lastUpdated?.toLocaleTimeString() ?? "--:--:--"}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => void loadDashboardData(true)}
+              className="rounded-xl border border-[#546a7b]/65 bg-[#fdfdff]/70 px-3 py-2 text-sm font-semibold text-[#393d3f]"
+            >
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#546a7b]/65 bg-[#fdfdff]/70 px-3 py-2 text-sm font-semibold text-[#393d3f]"
+            >
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </button>
+            <button
+              onClick={() => {
+                const rows = [
+                  `stats,total_users,${stats.total_users}`,
+                  `stats,total_orders,${stats.total_orders}`,
+                  `stats,total_revenue,${stats.total_revenue}`,
+                ];
+                const blob = new Blob(
+                  [`section,key,value\n${rows.join("\n")}`],
+                  { type: "text/csv;charset=utf-8;" },
+                );
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `admin-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
+                link.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#546a7b]/65 bg-[#fdfdff]/70 px-3 py-2 text-sm font-semibold text-[#393d3f]"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+            <span className="inline-flex items-center gap-2 rounded-xl border border-[#546a7b]/65 bg-[#62929e]/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#546a7b]">
+              <CalendarRange className="h-4 w-4 text-[#62929e]" />
+              {getDays()} days
+            </span>
+          </div>
         </div>
+      </header>
 
-        <div className="flex items-center gap-3">
-          {/* Auto-refresh indicator */}
-          <span className="text-xs text-gray-400">Auto-refresh: 30s</span>
-
+      <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
+        <div className="flex flex-wrap gap-2">
+          {QUICK_RANGES.map((range) => (
+            <button
+              key={range}
+              onClick={() => setSelectedRange(String(range))}
+              className={`rounded-xl border px-3 py-2 text-sm font-semibold ${selectedRange === String(range) ? "border-[#62929e]/40 bg-[#62929e]/15 text-[#393d3f]" : "border-[#546a7b]/65 bg-[#fdfdff]/70 text-[#546a7b]"}`}
+            >
+              Last {range} days
+            </button>
+          ))}
           <button
-            onClick={exportCsv}
-            className="px-3 py-2 text-sm rounded-md border border-white/10 text-gray-200 hover:bg-white/10"
+            onClick={() => setSelectedRange(CUSTOM_RANGE)}
+            className={`rounded-xl border px-3 py-2 text-sm font-semibold ${selectedRange === CUSTOM_RANGE ? "border-[#62929e]/40 bg-[#62929e]/15 text-[#393d3f]" : "border-[#546a7b]/65 bg-[#fdfdff]/70 text-[#546a7b]"}`}
           >
-            Export CSV
+            Custom
           </button>
-          <button
-            onClick={exportPdf}
-            className="px-3 py-2 text-sm rounded-md border border-white/10 text-gray-200 hover:bg-white/10"
-          >
-            Export PDF
-          </button>
-
-          {/* Date range selector */}
-          <select
-            value={selectedRange}
-            onChange={(e) => {
-              const next = e.target.value;
-              setSelectedRange(next);
-              if (next !== CUSTOM_RANGE) {
-                setDays(Number(next));
-              }
-            }}
-            className="px-4 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#FE7743]"
-          >
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-            <option value={365}>Last year</option>
-            <option value={CUSTOM_RANGE}>Custom range</option>
-          </select>
         </div>
-      </div>
-      {selectedRange === CUSTOM_RANGE && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center">
-          <input
-            type="date"
-            value={customStartDate}
-            onChange={(e) => setCustomStartDate(e.target.value)}
-            className="px-3 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200"
-          />
-          <input
-            type="date"
-            value={customEndDate}
-            onChange={(e) => setCustomEndDate(e.target.value)}
-            className="px-3 py-2 border border-white/10 bg-transparent rounded-md text-sm text-gray-200"
-          />
-          <span className="text-xs text-gray-500">
-            Applies to analytics charts and tables.
-          </span>
-        </div>
-      )}
+        {selectedRange === CUSTOM_RANGE ? (
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              className="rounded-xl border border-[#546a7b]/65 bg-[#fdfdff]/80 px-3 py-2 text-sm text-[#393d3f]"
+            />
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              className="rounded-xl border border-[#546a7b]/65 bg-[#fdfdff]/80 px-3 py-2 text-sm text-[#393d3f]"
+            />
+          </div>
+        ) : null}
+      </section>
 
-      {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KpiCard
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KPI
           title="Total Users"
           value={stats.total_users.toLocaleString()}
-          subtitle={`+${stats.new_users_today} today · ${stats.active_users.toLocaleString()} active`}
-          icon="👥"
-          iconColor="text-blue-600"
+          subtitle={`${stats.active_users.toLocaleString()} active - +${stats.new_users_today} today`}
+          icon={Users}
         />
-        <KpiCard
-          title="Total Orders"
+        <KPI
+          title="Orders"
           value={stats.total_orders.toLocaleString()}
-          subtitle={`${stats.pending_orders} pending · ${stats.in_progress_orders} in-progress`}
-          icon="📦"
-          iconColor="text-orange-500"
+          subtitle={`${stats.pending_orders} pending - ${stats.in_progress_orders} in progress`}
+          icon={ShoppingCart}
         />
-        <KpiCard
-          title="Total Revenue"
+        <KPI
+          title="Revenue"
           value={`$${stats.total_revenue.toLocaleString()}`}
           subtitle={`$${stats.revenue_today.toLocaleString()} today`}
-          icon="💰"
-          iconColor="text-green-600"
+          icon={CircleDollarSign}
         />
-        <KpiCard
+        <KPI
           title="Avg Order Value"
           value={`$${stats.avg_order_value.toLocaleString()}`}
-          subtitle={`${stats.completed_orders.toLocaleString()} completed orders`}
-          icon="📊"
-          iconColor="text-purple-600"
+          subtitle={`${stats.completed_orders.toLocaleString()} completed - ${stats.cancelled_orders} canceled`}
+          icon={Activity}
         />
-      </div>
+      </section>
 
-      {/* ── KYC quick-stats bar ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          {
-            label: "KYC Pending",
-            value: stats.kyc_pending,
-            color:
-              "bg-yellow-500/10 text-yellow-300 border border-yellow-500/20",
-          },
-          {
-            label: "KYC Approved",
-            value: stats.kyc_approved,
-            color:
-              "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
-          },
-          {
-            label: "KYC Rejected",
-            value: stats.kyc_rejected,
-            color: "bg-rose-500/10 text-rose-300 border border-rose-500/20",
-          },
-        ].map(({ label, value, color }) => (
-          <div
-            key={label}
-            className={`rounded-lg px-4 py-3 ${color} flex items-center justify-between`}
-          >
-            <span className="text-sm font-medium">{label}</span>
-            <span className="text-xl font-bold">{value}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Charts Row 1 ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Growth – Line Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">User Growth</h2>
-          <ResponsiveContainer width="100%" height={300}>
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
+          <h2 className="mb-4 text-lg font-semibold text-[#393d3f]">
+            User Growth
+          </h2>
+          <ResponsiveContainer width="100%" height={280}>
             <LineChart data={userAnalytics?.daily_registrations ?? []}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid
+                strokeDasharray="4 4"
+                stroke="rgba(84,106,123,0.24)"
+              />
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => format(new Date(d), "MMM d")}
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                tick={{ fontSize: 12, fill: "#5f6c79" }}
               />
-              <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} />
+              <YAxis
+                width={70}
+                tickFormatter={(value) => formatCompact(Number(value))}
+                tick={{ fontSize: 12, fill: "#5f6c79" }}
+              />
               <Tooltip
                 labelFormatter={(d) => format(new Date(d), "MMM d, yyyy")}
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
               />
-              <Legend wrapperStyle={{ color: "#E5E7EB" }} />
               <Line
                 type="monotone"
                 dataKey="count"
                 stroke={CHART_COLORS[0]}
-                strokeWidth={2}
-                dot={false}
-                name="New Users"
-              />
+                strokeWidth={2.4}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              >
+                <LabelList
+                  dataKey="count"
+                  position="top"
+                  fill="#8fa3b1"
+                  formatter={(value) => formatCompact(Number(value ?? 0))}
+                />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Order Status – Pie Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Order Status Distribution</h2>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
+          <h2 className="mb-4 text-lg font-semibold text-[#393d3f]">
+            Order Status
+          </h2>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
-                data={statusChartData}
+                data={orderStatusData}
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
+                outerRadius={96}
                 dataKey="value"
                 labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                label={({ name, value }) =>
+                  `${name}: ${formatCompact(Number(value ?? 0))}`
                 }
               >
-                {statusChartData.map((_, i) => (
+                {orderStatusData.map((_, i) => (
                   <Cell
-                    key={`cell-${i}`}
+                    key={`status-${i}`}
                     fill={CHART_COLORS[i % CHART_COLORS.length]}
                   />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
-              />
+              <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
 
-      {/* ── Charts Row 2 ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Revenue – Bar Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Daily Revenue</h2>
-          <ResponsiveContainer width="100%" height={300}>
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
+          <h2 className="mb-4 text-lg font-semibold text-[#393d3f]">
+            Daily Revenue
+          </h2>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={revenueAnalytics?.daily_revenue ?? []}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid
+                strokeDasharray="4 4"
+                stroke="rgba(84,106,123,0.24)"
+              />
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => format(new Date(d), "MMM d")}
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                tick={{ fontSize: 12, fill: "#5f6c79" }}
               />
-              <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} />
+              <YAxis
+                width={82}
+                tickFormatter={(value) => formatCompact(Number(value))}
+                tick={{ fontSize: 12, fill: "#5f6c79" }}
+              />
               <Tooltip
-                labelFormatter={(d) => format(new Date(d), "MMM d, yyyy")}
                 formatter={(v) => [
                   `$${Number(v ?? 0).toLocaleString()}`,
                   "Revenue",
                 ]}
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
               />
-              <Legend wrapperStyle={{ color: "#E5E7EB" }} />
               <Bar
                 dataKey="amount"
                 fill={CHART_COLORS[1]}
-                name="Revenue"
-                radius={[4, 4, 0, 0]}
-              />
+                radius={[8, 8, 0, 0]}
+              >
+                <LabelList
+                  dataKey="amount"
+                  position="top"
+                  fill="#8fa3b1"
+                  formatter={(value) => `$${formatCompact(Number(value ?? 0))}`}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        {/* User Roles – Pie Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">User Role Distribution</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={roleChartData}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                dataKey="value"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                }
-              >
-                {roleChartData.map((_, i) => (
-                  <Cell
-                    key={`cell-${i}`}
-                    fill={CHART_COLORS[i % CHART_COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
+          <h2 className="mb-4 text-lg font-semibold text-[#393d3f]">
+            Payment Methods
+          </h2>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={paymentData}>
+              <CartesianGrid
+                strokeDasharray="4 4"
+                stroke="rgba(84,106,123,0.24)"
               />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* ── Charts Row 3 – KYC & Payment breakdown ────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* KYC Status – Pie Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">KYC Status Distribution</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={kycChartData}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                dataKey="value"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                }
-              >
-                {kycChartData.map((_, i) => (
-                  <Cell
-                    key={`cell-${i}`}
-                    fill={CHART_COLORS[i % CHART_COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#5f6c79" }} />
+              <YAxis
+                width={82}
+                tickFormatter={(value) => formatCompact(Number(value))}
+                tick={{ fontSize: 12, fill: "#5f6c79" }}
               />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Payment Methods – Bar Chart */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Revenue by Payment Method</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={paymentChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#9CA3AF" }} />
-              <YAxis tick={{ fontSize: 12, fill: "#9CA3AF" }} />
               <Tooltip
                 formatter={(v) => [
                   `$${Number(v ?? 0).toLocaleString()}`,
                   "Amount",
                 ]}
-                contentStyle={TOOLTIP_STYLE}
-                labelStyle={TOOLTIP_LABEL_STYLE}
-                itemStyle={TOOLTIP_ITEM_STYLE}
               />
-              <Legend wrapperStyle={{ color: "#E5E7EB" }} />
               <Bar
                 dataKey="amount"
                 fill={CHART_COLORS[4]}
-                name="Amount"
-                radius={[4, 4, 0, 0]}
-              />
+                radius={[8, 8, 0, 0]}
+              >
+                <LabelList
+                  dataKey="amount"
+                  position="top"
+                  fill="#8fa3b1"
+                  formatter={(value) => `$${formatCompact(Number(value ?? 0))}`}
+                />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
 
-      {/* ── Summary Metric Cards ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <MetricCard
-          title="Avg Processing Time"
-          value={`${orderAnalytics?.avg_processing_time_days.toFixed(1) ?? "—"} days`}
-          subtitle="Order created → delivered"
-        />
-        <MetricCard
-          title="Order Completion Rate"
-          value={`${orderAnalytics?.completion_rate.toFixed(1) ?? "—"}%`}
-          subtitle="Successfully delivered"
-          valueColor="text-green-600"
-        />
-        <MetricCard
-          title="Revenue Growth"
-          value={`${(revenueAnalytics?.revenue_growth_rate ?? 0) >= 0 ? "+" : ""}${revenueAnalytics?.revenue_growth_rate.toFixed(1) ?? "—"}%`}
-          subtitle={`vs previous ${getEffectiveDays()} days`}
-          valueColor={
-            (revenueAnalytics?.revenue_growth_rate ?? 0) >= 0
-              ? "text-green-600"
-              : "text-red-600"
-          }
-        />
-      </div>
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <article className="rounded-2xl border border-amber-500/35 bg-amber-500/10 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+            KYC Pending
+          </p>
+          <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
+            {stats.kyc_pending}
+          </p>
+        </article>
+        <article className="rounded-2xl border border-emerald-500/35 bg-emerald-500/10 p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200">
+              KYC Approved
+            </p>
+            <ShieldCheck className="h-4 w-4 text-emerald-200" />
+          </div>
+          <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
+            {stats.kyc_approved}
+          </p>
+        </article>
+        <article className="rounded-2xl border border-red-500/35 bg-red-500/10 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-200">
+            KYC Rejected
+          </p>
+          <p className="mt-2 text-3xl font-semibold text-[#393d3f]">
+            {stats.kyc_rejected}
+          </p>
+        </article>
+      </section>
 
-      {/* ── Top Revenue Sources Table ──────────────────────────────────────── */}
-      {revenueAnalytics && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Top Revenue Sources</h2>
+      {revenueAnalytics?.top_revenue_sources?.length ? (
+        <section className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-5">
+          <h2 className="mb-3 text-lg font-semibold text-[#393d3f]">
+            Top Revenue Sources
+          </h2>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b text-gray-500 uppercase text-xs">
-                  <th className="pb-3 pr-6">Source</th>
-                  <th className="pb-3 pr-6">Revenue</th>
-                  <th className="pb-3">Share</th>
+                <tr className="border-b border-[#546a7b]/40 text-left text-xs font-semibold uppercase tracking-[0.2em] text-[#546a7b]">
+                  <th className="px-1 py-3">Source</th>
+                  <th className="px-1 py-3">Revenue</th>
+                  <th className="px-1 py-3">Share</th>
                 </tr>
               </thead>
               <tbody>
                 {revenueAnalytics.top_revenue_sources.map((src) => (
-                  <tr key={src.source} className="border-b last:border-0">
-                    <td className="py-3 pr-6 font-medium">{src.source}</td>
-                    <td className="py-3 pr-6">
-                      $
-                      {src.amount.toLocaleString(undefined, {
-                        maximumFractionDigits: 0,
-                      })}
+                  <tr
+                    key={src.source}
+                    className="border-b border-[#546a7b]/25 last:border-0"
+                  >
+                    <td className="px-1 py-3 font-medium text-[#393d3f]">
+                      {src.source}
                     </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-white/10 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${src.percentage}%` }}
-                          />
-                        </div>
-                        <span>{src.percentage.toFixed(1)}%</span>
-                      </div>
+                    <td className="px-1 py-3 text-[#393d3f]">
+                      ${src.amount.toLocaleString()}
+                    </td>
+                    <td className="px-1 py-3 text-[#546a7b]">
+                      {src.percentage.toFixed(1)}%
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        </section>
+      ) : null}
     </div>
   );
 }

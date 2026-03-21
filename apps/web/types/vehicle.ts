@@ -18,7 +18,7 @@ export interface Vehicle {
   priceJPY: number;
   trim: string;
   chassisCode: string;
-  engineCC: number;
+  engineCC: number | null;
   endTime: string | Date;
   firstRegistrationDate?: string | Date;
   color?: string;

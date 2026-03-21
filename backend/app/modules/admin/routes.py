@@ -11,6 +11,7 @@ from app.core.permissions import Permission, require_permission
 from app.models.audit_log import AuditEventType, AuditLog
 from app.modules.auth.models import Role, User
 from app.modules.kyc.models import KYCDocument, KYCStatus
+from app.modules.orders.models import Order, OrderStatus
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import or_
@@ -66,6 +67,30 @@ class RoleChangeResponse(BaseModel):
     new_role: str
     changed_by: str
     changed_at: str
+
+
+class UserDetailResponse(BaseModel):
+    """Detailed profile view for a single user."""
+
+    id: str
+    email: str
+    name: str
+    phone: Optional[str] = None
+    role: str
+    is_active: bool
+    created_at: str
+    updated_at: str
+    last_login: Optional[str] = None
+    deleted_at: Optional[str] = None
+    kyc_status: Optional[str] = None
+    kyc_submitted_at: Optional[str] = None
+    kyc_reviewed_at: Optional[str] = None
+    kyc_rejection_reason: Optional[str] = None
+    total_orders: int
+    active_orders: int
+    delivered_orders: int
+    cancelled_orders: int
+    last_order_at: Optional[str] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -261,6 +286,84 @@ async def get_users(
         page=page,
         limit=limit,
         total_pages=total_pages,
+    )
+
+
+@router.get("/users/{user_id}", response_model=UserDetailResponse)
+async def get_user_detail(
+    user_id: str,
+    current_user: User = Depends(require_permission(Permission.MANAGE_USERS)),
+    db: Session = Depends(get_db),
+):
+    """
+    Get detailed user profile for admin review.
+
+    Permissions: manage_users
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    kyc_doc = db.query(KYCDocument).filter(KYCDocument.user_id == user.id).first()
+
+    total_orders = db.query(Order).filter(Order.user_id == user.id).count()
+    delivered_orders = (
+        db.query(Order)
+        .filter(
+            Order.user_id == user.id,
+            Order.status == OrderStatus.DELIVERED,
+        )
+        .count()
+    )
+    cancelled_orders = (
+        db.query(Order)
+        .filter(
+            Order.user_id == user.id,
+            Order.status == OrderStatus.CANCELLED,
+        )
+        .count()
+    )
+    active_orders = max(total_orders - delivered_orders - cancelled_orders, 0)
+
+    last_order = (
+        db.query(Order.created_at)
+        .filter(Order.user_id == user.id)
+        .order_by(Order.created_at.desc())
+        .first()
+    )
+
+    logger.info(
+        "Admin viewed user detail",
+        extra={
+            "admin_id": str(current_user.id),
+            "admin_email": current_user.email,
+            "target_user_id": str(user.id),
+            "target_user_email": user.email,
+        },
+    )
+
+    return UserDetailResponse(
+        id=str(user.id),
+        email=user.email,
+        name=user.name or "N/A",
+        phone=user.phone,
+        role=user.role.value,
+        is_active=user.deleted_at is None,
+        created_at=user.created_at.isoformat(),
+        updated_at=user.updated_at.isoformat(),
+        last_login=user.updated_at.isoformat() if user.updated_at else None,
+        deleted_at=user.deleted_at.isoformat() if user.deleted_at else None,
+        kyc_status=kyc_doc.status.value if kyc_doc else None,
+        kyc_submitted_at=kyc_doc.created_at.isoformat() if kyc_doc else None,
+        kyc_reviewed_at=(
+            kyc_doc.reviewed_at.isoformat() if kyc_doc and kyc_doc.reviewed_at else None
+        ),
+        kyc_rejection_reason=kyc_doc.rejection_reason if kyc_doc else None,
+        total_orders=total_orders,
+        active_orders=active_orders,
+        delivered_orders=delivered_orders,
+        cancelled_orders=cancelled_orders,
+        last_order_at=last_order[0].isoformat() if last_order and last_order[0] else None,
     )
 
 

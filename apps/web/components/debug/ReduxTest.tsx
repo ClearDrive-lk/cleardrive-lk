@@ -28,8 +28,8 @@ export default function ReduxTest() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 p-4 bg-gray-900 border border-gray-700 rounded-lg text-white text-xs font-mono z-50 shadow-xl">
-      <h3 className="text-[#FE7743] font-bold mb-2">🔴 REDUX STATE MONITOR</h3>
+    <div className="fixed bottom-4 right-4 p-4 bg-gray-900 border border-gray-700 rounded-lg text-[#393d3f] text-xs font-mono z-50 shadow-xl">
+      <h3 className="text-[#62929e] font-bold mb-2">🔴 REDUX STATE MONITOR</h3>
 
       <div className="mb-4 space-y-1">
         <p>
