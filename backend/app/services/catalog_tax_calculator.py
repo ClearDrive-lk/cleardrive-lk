@@ -217,6 +217,20 @@ def calculate_catalog_tax(
         condition="EFFECTIVE_FROM_APRIL_1_2026",
         default=Decimal("0"),
     )
+    vel = _get_global_value(
+        engine,
+        group="FIXED_FEES",
+        name="VEL",
+        condition="PER_UNIT",
+        default=Decimal("0"),
+    )
+    com_exm_sel = _get_global_value(
+        engine,
+        group="FIXED_FEES",
+        name="COM_EXM_SEL",
+        condition="PER_UNIT",
+        default=Decimal("0"),
+    )
 
     luxury_threshold = Decimal("0")
     luxury_rate = Decimal("0")
@@ -282,7 +296,18 @@ def calculate_catalog_tax(
     vat = vat_base * (vat_rate / Decimal("100"))
     sscl = vat_base * (sscl_rate / Decimal("100"))
 
-    total_duty = customs_duty + surcharge + excise_duty + pal + cess + luxury_tax + vat + sscl
+    total_duty = (
+        customs_duty
+        + surcharge
+        + excise_duty
+        + pal
+        + cess
+        + luxury_tax
+        + vat
+        + sscl
+        + vel
+        + com_exm_sel
+    )
     total_landed_cost = uplifted_value + total_duty
     effective_rate = (total_duty / uplifted_value * Decimal("100")) if uplifted_value > 0 else 0
 
@@ -295,6 +320,8 @@ def calculate_catalog_tax(
         "vat": float(vat + sscl),
         "pal": float(pal),
         "luxury_tax": float(luxury_tax),
+        "vel": float(vel),
+        "com_exm_sel": float(com_exm_sel),
         "total_duty": float(total_duty),
         "total_landed_cost": float(total_landed_cost),
         "effective_rate_percent": float(effective_rate),
