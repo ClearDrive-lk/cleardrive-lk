@@ -141,6 +141,10 @@ def determine_user_tier(user: User | None, db: Session | None = None) -> UserTie
     """
     if user is None:
         return UserTier.STANDARD
+    if not all(
+        hasattr(user, attr) for attr in ("created_at", "failed_auth_attempts", "last_failed_auth")
+    ):
+        return UserTier.STANDARD
 
     owns_db = db is None
     session = db or SessionLocal()

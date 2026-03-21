@@ -5,6 +5,7 @@ Global tiered rate-limit middleware.
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 
 from app.core.config import settings
 from app.core.rate_limit import (
@@ -62,8 +63,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         }
 
         try:
-            await self._resolve_token(request)
-            await check_rate_limit(request, None, endpoint_type, db=None)
+            user = await self._resolve_token(request)
+            await check_rate_limit(request, user, endpoint_type, db=None)
             response = await call_next(request)
             apply_rate_limit_headers(response, request)
             return response
@@ -79,16 +80,22 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             apply_rate_limit_headers(response, request)
             return response
 
-    async def _resolve_token(self, request: Request) -> None:
+    async def _resolve_token(self, request: Request):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            return
+            return None
 
         token = auth_header.split(" ", 1)[1].strip()
         payload = decode_access_token(token)
         if payload is None:
-            return
+            return None
 
         token_jti = payload.get("jti")
         if token_jti and await is_token_blacklisted(str(token_jti)):
-            return
+            return None
+
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+
+        return SimpleNamespace(id=user_id)
