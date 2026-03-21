@@ -20,6 +20,7 @@ import {
 
 import AuthGuard from "@/components/auth/AuthGuard";
 import { GDPRDataExport } from "@/components/gdpr/GDPRDataExport";
+import GDPRDataDeletion from "@/components/profile/GDPRDataDeletion";
 import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -611,6 +612,9 @@ export default function ProfilePage() {
                   </p>
                   <div className="mt-4">
                     <GDPRDataExport />
+                  </div>
+                  <div className="mt-4">
+                    <GDPRDataDeletion />
                   </div>
                   <Button
                     onClick={logout}
