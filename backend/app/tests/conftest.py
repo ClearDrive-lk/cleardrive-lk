@@ -21,7 +21,7 @@ os.environ.setdefault("SMTP_HOST", "smtp.gmail.com")
 os.environ.setdefault("SMTP_USERNAME", "test@gmail.com")
 os.environ.setdefault("SMTP_PASSWORD", "test-password")
 os.environ.setdefault("ADMIN_EMAILS", "admin@cleardrive.lk")
-os.environ.setdefault("ENVIRONMENT", "test")
+os.environ["ENVIRONMENT"] = "test"
 
 import asyncio  # noqa: E402
 from typing import AsyncGenerator, Generator  # noqa: E402

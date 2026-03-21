@@ -190,6 +190,10 @@ async def get_user_tier(user: User | None, db: Session | None = None) -> UserTie
     """
     if user is None:
         return UserTier.STANDARD
+    if not all(
+        hasattr(user, attr) for attr in ("created_at", "failed_auth_attempts", "last_failed_auth")
+    ):
+        return UserTier.STANDARD
 
     redis = await get_redis()
     cache_key = f"user_tier:{user.id}"
