@@ -5,6 +5,7 @@ CD-23 live scraper using requests + BeautifulSoup with Selenium fallback.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -97,12 +98,27 @@ class AuctionSiteScraper:
         self._http = requests.Session()
         self._http.headers.update(self._HEADERS)
 
+    @staticmethod
+    def _resolve_max_pages() -> int | None:
+        raw_value = os.getenv("CD23_MAX_PAGES", "").strip().lower()
+        if not raw_value:
+            return None
+        if raw_value in {"all", "full", "unlimited"}:
+            return None
+        try:
+            parsed = int(raw_value)
+        except ValueError:
+            logger.warning("Invalid CD23_MAX_PAGES value %r; ignoring", raw_value)
+            return None
+        return parsed if parsed > 0 else None
+
     def scrape(self, count: int = 10) -> list[dict[str, Any]]:
         if not BS4_AVAILABLE:
             logger.warning("BeautifulSoup is not installed. Live scraper disabled for this run.")
             return []
 
         unlimited = count < 1
+        max_pages = self._resolve_max_pages()
         rows: list[dict[str, Any]] = []
         seen_stock: set[str] = set()
 
@@ -128,6 +144,8 @@ class AuctionSiteScraper:
                 if "search_by_usual.php" in page_url:
                     empty_pages = 0
                     for page in range(1, 200):
+                        if max_pages is not None and page > max_pages:
+                            break
                         if not unlimited and len(rows) >= count:
                             return rows[:count]
 
