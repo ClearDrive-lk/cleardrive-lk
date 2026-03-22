@@ -75,6 +75,12 @@ export default function Header() {
               Vehicles
             </Link>
             <Link
+              href="/tax-calculator"
+              className={isActive("/tax-calculator") ? activeLink : linkBase}
+            >
+              Tax Calculator
+            </Link>
+            <Link
               href="/dashboard/kyc"
               className={isActive("/dashboard/kyc") ? activeLink : linkBase}
             >
@@ -100,6 +106,12 @@ export default function Header() {
               }
             >
               Vehicles
+            </Link>
+            <Link
+              href="/tax-calculator"
+              className={isActive("/tax-calculator") ? activeLink : linkBase}
+            >
+              Tax Calculator
             </Link>
 
             {isAuthenticated && (

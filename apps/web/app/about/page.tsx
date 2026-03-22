@@ -220,6 +220,12 @@ export default function AboutPage() {
                 Live Shipping Lane
               </Link>
               <Link
+                href="/tax-calculator"
+                className="hover:text-[#393d3f] transition-colors"
+              >
+                Tax Calculator
+              </Link>
+              <Link
                 href="/about"
                 className="hover:text-[#393d3f] transition-colors text-[#393d3f]"
               >
