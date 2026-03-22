@@ -35,20 +35,17 @@ export default function ThemeToggle({
   className?: string;
   size?: ThemeToggleSize;
 }) {
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<ThemeMode>("light");
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "light";
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+    return getSystemPreference();
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const initial =
-      stored === "light" || stored === "dark"
-        ? (stored as ThemeMode)
-        : getSystemPreference();
-    setTheme(initial);
     const root = document.documentElement;
-    root.classList.toggle("dark", initial === "dark");
-    setMounted(true);
-  }, []);
+    root.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
   const applyTheme = (next: ThemeMode) => {
     const root = document.documentElement;
@@ -65,8 +62,6 @@ export default function ThemeToggle({
     setTheme(next);
     applyTheme(next);
   };
-
-  if (!mounted) return null;
 
   return (
     <button

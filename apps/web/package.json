@@ -9,7 +9,7 @@
     "prebuild": "npm run generate-sri",
     "postbuild": "npm run test-sri",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "test-sri": "node scripts/test-sri.js",
     "type-check": "tsc --noEmit --incremental false",
     "test:e2e": "playwright test"

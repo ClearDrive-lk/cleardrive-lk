@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/lib/store/store";
 import { LogOut } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ThemeToggle from "@/components/ui/theme-toggle";
@@ -21,15 +20,9 @@ export default function Header() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const role = normalizeRole(user?.role);
   const { logout, isLoading } = useLogout();
-  const [hasSession, setHasSession] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
+  const hasSession = Boolean(getAccessToken() || getRefreshToken());
   const showCustomerOnlyNav = isAuthenticated && role === "CUSTOMER";
-  const isAuthed = authReady && (isAuthenticated || hasSession);
-
-  useEffect(() => {
-    setHasSession(Boolean(getAccessToken() || getRefreshToken()));
-    setAuthReady(true);
-  }, []);
+  const isAuthed = isAuthenticated || hasSession;
 
   const isActive = (path: string) => pathname === path;
   const linkBase =
