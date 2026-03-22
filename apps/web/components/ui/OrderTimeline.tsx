@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
@@ -52,10 +52,32 @@ export function OrderTimeline({
   const [error, setError] = useState<string | null>(null);
   const lastSnapshotRef = useRef<string | null>(null);
   const initialEventSkippedRef = useRef(false);
+  const fetchTimeline = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
+
+      try {
+        const { data } = await apiClient.get(`/orders/${orderId}/timeline`);
+        setTimeline(data.timeline);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to fetch timeline";
+        setError(message);
+      } finally {
+        if (!silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [orderId],
+  );
 
   useEffect(() => {
     void fetchTimeline();
-  }, [orderId]);
+  }, [fetchTimeline]);
 
   useEffect(() => {
     const accessToken = getAccessToken();
@@ -132,29 +154,7 @@ export function OrderTimeline({
     void subscribe();
 
     return () => controller.abort();
-  }, [orderId, onTimelineUpdate]);
-
-  const fetchTimeline = async ({
-    silent = false,
-  }: { silent?: boolean } = {}) => {
-    if (!silent) {
-      setLoading(true);
-      setError(null);
-    }
-
-    try {
-      const { data } = await apiClient.get(`/orders/${orderId}/timeline`);
-      setTimeline(data.timeline);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to fetch timeline";
-      setError(message);
-    } finally {
-      if (!silent) {
-        setLoading(false);
-      }
-    }
-  };
+  }, [orderId, onTimelineUpdate, fetchTimeline]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

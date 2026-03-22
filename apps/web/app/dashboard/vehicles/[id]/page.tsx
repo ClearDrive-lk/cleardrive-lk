@@ -30,7 +30,6 @@ import OrderCreateForm from "@/components/orders/OrderCreateForm";
 import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 import { apiClient } from "@/lib/api-client";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
-import { useExchangeRate } from "@/lib/hooks/useExchangeRate";
 import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
 import { useAppSelector } from "@/lib/store/store";
 import { Vehicle } from "@/types/vehicle";
@@ -52,16 +51,12 @@ const subscribeHydration = () => () => {};
 const getClientHydratedSnapshot = () => true;
 const getServerHydratedSnapshot = () => false;
 
-const useVehicle = (id: string, exchangeRate?: number | null) =>
+const useVehicle = (id: string) =>
   useQuery<Vehicle>({
-    queryKey: [
-      "vehicle",
-      id,
-      exchangeRate ? Number(exchangeRate.toFixed(4)) : "",
-    ],
+    queryKey: ["vehicle", id],
     queryFn: async () => {
       const response = await apiClient.get(`/vehicles/${id}`);
-      return mapBackendVehicle(response.data, exchangeRate ?? null);
+      return mapBackendVehicle(response.data);
     },
     enabled: Boolean(id),
   });
@@ -93,13 +88,8 @@ function VehicleDetail() {
   const hasSession =
     hasHydrated && Boolean(getAccessToken() || getRefreshToken());
   const isAuthed = isAuthenticated || hasSession;
-  const { data: exchangeRateData } = useExchangeRate();
 
-  const {
-    data: vehicle,
-    isLoading,
-    isError,
-  } = useVehicle(id, exchangeRateData?.rate ?? null);
+  const { data: vehicle, isLoading, isError } = useVehicle(id);
   const { data: galleryImages } = useVehicleImages(id);
 
   const [selectedImageOverride, setSelectedImageOverride] = useState<
@@ -177,18 +167,14 @@ function VehicleDetail() {
       ? `${vehicle.engineCC} cc`
       : "Spec pending";
   const canCreateOrder = isAuthed && isAvailable;
-  const estimatedLandedCost =
-    typeof vehicle?.estimatedLandedCostLKR === "number" &&
-    Number.isFinite(vehicle.estimatedLandedCostLKR)
-      ? vehicle.estimatedLandedCostLKR
-      : null;
-  const hasEstimate = estimatedLandedCost !== null && estimatedLandedCost > 0;
   const estDuty =
-    hasPrice && hasEstimate ? Math.round(estimatedLandedCost * 0.3) : 0;
+    hasPrice && vehicle ? Math.round(vehicle.estimatedLandedCostLKR * 0.3) : 0;
   const bidLabel =
     hasPrice && vehicle ? formatJPY(vehicle.priceJPY) : "Bid pending";
   const landedLabel =
-    hasPrice && hasEstimate ? formatLKR(estimatedLandedCost) : "Awaiting bid";
+    hasPrice && vehicle
+      ? formatLKR(vehicle.estimatedLandedCostLKR)
+      : "Awaiting bid";
   const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
   const displayImage = selectedImage || images[0] || null;
 

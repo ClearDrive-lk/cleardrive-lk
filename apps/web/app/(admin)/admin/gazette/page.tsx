@@ -83,10 +83,7 @@ type GazetteRuleDraft = {
 type GazettePreview = {
   gazette_no?: string;
   effective_date?: string;
-  source?: string;
-  dataset?: string;
   rules?: GazetteRule[];
-  catalog_rows?: Record<string, string | number | boolean | null>[];
   text?: string;
   tables?: unknown[];
   error?: string;
@@ -101,6 +98,15 @@ type GazetteUploadResponse = {
   status: string;
   preview: GazettePreview;
   message?: string | null;
+};
+
+type CatalogUploadResponse = {
+  dataset: string;
+  effective_date: string;
+  uploaded_rows: number;
+  superseded_rows: number;
+  preview_rows: Record<string, string | number | boolean | null>[];
+  message: string;
 };
 
 type GazetteDetailResponse = {
@@ -208,10 +214,6 @@ function formatDateTime(value: string | null | undefined) {
   return date.toLocaleString();
 }
 
-function isCatalogPreview(preview?: GazettePreview | null) {
-  return Boolean(preview?.source?.startsWith("CATALOG_"));
-}
-
 export default function GazetteManagementPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -222,9 +224,17 @@ export default function GazetteManagementPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadResult, setUploadResult] =
     useState<GazetteUploadResponse | null>(null);
+  const [catalogUploadResult, setCatalogUploadResult] =
+    useState<CatalogUploadResponse | null>(null);
   const [catalogEditableRows, setCatalogEditableRows] = useState<
     Record<string, string | number | boolean | null>[]
   >([]);
+  const [catalogSavingRowId, setCatalogSavingRowId] = useState<string | null>(
+    null,
+  );
+  const [catalogDeletingRowId, setCatalogDeletingRowId] = useState<
+    string | null
+  >(null);
   const [catalogSavingAll, setCatalogSavingAll] = useState(false);
   const [catalogChangeReason, setCatalogChangeReason] = useState("");
 
@@ -330,13 +340,7 @@ export default function GazetteManagementPage() {
         setDecisionError(null);
         setRejectionReason(response.data.rejection_reason ?? "");
         setEditableEffectiveDate(response.data.effective_date ?? "");
-        if (isCatalogPreview(response.data.preview)) {
-          setCatalogEditableRows(response.data.preview.catalog_rows ?? []);
-          setEditableRules([]);
-        } else {
-          setCatalogEditableRows([]);
-          setEditableRules(buildRuleDrafts(response.data.preview.rules));
-        }
+        setEditableRules(buildRuleDrafts(response.data.preview.rules));
       } catch (err: unknown) {
         if (isAxiosError(err)) {
           setDetailError(
@@ -373,11 +377,8 @@ export default function GazetteManagementPage() {
     selectedFileName === "global_tax_parameters.csv";
   const isHsCodeMatrixCsv = selectedFileName === "hs_code_matrix.csv";
   const isCatalogCsv = isGlobalTaxParametersCsv || isHsCodeMatrixCsv;
-  const selectedCatalogRows = isCatalogPreview(selectedGazette?.preview)
-    ? (selectedGazette?.preview.catalog_rows ?? [])
-    : [];
-  const catalogPreviewColumns = selectedCatalogRows[0]
-    ? Object.keys(selectedCatalogRows[0]).filter(
+  const catalogPreviewColumns = catalogUploadResult?.preview_rows?.[0]
+    ? Object.keys(catalogUploadResult.preview_rows[0]).filter(
         (column) => column !== "is_active",
       )
     : [];
@@ -410,40 +411,136 @@ export default function GazetteManagementPage() {
     );
   };
 
-  const removeCatalogRow = (rowIndex: number) => {
-    setCatalogEditableRows((current) =>
-      current.filter((_, index) => index !== rowIndex),
-    );
+  const saveCatalogRow = async (rowIndex: number) => {
+    if (!catalogUploadResult) return;
+    const row = catalogEditableRows[rowIndex];
+    const rowId = String(row.id ?? "");
+    if (!rowId) return;
+
+    setCatalogSavingRowId(rowId);
+    setUploadError(null);
+    try {
+      const response = await apiClient.patch<
+        Record<string, string | number | boolean | null>
+      >(`/gazette/catalog/${catalogUploadResult.dataset}/${rowId}`, {
+        values: row,
+        change_reason: catalogChangeReason.trim() || "Manual catalog edit",
+      });
+
+      setCatalogEditableRows((current) =>
+        current.map((currentRow, index) =>
+          index === rowIndex ? response.data : currentRow,
+        ),
+      );
+      setCatalogUploadResult((current) =>
+        current
+          ? {
+              ...current,
+              preview_rows: current.preview_rows.map((currentRow, index) =>
+                index === rowIndex ? response.data : currentRow,
+              ),
+            }
+          : current,
+      );
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        setUploadError(
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+            "Failed to save catalog row.",
+        );
+      } else {
+        setUploadError("Failed to save catalog row.");
+      }
+    } finally {
+      setCatalogSavingRowId(null);
+    }
+  };
+
+  const deleteCatalogRow = async (rowIndex: number) => {
+    if (!catalogUploadResult) return;
+    const row = catalogEditableRows[rowIndex];
+    const rowId = String(row.id ?? "");
+    if (!rowId) return;
+
+    setCatalogDeletingRowId(rowId);
+    setUploadError(null);
+    try {
+      await apiClient.delete(
+        `/gazette/catalog/${catalogUploadResult.dataset}/${rowId}`,
+        {
+          params: {
+            change_reason:
+              catalogChangeReason.trim() || "Manual catalog deactivation",
+          },
+        },
+      );
+
+      setCatalogEditableRows((current) =>
+        current.filter((_, index) => index !== rowIndex),
+      );
+      setCatalogUploadResult((current) =>
+        current
+          ? {
+              ...current,
+              preview_rows: current.preview_rows.filter(
+                (_, index) => index !== rowIndex,
+              ),
+            }
+          : current,
+      );
+    } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        setUploadError(
+          (err.response?.data as { detail?: string } | undefined)?.detail ??
+            "Failed to deactivate catalog row.",
+        );
+      } else {
+        setUploadError("Failed to deactivate catalog row.");
+      }
+    } finally {
+      setCatalogDeletingRowId(null);
+    }
   };
 
   const saveAllCatalogRows = async () => {
-    if (!selectedGazette || !isCatalogPreview(selectedGazette.preview)) return;
+    if (!catalogUploadResult || catalogEditableRows.length === 0) return;
     setCatalogSavingAll(true);
-    setDecisionError(null);
-    setDecisionSuccess(null);
+    setUploadError(null);
     try {
-      const response = await apiClient.patch<GazetteDetailResponse>(
-        `/gazette/${selectedGazette.gazette_id}/catalog-review`,
-        {
-          effective_date: editableEffectiveDate || null,
-          rows: catalogEditableRows,
+      const nextRows: Record<string, string | number | boolean | null>[] = [];
+      for (const row of catalogEditableRows) {
+        const rowId = String(row.id ?? "");
+        if (!rowId) {
+          nextRows.push(row);
+          continue;
+        }
+        const response = await apiClient.patch<
+          Record<string, string | number | boolean | null>
+        >(`/gazette/catalog/${catalogUploadResult.dataset}/${rowId}`, {
+          values: row,
           change_reason:
-            catalogChangeReason.trim() || "Manual catalog review update",
-        },
+            catalogChangeReason.trim() || "Manual catalog bulk edit",
+        });
+        nextRows.push(response.data);
+      }
+
+      setCatalogEditableRows(nextRows);
+      setCatalogUploadResult((current) =>
+        current
+          ? {
+              ...current,
+              preview_rows: nextRows,
+            }
+          : current,
       );
-      setSelectedGazette(response.data);
-      setEditableEffectiveDate(response.data.effective_date ?? "");
-      setCatalogEditableRows(response.data.preview.catalog_rows ?? []);
-      setDecisionSuccess("Catalog review changes saved.");
-      await loadHistory(history?.page ?? 1);
     } catch (err: unknown) {
       if (isAxiosError(err)) {
-        setDecisionError(
+        setUploadError(
           (err.response?.data as { detail?: string } | undefined)?.detail ??
             "Failed to save all catalog rows.",
         );
       } else {
-        setDecisionError("Failed to save all catalog rows.");
+        setUploadError("Failed to save all catalog rows.");
       }
     } finally {
       setCatalogSavingAll(false);
@@ -465,6 +562,7 @@ export default function GazetteManagementPage() {
     setDecisionSuccess(null);
     setDecisionError(null);
     setUploadResult(null);
+    setCatalogUploadResult(null);
     try {
       const form = new FormData();
       form.append("file", selectedFile);
@@ -473,43 +571,21 @@ export default function GazetteManagementPage() {
       }
 
       if (isGlobalTaxParametersCsv) {
-        const response = await apiClient.post<GazetteUploadResponse>(
+        const response = await apiClient.post<CatalogUploadResponse>(
           "/gazette/upload-global-tax-parameters-csv",
           form,
           { headers: { "Content-Type": "multipart/form-data" } },
         );
-        setUploadResult(response.data);
-        setSelectedGazette({
-          gazette_id: response.data.gazette_id,
-          gazette_no: response.data.gazette_no,
-          effective_date: response.data.effective_date,
-          rules_count: response.data.rules_count,
-          status: response.data.status,
-          preview: response.data.preview,
-          created_at: new Date().toISOString(),
-        });
-        setEditableEffectiveDate(response.data.effective_date ?? "");
-        setCatalogEditableRows(response.data.preview.catalog_rows ?? []);
-        setEditableRules([]);
+        setCatalogUploadResult(response.data);
+        setCatalogEditableRows(response.data.preview_rows);
       } else if (isHsCodeMatrixCsv) {
-        const response = await apiClient.post<GazetteUploadResponse>(
+        const response = await apiClient.post<CatalogUploadResponse>(
           "/gazette/upload-hs-code-matrix-csv",
           form,
           { headers: { "Content-Type": "multipart/form-data" } },
         );
-        setUploadResult(response.data);
-        setSelectedGazette({
-          gazette_id: response.data.gazette_id,
-          gazette_no: response.data.gazette_no,
-          effective_date: response.data.effective_date,
-          rules_count: response.data.rules_count,
-          status: response.data.status,
-          preview: response.data.preview,
-          created_at: new Date().toISOString(),
-        });
-        setEditableEffectiveDate(response.data.effective_date ?? "");
-        setCatalogEditableRows(response.data.preview.catalog_rows ?? []);
-        setEditableRules([]);
+        setCatalogUploadResult(response.data);
+        setCatalogEditableRows(response.data.preview_rows);
       } else {
         form.append("gazette_no", gazetteNo.trim());
         const uploadEndpoint = selectedFile.name.toLowerCase().endsWith(".csv")
@@ -537,7 +613,6 @@ export default function GazetteManagementPage() {
         setRejectionReason("");
         setEditableEffectiveDate(response.data.effective_date ?? "");
         setEditableRules(buildRuleDrafts(response.data.preview.rules));
-        setCatalogEditableRows([]);
       }
 
       setGazetteNo("");
@@ -744,8 +819,8 @@ export default function GazetteManagementPage() {
   };
 
   return (
-    <div className="min-h-screen space-y-8 p-6">
-      <header className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm backdrop-blur">
+    <div className="cd-container min-h-screen py-6 space-y-8">
+      <header className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">
@@ -771,7 +846,7 @@ export default function GazetteManagementPage() {
       </header>
 
       <section id="upload" className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm">
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">
@@ -825,7 +900,7 @@ export default function GazetteManagementPage() {
                 "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed px-6 py-10 text-center transition",
                 dragOver
                   ? "border-orange-400 bg-orange-500/10"
-                  : "border-white/10 bg-white/5 hover:border-orange-300 hover:bg-orange-500/10",
+                  : "border-[#546a7b]/65 bg-[#c6c5b9]/20 hover:border-orange-300 hover:bg-orange-500/10",
               )}
             >
               <FileText className="h-10 w-10 text-gray-400" />
@@ -834,12 +909,13 @@ export default function GazetteManagementPage() {
                   Drop PDF or CSV here or click to browse
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  PDF uses extraction. Gazette CSV and the two catalog CSVs all
-                  go to review before approval.
+                  PDF uses extraction. Gazette CSV goes to review.
+                  `global_tax_parameters.csv` and `hs_code_matrix.csv` import
+                  directly.
                 </p>
               </div>
               {selectedFile && (
-                <div className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white">
+                <div className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-[#393d3f]">
                   {selectedFile.name}
                 </div>
               )}
@@ -866,7 +942,7 @@ export default function GazetteManagementPage() {
               type="button"
               onClick={handleUpload}
               disabled={uploading}
-              className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {uploading ? "Uploading..." : "Upload for Review"}
             </button>
@@ -876,25 +952,58 @@ export default function GazetteManagementPage() {
                 {uploadResult.message}
               </div>
             )}
+
+            {catalogUploadResult?.message && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {catalogUploadResult.message} Imported{" "}
+                {catalogUploadResult.uploaded_rows} rows, superseded{" "}
+                {catalogUploadResult.superseded_rows}.
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-sm">
+        <div className="rounded-3xl border border-[#546a7b]/65 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 p-6 text-slate-100 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
             Latest Upload
           </p>
-          {uploadResult ? (
+          {catalogUploadResult ? (
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">
-                  {isCatalogPreview(uploadResult.preview)
-                    ? "Dataset"
-                    : "Gazette"}
-                </span>
+                <span className="text-slate-400">Dataset</span>
                 <span className="font-semibold text-white">
-                  {isCatalogPreview(uploadResult.preview)
-                    ? (uploadResult.preview.dataset ?? uploadResult.gazette_no)
-                    : uploadResult.gazette_no}
+                  {catalogUploadResult.dataset}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Effective Date</span>
+                <span className="font-semibold text-white">
+                  {formatDate(catalogUploadResult.effective_date)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Rows Imported</span>
+                <span className="font-semibold text-white">
+                  {catalogUploadResult.uploaded_rows}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Rows Superseded</span>
+                <span className="font-semibold text-white">
+                  {catalogUploadResult.superseded_rows}
+                </span>
+              </div>
+              <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
+                Catalog uploads activate directly after import. They do not
+                create gazette review cards.
+              </div>
+            </div>
+          ) : uploadResult ? (
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Gazette</span>
+                <span className="font-semibold text-white">
+                  {uploadResult.gazette_no}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -904,23 +1013,17 @@ export default function GazetteManagementPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">
-                  {isCatalogPreview(uploadResult.preview)
-                    ? "Rows Pending"
-                    : "Rules Extracted"}
-                </span>
-                <span className="font-semibold text-white">
+                <span className="text-slate-400">Rules Extracted</span>
+                <span className="font-semibold text-[#393d3f]">
                   {uploadResult.rules_count}
                 </span>
               </div>
-              {!isCatalogPreview(uploadResult.preview) ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Confidence</span>
-                  <span className="font-semibold text-white">
-                    {(uploadResult.confidence * 100).toFixed(1)}%
-                  </span>
-                </div>
-              ) : null}
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Confidence</span>
+                <span className="font-semibold text-[#393d3f]">
+                  {(uploadResult.confidence * 100).toFixed(1)}%
+                </span>
+              </div>
               <div>{statusBadge(uploadResult.status)}</div>
             </div>
           ) : (
@@ -933,7 +1036,7 @@ export default function GazetteManagementPage() {
 
       <section
         id="review"
-        className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm"
+        className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -946,7 +1049,7 @@ export default function GazetteManagementPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             {selectedGazette && (
-              <div className="rounded-2xl border border-white/10 px-3 py-2 text-sm text-gray-300">
+              <div className="rounded-2xl border border-[#546a7b]/65 px-3 py-2 text-sm text-[#546a7b]">
                 Gazette{" "}
                 <span className="font-semibold">
                   {selectedGazette.gazette_no}
@@ -968,12 +1071,48 @@ export default function GazetteManagementPage() {
 
         {!selectedGazette && !detailLoading && !detailError && (
           <div className="mt-6 rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-slate-500">
-            Select a gazette from history or upload a new one to review.
+            {catalogUploadResult
+              ? "The latest action was a direct catalog import, so there is no gazette review card to approve."
+              : "Select a gazette from history or upload a new one to review."}
           </div>
         )}
 
-        {/*
-
+        {catalogUploadResult && !selectedGazette && (
+          <div className="mt-6 space-y-6">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="rounded-2xl bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Dataset
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {catalogUploadResult.dataset}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Effective Date
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {formatDate(catalogUploadResult.effective_date)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Imported
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {catalogUploadResult.uploaded_rows}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Superseded
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {catalogUploadResult.superseded_rows}
+                </p>
+              </div>
+            </div>
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
               These rows were imported directly. You can edit or deactivate them
@@ -1089,7 +1228,6 @@ export default function GazetteManagementPage() {
             </div>
           </div>
         )}
-        */}
 
         {selectedGazette && (
           <div className="mt-6 space-y-6">
@@ -1128,699 +1266,577 @@ export default function GazetteManagementPage() {
               </div>
             </div>
 
-            {isCatalogPreview(selectedGazette.preview) ? (
-              <div className="space-y-4 rounded-2xl border border-white/10 p-4">
-                <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-                  <label className="space-y-2 text-sm font-medium text-slate-700">
-                    Effective Date
-                    <input
-                      type="date"
-                      value={editableEffectiveDate}
-                      onChange={(event) =>
-                        setEditableEffectiveDate(event.target.value)
-                      }
-                      className="w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-orange-400 focus:outline-none"
-                    />
-                  </label>
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                    Review the imported catalog rows, edit or remove anything
-                    incorrect, then save before approval. Approving this item
-                    activates the catalog rows.
-                  </div>
-                </div>
-
+            <div className="space-y-4 rounded-2xl border border-white/10 p-4">
+              <div className="grid gap-4 md:grid-cols-[220px_1fr]">
                 <label className="space-y-2 text-sm font-medium text-slate-700">
-                  Change Reason
+                  Effective Date
                   <input
-                    value={catalogChangeReason}
+                    type="date"
+                    value={editableEffectiveDate}
                     onChange={(event) =>
-                      setCatalogChangeReason(event.target.value)
+                      setEditableEffectiveDate(event.target.value)
                     }
-                    placeholder="Reason for updating this catalog review"
                     className="w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-orange-400 focus:outline-none"
                   />
                 </label>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={saveAllCatalogRows}
-                    disabled={catalogSavingAll}
-                    className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {catalogSavingAll ? "Saving All..." : "Save All"}
-                  </button>
-                </div>
-
-                <div className="overflow-hidden rounded-2xl border border-white/10">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-white/10 text-sm">
-                      <thead className="bg-white/5">
-                        <tr>
-                          {catalogPreviewColumns.map((column) => (
-                            <th
-                              key={column}
-                              className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-400"
-                            >
-                              {column.replaceAll("_", " ")}
-                            </th>
-                          ))}
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/10 bg-white/0">
-                        {catalogEditableRows.map((row, rowIndex) => (
-                          <tr
-                            key={`${selectedGazette.gazette_id}-catalog-row-${rowIndex}`}
-                          >
-                            {catalogPreviewColumns.map((column) => (
-                              <td
-                                key={`${rowIndex}-${column}`}
-                                className="whitespace-nowrap px-4 py-3 text-white"
-                              >
-                                {column === "id" || column === "version" ? (
-                                  <span>
-                                    {row[column] === null ||
-                                    row[column] === undefined ||
-                                    row[column] === ""
-                                      ? "-"
-                                      : String(row[column])}
-                                  </span>
-                                ) : (
-                                  <input
-                                    value={
-                                      row[column] === null ||
-                                      row[column] === undefined
-                                        ? ""
-                                        : String(row[column])
-                                    }
-                                    onChange={(event) =>
-                                      updateCatalogRowField(
-                                        rowIndex,
-                                        column,
-                                        event.target.value,
-                                      )
-                                    }
-                                    className="w-full min-w-[120px] rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                                  />
-                                )}
-                              </td>
-                            ))}
-                            <td className="px-4 py-3">
-                              <button
-                                type="button"
-                                onClick={() => removeCatalogRow(rowIndex)}
-                                className="rounded-xl border border-rose-300 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:bg-rose-50"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  Review the extracted values, correct any OCR mistakes, then
+                  save before approval. The tax calculator will use the approved
+                  rules from this review.
                 </div>
               </div>
-            ) : (
-              <div className="space-y-4 rounded-2xl border border-white/10 p-4">
-                <div className="grid gap-4 md:grid-cols-[220px_1fr]">
-                  <label className="space-y-2 text-sm font-medium text-slate-700">
-                    Effective Date
-                    <input
-                      type="date"
-                      value={editableEffectiveDate}
-                      onChange={(event) =>
-                        setEditableEffectiveDate(event.target.value)
-                      }
-                      className="w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-orange-400 focus:outline-none"
-                    />
-                  </label>
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                    Review the extracted values, correct any OCR mistakes, then
-                    save before approval. The tax calculator will use the
-                    approved rules from this review.
-                  </div>
+
+              {editableRules.length === 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-700">
+                  No structured rules were extracted. Add the rules manually,
+                  save them, then approve the gazette.
                 </div>
+              ) : null}
 
-                {editableRules.length === 0 ? (
-                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-700">
-                    No structured rules were extracted. Add the rules manually,
-                    save them, then approve the gazette.
-                  </div>
-                ) : null}
-
-                <div className="space-y-4">
-                  {editableRules.map((rule, index) => (
-                    <div
-                      key={`${selectedGazette.gazette_id}-rule-${index}`}
-                      className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                    >
-                      <div className="mb-4 flex items-center justify-between">
-                        <p className="text-sm font-semibold text-white">
-                          Rule {index + 1}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => removeRule(index)}
-                          className="rounded-xl border border-rose-300 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:bg-rose-50"
-                        >
-                          Remove
-                        </button>
-                      </div>
-
-                      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Rule Type
-                          <select
-                            value={rule.rule_type}
-                            onChange={(event) => {
-                              const nextType = event.target.value;
-                              setEditableRules((current) =>
-                                current.map((currentRule, ruleIndex) =>
-                                  ruleIndex === index
-                                    ? {
-                                        ...createEmptyRuleDraft(nextType),
-                                        notes: currentRule.notes,
-                                        hs_code: currentRule.hs_code,
-                                      }
-                                    : currentRule,
-                                ),
-                              );
-                            }}
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          >
-                            <option value="VEHICLE_TAX">VEHICLE_TAX</option>
-                            <option value="CUSTOMS">CUSTOMS</option>
-                            <option value="SURCHARGE">SURCHARGE</option>
-                            <option value="LUXURY">LUXURY</option>
-                          </select>
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          HS Code
-                          <input
-                            value={rule.hs_code}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "hs_code",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="8703.80.31"
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Name
-                          <input
-                            value={rule.name}
-                            onChange={(event) =>
-                              updateRuleField(index, "name", event.target.value)
-                            }
-                            placeholder="CUSTOMS_SURCHARGE"
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Applies To
-                          <input
-                            value={rule.applies_to}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "applies_to",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="CUSTOMS_DUTY"
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        {rule.rule_type === "VEHICLE_TAX" ? (
-                          <>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Vehicle Type
-                              <input
-                                value={rule.vehicle_type}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "vehicle_type",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Fuel Type
-                              <input
-                                value={rule.fuel_type}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "fuel_type",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Category Code
-                              <input
-                                value={rule.category_code}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "category_code",
-                                    event.target.value,
-                                  )
-                                }
-                                placeholder="PASSENGER_VEHICLE_BEV"
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Engine Min (cc)
-                              <input
-                                type="number"
-                                value={rule.engine_min}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "engine_min",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Engine Max (cc)
-                              <input
-                                type="number"
-                                value={rule.engine_max}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "engine_max",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Power Min (kW)
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={rule.power_kw_min}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "power_kw_min",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Power Max (kW)
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={rule.power_kw_max}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "power_kw_max",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Age Min (Years)
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={rule.age_years_min}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "age_years_min",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Age Max (Years)
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={rule.age_years_max}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "age_years_max",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Excise Type
-                              <select
-                                value={rule.excise_type}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "excise_type",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              >
-                                <option value="">Select</option>
-                                <option value="PER_KW">PER_KW</option>
-                                <option value="PERCENTAGE">PERCENTAGE</option>
-                              </select>
-                            </label>
-                            <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                              Excise Rate
-                              <input
-                                type="number"
-                                step="0.01"
-                                value={rule.excise_rate}
-                                onChange={(event) =>
-                                  updateRuleField(
-                                    index,
-                                    "excise_rate",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                              />
-                            </label>
-                          </>
-                        ) : null}
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Customs %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.customs_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "customs_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Surcharge %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.surcharge_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "surcharge_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Excise %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.excise_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "excise_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Excise Rs/kW
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.excise_per_kw_amount}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "excise_per_kw_amount",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          VAT %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.vat_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "vat_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          PAL %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.pal_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "pal_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          CESS %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.cess_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "cess_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          CESS Type
-                          <select
-                            value={rule.cess_type}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "cess_type",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          >
-                            <option value="">Select</option>
-                            <option value="PERCENT">PERCENT</option>
-                            <option value="FIXED">FIXED</option>
-                          </select>
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          CESS Value
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.cess_value}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "cess_value",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Threshold Value
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.threshold_value}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "threshold_value",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Rate %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.rate_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "rate_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Luxury Threshold
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.luxury_tax_threshold}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "luxury_tax_threshold",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Luxury Tax %
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={rule.luxury_tax_percent}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "luxury_tax_percent",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                          Apply On
-                          <select
-                            value={rule.apply_on}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "apply_on",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          >
-                            <option value="CIF">CIF</option>
-                            <option value="CIF_PLUS_CUSTOMS">
-                              CIF_PLUS_CUSTOMS
-                            </option>
-                            <option value="CUSTOMS_ONLY">CUSTOMS_ONLY</option>
-                            <option value="CIF_PLUS_EXCISE">
-                              CIF_PLUS_EXCISE
-                            </option>
-                          </select>
-                        </label>
-                        <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400 md:col-span-2 xl:col-span-2">
-                          Notes
-                          <input
-                            value={rule.notes}
-                            onChange={(event) =>
-                              updateRuleField(
-                                index,
-                                "notes",
-                                event.target.value,
-                              )
-                            }
-                            className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
-                          />
-                        </label>
-                      </div>
+              <div className="space-y-4">
+                {editableRules.map((rule, index) => (
+                  <div
+                    key={`${selectedGazette.gazette_id}-rule-${index}`}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                  >
+                    <div className="mb-4 flex items-center justify-between">
+                      <p className="text-sm font-semibold text-white">
+                        Rule {index + 1}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => removeRule(index)}
+                        className="rounded-xl border border-rose-300 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-rose-600 transition hover:bg-rose-50"
+                      >
+                        Remove
+                      </button>
                     </div>
-                  ))}
-                </div>
 
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={addRule}
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Add Rule
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveReviewChanges}
-                    disabled={reviewSaving}
-                    className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {reviewSaving ? "Saving..." : "Save Review Changes"}
-                  </button>
-                </div>
+                    <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Rule Type
+                        <select
+                          value={rule.rule_type}
+                          onChange={(event) => {
+                            const nextType = event.target.value;
+                            setEditableRules((current) =>
+                              current.map((currentRule, ruleIndex) =>
+                                ruleIndex === index
+                                  ? {
+                                      ...createEmptyRuleDraft(nextType),
+                                      notes: currentRule.notes,
+                                      hs_code: currentRule.hs_code,
+                                    }
+                                  : currentRule,
+                              ),
+                            );
+                          }}
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        >
+                          <option value="VEHICLE_TAX">VEHICLE_TAX</option>
+                          <option value="CUSTOMS">CUSTOMS</option>
+                          <option value="SURCHARGE">SURCHARGE</option>
+                          <option value="LUXURY">LUXURY</option>
+                        </select>
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        HS Code
+                        <input
+                          value={rule.hs_code}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "hs_code",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="8703.80.31"
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Name
+                        <input
+                          value={rule.name}
+                          onChange={(event) =>
+                            updateRuleField(index, "name", event.target.value)
+                          }
+                          placeholder="CUSTOMS_SURCHARGE"
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Applies To
+                        <input
+                          value={rule.applies_to}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "applies_to",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="CUSTOMS_DUTY"
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                      {rule.rule_type === "VEHICLE_TAX" ? (
+                        <>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Vehicle Type
+                            <input
+                              value={rule.vehicle_type}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "vehicle_type",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Fuel Type
+                            <input
+                              value={rule.fuel_type}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "fuel_type",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Category Code
+                            <input
+                              value={rule.category_code}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "category_code",
+                                  event.target.value,
+                                )
+                              }
+                              placeholder="PASSENGER_VEHICLE_BEV"
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Engine Min (cc)
+                            <input
+                              type="number"
+                              value={rule.engine_min}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "engine_min",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Engine Max (cc)
+                            <input
+                              type="number"
+                              value={rule.engine_max}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "engine_max",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Power Min (kW)
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={rule.power_kw_min}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "power_kw_min",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Power Max (kW)
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={rule.power_kw_max}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "power_kw_max",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Age Min (Years)
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={rule.age_years_min}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "age_years_min",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Age Max (Years)
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={rule.age_years_max}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "age_years_max",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Excise Type
+                            <select
+                              value={rule.excise_type}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "excise_type",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            >
+                              <option value="">Select</option>
+                              <option value="PER_KW">PER_KW</option>
+                              <option value="PERCENTAGE">PERCENTAGE</option>
+                            </select>
+                          </label>
+                          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            Excise Rate
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={rule.excise_rate}
+                              onChange={(event) =>
+                                updateRuleField(
+                                  index,
+                                  "excise_rate",
+                                  event.target.value,
+                                )
+                              }
+                              className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                            />
+                          </label>
+                        </>
+                      ) : null}
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Customs %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.customs_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "customs_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Surcharge %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.surcharge_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "surcharge_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Excise %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.excise_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "excise_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Excise Rs/kW
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.excise_per_kw_amount}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "excise_per_kw_amount",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        VAT %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.vat_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "vat_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        PAL %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.pal_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "pal_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        CESS %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.cess_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "cess_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        CESS Type
+                        <select
+                          value={rule.cess_type}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "cess_type",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        >
+                          <option value="">Select</option>
+                          <option value="PERCENT">PERCENT</option>
+                          <option value="FIXED">FIXED</option>
+                        </select>
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        CESS Value
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.cess_value}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "cess_value",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Threshold Value
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.threshold_value}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "threshold_value",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Rate %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.rate_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "rate_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Luxury Threshold
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.luxury_tax_threshold}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "luxury_tax_threshold",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Luxury Tax %
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={rule.luxury_tax_percent}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "luxury_tax_percent",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        Apply On
+                        <select
+                          value={rule.apply_on}
+                          onChange={(event) =>
+                            updateRuleField(
+                              index,
+                              "apply_on",
+                              event.target.value,
+                            )
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        >
+                          <option value="CIF">CIF</option>
+                          <option value="CIF_PLUS_CUSTOMS">
+                            CIF_PLUS_CUSTOMS
+                          </option>
+                          <option value="CUSTOMS_ONLY">CUSTOMS_ONLY</option>
+                          <option value="CIF_PLUS_EXCISE">
+                            CIF_PLUS_EXCISE
+                          </option>
+                        </select>
+                      </label>
+                      <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-400 md:col-span-2 xl:col-span-2">
+                        Notes
+                        <input
+                          value={rule.notes}
+                          onChange={(event) =>
+                            updateRuleField(index, "notes", event.target.value)
+                          }
+                          className="w-full rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={addRule}
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 transition hover:bg-slate-50"
+                >
+                  Add Rule
+                </button>
+                <button
+                  type="button"
+                  onClick={saveReviewChanges}
+                  disabled={reviewSaving}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {reviewSaving ? "Saving..." : "Save Review Changes"}
+                </button>
+              </div>
+            </div>
 
             <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-2xl border border-white/10 p-4">
-                <label className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              <div className="rounded-2xl border border-[#546a7b]/65 p-4">
+                <label className="text-xs font-semibold uppercase tracking-wide text-[#546a7b]">
                   Rejection Reason
                 </label>
                 <textarea
                   value={rejectionReason}
                   onChange={(event) => setRejectionReason(event.target.value)}
                   placeholder="Provide a detailed reason if rejecting."
-                  className="mt-2 min-h-[120px] w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-rose-400 focus:outline-none"
+                  className="mt-2 min-h-[120px] w-full rounded-2xl border border-[#546a7b]/65 bg-transparent px-4 py-3 text-sm text-[#393d3f] focus:border-rose-400 focus:outline-none"
                 />
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-[#546a7b]">
                   Minimum 10 characters required for rejection.
                 </p>
               </div>
@@ -1831,7 +1847,7 @@ export default function GazetteManagementPage() {
                   disabled={
                     decisionLoading || selectedGazette.status === "APPROVED"
                   }
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   Approve Gazette
@@ -1842,7 +1858,7 @@ export default function GazetteManagementPage() {
                   disabled={
                     decisionLoading || selectedGazette.status === "REJECTED"
                   }
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-[#393d3f] transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <XCircle className="h-4 w-4" />
                   Reject Gazette
@@ -1865,7 +1881,7 @@ export default function GazetteManagementPage() {
 
       <section
         id="history"
-        className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-sm"
+        className="rounded-3xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-6 shadow-sm"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -1877,12 +1893,12 @@ export default function GazetteManagementPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm text-gray-300">
+            <label className="text-sm text-[#546a7b]">
               Status
               <select
                 value={historyStatus}
                 onChange={(event) => setHistoryStatus(event.target.value)}
-                className="ml-2 rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm text-white"
+                className="ml-2 rounded-xl border border-[#546a7b]/65 bg-transparent px-3 py-2 text-sm text-[#393d3f]"
               >
                 <option value="">All</option>
                 <option value="PENDING">PENDING</option>
@@ -1908,14 +1924,14 @@ export default function GazetteManagementPage() {
             {historyError}
           </div>
         ) : !history || history.items.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 px-6 py-10 text-center text-sm text-gray-500">
+          <div className="mt-6 rounded-2xl border border-dashed border-[#546a7b]/65 px-6 py-10 text-center text-sm text-[#546a7b]">
             No gazettes found for the selected filter.
           </div>
         ) : (
           <div className="mt-6 space-y-4">
-            <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <div className="overflow-x-auto rounded-2xl border border-[#546a7b]/65">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-white/5 text-xs uppercase tracking-wide text-gray-400">
+                <thead className="bg-[#c6c5b9]/20 text-xs uppercase tracking-wide text-[#546a7b]">
                   <tr>
                     <th className="px-4 py-3">Gazette</th>
                     <th className="px-4 py-3">Effective Date</th>
@@ -1927,25 +1943,25 @@ export default function GazetteManagementPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {history.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-white/5">
-                      <td className="px-4 py-3 font-medium text-white">
+                    <tr key={item.id} className="hover:bg-[#c6c5b9]/20">
+                      <td className="px-4 py-3 font-medium text-[#393d3f]">
                         {item.gazette_no}
                       </td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-[#546a7b]">
                         {formatDate(item.effective_date)}
                       </td>
                       <td className="px-4 py-3">{statusBadge(item.status)}</td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-[#546a7b]">
                         {item.rules_count}
                       </td>
-                      <td className="px-4 py-3 text-gray-300">
+                      <td className="px-4 py-3 text-[#546a7b]">
                         {formatDateTime(item.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <button
                           type="button"
                           onClick={() => void loadGazetteDetail(item.id)}
-                          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+                          className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-[#393d3f] transition hover:bg-slate-800"
                         >
                           <ClipboardCheck className="h-4 w-4" />
                           Review
