@@ -11,9 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AuctionTicker } from "@/components/ui/ticker";
 import ThemeToggle from "@/components/ui/theme-toggle";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import {
   Search,
+  Menu,
   Zap,
   Globe,
   TrendingUp,
@@ -123,10 +132,17 @@ export default function Home() {
   };
 
   const navHref = isAuthenticated || hasSession ? "/dashboard" : "/";
+  const mobileNavLinks = [
+    { href: "/dashboard/vehicles", label: "Auctions" },
+    { href: "/#process", label: "How It Works" },
+    { href: "/#lane", label: "Live Shipping Lane" },
+    { href: "/tax-calculator", label: "Tax Calculator" },
+    { href: "/about", label: "About Us" },
+  ];
 
   return (
     <div
-      className={`${plex.className} min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] flex flex-col`}
+      className={`${plex.className} min-h-screen overflow-x-clip bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] flex flex-col`}
     >
       {/* --- NAVIGATION --- */}
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
@@ -193,6 +209,64 @@ export default function Home() {
                 Get Access
               </Button>
             </Link>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20"
+                >
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="w-[88vw] max-w-sm border-l border-[#546a7b]/30 bg-[#fdfdff] p-0"
+              >
+                <SheetHeader className="border-b border-[#546a7b]/20 px-5 py-4 text-left">
+                  <SheetTitle className="text-[#393d3f]">Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-2 px-4 py-4">
+                  {(isAuthenticated || hasSession
+                    ? [
+                        { href: "/dashboard", label: "Dashboard" },
+                        ...mobileNavLinks,
+                      ]
+                    : mobileNavLinks
+                  ).map((item) => (
+                    <SheetClose asChild key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f]"
+                      >
+                        {item.label}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                  <div className="mt-2 grid grid-cols-1 gap-2">
+                    <SheetClose asChild>
+                      <Link
+                        href="/login"
+                        className="rounded-lg border border-[#546a7b]/35 px-3 py-2 text-center text-sm font-medium text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f]"
+                      >
+                        Sign In
+                      </Link>
+                    </SheetClose>
+                    {!isAuthenticated && !hasSession && (
+                      <SheetClose asChild>
+                        <Link
+                          href="/register"
+                          className="rounded-lg bg-[#62929e] px-3 py-2 text-center text-sm font-semibold text-[#fdfdff] hover:bg-[#62929e]/90"
+                        >
+                          Get Access
+                        </Link>
+                      </SheetClose>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>
@@ -398,7 +472,7 @@ export default function Home() {
           </div>
 
           <h1
-            className={`${playfair.className} text-5xl md:text-7xl font-semibold tracking-tight text-[#393d3f] leading-[1.05]`}
+            className={`${playfair.className} text-4xl sm:text-5xl md:text-7xl font-semibold tracking-tight text-[#393d3f] leading-[1.05]`}
           >
             Direct Import.{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9]">
@@ -420,37 +494,39 @@ export default function Home() {
           <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl group hover-glow focus-within:ring-1 focus-within:ring-[#62929e]/40">
             <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[#62929e]/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/2 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.35),transparent)] animate-scanline" />
-            <div className="relative flex items-center bg-[#fdfdff] rounded-lg p-1.5">
-              <Search className="w-5 h-5 text-[#546a7b] ml-4" />
-              <Input
-                className="border-0 bg-transparent text-[#393d3f] placeholder:text-[#393d3f] focus-visible:ring-0 h-12 text-lg font-mono"
-                placeholder="Search make, model, or chassis..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    handleSearch();
-                  }
-                }}
-              />
-              <div className="hidden md:flex items-center gap-2 pr-4">
-                <Badge
-                  variant="secondary"
-                  className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20"
-                >
-                  Make/Model
-                </Badge>
-                <Badge
-                  variant="secondary"
-                  className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20"
-                >
-                  Chassis
-                </Badge>
+            <div className="relative rounded-lg bg-[#fdfdff] p-1.5 sm:flex sm:items-center sm:gap-2">
+              <div className="flex min-w-0 flex-1 items-center">
+                <Search className="ml-3 h-5 w-5 shrink-0 text-[#546a7b]" />
+                <Input
+                  className="h-12 border-0 bg-transparent text-base text-[#393d3f] placeholder:text-[#393d3f] focus-visible:ring-0 sm:text-lg font-mono"
+                  placeholder="Search make, model, or chassis..."
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      handleSearch();
+                    }
+                  }}
+                />
+                <div className="hidden md:flex items-center gap-2 pr-2">
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20"
+                  >
+                    Make/Model
+                  </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20"
+                  >
+                    Chassis
+                  </Badge>
+                </div>
               </div>
               <Button
                 onClick={handleSearch}
-                className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold h-11 px-8 rounded-md"
+                className="mt-2 h-11 w-full rounded-md bg-[#62929e] px-5 text-[#fdfdff] hover:bg-[#62929e]/90 sm:mt-0 sm:w-auto sm:px-8 font-bold"
               >
                 Search Vehicles
               </Button>

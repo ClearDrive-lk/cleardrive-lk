@@ -15,6 +15,7 @@ import {
   Search,
   X,
   SlidersHorizontal,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -515,7 +517,7 @@ function VehicleCatalog({
   const isAuthed = isAuthenticated || hasSession;
 
   return (
-    <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans dark:bg-slate-950 dark:text-slate-100 flex flex-col">
+    <div className="min-h-screen overflow-x-clip bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans dark:bg-slate-950 dark:text-slate-100 flex flex-col">
       {/* Grid Background */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
@@ -530,11 +532,13 @@ function VehicleCatalog({
               className="font-bold text-xl tracking-tighter flex items-center gap-2"
             >
               <BrandMark className="h-12 w-12" />
-              <BrandWordmark />
+              <span className="hidden sm:inline">
+                <BrandWordmark />
+              </span>
             </Link>
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <div className="flex gap-3">
+              <div className="hidden sm:flex gap-3">
                 <Link href="/login">
                   <Button
                     variant="ghost"
@@ -549,6 +553,72 @@ function VehicleCatalog({
                   </Button>
                 </Link>
               </div>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="sm:hidden text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:text-slate-300 dark:hover:text-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-[88vw] max-w-sm border-l border-[#546a7b]/30 bg-[#fdfdff] p-0 dark:border-slate-700 dark:bg-slate-900"
+                >
+                  <SheetHeader className="border-b border-[#546a7b]/20 px-5 py-4 text-left dark:border-slate-700">
+                    <SheetTitle className="text-[#393d3f] dark:text-slate-100">
+                      Menu
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-2 px-4 py-4">
+                    <SheetClose asChild>
+                      <Link
+                        href="/dashboard/vehicles"
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      >
+                        Vehicles
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link
+                        href="/tax-calculator"
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      >
+                        Tax Calculator
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link
+                        href="/about"
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                      >
+                        About Us
+                      </Link>
+                    </SheetClose>
+                    <div className="mt-2 grid grid-cols-1 gap-2">
+                      <SheetClose asChild>
+                        <Link
+                          href="/login"
+                          className="rounded-lg border border-[#546a7b]/35 px-3 py-2 text-center text-sm font-medium text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        >
+                          Sign In
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link
+                          href="/register"
+                          className="rounded-lg bg-[#62929e] px-3 py-2 text-center text-sm font-semibold text-[#fdfdff] hover:bg-[#62929e]/90"
+                        >
+                          Get Access
+                        </Link>
+                      </SheetClose>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </nav>
@@ -624,7 +694,7 @@ function VehicleCatalog({
                   value={currentType}
                   onValueChange={(val) => updateFilters({ type: val })}
                 >
-                  <SelectTrigger className="w-[140px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
+                  <SelectTrigger className="h-10 w-full sm:w-[140px] bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
@@ -646,7 +716,7 @@ function VehicleCatalog({
                   value={currentFuel}
                   onValueChange={(val) => updateFilters({ fuel: val })}
                 >
-                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
+                  <SelectTrigger className="h-10 w-full sm:w-[120px] bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Fuel" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
@@ -665,7 +735,7 @@ function VehicleCatalog({
                   value={currentStatus}
                   onValueChange={(val) => updateFilters({ status: val })}
                 >
-                  <SelectTrigger className="w-[120px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
+                  <SelectTrigger className="h-10 w-full sm:w-[120px] bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
@@ -680,7 +750,7 @@ function VehicleCatalog({
                   value={currentSort}
                   onValueChange={(val) => updateFilters({ sort: val })}
                 >
-                  <SelectTrigger className="w-[160px] h-10 bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
+                  <SelectTrigger className="h-10 w-full sm:w-[160px] bg-[#c6c5b9]/20 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 dark:bg-slate-800/70 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800">
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#fdfdff] border-[#546a7b]/65 text-[#393d3f] dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100">
@@ -701,7 +771,7 @@ function VehicleCatalog({
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-10 border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 hover:text-[#62929e] dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-teal-300"
+                      className="h-10 w-full sm:w-auto border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/30 hover:text-[#62929e] dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800 dark:hover:text-teal-300"
                     >
                       <SlidersHorizontal className="w-4 h-4 mr-2" /> Filters
                     </Button>

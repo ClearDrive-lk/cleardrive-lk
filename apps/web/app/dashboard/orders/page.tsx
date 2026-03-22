@@ -87,7 +87,7 @@ export default function OrdersPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
+      <div className="min-h-screen overflow-x-clip bg-[#fdfdff] text-[#393d3f] selection:bg-[#62929e] selection:text-[#fdfdff] font-sans flex flex-col">
         <CustomerDashboardNav />
 
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#c6c5b912_1px,transparent_1px),linear-gradient(to_bottom,#c6c5b912_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
@@ -103,7 +103,7 @@ export default function OrdersPage() {
               ORDER MANAGEMENT :: CLEARANCE TRACKING
             </div>
 
-            <h1 className="text-5xl md:text-8xl font-bold tracking-tighter text-[#393d3f] leading-[0.9] mb-6">
+            <h1 className="text-4xl sm:text-5xl lg:text-8xl font-bold tracking-tighter text-[#393d3f] leading-[0.9] mb-6">
               YOUR{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#62929e] to-[#c6c5b9]">
                 ORDERS.
@@ -147,7 +147,7 @@ export default function OrdersPage() {
                 ].map((stat, i) => (
                   <div
                     key={i}
-                    className="p-8 flex items-start gap-4 group hover:bg-[#c6c5b9]/20 transition-colors cursor-default"
+                    className="p-4 sm:p-6 lg:p-8 flex items-start gap-3 sm:gap-4 group hover:bg-[#c6c5b9]/20 transition-colors cursor-default"
                   >
                     <div className="mt-1 p-2 rounded-md bg-[#62929e]/10 text-[#62929e] group-hover:bg-[#62929e] group-hover:text-[#fdfdff] transition-colors">
                       <stat.icon className="w-5 h-5" />
@@ -202,7 +202,7 @@ export default function OrdersPage() {
                 </div>
               </div>
             ) : (
-              <div className="grid gap-8 lg:grid-cols-[380px_minmax(0,1fr)]">
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
                 <div className="rounded-[28px] border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
@@ -240,7 +240,7 @@ export default function OrdersPage() {
                               : "border-[#546a7b]/65 bg-[#fdfdff] hover:bg-[#c6c5b9]/20"
                           }`}
                         >
-                          <div className="mb-3 flex items-start justify-between gap-3">
+                          <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                             <div>
                               <p className="text-xs uppercase tracking-[0.25em] text-[#546a7b]">
                                 Order
@@ -249,18 +249,22 @@ export default function OrdersPage() {
                                 {order.id}
                               </p>
                             </div>
-                            <Badge
-                              className={getOrderStatusBadgeClass(order.status)}
-                            >
-                              {order.status.replace(/_/g, " ")}
-                            </Badge>
-                            {needsPayment && (
-                              <Badge className="border-amber-500/35 bg-amber-500/15 text-amber-800 dark:text-amber-200">
-                                Payment Required
+                            <div className="flex flex-wrap items-center justify-end gap-2">
+                              <Badge
+                                className={getOrderStatusBadgeClass(
+                                  order.status,
+                                )}
+                              >
+                                {order.status.replace(/_/g, " ")}
                               </Badge>
-                            )}
+                              {needsPayment && (
+                                <Badge className="border-amber-500/35 bg-amber-500/15 text-amber-800 dark:text-amber-200">
+                                  Payment Required
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center justify-between text-sm text-[#546a7b]">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-[#546a7b]">
                             <span>
                               {new Date(order.created_at).toLocaleDateString()}
                             </span>
