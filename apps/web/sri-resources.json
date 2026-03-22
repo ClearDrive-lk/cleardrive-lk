@@ -3,7 +3,7 @@
     {
       "name": "Google Identity Services",
       "url": "https://accounts.google.com/gsi/client",
-      "integrity": "sha384-DZtwVp8c702lem8TC/4Ykm8gxShQY8WZjYkmzf4WTy5uVXZIyAJjEw5yGvLEiTlR",
+      "integrity": "sha384-Z4YVFJ0pmFL1gcjt8qwDoLJ4XcPfMCEw2f0XRI72lbezIXXTibtneXHJ9xW0ow92",
       "crossorigin": "anonymous",
       "match": "exact"
     },
