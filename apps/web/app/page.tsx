@@ -130,13 +130,15 @@ export default function Home() {
     >
       {/* --- NAVIGATION --- */}
       <nav className="border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="cd-container h-16 flex items-center justify-between">
+        <div className="cd-container flex min-h-16 items-center justify-between py-2">
           <Link
             href={navHref}
             className="font-bold text-xl tracking-tighter flex items-center gap-2"
           >
-            <BrandMark className="h-12 w-12" />
-            <BrandWordmark />
+            <BrandMark className="h-10 w-10 sm:h-12 sm:w-12" />
+            <span className="hidden sm:inline">
+              <BrandWordmark />
+            </span>
           </Link>
           <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b]">
             <Link
@@ -176,17 +178,17 @@ export default function Home() {
               About Us
             </Link>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <Link href="/login">
               <Button
                 variant="ghost"
-                className="text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono"
+                className="px-2 sm:px-3 text-[#546a7b] hover:text-[#393d3f] hover:bg-[#c6c5b9]/20 font-mono"
               >
                 Sign In
               </Button>
             </Link>
-            <Link href="/register">
+            <Link href="/register" className="hidden sm:block">
               <Button className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold">
                 Get Access
               </Button>

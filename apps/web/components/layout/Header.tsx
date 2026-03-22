@@ -31,14 +31,16 @@ export default function Header() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-[#546a7b]/65 bg-[#fdfdff]/80 backdrop-blur-md dark:border-[#8fa3b1]/35 dark:bg-[#10191e]/80">
-      <div className="cd-container h-16 flex items-center justify-between">
+      <div className="cd-container flex min-h-16 items-center justify-between py-2">
         {/* Logo */}
         <Link
           href={isAuthed ? "/dashboard" : "/"}
           className="flex items-center gap-2 text-xl font-bold tracking-tighter text-[#393d3f] dark:text-[#edf2f7]"
         >
-          <BrandMark className="h-12 w-12" />
-          <BrandWordmark />
+          <BrandMark className="h-10 w-10 sm:h-12 sm:w-12" />
+          <span className="hidden sm:inline">
+            <BrandWordmark />
+          </span>
         </Link>
 
         {/* Navigation Links */}
@@ -166,7 +168,7 @@ export default function Header() {
         )}
 
         {/* User Actions */}
-        <div className="flex gap-3 items-center">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           {isAuthed ? (
             <>
@@ -177,10 +179,12 @@ export default function Header() {
                 onClick={logout}
                 disabled={isLoading}
                 variant="ghost"
-                className="flex items-center gap-2 font-mono text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-[#b8c7d4] dark:hover:bg-[#24323b] dark:hover:text-[#edf2f7]"
+                className="flex items-center gap-2 px-2 sm:px-3 font-mono text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-[#b8c7d4] dark:hover:bg-[#24323b] dark:hover:text-[#edf2f7]"
               >
                 <LogOut className="w-4 h-4" />
-                {isLoading ? "Signing out..." : "Sign Out"}
+                <span className="hidden sm:inline">
+                  {isLoading ? "Signing out..." : "Sign Out"}
+                </span>
               </Button>
             </>
           ) : (
@@ -188,12 +192,12 @@ export default function Header() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="font-mono text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-[#b8c7d4] dark:hover:bg-[#24323b] dark:hover:text-[#edf2f7]"
+                  className="px-2 sm:px-3 font-mono text-[#546a7b] hover:bg-[#c6c5b9]/20 hover:text-[#393d3f] dark:text-[#b8c7d4] dark:hover:bg-[#24323b] dark:hover:text-[#edf2f7]"
                 >
                   Sign In
                 </Button>
               </Link>
-              <Link href="/register">
+              <Link href="/register" className="hidden sm:block">
                 <Button className="bg-[#62929e] font-bold text-[#fdfdff] hover:bg-[#62929e]/90 dark:bg-[#6ab2bf] dark:text-[#0f1417] dark:hover:bg-[#88d6e4]">
                   Get Access
                 </Button>

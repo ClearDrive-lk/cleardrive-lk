@@ -383,12 +383,12 @@ export default function TaxCalculatorPage() {
       <main>
         <section className="relative overflow-hidden border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(98,146,158,0.2),transparent_38%),linear-gradient(to_right,rgba(84,106,123,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(84,106,123,0.14)_1px,transparent_1px)] bg-[size:auto,36px_36px,36px_36px]" />
-          <div className="relative mx-auto max-w-7xl px-6 py-16">
+          <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
             <div className="max-w-3xl space-y-5">
               <Badge className="border border-[#62929e]/30 bg-[#62929e]/10 px-3 py-1 font-mono text-[#62929e] dark:border-[#88d6e4]/30 dark:bg-[#88d6e4]/10 dark:text-[#88d6e4]">
                 Public Estimator
               </Badge>
-              <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-6xl">
                 Vehicle Tax Calculator
               </h1>
               <p className="max-w-2xl text-base text-[#546a7b] dark:text-[#b8c7d4] md:text-lg">
@@ -400,7 +400,7 @@ export default function TaxCalculatorPage() {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.02fr_1.18fr]">
+        <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-10 lg:grid-cols-[1.02fr_1.18fr]">
           <Card className="border-[#546a7b]/35 bg-[#fdfdff] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]">
             <CardHeader className="border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25">
               <CardTitle className="flex items-center gap-2 text-[#393d3f] dark:text-[#edf2f7]">
@@ -561,18 +561,18 @@ export default function TaxCalculatorPage() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button
                   onClick={handleCalculate}
                   disabled={isCalculating}
-                  className="bg-[#62929e] text-[#fdfdff] hover:bg-[#3f7480] dark:bg-[#88d6e4] dark:text-[#0f1417] dark:hover:bg-[#6ab2bf]"
+                  className="w-full sm:w-auto bg-[#62929e] text-[#fdfdff] hover:bg-[#3f7480] dark:bg-[#88d6e4] dark:text-[#0f1417] dark:hover:bg-[#6ab2bf]"
                 >
                   {isCalculating ? "Calculating..." : "Calculate Tax"}
                 </Button>
                 <Button
                   onClick={handleReset}
                   variant="outline"
-                  className="border-[#546a7b]/35 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/30 dark:text-[#edf2f7] dark:hover:bg-[#24323b]"
+                  className="w-full sm:w-auto border-[#546a7b]/35 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/30 dark:text-[#edf2f7] dark:hover:bg-[#24323b]"
                 >
                   Reset
                 </Button>
@@ -648,54 +648,56 @@ export default function TaxCalculatorPage() {
                     </div>
                   </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-[#546a7b]/30 dark:border-[#8fa3b1]/25 hover:bg-transparent">
-                        <TableHead>Type</TableHead>
-                        <TableHead>Tax Base</TableHead>
-                        <TableHead>Rate</TableHead>
-                        <TableHead className="min-w-[140px] text-right">
-                          Amount (LKR)
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {taxRows.map((row) => (
-                        <TableRow
-                          key={row.code}
-                          className="border-[#546a7b]/30 dark:border-[#8fa3b1]/25 hover:bg-[#e8eef1] dark:hover:bg-[#24323b]"
-                        >
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[640px]">
+                      <TableHeader>
+                        <TableRow className="border-[#546a7b]/30 dark:border-[#8fa3b1]/25 hover:bg-transparent">
+                          <TableHead>Type</TableHead>
+                          <TableHead>Tax Base</TableHead>
+                          <TableHead>Rate</TableHead>
+                          <TableHead className="min-w-[140px] text-right">
+                            Amount (LKR)
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {taxRows.map((row) => (
+                          <TableRow
+                            key={row.code}
+                            className="border-[#546a7b]/30 dark:border-[#8fa3b1]/25 hover:bg-[#e8eef1] dark:hover:bg-[#24323b]"
+                          >
+                            <TableCell className="font-semibold text-[#393d3f] dark:text-[#edf2f7]">
+                              {row.code}
+                              {"helper" in row && row.helper ? (
+                                <div className="mt-1 text-[11px] font-normal text-[#546a7b] dark:text-[#9fb1bf]">
+                                  {row.helper}
+                                </div>
+                              ) : null}
+                            </TableCell>
+                            <TableCell className="max-w-[140px] whitespace-normal break-words text-[#546a7b] dark:text-[#b8c7d4]">
+                              {formatNumber(Number(row.base))}
+                            </TableCell>
+                            <TableCell className="max-w-[180px] whitespace-normal break-words text-[#546a7b] dark:text-[#b8c7d4]">
+                              {row.rate}
+                            </TableCell>
+                            <TableCell className="max-w-[180px] whitespace-normal break-words text-right font-medium text-[#393d3f] dark:text-[#edf2f7]">
+                              {formatLkr(row.amount)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#1a2630] hover:bg-[#e8eef1] dark:hover:bg-[#24323b]">
                           <TableCell className="font-semibold text-[#393d3f] dark:text-[#edf2f7]">
-                            {row.code}
-                            {"helper" in row && row.helper ? (
-                              <div className="mt-1 text-[11px] font-normal text-[#546a7b] dark:text-[#9fb1bf]">
-                                {row.helper}
-                              </div>
-                            ) : null}
+                            Total Tax
                           </TableCell>
-                          <TableCell className="max-w-[140px] whitespace-normal break-words text-[#546a7b] dark:text-[#b8c7d4]">
-                            {formatNumber(Number(row.base))}
-                          </TableCell>
-                          <TableCell className="max-w-[180px] whitespace-normal break-words text-[#546a7b] dark:text-[#b8c7d4]">
-                            {row.rate}
-                          </TableCell>
-                          <TableCell className="max-w-[180px] whitespace-normal break-words text-right font-medium text-[#393d3f] dark:text-[#edf2f7]">
-                            {formatLkr(row.amount)}
+                          <TableCell />
+                          <TableCell />
+                          <TableCell className="max-w-[180px] whitespace-normal break-words text-right text-xl font-semibold text-[#62929e] dark:text-[#88d6e4]">
+                            {formatLkr(result.total_payable_to_customs)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                      <TableRow className="border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#1a2630] hover:bg-[#e8eef1] dark:hover:bg-[#24323b]">
-                        <TableCell className="font-semibold text-[#393d3f] dark:text-[#edf2f7]">
-                          Total Tax
-                        </TableCell>
-                        <TableCell />
-                        <TableCell />
-                        <TableCell className="max-w-[180px] whitespace-normal break-words text-right text-xl font-semibold text-[#62929e] dark:text-[#88d6e4]">
-                          {formatLkr(result.total_payable_to_customs)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
                 </>
               ) : (
                 <div className="rounded-2xl border border-dashed border-[#546a7b]/35 bg-[#f7fafb] dark:border-[#8fa3b1]/30 dark:bg-[#15202a] p-8 text-[#546a7b] dark:text-[#b8c7d4]">
@@ -718,7 +720,7 @@ export default function TaxCalculatorPage() {
           </Card>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-10">
+        <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-10">
           <Card
             id="reference-documents"
             className="border-[#546a7b]/35 bg-[#fdfdff] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]"
@@ -782,8 +784,8 @@ export default function TaxCalculatorPage() {
               </div>
 
               <div className="overflow-hidden rounded-3xl border border-[#546a7b]/30 dark:border-[#8fa3b1]/25 bg-[#f7fafb] dark:bg-[#15202a]">
-                <div className="flex items-center justify-between border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25 px-4 py-3">
-                  <div>
+                <div className="flex flex-col gap-3 border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <div className="text-sm font-semibold text-[#393d3f] dark:text-[#edf2f7]">
                       {selectedDoc?.title ?? "No document selected"}
                     </div>
@@ -796,7 +798,7 @@ export default function TaxCalculatorPage() {
                     href={selectedDoc?.file_url ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-[#62929e] dark:text-[#88d6e4] hover:text-[#3f7480] dark:hover:text-[#88d6e4]"
+                    className="inline-flex shrink-0 items-center gap-2 text-sm text-[#62929e] dark:text-[#88d6e4] hover:text-[#3f7480] dark:hover:text-[#88d6e4]"
                   >
                     Open in new tab
                     <ExternalLink className="h-4 w-4" />
@@ -806,10 +808,10 @@ export default function TaxCalculatorPage() {
                   <iframe
                     title={selectedDoc.title}
                     src={selectedDoc.file_url}
-                    className="h-[540px] w-full bg-[#fdfdff] dark:bg-[#0f1417]"
+                    className="h-[420px] w-full bg-[#fdfdff] dark:bg-[#0f1417] sm:h-[540px]"
                   />
                 ) : (
-                  <div className="flex h-[540px] items-center justify-center px-6 text-sm text-[#546a7b] dark:text-[#b8c7d4]">
+                  <div className="flex h-[420px] items-center justify-center px-6 text-sm text-[#546a7b] dark:text-[#b8c7d4] sm:h-[540px]">
                     No active reference documents uploaded yet.
                   </div>
                 )}
@@ -819,7 +821,7 @@ export default function TaxCalculatorPage() {
         </section>
 
         <section className="border-t border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10 md:flex-row md:items-start md:justify-between">
+          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
             <div>
               <div className="text-sm uppercase tracking-[0.24em] text-[#546a7b] dark:text-[#9fb1bf]">
                 Contact Us

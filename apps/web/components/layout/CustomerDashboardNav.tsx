@@ -9,6 +9,7 @@ import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { useAppSelector } from "@/lib/store/store";
 import { normalizeRole } from "@/lib/roles";
+import { LogOut } from "lucide-react";
 
 type NavItem = {
   label: string;
@@ -51,13 +52,15 @@ export default function CustomerDashboardNav() {
 
   return (
     <nav className="border-b border-[#546a7b]/45 dark:border-[#8fa3b1]/35 bg-[#fdfdff]/80 dark:bg-[#10191e]/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="cd-container h-16 flex items-center justify-between">
+      <div className="cd-container flex min-h-16 items-center justify-between py-2">
         <Link
           href="/"
           className="font-bold text-xl tracking-tighter flex items-center gap-2 group text-[#1f2937] dark:text-[#edf2f7]"
         >
-          <BrandMark className="h-12 w-12 transition-transform group-hover:scale-105" />
-          <BrandWordmark />
+          <BrandMark className="h-10 w-10 transition-transform group-hover:scale-105 sm:h-12 sm:w-12" />
+          <span className="hidden sm:inline">
+            <BrandWordmark />
+          </span>
         </Link>
 
         <div className="hidden md:flex gap-8 text-sm font-medium text-[#546a7b] dark:text-[#b8c7d4]">
@@ -87,14 +90,17 @@ export default function CustomerDashboardNav() {
           })}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <Button
             onClick={logout}
             disabled={isLoading}
-            className="bg-[#62929e] text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
+            className="bg-[#62929e] px-2 sm:px-3 text-[#fdfdff] hover:bg-[#62929e]/90 font-bold"
           >
-            {isLoading ? "Signing Out..." : "Sign Out"}
+            <LogOut className="h-4 w-4 sm:hidden" />
+            <span className="hidden sm:inline">
+              {isLoading ? "Signing Out..." : "Sign Out"}
+            </span>
           </Button>
         </div>
       </div>
