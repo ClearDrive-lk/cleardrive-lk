@@ -14,7 +14,6 @@ import {
 import { Loader2 } from "lucide-react";
 import { getAccessToken } from "@/lib/auth";
 import apiClient from "@/lib/api-client";
-import { useKycStatus } from "@/lib/hooks/useKycStatus";
 import { useToast } from "@/lib/hooks/use-toast";
 
 // We move the logic into a inner component
@@ -24,21 +23,19 @@ function PaymentForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { isApproved, loading: kycLoading, normalizedStatus } = useKycStatus();
 
   const orderId = searchParams.get("orderId");
-  const [resubmissionError, setResubmissionError] = useState<string | null>(
-    null,
-  );
 
   useEffect(() => {
-    if (!orderId) return;
-    const submittedAt = sessionStorage.getItem(`payment:submitted:${orderId}`);
-    if (!submittedAt) return;
-    setResubmissionError(
-      "This payment was already submitted once. Re-submitting may create a duplicate attempt. Check your order status before trying again.",
-    );
-  }, [orderId]);
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   const getPaymentIdempotencyKey = (currentOrderId: string): string => {
     const storageKey = `payment:idempotency:${currentOrderId}`;
@@ -53,17 +50,6 @@ function PaymentForm() {
   const handlePayment = async () => {
     if (!orderId) {
       setError("Order ID is required");
-      return;
-    }
-    if (kycLoading) {
-      return;
-    }
-    if (!isApproved) {
-      const message =
-        normalizedStatus === null
-          ? "KYC verification required before payment."
-          : `KYC status is ${normalizedStatus}. Only approved users can proceed to payment.`;
-      setError(message);
       return;
     }
 
@@ -95,11 +81,6 @@ function PaymentForm() {
         payment_url: string;
         payhere_params: Record<string, string>;
       };
-
-      sessionStorage.setItem(
-        `payment:submitted:${orderId}`,
-        new Date().toISOString(),
-      );
 
       // Redirect to PayHere
       toast({
@@ -179,38 +160,15 @@ function PaymentForm() {
           </div>
         )}
 
-        {resubmissionError && (
-          <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 px-4 py-3 rounded text-sm">
-            {resubmissionError}
-          </div>
-        )}
-
-        {!kycLoading && !isApproved && (
-          <div className="bg-amber-500/10 border border-amber-500/40 text-amber-300 px-4 py-3 rounded text-sm">
-            KYC must be approved before payment.
-            <a
-              href="/dashboard/kyc"
-              className="ml-2 font-semibold text-white underline underline-offset-4"
-            >
-              Open KYC
-            </a>
-            {normalizedStatus ? ` Current status: ${normalizedStatus}.` : ""}
-          </div>
-        )}
-
         <Button
           onClick={handlePayment}
-          disabled={loading || kycLoading || !isApproved}
+          disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-500 py-6 text-lg"
         >
           {loading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...
             </>
-          ) : kycLoading ? (
-            "Checking KYC..."
-          ) : !isApproved ? (
-            "KYC Approval Required"
           ) : (
             "Proceed to Payment"
           )}

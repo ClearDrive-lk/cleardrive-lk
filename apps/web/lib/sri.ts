@@ -1,4 +1,4 @@
-import { sriResources } from "@/sri-resources";
+import sriResources from "@/sri-resources.json";
 
 type MatchType = "exact" | "startsWith";
 
@@ -15,7 +15,7 @@ type SriAttributes = {
   crossOrigin?: string;
 };
 
-const resources: SriResource[] = sriResources.resources.map((resource) => ({
+const resources = (sriResources.resources as SriResource[]).map((resource) => ({
   ...resource,
   match: resource.match ?? "exact",
 }));
