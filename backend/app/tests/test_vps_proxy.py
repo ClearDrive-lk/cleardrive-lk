@@ -20,7 +20,9 @@ class _FakeResponse:
 
 @pytest.mark.asyncio
 async def test_extract_nic_from_vps_success(mocker, monkeypatch):
-    monkeypatch.setattr(vps_proxy.settings, "VPS_URL", "http://127.0.0.1:8001")
+    monkeypatch.setattr(
+        vps_proxy.settings, "VPS_URL", "https://retrorsely-subtrihedral-camilo.ngrok-free.dev"
+    )
     monkeypatch.setattr(vps_proxy.settings, "VPS_SECRET", "secret")
     monkeypatch.setattr(vps_proxy.settings, "KYC_VPS_TIMEOUT_SECONDS", 60.0)
 
@@ -40,6 +42,11 @@ async def test_extract_nic_from_vps_success(mocker, monkeypatch):
     result = await vps_proxy.extract_nic_from_vps(b"image-bytes", side="front")
     assert result["nic_number"] == "200012345678"
     client.post.assert_called_once()
+    assert client.post.await_args.kwargs["headers"] == {
+        "X-Internal-Secret": "secret",  # pragma: allowlist secret
+        "X-Side": "front",
+        "ngrok-skip-browser-warning": "true",
+    }
 
 
 @pytest.mark.asyncio
@@ -87,6 +94,24 @@ async def test_extract_nic_from_vps_invalid_json_raises(mocker, monkeypatch):
 
     with pytest.raises(VPSExtractionError, match="Invalid JSON response from VPS"):
         await vps_proxy.extract_nic_from_vps(b"image-bytes", side="front")
+
+
+@pytest.mark.asyncio
+async def test_check_vps_health_omits_ngrok_header_for_non_ngrok_hosts(mocker, monkeypatch):
+    monkeypatch.setattr(vps_proxy.settings, "VPS_URL", "http://127.0.0.1:8001")
+    monkeypatch.setattr(vps_proxy.settings, "VPS_SECRET", "secret")  # pragma: allowlist secret
+
+    client = AsyncMock()
+    client.get.return_value = _FakeResponse(200, {"status": "healthy"})
+    cm = AsyncMock()
+    cm.__aenter__.return_value = client
+    mocker.patch("app.services.vps_proxy.httpx.AsyncClient", return_value=cm)
+
+    assert await vps_proxy.check_vps_health() is True
+    client.get.assert_called_once()
+    assert client.get.await_args.kwargs["headers"] == {
+        "X-Internal-Secret": "secret",  # pragma: allowlist secret
+    }
 
 
 @pytest.mark.asyncio

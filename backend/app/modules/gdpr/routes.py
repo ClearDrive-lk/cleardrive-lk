@@ -453,11 +453,6 @@ async def export_user_data(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Export all user data (GDPR Article 15).
-
-    **Story**: CD-102.1, CD-102.3, CD-102.4, CD-102.6
-    """
 
     logger.info(
         "GDPR export request user=%s ip=%s",
