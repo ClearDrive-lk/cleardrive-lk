@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -17,6 +17,17 @@ declare global {
             callback: (response: { credential: string }) => void;
             auto_select?: boolean;
           }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme?: "outline" | "filled_blue" | "filled_black";
+              size?: "large" | "medium" | "small";
+              shape?: "rectangular" | "pill" | "circle" | "square";
+              text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+              width?: number;
+              logo_alignment?: "left" | "center";
+            },
+          ) => void;
           prompt: (momentListener?: (value: unknown) => void) => void;
         };
       };
@@ -86,6 +97,7 @@ function ensureGoogleScript(src: string): Promise<void> {
 export function GoogleLoginButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   const clientId =
@@ -151,11 +163,21 @@ export function GoogleLoginButton() {
     if (!clientId || typeof window === "undefined") return;
     ensureGoogleScript(GSI_SRC)
       .then(() => {
-        if (window.google?.accounts?.id) {
-          window.google.accounts.id.initialize({
+        const googleId = window.google?.accounts?.id;
+        if (googleId && googleButtonRef.current) {
+          googleId.initialize({
             client_id: clientId,
             callback: (response) => handleCredential(response.credential),
             auto_select: false,
+          });
+          googleButtonRef.current.innerHTML = "";
+          googleId.renderButton(googleButtonRef.current, {
+            theme: "outline",
+            size: "large",
+            shape: "rectangular",
+            text: "continue_with",
+            width: 320,
+            logo_alignment: "left",
           });
           setError(null);
         }
@@ -174,36 +196,18 @@ export function GoogleLoginButton() {
     setLoading(true);
     try {
       await ensureGoogleScript(GSI_SRC);
-      window.google?.accounts?.id?.initialize({
-        client_id: clientId,
-        callback: (response) => handleCredential(response.credential),
-        auto_select: false,
-      });
-      window.google?.accounts?.id?.prompt((notification: unknown) => {
-        const n = notification as {
-          isNotDisplayed?: () => boolean;
-          isSkippedMoment?: () => boolean;
-          getNotDisplayedReason?: () => string;
-          getSkippedReason?: () => string;
-        };
-
-        // FedCM can cancel prompt flow without this being an application error.
-        // Clear loading state and only surface actionable prompt issues.
+      const renderedButton =
+        googleButtonRef.current?.querySelector<HTMLElement>(
+          'div[role="button"], iframe, [tabindex="0"]',
+        );
+      if (!renderedButton) {
+        setError("Google Sign-In is still loading. Try again.");
         setLoading(false);
+        return;
+      }
 
-        if (n?.isNotDisplayed?.()) {
-          const reason = n.getNotDisplayedReason?.() || "unknown";
-          setError(`Google sign-in prompt unavailable (${reason}).`);
-          return;
-        }
-
-        if (n?.isSkippedMoment?.()) {
-          const reason = n.getSkippedReason?.();
-          if (reason && reason !== "user_cancel") {
-            setError(`Google sign-in was skipped (${reason}).`);
-          }
-        }
-      });
+      renderedButton.click();
+      setLoading(false);
     } catch {
       setError("Could not load Google Sign-In");
       setLoading(false);
@@ -247,6 +251,12 @@ export function GoogleLoginButton() {
           </div>
         )}
       </Button>
+      <div className="flex justify-center">
+        <div
+          ref={googleButtonRef}
+          className="google-signin-button overflow-hidden rounded-xl"
+        />
+      </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
     </div>
   );

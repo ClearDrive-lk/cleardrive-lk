@@ -46,10 +46,13 @@ elif not is_sqlite:
     )
 
 # Create engine
+create_engine_kwargs = dict(engine_kwargs)
+if not is_sqlite:
+    create_engine_kwargs["use_native_hstore"] = False
+
 engine = create_engine(
     url,
-    use_native_hstore=False,
-    **engine_kwargs,
+    **create_engine_kwargs,
 )
 
 # Create session factory

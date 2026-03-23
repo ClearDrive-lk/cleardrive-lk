@@ -20,6 +20,7 @@ from app.core.rate_limit import (
 )
 from app.core.redis import is_token_blacklisted
 from app.core.security import decode_access_token
+from app.modules.auth.models import User
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -71,7 +72,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         db = next(db_generator)
 
         try:
-            user = await self._resolve_token(request)
+            user = await self._resolve_token(request, db)
             await check_rate_limit(request, user, endpoint_type, db=db)
             context = getattr(request.state, "rate_limit_context", default_context)
             response = await call_next(request)
@@ -92,7 +93,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         finally:
             self._close_db_generator(db_generator)
 
-    async def _resolve_token(self, request: Request):
+    async def _resolve_token(self, request: Request, db: Session) -> User | None:
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return None
@@ -109,6 +110,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         user_id = payload.get("sub")
         if not user_id:
             return None
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is not None:
+            return user
 
         return SimpleNamespace(id=user_id)
 
