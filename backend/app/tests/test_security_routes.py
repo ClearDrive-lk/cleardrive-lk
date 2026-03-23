@@ -53,6 +53,9 @@ def test_verify_file_integrity_endpoint_detects_tampering(
 ):
     record = _create_integrity_record(db, admin_user)
     sent_emails: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        "app.services.security.file_integrity.settings.ADMIN_EMAILS", "admin@cleardrive.lk"
+    )
 
     async def _download_file(bucket: str, file_path: str) -> bytes:
         return b"tampered-file"
@@ -109,6 +112,9 @@ def test_verify_all_files_returns_statistics(client, db, admin_headers, admin_us
     async def _send_email(to_email, subject, html_content, text_content):
         return True
 
+    monkeypatch.setattr(
+        "app.services.security.file_integrity.settings.ADMIN_EMAILS", "admin@cleardrive.lk"
+    )
     monkeypatch.setattr("app.core.storage.storage.download_file", _download_file)
     monkeypatch.setattr("app.services.security.file_integrity.send_email", _send_email)
 

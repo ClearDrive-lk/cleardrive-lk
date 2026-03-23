@@ -10,7 +10,6 @@ import apiClient from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useKycStatus } from "@/lib/hooks/useKycStatus";
 import { useToast } from "@/lib/hooks/use-toast";
 
 interface OrderCreateFormProps {
@@ -36,7 +35,6 @@ export default function OrderCreateForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
-  const { isApproved, loading: kycLoading, normalizedStatus } = useKycStatus();
 
   const trimmedAddress = shippingAddress.trim();
   const trimmedPhone = phone.trim();
@@ -45,21 +43,8 @@ export default function OrderCreateForm({
   const isPhoneValid = trimmedPhone.length >= 7;
 
   const canSubmit = useMemo(
-    () =>
-      Boolean(vehicleId) &&
-      isAddressValid &&
-      isPhoneValid &&
-      !submitting &&
-      !kycLoading &&
-      isApproved,
-    [
-      vehicleId,
-      isAddressValid,
-      isPhoneValid,
-      submitting,
-      kycLoading,
-      isApproved,
-    ],
+    () => Boolean(vehicleId) && isAddressValid && isPhoneValid && !submitting,
+    [vehicleId, isAddressValid, isPhoneValid, submitting],
   );
 
   const formatLkr = (value: number | string | null | undefined) => {
@@ -75,10 +60,6 @@ export default function OrderCreateForm({
 
   const handleSubmit = async () => {
     if (!canSubmit) {
-      if (!isApproved) {
-        setError("KYC approval is required before you can create an order.");
-        return;
-      }
       setError("Please provide a valid shipping address and phone number.");
       return;
     }
@@ -145,18 +126,6 @@ export default function OrderCreateForm({
           Add your delivery details to reserve this vehicle. Your address is
           encrypted at rest.
         </p>
-        {!kycLoading && !isApproved && (
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-            KYC must be approved before you can create an order.
-            <Link
-              href="/dashboard/kyc"
-              className="ml-2 font-semibold text-white underline underline-offset-4"
-            >
-              Complete KYC
-            </Link>
-            {normalizedStatus ? ` Current status: ${normalizedStatus}.` : ""}
-          </div>
-        )}
       </CardHeader>
       <CardContent className="space-y-5">
         {createdOrder ? (
@@ -282,10 +251,6 @@ export default function OrderCreateForm({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Order...
                 </>
-              ) : kycLoading ? (
-                "Checking KYC..."
-              ) : !isApproved ? (
-                "KYC Approval Required"
               ) : (
                 "Create Order"
               )}

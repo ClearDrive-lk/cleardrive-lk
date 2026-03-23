@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from app.core.config import settings
@@ -34,6 +35,18 @@ def _vps_secret() -> str:
     return settings.VPS_SECRET
 
 
+def _vps_headers(*, side: str | None = None) -> dict[str, str]:
+    headers = {
+        "X-Internal-Secret": _vps_secret(),
+    }
+    host = urlparse(_vps_base_url()).hostname or ""
+    if host.endswith(".ngrok-free.dev") or host.endswith(".ngrok.app"):
+        headers["ngrok-skip-browser-warning"] = "true"
+    if side is not None:
+        headers["X-Side"] = side
+    return headers
+
+
 async def extract_nic_from_vps(
     image_bytes: bytes,
     *,
@@ -46,10 +59,7 @@ async def extract_nic_from_vps(
     Uses a 60-second timeout by default (configurable via settings).
     """
     url = f"{_vps_base_url()}/extract/nic"
-    headers = {
-        "X-Internal-Secret": _vps_secret(),
-        "X-Side": side,
-    }
+    headers = _vps_headers(side=side)
     files = {"image": (f"nic_{side}.jpg", image_bytes, content_type)}
 
     try:
@@ -121,7 +131,7 @@ async def check_vps_health() -> bool:
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(
                 f"{_vps_base_url()}/health",
-                headers={"X-Internal-Secret": _vps_secret()},
+                headers=_vps_headers(),
             )
         return response.status_code == 200
     except Exception:

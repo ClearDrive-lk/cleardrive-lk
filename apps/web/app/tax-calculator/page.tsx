@@ -162,7 +162,9 @@ function AmountText({
   return (
     <span
       className={`block max-w-full overflow-hidden text-ellipsis break-words leading-tight ${
-        accent ? "text-[#FE7743]" : "text-white"
+        accent
+          ? "text-[#62929e] dark:text-[#88d6e4]"
+          : "text-[#393d3f] dark:text-[#edf2f7]"
       }`}
     >
       {value}
@@ -376,20 +378,20 @@ export default function TaxCalculatorPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#fdfdff] text-[#393d3f] dark:bg-[#0f1417] dark:text-[#edf2f7]">
       <Header />
       <main>
-        <section className="relative overflow-hidden border-b border-white/10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(254,119,67,0.18),transparent_38%),linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:auto,36px_36px,36px_36px]" />
-          <div className="relative mx-auto max-w-7xl px-6 py-16">
+        <section className="relative overflow-hidden border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(98,146,158,0.2),transparent_38%),linear-gradient(to_right,rgba(84,106,123,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(84,106,123,0.14)_1px,transparent_1px)] bg-[size:auto,36px_36px,36px_36px]" />
+          <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
             <div className="max-w-3xl space-y-5">
-              <Badge className="border border-[#FE7743]/20 bg-[#FE7743]/10 px-3 py-1 font-mono text-[#FE7743]">
+              <Badge className="border border-[#62929e]/30 bg-[#62929e]/10 px-3 py-1 font-mono text-[#62929e] dark:border-[#88d6e4]/30 dark:bg-[#88d6e4]/10 dark:text-[#88d6e4]">
                 Public Estimator
               </Badge>
-              <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-6xl">
                 Vehicle Tax Calculator
               </h1>
-              <p className="max-w-2xl text-base text-slate-300 md:text-lg">
+              <p className="max-w-2xl text-base text-[#546a7b] dark:text-[#b8c7d4] md:text-lg">
                 Estimate Sri Lankan import levies for vehicles imported from
                 Japan, show the resolved HS code, and keep the supporting
                 customs references visible on the same page.
@@ -398,11 +400,11 @@ export default function TaxCalculatorPage() {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-7xl gap-8 px-6 py-10 lg:grid-cols-[1.02fr_1.18fr]">
-          <Card className="border-white/10 bg-[#0d0d0d]">
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Calculator className="h-5 w-5 text-[#FE7743]" />
+        <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-10 lg:grid-cols-[1.02fr_1.18fr]">
+          <Card className="border-[#546a7b]/35 bg-[#fdfdff] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]">
+            <CardHeader className="border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25">
+              <CardTitle className="flex items-center gap-2 text-[#393d3f] dark:text-[#edf2f7]">
+                <Calculator className="h-5 w-5 text-[#62929e] dark:text-[#88d6e4]" />
                 For Vehicles Imported from Japan
               </CardTitle>
             </CardHeader>
@@ -416,7 +418,7 @@ export default function TaxCalculatorPage() {
                     onChange={(event) =>
                       setForm({ ...form, cifJpy: event.target.value })
                     }
-                    className="border-white/10 bg-white/5 text-white"
+                    className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -428,7 +430,7 @@ export default function TaxCalculatorPage() {
                       setRateTouched(true);
                       setForm({ ...form, exchangeRate: event.target.value });
                     }}
-                    className="border-white/10 bg-white/5 text-white"
+                    className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]"
                   />
                 </div>
               </div>
@@ -437,13 +439,13 @@ export default function TaxCalculatorPage() {
                 href={CBSL_EXCHANGE_RATE_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-[#FE7743] hover:text-orange-200"
+                className="inline-flex items-center gap-2 text-sm text-[#62929e] dark:text-[#88d6e4] hover:text-[#3f7480] dark:hover:text-[#88d6e4]"
               >
                 {exchangeRateData?.source ||
                   "View Sri Lanka Customs Weekly Exchange Rates"}
                 <ArrowUpRight className="h-4 w-4" />
               </a>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#546a7b] dark:text-[#9fb1bf]">
                 Live rate{" "}
                 {exchangeRateData?.date
                   ? `for ${new Date(exchangeRateData.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
@@ -462,7 +464,7 @@ export default function TaxCalculatorPage() {
                       exchangeRate: liveRate.toFixed(5),
                     }));
                   }}
-                  className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white"
+                  className="inline-flex items-center gap-2 text-xs text-[#546a7b] dark:text-[#b8c7d4] hover:text-[#393d3f] dark:hover:text-[#edf2f7]"
                 >
                   Use live CBSL rate
                 </button>
@@ -477,15 +479,15 @@ export default function TaxCalculatorPage() {
                       setForm({ ...form, vehicleType: value })
                     }
                   >
-                    <SelectTrigger className="border-white/15 bg-[#161616] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <SelectTrigger className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]">
                       <SelectValue placeholder="Select vehicle type" />
                     </SelectTrigger>
-                    <SelectContent className="border-white/15 bg-[#121212] text-white">
+                    <SelectContent className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]">
                       {vehicleOptions.map((option) => (
                         <SelectItem
                           key={option.value}
                           value={option.value}
-                          className="text-white focus:bg-[#222] focus:text-white"
+                          className="text-[#393d3f] focus:bg-[#e7eef1] focus:text-[#393d3f] dark:text-[#edf2f7] dark:focus:bg-[#24323b] dark:focus:text-[#edf2f7]"
                         >
                           {option.label}
                         </SelectItem>
@@ -501,15 +503,15 @@ export default function TaxCalculatorPage() {
                       setForm({ ...form, fuelPreset: value })
                     }
                   >
-                    <SelectTrigger className="border-white/15 bg-[#161616] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <SelectTrigger className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="border-white/15 bg-[#121212] text-white">
+                    <SelectContent className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]">
                       {fuelOptions.map((option) => (
                         <SelectItem
                           key={option.value}
                           value={option.value}
-                          className="text-white focus:bg-[#222] focus:text-white"
+                          className="text-[#393d3f] focus:bg-[#e7eef1] focus:text-[#393d3f] dark:text-[#edf2f7] dark:focus:bg-[#24323b] dark:focus:text-[#edf2f7]"
                         >
                           {option.label}
                         </SelectItem>
@@ -528,7 +530,7 @@ export default function TaxCalculatorPage() {
                     onChange={(event) =>
                       setForm({ ...form, engineCc: event.target.value })
                     }
-                    className="border-white/10 bg-white/5 text-white"
+                    className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -540,7 +542,7 @@ export default function TaxCalculatorPage() {
                     onChange={(event) =>
                       setForm({ ...form, importDate: event.target.value })
                     }
-                    className="border-white/10 bg-white/5 text-white"
+                    className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]"
                   />
                 </div>
               </div>
@@ -554,35 +556,35 @@ export default function TaxCalculatorPage() {
                     onChange={(event) =>
                       setForm({ ...form, powerKw: event.target.value })
                     }
-                    className="border-white/10 bg-white/5 text-white"
+                    className="border-[#546a7b]/35 bg-[#fdfdff] text-[#393d3f] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#edf2f7]"
                   />
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button
                   onClick={handleCalculate}
                   disabled={isCalculating}
-                  className="bg-[#FE7743] text-black hover:bg-[#ff8b5e]"
+                  className="w-full sm:w-auto bg-[#62929e] text-[#fdfdff] hover:bg-[#3f7480] dark:bg-[#88d6e4] dark:text-[#0f1417] dark:hover:bg-[#6ab2bf]"
                 >
                   {isCalculating ? "Calculating..." : "Calculate Tax"}
                 </Button>
                 <Button
                   onClick={handleReset}
                   variant="outline"
-                  className="border-white/15 bg-transparent text-white hover:bg-white/5"
+                  className="w-full sm:w-auto border-[#546a7b]/35 bg-transparent text-[#393d3f] hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/30 dark:text-[#edf2f7] dark:hover:bg-[#24323b]"
                 >
                   Reset
                 </Button>
               </div>
 
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[#546a7b] dark:text-[#b8c7d4]">
                 Current input converts{" "}
-                <span className="font-mono text-white">
+                <span className="font-mono text-[#393d3f] dark:text-[#edf2f7]">
                   {formatJpy(cifJpy)}
                 </span>{" "}
                 to{" "}
-                <span className="font-mono text-white">
+                <span className="font-mono text-[#393d3f] dark:text-[#edf2f7]">
                   {formatLkr(calculatedCifLkr)}
                 </span>
                 .
@@ -592,16 +594,18 @@ export default function TaxCalculatorPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-[#0d0d0d]">
-            <CardHeader className="border-b border-white/10">
+          <Card className="border-[#546a7b]/35 bg-[#fdfdff] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]">
+            <CardHeader className="border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle className="text-white">Tax Calculation</CardTitle>
+                <CardTitle className="text-[#393d3f] dark:text-[#edf2f7]">
+                  Tax Calculation
+                </CardTitle>
                 {result ? (
                   <Badge className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
                     HS Code: {String(ruleUsed.hs_code ?? "N/A")}
                   </Badge>
                 ) : (
-                  <Badge className="border border-white/10 bg-white/5 text-slate-400">
+                  <Badge className="border border-[#546a7b]/35 bg-[#fdfdff] text-[#546a7b] dark:border-[#8fa3b1]/30 dark:bg-[#162028] dark:text-[#b8c7d4]">
                     Ready for calculation
                   </Badge>
                 )}
@@ -611,16 +615,16 @@ export default function TaxCalculatorPage() {
               {result ? (
                 <>
                   <div className="grid gap-3 md:grid-cols-3">
-                    <div className="rounded-2xl border border-white/10 bg-[#141414] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                    <div className="rounded-2xl border border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#1a2630] p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-[#546a7b] dark:text-[#9fb1bf]">
                         CIF Value (LKR)
                       </div>
                       <div className="mt-2 text-2xl font-semibold md:text-3xl">
                         <AmountText value={formatLkr(result.cif_value)} />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-[#141414] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                    <div className="rounded-2xl border border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#1a2630] p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-[#546a7b] dark:text-[#9fb1bf]">
                         Total Tax
                       </div>
                       <div className="mt-2 text-2xl font-semibold md:text-3xl">
@@ -630,8 +634,8 @@ export default function TaxCalculatorPage() {
                         />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-[#FE7743]/20 bg-[#18110d] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                    <div className="rounded-2xl border border-[#62929e]/25 bg-[#edf4f6] dark:border-[#88d6e4]/25 dark:bg-[#132028] p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-[#546a7b] dark:text-[#9fb1bf]">
                         CIF + Taxes Total
                       </div>
                       <div className="mt-2 text-2xl font-semibold md:text-3xl">
@@ -644,64 +648,66 @@ export default function TaxCalculatorPage() {
                     </div>
                   </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-white/10 hover:bg-transparent">
-                        <TableHead>Type</TableHead>
-                        <TableHead>Tax Base</TableHead>
-                        <TableHead>Rate</TableHead>
-                        <TableHead className="min-w-[140px] text-right">
-                          Amount (LKR)
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {taxRows.map((row) => (
-                        <TableRow
-                          key={row.code}
-                          className="border-white/10 hover:bg-white/5"
-                        >
-                          <TableCell className="font-semibold text-white">
-                            {row.code}
-                            {"helper" in row && row.helper ? (
-                              <div className="mt-1 text-[11px] font-normal text-slate-500">
-                                {row.helper}
-                              </div>
-                            ) : null}
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[640px]">
+                      <TableHeader>
+                        <TableRow className="border-[#546a7b]/30 dark:border-[#8fa3b1]/25 hover:bg-transparent">
+                          <TableHead>Type</TableHead>
+                          <TableHead>Tax Base</TableHead>
+                          <TableHead>Rate</TableHead>
+                          <TableHead className="min-w-[140px] text-right">
+                            Amount (LKR)
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {taxRows.map((row) => (
+                          <TableRow
+                            key={row.code}
+                            className="border-[#546a7b]/30 dark:border-[#8fa3b1]/25 hover:bg-[#e8eef1] dark:hover:bg-[#24323b]"
+                          >
+                            <TableCell className="font-semibold text-[#393d3f] dark:text-[#edf2f7]">
+                              {row.code}
+                              {"helper" in row && row.helper ? (
+                                <div className="mt-1 text-[11px] font-normal text-[#546a7b] dark:text-[#9fb1bf]">
+                                  {row.helper}
+                                </div>
+                              ) : null}
+                            </TableCell>
+                            <TableCell className="max-w-[140px] whitespace-normal break-words text-[#546a7b] dark:text-[#b8c7d4]">
+                              {formatNumber(Number(row.base))}
+                            </TableCell>
+                            <TableCell className="max-w-[180px] whitespace-normal break-words text-[#546a7b] dark:text-[#b8c7d4]">
+                              {row.rate}
+                            </TableCell>
+                            <TableCell className="max-w-[180px] whitespace-normal break-words text-right font-medium text-[#393d3f] dark:text-[#edf2f7]">
+                              {formatLkr(row.amount)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#1a2630] hover:bg-[#e8eef1] dark:hover:bg-[#24323b]">
+                          <TableCell className="font-semibold text-[#393d3f] dark:text-[#edf2f7]">
+                            Total Tax
                           </TableCell>
-                          <TableCell className="max-w-[140px] whitespace-normal break-words text-slate-300">
-                            {formatNumber(Number(row.base))}
-                          </TableCell>
-                          <TableCell className="max-w-[180px] whitespace-normal break-words text-slate-300">
-                            {row.rate}
-                          </TableCell>
-                          <TableCell className="max-w-[180px] whitespace-normal break-words text-right font-medium text-white">
-                            {formatLkr(row.amount)}
+                          <TableCell />
+                          <TableCell />
+                          <TableCell className="max-w-[180px] whitespace-normal break-words text-right text-xl font-semibold text-[#62929e] dark:text-[#88d6e4]">
+                            {formatLkr(result.total_payable_to_customs)}
                           </TableCell>
                         </TableRow>
-                      ))}
-                      <TableRow className="border-white/10 bg-[#141414] hover:bg-[#141414]">
-                        <TableCell className="font-semibold text-white">
-                          Total Tax
-                        </TableCell>
-                        <TableCell />
-                        <TableCell />
-                        <TableCell className="max-w-[180px] whitespace-normal break-words text-right text-xl font-semibold text-[#FE7743]">
-                          {formatLkr(result.total_payable_to_customs)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
                 </>
               ) : (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-[#101010] p-8 text-slate-400">
+                <div className="rounded-2xl border border-dashed border-[#546a7b]/35 bg-[#f7fafb] dark:border-[#8fa3b1]/30 dark:bg-[#15202a] p-8 text-[#546a7b] dark:text-[#b8c7d4]">
                   Run a calculation to see the resolved HS code, CIF in LKR, and
                   the full levy stack.
                 </div>
               )}
 
-              <div className="rounded-2xl border border-[#FE7743]/15 bg-[#16110e] p-5 text-sm leading-7 text-slate-300">
-                <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-[#FE7743]">
+              <div className="rounded-2xl border border-[#62929e]/25 bg-[#edf4f6] dark:border-[#88d6e4]/25 dark:bg-[#132028] p-5 text-sm leading-7 text-[#546a7b] dark:text-[#b8c7d4]">
+                <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-[#62929e] dark:text-[#88d6e4]">
                   Disclaimer
                 </div>
                 This calculator provides estimated values based on the active
@@ -714,14 +720,14 @@ export default function TaxCalculatorPage() {
           </Card>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 pb-10">
+        <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 sm:pb-10">
           <Card
             id="reference-documents"
-            className="border-white/10 bg-[#0d0d0d]"
+            className="border-[#546a7b]/35 bg-[#fdfdff] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]"
           >
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="flex items-center gap-2 text-white">
-                <ReceiptText className="h-5 w-5 text-[#FE7743]" />
+            <CardHeader className="border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25">
+              <CardTitle className="flex items-center gap-2 text-[#393d3f] dark:text-[#edf2f7]">
+                <ReceiptText className="h-5 w-5 text-[#62929e] dark:text-[#88d6e4]" />
                 Reference Documents
               </CardTitle>
             </CardHeader>
@@ -732,31 +738,31 @@ export default function TaxCalculatorPage() {
                   return (
                     <div
                       key={document.id}
-                      className={`rounded-2xl border p-4 transition ${isActive ? "border-[#FE7743]/40 bg-[#1a130f]" : "border-white/10 bg-[#131313]"}`}
+                      className={`rounded-2xl border p-4 transition ${isActive ? "border-[#62929e]/35 bg-[#edf4f6] dark:border-[#88d6e4]/35 dark:bg-[#132028]" : "border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#15202a]"}`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-white">
+                          <div className="text-sm font-semibold text-[#393d3f] dark:text-[#edf2f7]">
                             {document.title}
                           </div>
-                          <div className="mt-1 text-xs text-slate-500">
+                          <div className="mt-1 text-xs text-[#546a7b] dark:text-[#9fb1bf]">
                             {document.issued_label}
                           </div>
                         </div>
-                        <FileText className="h-4 w-4 shrink-0 text-[#FE7743]" />
+                        <FileText className="h-4 w-4 shrink-0 text-[#62929e] dark:text-[#88d6e4]" />
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setSelectedDoc(document)}
-                          className="border-white/10 bg-transparent text-white hover:bg-white/5"
+                          className="border-[#546a7b]/35 bg-transparent text-[#393d3f] hover:bg-[#e8eef1] dark:border-[#8fa3b1]/30 dark:text-[#edf2f7] dark:hover:bg-[#24323b]"
                         >
                           View
                         </Button>
                         <Button
                           asChild
-                          className="bg-[#FE7743] text-black hover:bg-[#ff8b5e]"
+                          className="bg-[#62929e] text-[#fdfdff] hover:bg-[#3f7480] dark:bg-[#88d6e4] dark:text-[#0f1417] dark:hover:bg-[#6ab2bf]"
                         >
                           <a href={document.file_url} download>
                             <Download className="mr-2 h-4 w-4" />
@@ -767,23 +773,23 @@ export default function TaxCalculatorPage() {
                     </div>
                   );
                 })}
-                <p className="text-xs leading-6 text-slate-500">
+                <p className="text-xs leading-6 text-[#546a7b] dark:text-[#9fb1bf]">
                   Admins can now manage these documents from
                   `/admin/reference-docs`.
                 </p>
-                <div className="rounded-2xl border border-dashed border-white/10 bg-[#111] p-4 text-xs leading-6 text-slate-400">
+                <div className="rounded-2xl border border-dashed border-[#546a7b]/35 bg-[#f7fafb] dark:border-[#8fa3b1]/30 dark:bg-[#15202a] p-4 text-xs leading-6 text-[#546a7b] dark:text-[#b8c7d4]">
                   Use the admin upload screen to add PDFs. The public calculator
                   reads the active document list from the backend automatically.
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#111]">
-                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">
+              <div className="overflow-hidden rounded-3xl border border-[#546a7b]/30 dark:border-[#8fa3b1]/25 bg-[#f7fafb] dark:bg-[#15202a]">
+                <div className="flex flex-col gap-3 border-b border-[#546a7b]/30 dark:border-[#8fa3b1]/25 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-[#393d3f] dark:text-[#edf2f7]">
                       {selectedDoc?.title ?? "No document selected"}
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-[#546a7b] dark:text-[#9fb1bf]">
                       {selectedDoc?.issued_label ??
                         "Upload a document from the admin panel."}
                     </div>
@@ -792,7 +798,7 @@ export default function TaxCalculatorPage() {
                     href={selectedDoc?.file_url ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-[#FE7743] hover:text-orange-200"
+                    className="inline-flex shrink-0 items-center gap-2 text-sm text-[#62929e] dark:text-[#88d6e4] hover:text-[#3f7480] dark:hover:text-[#88d6e4]"
                   >
                     Open in new tab
                     <ExternalLink className="h-4 w-4" />
@@ -802,10 +808,10 @@ export default function TaxCalculatorPage() {
                   <iframe
                     title={selectedDoc.title}
                     src={selectedDoc.file_url}
-                    className="h-[540px] w-full bg-white"
+                    className="h-[420px] w-full bg-[#fdfdff] dark:bg-[#0f1417] sm:h-[540px]"
                   />
                 ) : (
-                  <div className="flex h-[540px] items-center justify-center px-6 text-sm text-slate-400">
+                  <div className="flex h-[420px] items-center justify-center px-6 text-sm text-[#546a7b] dark:text-[#b8c7d4] sm:h-[540px]">
                     No active reference documents uploaded yet.
                   </div>
                 )}
@@ -814,27 +820,27 @@ export default function TaxCalculatorPage() {
           </Card>
         </section>
 
-        <section className="border-t border-white/10 bg-[#080808]">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10 md:flex-row md:items-start md:justify-between">
+        <section className="border-t border-[#546a7b]/30 bg-[#f7fafb] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]">
+          <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-start md:justify-between">
             <div>
-              <div className="text-sm uppercase tracking-[0.24em] text-slate-500">
+              <div className="text-sm uppercase tracking-[0.24em] text-[#546a7b] dark:text-[#9fb1bf]">
                 Contact Us
               </div>
-              <div className="mt-4 flex items-center gap-3 text-white">
-                <Phone className="h-4 w-4 text-[#FE7743]" />
+              <div className="mt-4 flex items-center gap-3 text-[#393d3f] dark:text-[#edf2f7]">
+                <Phone className="h-4 w-4 text-[#62929e] dark:text-[#88d6e4]" />
                 <span>077 66 10 600</span>
               </div>
               <a
                 href="https://wa.me/94776610600"
                 target="_blank"
                 rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-2 text-sm text-[#FE7743] hover:text-orange-200"
+                className="mt-3 inline-flex items-center gap-2 text-sm text-[#62929e] dark:text-[#88d6e4] hover:text-[#3f7480] dark:hover:text-[#88d6e4]"
               >
                 Chat with us on WhatsApp
                 <ExternalLink className="h-4 w-4" />
               </a>
             </div>
-            <div className="max-w-xl text-sm leading-7 text-slate-400">
+            <div className="max-w-xl text-sm leading-7 text-[#546a7b] dark:text-[#b8c7d4]">
               Powered by Passion, Built on Trust. Keep the calculator, the
               active HS rules, and the supporting customs documents in one place
               so users can see both the estimate and the source basis behind it.

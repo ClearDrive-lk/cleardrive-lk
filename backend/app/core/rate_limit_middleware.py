@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Generator
+from types import SimpleNamespace
 from typing import Callable, cast
 
 from app.core.config import settings
@@ -19,7 +20,6 @@ from app.core.rate_limit import (
 )
 from app.core.redis import is_token_blacklisted
 from app.core.security import decode_access_token
-from app.modules.auth.models import User
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -58,22 +58,24 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         endpoint_type = get_endpoint_type(path)
         default_limits = get_rate_limit(UserTier.STANDARD, endpoint_type)
-        request.state.rate_limit_context = {
+        default_context = {
             "tier": UserTier.STANDARD.value,
             "minute_limit": default_limits["minute"],
             "minute_remaining": default_limits["minute"],
             "hour_limit": default_limits["hour"],
             "hour_remaining": default_limits["hour"],
         }
+        request.state.rate_limit_context = default_context
 
         db_generator = self._get_db_generator(request)
         db = next(db_generator)
 
         try:
-            user = await self._resolve_user(request, db)
+            user = await self._resolve_token(request)
             await check_rate_limit(request, user, endpoint_type, db=db)
+            context = getattr(request.state, "rate_limit_context", default_context)
             response = await call_next(request)
-            apply_rate_limit_headers(response, request)
+            self._apply_headers(response, request, context)
             return response
         except HTTPException as exc:
             return JSONResponse(
@@ -84,12 +86,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         except Exception as exc:
             logger.exception("Rate limit middleware failed open for %s: %s", path, exc)
             response = await call_next(request)
-            apply_rate_limit_headers(response, request)
+            context = getattr(request.state, "rate_limit_context", default_context)
+            self._apply_headers(response, request, context)
             return response
         finally:
             self._close_db_generator(db_generator)
 
-    async def _resolve_user(self, request: Request, db: Session) -> User | None:
+    async def _resolve_token(self, request: Request):
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return None
@@ -107,7 +110,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not user_id:
             return None
 
-        return cast(User | None, db.query(User).filter(User.id == user_id).first())
+        return SimpleNamespace(id=user_id)
 
     def _get_db_generator(self, request: Request) -> Generator[Session, None, None]:
         db_dependency = cast(
@@ -121,3 +124,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             next(generator)
         except StopIteration:
             return
+
+    def _apply_headers(self, response, request: Request, context: dict[str, object]) -> None:
+        request.state.rate_limit_context = context
+        apply_rate_limit_headers(response, request)

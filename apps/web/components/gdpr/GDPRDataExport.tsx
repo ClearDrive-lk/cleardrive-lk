@@ -25,7 +25,7 @@ export function GDPRDataExport() {
         "/gdpr/export/history",
       );
       setQuota(res.data);
-    } catch (err) {
+    } catch {
       setError("GDPR export service is unavailable right now.");
     }
   };
@@ -77,7 +77,7 @@ export function GDPRDataExport() {
       window.URL.revokeObjectURL(url);
 
       await loadQuota();
-    } catch (err: unknown) {
+    } catch {
       setError("Export failed. Please try again or contact support.");
     } finally {
       setLoading(false);

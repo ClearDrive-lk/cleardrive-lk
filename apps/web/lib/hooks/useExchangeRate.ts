@@ -11,6 +11,7 @@ export type ExchangeRateResponse = {
   provider: string;
   source?: string | null;
   rate_type?: string | null;
+  error?: string | null;
   fetched_at: string;
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,9 @@ type ThemeMode = "light" | "dark";
 type ThemeToggleSize = "nav" | "sm" | "md";
 
 const STORAGE_KEY = "cleardrive-theme";
+const subscribeHydration = () => () => {};
+const getClientHydratedSnapshot = () => true;
+const getServerHydratedSnapshot = () => false;
 
 function getSystemPreference() {
   if (typeof window === "undefined") return "light";
@@ -35,20 +38,22 @@ export default function ThemeToggle({
   className?: string;
   size?: ThemeToggleSize;
 }) {
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<ThemeMode>("light");
+  const hasHydrated = useSyncExternalStore(
+    subscribeHydration,
+    getClientHydratedSnapshot,
+    getServerHydratedSnapshot,
+  );
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "light";
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+    return getSystemPreference();
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const initial =
-      stored === "light" || stored === "dark"
-        ? (stored as ThemeMode)
-        : getSystemPreference();
-    setTheme(initial);
     const root = document.documentElement;
-    root.classList.toggle("dark", initial === "dark");
-    setMounted(true);
-  }, []);
+    root.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
   const applyTheme = (next: ThemeMode) => {
     const root = document.documentElement;
@@ -66,7 +71,9 @@ export default function ThemeToggle({
     applyTheme(next);
   };
 
-  if (!mounted) return null;
+  if (!hasHydrated) {
+    return null;
+  }
 
   return (
     <button

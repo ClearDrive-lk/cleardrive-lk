@@ -17,36 +17,45 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const formatJPY = new Intl.NumberFormat("ja-JP", {
     style: "currency",
     currency: "JPY",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumSignificantDigits: 3,
   }).format;
   const formatLKR = new Intl.NumberFormat("en-LK", {
     style: "currency",
     currency: "LKR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumSignificantDigits: 3,
   }).format;
   const formatKm = new Intl.NumberFormat("en-US").format;
 
   const hasPrice = Number.isFinite(vehicle.priceJPY) && vehicle.priceJPY > 0;
-  const hasEstimate =
-    Number.isFinite(vehicle.estimatedLandedCostLKR) &&
-    (vehicle.estimatedLandedCostLKR ?? 0) > 0;
+  const isElectric = vehicle.fuel.toLowerCase().includes("electric");
+  const engineLabel = isElectric
+    ? "Electric"
+    : typeof vehicle.engineCC === "number" && vehicle.engineCC > 0
+      ? `${vehicle.engineCC}cc`
+      : "Spec pending";
 
   // Mini Cost Calculator: Est. Duty = 30% of price (placeholder logic)
-  const estDuty =
-    hasPrice && hasEstimate ? vehicle.estimatedLandedCostLKR! * 0.3 : 0;
+  const estDuty = hasPrice ? vehicle.estimatedLandedCostLKR * 0.3 : 0;
+  const bidLabel = hasPrice ? formatJPY(vehicle.priceJPY) : "Bid pending";
+  const landedLabel = hasPrice
+    ? formatLKR(vehicle.estimatedLandedCostLKR)
+    : "Awaiting bid";
+  const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
 
   return (
-    <Card className="group relative overflow-hidden border-white/10 bg-[#0A0A0A] hover:border-[#FE7743]/50 transition-all duration-300 hover:shadow-[0_0_20px_rgba(254,119,67,0.1)]">
+    <Card className="group relative flex h-full flex-col overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
       {/* Image Section */}
-      <div className="relative h-48 w-full overflow-hidden bg-gray-900 group-hover:scale-105 transition-transform duration-500">
+      <div className="relative h-48 w-full overflow-hidden bg-gray-900 transition-transform duration-700 group-hover:scale-[1.07] group-hover:translate-x-1">
+        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.18),transparent)] animate-shimmer" />
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(115deg,rgba(255,255,255,0.08)_0_2px,transparent_2px_18px)] opacity-40" />
+        </div>
         {!imageError && vehicle.imageUrl ? (
           <Image
             src={vehicle.imageUrl}
             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
             onError={() => setImageError(true)}
           />
         ) : (
@@ -57,11 +66,11 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         )}
 
         {/* Overlays */}
-        <div className="absolute top-2 left-2 flex gap-2">
-          <Badge className="bg-black/60 backdrop-blur text-white border-white/20 font-mono">
+        <div className="absolute top-2 left-2 flex gap-2 transition-transform duration-300 group-hover:-translate-y-0.5">
+          <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#546a7b]/65 font-mono">
             {`Stock #${vehicle.lotNumber || "-"}`}
           </Badge>
-          <Badge className="bg-[#FE7743] text-black font-bold border-0">
+          <Badge className="bg-[#62929e] text-[#fdfdff] font-bold border-0">
             Grade {vehicle.grade}
           </Badge>
           {vehicle.condition === "New" ? (
@@ -69,13 +78,13 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
               NEW
             </Badge>
           ) : (
-            <Badge className="bg-gray-500/20 text-gray-400 font-bold border-gray-500/50">
+            <Badge className="bg-gray-500/20 text-[#546a7b] font-bold border-gray-500/50">
               USED
             </Badge>
           )}
         </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3">
-          <div className="flex items-center gap-1 text-[#FE7743] text-xs font-mono">
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3 transition-opacity duration-300 group-hover:opacity-90">
+          <div className="flex items-center gap-1 text-[#62929e] text-xs font-mono">
             <Timer className="w-3 h-3" />
             <span>
               Ends on {new Date(vehicle.endTime).toLocaleDateString()}
@@ -85,70 +94,57 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
       </div>
 
       {/* Content Section */}
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="flex-1 p-4 space-y-3">
         <div>
-          <h3 className="text-lg font-bold text-white truncate">
+          <h3 className="text-lg font-bold text-[#393d3f] truncate">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
-          <p className="text-sm text-gray-400 truncate">
+          <p className="text-sm text-[#546a7b] truncate">
             {vehicle.trim} ({vehicle.chassisCode})
           </p>
         </div>
 
         {/* Specs Grid */}
-        <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 font-mono py-2 border-y border-white/5">
+        <div className="grid grid-cols-3 gap-2 text-xs text-[#546a7b] font-mono py-2 border-y border-[#546a7b]/40">
           <div className="flex flex-col items-center gap-1">
-            <Calendar className="w-3 h-3 text-gray-600" />
+            <Calendar className="w-3 h-3 text-[#393d3f]" />
             {vehicle.year}
           </div>
-          <div className="flex flex-col items-center gap-1 border-l border-white/5">
-            <Gauge className="w-3 h-3 text-gray-600" />
+          <div className="flex flex-col items-center gap-1 border-l border-[#546a7b]/40">
+            <Gauge className="w-3 h-3 text-[#393d3f]" />
             {formatKm(vehicle.mileage)} km
           </div>
-          <div className="flex flex-col items-center gap-1 border-l border-white/5">
-            <Fuel className="w-3 h-3 text-gray-600" />
-            {vehicle.engineCC}cc
+          <div className="flex flex-col items-center gap-1 border-l border-[#546a7b]/40">
+            <Fuel className="w-3 h-3 text-[#393d3f]" />
+            {engineLabel}
           </div>
         </div>
 
         {/* Price Section */}
-        <div className="space-y-1">
-          {hasPrice ? (
-            <>
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-gray-500">Current Bid (JPY)</span>
-                <span className="text-sm font-medium text-gray-300">
-                  {formatJPY(vehicle.priceJPY)}
-                </span>
-              </div>
-              <div className="flex justify-between items-end">
-                <span className="text-xs text-[#FE7743]">
-                  Est. Landed (LKR)
-                </span>
-                <span className="text-lg font-bold text-white">
-                  {hasEstimate
-                    ? formatLKR(vehicle.estimatedLandedCostLKR!)
-                    : "Live rate pending"}
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-gray-500">
-                  Est. Duty: {hasEstimate ? formatLKR(estDuty) : "N/A"}
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Price</span>
-              <span className="text-gray-400">Pending</span>
-            </div>
-          )}
+        <div className="min-h-[100px] space-y-1">
+          <div className="flex justify-between items-end">
+            <span className="text-xs text-[#546a7b]">Current Bid (JPY)</span>
+            <span className="text-sm font-medium text-[#546a7b]">
+              {bidLabel}
+            </span>
+          </div>
+          <div className="flex justify-between items-end">
+            <span className="text-xs text-[#62929e]">Est. Landed (LKR)</span>
+            <span className="text-lg font-bold text-[#393d3f]">
+              {landedLabel}
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] text-[#546a7b]">
+              Est. Duty: {dutyLabel}
+            </span>
+          </div>
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="mt-auto p-4 pt-0">
         <Link href={`/dashboard/vehicles/${vehicle.id}`} className="w-full">
-          <Button className="w-full bg-white/5 hover:bg-[#FE7743] hover:text-black text-white border border-white/10 transition-colors font-mono text-xs h-9">
+          <Button className="w-full bg-[#c6c5b9]/20 hover:bg-[#62929e] hover:text-[#fdfdff] text-[#393d3f] border border-[#546a7b]/65 transition-colors font-mono text-xs h-9">
             VIEW DETAILS &gt;
           </Button>
         </Link>

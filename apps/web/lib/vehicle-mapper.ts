@@ -13,6 +13,7 @@ type BackendVehicle = {
   fuel_type: string | null;
   transmission: string | null;
   engine_cc: number | null;
+  engine_model?: string | null;
   image_url: string | null;
   status: "AVAILABLE" | "RESERVED" | "SOLD";
   created_at: string;
@@ -83,10 +84,58 @@ function mapStatus(status: BackendVehicle["status"]): Vehicle["status"] {
   return "Live";
 }
 
-export function mapBackendVehicle(
-  v: BackendVehicle,
-  exchangeRate?: number | null,
-): Vehicle {
+function normalizeEngineCC(value: number | null): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return Math.round(value);
+}
+
+function inferEngineCCFromKnownModels(
+  make: string | null | undefined,
+  model: string | null | undefined,
+  fuel: string | null | undefined,
+): number | null {
+  const makeKey = (make ?? "").trim().toLowerCase();
+  const modelKey = (model ?? "").trim().toLowerCase();
+  const fuelKey = (fuel ?? "").trim().toLowerCase();
+
+  if (fuelKey.includes("electric")) return null;
+
+  const modelCcMap: Record<string, number> = {
+    "suzuki|jimny": 660,
+    "suzuki|wagon r": 660,
+    "toyota|raize": 1200,
+    "daihatsu|rocky": 1200,
+  };
+
+  return modelCcMap[`${makeKey}|${modelKey}`] ?? null;
+}
+
+function inferEngineCC(
+  ...sources: Array<string | null | undefined>
+): number | null {
+  const joined = sources.filter(Boolean).join(" ");
+  if (!joined) return null;
+
+  const ccMatch = joined.match(/(\d{3,4})\s*cc\b/i);
+  if (ccMatch) {
+    const parsed = Number(ccMatch[1]);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+
+  const literMatch = joined.match(/\b(\d(?:\.\d)?)\s*l\b/i);
+  if (literMatch) {
+    const liters = Number(literMatch[1]);
+    if (Number.isFinite(liters) && liters > 0) {
+      return Math.round(liters * 1000);
+    }
+  }
+
+  return null;
+}
+
+export function mapBackendVehicle(v: BackendVehicle): Vehicle {
   const yearNow = new Date().getFullYear();
   const priceJPY = (() => {
     if (typeof v.price_jpy === "number") {
@@ -100,11 +149,16 @@ export function mapBackendVehicle(
     }
     return 0;
   })();
-
-  const estimatedLandedCostLKR =
-    exchangeRate && Number.isFinite(exchangeRate) && exchangeRate > 0
-      ? Math.round(priceJPY * exchangeRate)
-      : undefined;
+  const engineCC =
+    normalizeEngineCC(v.engine_cc) ??
+    inferEngineCC(
+      v.engine_model,
+      v.model,
+      v.grade,
+      v.options,
+      v.other_remarks,
+    ) ??
+    inferEngineCCFromKnownModels(v.make, v.model, v.fuel_type);
 
   return {
     id: v.id,
@@ -120,11 +174,11 @@ export function mapBackendVehicle(
     imageUrl: normalizeImageUrl(v.image_url),
     lotNumber: v.stock_no,
     grade: v.grade || "-",
-    estimatedLandedCostLKR,
+    estimatedLandedCostLKR: Math.round(priceJPY * 2.2),
     priceJPY,
     trim: v.model,
     chassisCode: v.chassis || "-",
-    engineCC: v.engine_cc ?? 0,
+    engineCC,
     endTime: v.updated_at || v.created_at,
     firstRegistrationDate: v.reg_year ?? undefined,
     color: v.color ?? undefined,
@@ -141,12 +195,9 @@ export function mapBackendVehicle(
 
 export function mapBackendVehicleList(
   payload: BackendVehicleList,
-  exchangeRate?: number | null,
 ): VehicleResponse {
   return {
-    data: payload.vehicles.map((vehicle) =>
-      mapBackendVehicle(vehicle, exchangeRate),
-    ),
+    data: payload.vehicles.map(mapBackendVehicle),
     total: payload.pagination.total,
     page: payload.pagination.page,
     limit: payload.pagination.limit,

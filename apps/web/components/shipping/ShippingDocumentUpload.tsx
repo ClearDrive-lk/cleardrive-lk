@@ -204,6 +204,7 @@ function InlinePreview({
               className="h-[70vh] w-full rounded-lg border border-slate-200 bg-[#fdfdff]"
             />
           ) : isImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={document.file_url}
               alt={document.file_name}

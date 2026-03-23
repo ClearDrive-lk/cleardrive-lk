@@ -22,4 +22,4 @@ COPY . .
 EXPOSE 8000
 
 # Run application (Render provides PORT env var)
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
