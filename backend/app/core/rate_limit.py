@@ -10,7 +10,7 @@ import re
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from functools import wraps
-from typing import Any
+from typing import Any, Protocol, TypeAlias, TypeGuard
 
 from app.core.config import settings
 from app.core.database import SessionLocal
@@ -31,6 +31,15 @@ from fastapi import HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
+
+
+class RateLimitSubject(Protocol):
+    """Minimal user shape needed for request-keyed rate limiting."""
+
+    id: Any
+
+
+RateLimitUser: TypeAlias = User | RateLimitSubject
 
 
 class UserTier(str, Enum):
@@ -95,6 +104,10 @@ def _reputation_to_tier(tier: ReputationTier | None) -> UserTier:
     return UserTier.STANDARD
 
 
+def _is_full_user(user: RateLimitUser | None) -> TypeGuard[User]:
+    return isinstance(user, User)
+
+
 def _tier_to_reputation(tier: UserTier) -> ReputationTier:
     if tier == UserTier.SUSPICIOUS:
         return ReputationTier.SUSPICIOUS
@@ -135,15 +148,11 @@ def _ensure_reputation(user: User, db: Session) -> UserReputation:
     return reputation
 
 
-def determine_user_tier(user: User | None, db: Session | None = None) -> UserTier:
+def determine_user_tier(user: RateLimitUser | None, db: Session | None = None) -> UserTier:
     """
     Determine user tier based on behavior, age, and verification state.
     """
-    if user is None:
-        return UserTier.STANDARD
-    if not all(
-        hasattr(user, attr) for attr in ("created_at", "failed_auth_attempts", "last_failed_auth")
-    ):
+    if not _is_full_user(user):
         return UserTier.STANDARD
 
     owns_db = db is None
@@ -184,15 +193,11 @@ def determine_user_tier(user: User | None, db: Session | None = None) -> UserTie
             session.close()
 
 
-async def get_user_tier(user: User | None, db: Session | None = None) -> UserTier:
+async def get_user_tier(user: RateLimitUser | None, db: Session | None = None) -> UserTier:
     """
     Get the user tier from Redis or calculate and persist it.
     """
-    if user is None:
-        return UserTier.STANDARD
-    if not all(
-        hasattr(user, attr) for attr in ("created_at", "failed_auth_attempts", "last_failed_auth")
-    ):
+    if not _is_full_user(user):
         return UserTier.STANDARD
 
     redis = await get_redis()
@@ -366,7 +371,7 @@ async def clear_failed_login_state(user: User, db: Session) -> None:
 
 async def _record_request_patterns(
     request: Request,
-    user: User | None,
+    user: RateLimitUser | None,
     db: Session | None,
     tier: UserTier,
     current_minute_count: int,
@@ -386,11 +391,15 @@ async def _record_request_patterns(
     await redis.setex(rapid_key, 3600, json.dumps(rapid_events[-20:]))
 
     last_ten = rapid_events[-10:]
-    if len(last_ten) == 10 and all(
-        float(b) - float(a) < 1.0 for a, b in zip(last_ten, last_ten[1:])
+    full_user = user if _is_full_user(user) else None
+
+    if (
+        full_user is not None
+        and len(last_ten) == 10
+        and all(float(b) - float(a) < 1.0 for a, b in zip(last_ten, last_ten[1:]))
     ):
         await flag_user_suspicious(
-            user,
+            full_user,
             db,
             reason="10+ rapid requests detected",
             request=request,
@@ -404,9 +413,9 @@ async def _record_request_patterns(
     ip_map[_client_ip(request)] = now
     await redis.setex(ip_key, 3600, json.dumps(ip_map))
 
-    if len(ip_map) >= 5:
+    if full_user is not None and len(ip_map) >= 5:
         await flag_user_suspicious(
-            user,
+            full_user,
             db,
             reason="Multiple IP addresses detected in 1 hour",
             request=request,
@@ -414,18 +423,24 @@ async def _record_request_patterns(
             manual_review=True,
         )
 
-    if re.search("|".join(SUSPICIOUS_USER_AGENT_PATTERNS), _user_agent(request), re.IGNORECASE):
+    if full_user is not None and re.search(
+        "|".join(SUSPICIOUS_USER_AGENT_PATTERNS), _user_agent(request), re.IGNORECASE
+    ):
         await flag_user_suspicious(
-            user,
+            full_user,
             db,
             reason="Suspicious user agent detected",
             request=request,
             alert_ttl_seconds=3600,
         )
 
-    if current_minute_count >= minute_limit * 2 and tier != UserTier.SUSPICIOUS:
+    if (
+        full_user is not None
+        and current_minute_count >= minute_limit * 2
+        and tier != UserTier.SUSPICIOUS
+    ):
         await flag_user_suspicious(
-            user,
+            full_user,
             db,
             reason="Repeated rate limit violations detected",
             request=request,
@@ -435,7 +450,7 @@ async def _record_request_patterns(
 
 async def _log_rate_limit_violation(
     request: Request,
-    user: User | None,
+    user: RateLimitUser | None,
     db: Session | None,
     tier: UserTier,
     endpoint_type: str,
@@ -489,7 +504,7 @@ def apply_rate_limit_headers(response: Response, request: Request) -> None:
 
 async def check_rate_limit(
     request: Request,
-    user: User | None = None,
+    user: RateLimitUser | None = None,
     endpoint_type: str = "api_general",
     db: Session | None = None,
 ) -> bool:

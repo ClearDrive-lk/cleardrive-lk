@@ -12,6 +12,7 @@ from typing import Callable, cast
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import (
+    RateLimitUser,
     UserTier,
     apply_rate_limit_headers,
     check_rate_limit,
@@ -93,7 +94,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         finally:
             self._close_db_generator(db_generator)
 
-    async def _resolve_token(self, request: Request, db: Session) -> User | None:
+    async def _resolve_token(self, request: Request, db: Session) -> RateLimitUser | None:
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return None

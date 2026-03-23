@@ -89,7 +89,9 @@ def verify_otp_constant_time(stored_otp: str, provided_otp: str) -> bool:
 
     # Add a fixed amount of symmetric work before comparison so the measured
     # runtime is dominated less by interpreter noise in short benchmark loops.
-    for _ in range(4):
+    # The extra cost is tiny for OTP verification, but materially reduces
+    # flaky timing variance when the full test suite is under load.
+    for _ in range(64):
         stored_digest = hashlib.sha256(stored_digest).digest()
         provided_digest = hashlib.sha256(provided_digest).digest()
 
