@@ -86,6 +86,91 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+async def _issue_auth_tokens_for_user(
+    user: User,
+    request: Request,
+    db: Session,
+) -> TokenResponse:
+    """Create the standard authenticated session/token bundle for a user."""
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email, "role": user.role.value}
+    )
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    refresh_payload = decode_refresh_token(refresh_token)
+    refresh_jti = refresh_payload.get("jti") if refresh_payload else None
+
+    session_id = None
+    limit_result: dict[str, Any] = {}
+
+    if refresh_jti:
+        await store_refresh_token(
+            token_jti=refresh_jti,
+            user_id=str(user.id),
+            device_info={
+                "ip": request.client.host if request.client else "unknown",
+                "user_agent": request.headers.get("user-agent", "unknown"),
+            },
+        )
+
+        session_id = str(uuid.uuid4())
+        await create_session(
+            user_id=str(user.id),
+            session_id=session_id,
+            token_jti=refresh_jti,
+            ip_address=request.client.host if request.client else "unknown",
+            user_agent=request.headers.get("user-agent", "unknown"),
+        )
+
+        limit_result = await enforce_session_limit(str(user.id), max_sessions=5)
+
+    db_session = UserSession(
+        user_id=user.id,
+        refresh_token_hash=hash_token(refresh_token),
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        device_info=extract_device_info(request),
+        is_active=True,
+        expires_at=datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
+    db.add(db_session)
+
+    session_count = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
+        .count()
+    )
+
+    if session_count > 5:
+        oldest_session = (
+            db.query(UserSession)
+            .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
+            .order_by(UserSession.created_at.asc())
+            .first()
+        )
+        if oldest_session:
+            oldest_session.is_active = False
+            logger.info("Revoked oldest session for %s (session limit exceeded)", user.email)
+
+    db.commit()
+
+    logger.info(
+        "Authentication successful for user %s. Session %s created. Active sessions: %s/%s",
+        user.email,
+        session_id or "N/A",
+        limit_result.get("current_count", "N/A"),
+        limit_result.get("limit", 5),
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse.model_validate(user),
+    )
+
+
 # ============================================================================
 # GOOGLE OAUTH
 # ============================================================================
@@ -183,27 +268,36 @@ async def google_auth(
             detail="Verification service temporarily unavailable. Please try again.",
         )
 
+    email_sent = False
     try:
         email_sent = await send_otp_email(email, otp, name)
     except Exception as e:
         logger.exception(f"Unexpected Google OTP email failure for {email}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Email service temporarily unavailable. Please try again.",
+
+    if email_sent:
+        return GoogleAuthResponse(
+            email=email,
+            name=name,
+            google_id=google_id,
+            message="Verification code sent to your email",
         )
 
-    if not email_sent:
-        logger.error(f"Failed to send OTP email to {email}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Email service temporarily unavailable. Please try again.",
-        )
-
+    logger.warning(
+        "Failed to send OTP email to %s after Google authentication. Falling back to direct sign-in.",
+        email,
+    )
+    await clear_failed_login_state(user, db)
+    token_response = await _issue_auth_tokens_for_user(user, request, db)
     return GoogleAuthResponse(
         email=email,
         name=name,
         google_id=google_id,
-        message="Verification code sent to your email",
+        message="Signed in with Google",
+        access_token=token_response.access_token,
+        refresh_token=token_response.refresh_token,
+        token_type=token_response.token_type,
+        expires_in=token_response.expires_in,
+        user=token_response.user,
     )
 
 

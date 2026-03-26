@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
+import { saveTokens } from "@/lib/auth";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
+import { setCredentials } from "@/lib/store/features/auth/authSlice";
+import { useAppDispatch } from "@/lib/store/store";
 declare global {
   interface Window {
     google?: {
@@ -94,6 +98,7 @@ export function GoogleLoginButton() {
   const [googleReady, setGoogleReady] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const buttonShellRef = useRef<HTMLDivElement | null>(null);
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const clientId =
@@ -112,7 +117,39 @@ export function GoogleLoginButton() {
           name?: string;
           google_id: string;
           message: string;
+          access_token?: string;
+          refresh_token?: string;
+          expires_in?: number;
+          user?: {
+            id: string;
+            email: string;
+            name?: string;
+            role: string;
+          };
         }>("/auth/google", { id_token: idToken });
+        if (data.access_token && data.refresh_token && data.user) {
+          saveTokens(
+            {
+              access_token: data.access_token,
+              refresh_token: data.refresh_token,
+            },
+            { persistAccess: true },
+          );
+          const role = normalizeRole(data.user.role);
+          dispatch(
+            setCredentials({
+              user: {
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.name || "User",
+                role,
+              },
+              token: data.access_token,
+            }),
+          );
+          router.push(roleHomePath(role));
+          return;
+        }
         if (data.email) {
           if (typeof window !== "undefined") {
             sessionStorage.setItem("otp_email", data.email);
@@ -152,7 +189,7 @@ export function GoogleLoginButton() {
         setLoading(false);
       }
     },
-    [router],
+    [dispatch, router],
   );
 
   useEffect(() => {
