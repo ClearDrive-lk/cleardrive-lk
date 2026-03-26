@@ -59,10 +59,6 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "identity-credentials-get=(self)",
           },
-          {
-            key: "Content-Security-Policy",
-            value: "require-sri-for script style;",
-          },
         ],
       },
     ];
