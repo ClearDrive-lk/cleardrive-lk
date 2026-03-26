@@ -33,6 +33,24 @@ def _is_valid_email_address(value: str) -> bool:
     return "." in domain
 
 
+def _get_resend_api_key() -> str | None:
+    """
+    Return a usable Resend API key.
+
+    Some deployments only provide the Resend key via SMTP_PASSWORD.
+    Treat that as a Resend credential only when it clearly looks like one,
+    rather than sending an arbitrary SMTP password to the Resend API.
+    """
+    if settings.RESEND_API_KEY:
+        return settings.RESEND_API_KEY
+
+    smtp_password = settings.SMTP_PASSWORD.strip()
+    if smtp_password.startswith("re_"):
+        return smtp_password
+
+    return None
+
+
 async def _send_email_via_resend_api(
     to_email: str,
     subject: str,
@@ -40,8 +58,9 @@ async def _send_email_via_resend_api(
     text_content: Optional[str] = None,
 ) -> bool:
     """Send email via Resend HTTPS API (fallback when SMTP is unavailable)."""
-    api_key = settings.RESEND_API_KEY or settings.SMTP_PASSWORD
+    api_key = _get_resend_api_key()
     if not api_key:
+        logger.warning("Resend API send skipped because no Resend API key is configured")
         return False
 
     configured_from_email = settings.RESEND_FROM_EMAIL or settings.SMTP_FROM_EMAIL
@@ -130,8 +149,10 @@ async def send_email(
     Returns:
         True if sent successfully, False otherwise
     """
+    resend_api_key = _get_resend_api_key()
+
     # Prefer HTTPS API when a Resend API key is configured to avoid blocked SMTP ports.
-    if settings.RESEND_API_KEY:
+    if resend_api_key:
         return await _send_email_via_resend_api(to_email, subject, html_content, text_content)
 
     try:
@@ -166,9 +187,7 @@ async def send_email(
 
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")
-        if not settings.RESEND_API_KEY and await _send_email_via_resend_api(
-            to_email, subject, html_content, text_content
-        ):
+        if await _send_email_via_resend_api(to_email, subject, html_content, text_content):
             return True
         return False
 

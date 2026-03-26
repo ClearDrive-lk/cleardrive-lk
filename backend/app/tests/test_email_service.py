@@ -2,7 +2,7 @@ import json
 from unittest.mock import AsyncMock
 
 import pytest
-from app.services.email import send_email
+from app.services.email import _get_resend_api_key, send_email
 from app.services.email_queue import email_queue
 
 
@@ -58,3 +58,24 @@ async def test_send_email_resend(mocker):
 
     assert result is True
     mock_post.assert_called_once()
+
+
+def test_get_resend_api_key_prefers_explicit_setting(mocker):
+    mocker.patch("app.services.email.settings.RESEND_API_KEY", "re_explicit_key")
+    mocker.patch("app.services.email.settings.SMTP_PASSWORD", "smtp-password")
+
+    assert _get_resend_api_key() == "re_explicit_key"
+
+
+def test_get_resend_api_key_accepts_resend_key_in_smtp_password(mocker):
+    mocker.patch("app.services.email.settings.RESEND_API_KEY", None)
+    mocker.patch("app.services.email.settings.SMTP_PASSWORD", "re_from_smtp_password")
+
+    assert _get_resend_api_key() == "re_from_smtp_password"
+
+
+def test_get_resend_api_key_rejects_plain_smtp_password(mocker):
+    mocker.patch("app.services.email.settings.RESEND_API_KEY", None)
+    mocker.patch("app.services.email.settings.SMTP_PASSWORD", "plain-smtp-password")
+
+    assert _get_resend_api_key() is None
