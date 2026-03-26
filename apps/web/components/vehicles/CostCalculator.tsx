@@ -16,6 +16,7 @@ type CostBreakdown = {
   vehicle_price_jpy: number | string;
   vehicle_price_lkr: number | string;
   exchange_rate: number | string;
+  hs_code?: string | null;
   shipping_cost_lkr: number | string;
   customs_duty_lkr: number | string;
   excise_duty_lkr: number | string;
@@ -151,12 +152,22 @@ export function CostCalculator({ vehicleId, priceJPY }: CostCalculatorProps) {
             <Calculator className="w-4 h-4 text-[#62929e]" />
             Landed Cost Analysis
           </CardTitle>
-          <Badge
-            variant="outline"
-            className="border-green-900 bg-green-900/10 text-green-500 text-[10px]"
-          >
-            LIVE RATE
-          </Badge>
+          <div className="flex items-center gap-2">
+            {data.hs_code ? (
+              <Badge
+                variant="outline"
+                className="border-[#62929e]/40 bg-[#62929e]/10 text-[#62929e] text-[10px]"
+              >
+                HS {data.hs_code}
+              </Badge>
+            ) : null}
+            <Badge
+              variant="outline"
+              className="border-green-900 bg-green-900/10 text-green-500 text-[10px]"
+            >
+              LIVE RATE
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
