@@ -21,6 +21,7 @@ import {
 import AuthGuard from "@/components/auth/AuthGuard";
 import { GDPRDataExport } from "@/components/gdpr/GDPRDataExport";
 import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
+import GDPRDataDeletion from "@/components/profile/GDPRDataDeletion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import apiClient from "@/lib/api-client";
@@ -607,10 +608,14 @@ export default function ProfilePage() {
                     Account Actions
                   </h2>
                   <p className="mt-1 text-sm text-[#546a7b] dark:text-[#bdcad4]">
-                    Manage privacy exports and secure sign-out.
+                    Manage privacy exports, account deletion, and secure
+                    sign-out.
                   </p>
                   <div className="mt-4">
                     <GDPRDataExport />
+                  </div>
+                  <div className="mt-4">
+                    <GDPRDataDeletion />
                   </div>
                   <Button
                     onClick={logout}
