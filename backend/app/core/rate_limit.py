@@ -53,6 +53,7 @@ class UserTier(str, Enum):
 TIER_LIMITS: dict[UserTier, dict[str, dict[str, int]]] = {
     UserTier.SUSPICIOUS: {
         "api_general": {"minute": 5, "hour": 50},
+        "vehicles": {"minute": 10, "hour": 120},
         "orders": {"minute": 5, "hour": 50},
         "payments": {"minute": 5, "hour": 50},
         "kyc": {"minute": 5, "hour": 50},
@@ -60,6 +61,7 @@ TIER_LIMITS: dict[UserTier, dict[str, dict[str, int]]] = {
     },
     UserTier.STANDARD: {
         "api_general": {"minute": 30, "hour": 500},
+        "vehicles": {"minute": 90, "hour": 1200},
         "orders": {"minute": 15, "hour": 200},
         "payments": {"minute": 10, "hour": 100},
         "kyc": {"minute": 10, "hour": 100},
@@ -67,6 +69,7 @@ TIER_LIMITS: dict[UserTier, dict[str, dict[str, int]]] = {
     },
     UserTier.TRUSTED: {
         "api_general": {"minute": 100, "hour": 2000},
+        "vehicles": {"minute": 180, "hour": 3000},
         "orders": {"minute": 40, "hour": 600},
         "payments": {"minute": 20, "hour": 200},
         "kyc": {"minute": 15, "hour": 150},
@@ -124,6 +127,8 @@ def get_endpoint_type(path: str) -> str:
     """Map request paths to rate-limit buckets."""
     if "/chat/" in path:
         return "chat"
+    if "/vehicles" in path:
+        return "vehicles"
     if "/orders" in path:
         return "orders"
     if "/payments" in path:

@@ -713,6 +713,48 @@ class ScraperScheduler:
         finally:
             db.close()
 
+    def cleanup_placeholder_vehicles(self) -> dict[str, int]:
+        stats = {"scanned": 0, "deleted": 0, "errors": 0}
+        db = SessionLocal()
+        try:
+            vehicles = (
+                db.query(Vehicle)
+                .filter(Vehicle.vehicle_url.isnot(None))
+                .filter(~exists().where(Order.vehicle_id == Vehicle.id))
+                .filter(
+                    (Vehicle.image_url.is_(None) | (Vehicle.image_url == ""))
+                    & (Vehicle.gallery_images.is_(None) | (Vehicle.gallery_images == ""))
+                )
+                .all()
+            )
+
+            for vehicle in vehicles:
+                stats["scanned"] += 1
+                try:
+                    db.delete(vehicle)
+                    stats["deleted"] += 1
+                except Exception as exc:
+                    stats["errors"] += 1
+                    logger.warning(
+                        "Placeholder vehicle deletion failed for %s: %s",
+                        vehicle.stock_no,
+                        exc,
+                    )
+
+            db.commit()
+            try:
+                _run_async(cache.clear_pattern("vehicles:*"))
+            except Exception as exc:
+                logger.warning("Failed to clear vehicle cache after placeholder cleanup: %s", exc)
+            return stats
+        except Exception:
+            db.rollback()
+            stats["errors"] += 1
+            logger.exception("Placeholder vehicle cleanup failed")
+            return stats
+        finally:
+            db.close()
+
     def scrape_and_import(self) -> dict[str, int]:
         stats = {"scraped": 0, "new": 0, "updated": 0, "skipped": 0, "removed": 0, "errors": 0}
         scrape_count = self._resolve_scrape_count()

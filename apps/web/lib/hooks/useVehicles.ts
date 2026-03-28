@@ -160,6 +160,7 @@ export function useVehicles(params: VehiclesQueryParams) {
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    refetchOnReconnect: false,
     retry: (failureCount, error) => {
       const status = (error as { response?: { status?: number } })?.response
         ?.status;

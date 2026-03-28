@@ -1259,6 +1259,28 @@ def test_cleanup_images_admin_endpoint(client, admin_headers, mocker):
     cleanup.assert_called_once()
 
 
+def test_cleanup_placeholder_vehicles_admin_endpoint(client, admin_headers, mocker):
+    cleanup = mocker.patch(
+        "app.services.scraper.scheduler.scraper_scheduler.cleanup_placeholder_vehicles"
+    )
+
+    class ImmediateThread:
+        def __init__(self, target, daemon=None):
+            self.target = target
+            self.daemon = daemon
+
+        def start(self):
+            self.target()
+
+    mocker.patch("app.modules.vehicles.routes.threading.Thread", ImmediateThread)
+
+    response = client.post("/api/v1/vehicles/cleanup-placeholder-vehicles", headers=admin_headers)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+    cleanup.assert_called_once()
+
+
 def test_scheduler_change_detection_thresholds():
     """Scheduler should update only when CD-23 thresholds are crossed."""
     scheduler = ScraperScheduler()

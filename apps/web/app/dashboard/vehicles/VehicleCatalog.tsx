@@ -397,7 +397,7 @@ function VehicleCatalog({
   }, [debouncedSearch, currentSearch, searchTerm, updateFilters]);
 
   // -- DATA FETCHING --
-  const { data, isLoading, isError, error, refetch } = useVehicles({
+  const { data, isLoading, isFetching, isError, error, refetch } = useVehicles({
     page: currentPage,
     limit: 8,
     search: currentSearch,
@@ -1059,7 +1059,7 @@ function VehicleCatalog({
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage === 1}
+                    disabled={currentPage === 1 || isFetching}
                     onClick={() => updateFilters({ page: currentPage - 1 })}
                     className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
                   >
@@ -1073,7 +1073,7 @@ function VehicleCatalog({
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage >= totalPages}
+                    disabled={currentPage >= totalPages || isFetching}
                     onClick={() => updateFilters({ page: currentPage + 1 })}
                     className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
                   >

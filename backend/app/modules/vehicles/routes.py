@@ -1128,6 +1128,20 @@ async def trigger_vehicle_image_cleanup(
     return {"message": "Vehicle image cleanup started", "status": "processing"}
 
 
+@router.post("/cleanup-placeholder-vehicles", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_placeholder_vehicle_cleanup(
+    current_user=Depends(get_current_admin),
+):
+    """
+    Delete scraped placeholder vehicles that have no usable images and no linked orders.
+    """
+    from app.services.scraper.scheduler import scraper_scheduler
+
+    thread = threading.Thread(target=scraper_scheduler.cleanup_placeholder_vehicles, daemon=True)
+    thread.start()
+    return {"message": "Placeholder vehicle cleanup started", "status": "processing"}
+
+
 @router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
 async def create_vehicle(
     vehicle_data: VehicleCreate,
