@@ -975,7 +975,10 @@ async def calculate_cost(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except NoTaxRuleError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        detail = str(exc)
+        if "No active tax rule found" in detail:
+            detail = "No approved tax rule matches this vehicle yet"
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
 
     port_charges_lkr = calculate_port_charges()
     clearance_fee_lkr = calculate_clearance_fee()
