@@ -145,6 +145,12 @@ if SECURITY_MIDDLEWARE_AVAILABLE:
 else:
     logger.warning("Security Headers Middleware not available")
 
+# 3. Rate Limit Middleware
+# Added before CORS so CORSMiddleware stays outermost and also decorates
+# middleware-generated error responses with the expected CORS headers.
+app.add_middleware(RateLimitMiddleware)
+logger.info("Rate Limit Middleware enabled")
+
 # 4. CORS Middleware
 app.add_middleware(
     CORSMiddleware,
@@ -160,12 +166,6 @@ logger.info(
     f"{settings.BACKEND_CORS_ORIGINS}, "
     f"regex: {settings.BACKEND_CORS_ORIGIN_REGEX or 'none'}"
 )
-
-# 3. Rate Limit Middleware
-# Added AFTER CORS to make it the "outer" middleware. This can prevent
-# request body consumption issues that sometimes lead to 400 errors in endpoints.
-app.add_middleware(RateLimitMiddleware)
-logger.info("Rate Limit Middleware enabled")
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(vehicles_router, prefix=settings.API_V1_PREFIX)

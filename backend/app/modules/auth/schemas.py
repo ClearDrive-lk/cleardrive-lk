@@ -62,6 +62,7 @@ class GoogleAuthResponse(BaseModel):
     name: Optional[str]
     google_id: str
     message: str = "OTP sent to email"
+    otp: Optional[str] = None
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
     token_type: str = "bearer"

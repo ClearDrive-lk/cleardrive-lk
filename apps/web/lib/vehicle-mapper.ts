@@ -56,7 +56,6 @@ function isAllowedRemoteHost(hostname: string): boolean {
 
   const allowed = new Set([
     "www.ramadbk.com",
-    "images.unsplash.com",
     "lh3.googleusercontent.com",
     "localhost",
     "127.0.0.1",

@@ -98,6 +98,8 @@ export function GoogleLoginButton() {
   const [googleReady, setGoogleReady] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const buttonShellRef = useRef<HTMLDivElement | null>(null);
+  const initializedRef = useRef(false);
+  const renderedWidthRef = useRef<number | null>(null);
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -120,6 +122,7 @@ export function GoogleLoginButton() {
           access_token?: string;
           refresh_token?: string;
           expires_in?: number;
+          otp?: string;
           user?: {
             id: string;
             email: string;
@@ -153,6 +156,11 @@ export function GoogleLoginButton() {
         if (data.email) {
           if (typeof window !== "undefined") {
             sessionStorage.setItem("otp_email", data.email);
+            if (data.otp) {
+              sessionStorage.setItem("dev_otp", data.otp);
+            } else {
+              sessionStorage.removeItem("dev_otp");
+            }
           }
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
           return;
@@ -202,20 +210,26 @@ export function GoogleLoginButton() {
             buttonShellRef.current?.offsetWidth ?? 320,
             240,
           );
-          googleId.initialize({
-            client_id: clientId,
-            callback: (response) => handleCredential(response.credential),
-            auto_select: false,
-          });
-          googleButtonRef.current.innerHTML = "";
-          googleId.renderButton(googleButtonRef.current, {
-            theme: "outline",
-            size: "large",
-            shape: "rectangular",
-            text: "continue_with",
-            width,
-            logo_alignment: "left",
-          });
+          if (!initializedRef.current) {
+            googleId.initialize({
+              client_id: clientId,
+              callback: (response) => handleCredential(response.credential),
+              auto_select: false,
+            });
+            initializedRef.current = true;
+          }
+          if (renderedWidthRef.current !== width) {
+            googleButtonRef.current.innerHTML = "";
+            googleId.renderButton(googleButtonRef.current, {
+              theme: "outline",
+              size: "large",
+              shape: "rectangular",
+              text: "continue_with",
+              width,
+              logo_alignment: "left",
+            });
+            renderedWidthRef.current = width;
+          }
           setGoogleReady(true);
           setError(null);
         }

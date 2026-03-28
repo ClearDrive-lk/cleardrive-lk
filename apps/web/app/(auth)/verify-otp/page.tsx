@@ -44,6 +44,8 @@ function OTPForm() {
   const emailFromQuery = searchParams.get("email");
   const emailFromSession =
     typeof window !== "undefined" ? sessionStorage.getItem("otp_email") : null;
+  const devOtp =
+    typeof window !== "undefined" ? sessionStorage.getItem("dev_otp") : null;
   const email = useMemo(
     () => emailFromQuery || emailFromSession || "cleardrivelk@gmail.com",
     [emailFromQuery, emailFromSession],
@@ -141,6 +143,7 @@ function OTPForm() {
 
       if (typeof window !== "undefined") {
         sessionStorage.removeItem("otp_email");
+        sessionStorage.removeItem("dev_otp");
       }
 
       setTimeout(() => {
@@ -164,8 +167,24 @@ function OTPForm() {
       setResendLoading(true);
       setError(null);
       setStatusMessage(null);
-      await apiClient.post("/auth/resend-otp", { email });
-      setStatusMessage("A new OTP has been sent.");
+      const { data } = await apiClient.post<{
+        message?: string;
+        otp?: string;
+        email_sent?: boolean;
+      }>("/auth/resend-otp", { email });
+      if (typeof window !== "undefined") {
+        if (data.otp) {
+          sessionStorage.setItem("dev_otp", data.otp);
+        } else {
+          sessionStorage.removeItem("dev_otp");
+        }
+      }
+      setStatusMessage(
+        data.message ||
+          (data.email_sent === false
+            ? "Email service unavailable locally. Use the development OTP shown below."
+            : "A new OTP has been sent."),
+      );
       setResendSeconds(30);
     } catch (err: unknown) {
       const axiosErr = err as AxiosError<{ detail?: string; message?: string }>;
@@ -266,6 +285,11 @@ function OTPForm() {
               Enter the 6-digit security code sent to <br />
               <span className="text-[#62929e] font-mono">{email}</span>
             </p>
+            {devOtp ? (
+              <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 font-mono">
+                Development OTP: {devOtp}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-8">

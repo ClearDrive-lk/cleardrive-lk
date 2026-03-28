@@ -278,7 +278,10 @@ function VehicleCatalog({
 
   // -- HANDLERS --
   const updateFilters = useCallback(
-    (newParams: Record<string, string | number | undefined>) => {
+    (
+      newParams: Record<string, string | number | undefined>,
+      options?: { replace?: boolean },
+    ) => {
       const baseParams: Record<string, string | number | undefined> = {
         page: currentPage,
         search: currentSearch || undefined,
@@ -346,7 +349,12 @@ function VehicleCatalog({
       });
 
       const query = params.toString();
-      router.push(`/dashboard/vehicles${query ? `?${query}` : ""}`);
+      const href = `/dashboard/vehicles${query ? `?${query}` : ""}`;
+      if (options?.replace) {
+        router.replace(href);
+        return;
+      }
+      router.push(href);
     },
     [
       router,
@@ -384,7 +392,7 @@ function VehicleCatalog({
       return;
     }
     if (debouncedSearch !== currentSearch) {
-      void updateFilters({ search: debouncedSearch });
+      void updateFilters({ search: debouncedSearch }, { replace: true });
     }
   }, [debouncedSearch, currentSearch, searchTerm, updateFilters]);
 

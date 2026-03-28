@@ -1114,6 +1114,20 @@ async def trigger_scrape_now(
     return {"message": "Vehicle scraping started", "status": "processing"}
 
 
+@router.post("/cleanup-images", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_vehicle_image_cleanup(
+    current_user=Depends(get_current_admin),
+):
+    """
+    Trigger cleanup of invalid/stale scraped vehicle images (admin only).
+    """
+    from app.services.scraper.scheduler import scraper_scheduler
+
+    thread = threading.Thread(target=scraper_scheduler.cleanup_invalid_vehicle_images, daemon=True)
+    thread.start()
+    return {"message": "Vehicle image cleanup started", "status": "processing"}
+
+
 @router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
 async def create_vehicle(
     vehicle_data: VehicleCreate,

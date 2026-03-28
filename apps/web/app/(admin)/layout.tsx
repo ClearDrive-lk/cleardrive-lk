@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import Link from "next/link";
 import { AdminMobileNav, AdminSidebar } from "@/components/admin/AdminNav";
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
@@ -16,7 +17,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <div className="flex min-w-0 flex-1 flex-col">
             <header className="sticky top-0 z-30 border-b border-[#546a7b]/65 bg-[#fdfdff]/80 py-3 backdrop-blur-xl">
               <div className="cd-container flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <Link
+                  href="/admin/dashboard"
+                  className="flex items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#62929e]/50"
+                >
                   <BrandMark className="h-14 w-14" />
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.4em] text-[#546a7b]">
@@ -26,7 +30,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       Control Room
                     </p>
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center gap-3">
                   <div className="hidden rounded-xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 px-3 py-1 text-right md:block">
                     <p className="text-[10px] uppercase tracking-[0.22em] text-[#546a7b]">

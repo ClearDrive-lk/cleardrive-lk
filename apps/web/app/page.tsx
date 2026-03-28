@@ -58,14 +58,56 @@ export default function Home() {
   const hasSession =
     hasHydrated && Boolean(getAccessToken() || getRefreshToken());
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMake, setSelectedMake] = useState("All");
+  const [selectedType, setSelectedType] = useState("All");
+  const [selectedFuel, setSelectedFuel] = useState("All");
+  const [yearMin, setYearMin] = useState("");
+  const [yearMax, setYearMax] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const heroRef = useRef<HTMLElement | null>(null);
   const heroRafRef = useRef<number | null>(null);
   const laneSurfaceRef = useRef<HTMLDivElement | null>(null);
   const laneRafRef = useRef<number | null>(null);
-  const handleSearch = () => {
+
+  const navigateToVehicleSearch = (
+    overrides: Record<string, string | undefined> = {},
+  ) => {
+    const params = new URLSearchParams();
     const trimmed = searchTerm.trim();
-    if (!trimmed) return;
-    router.push(`/dashboard/vehicles?search=${encodeURIComponent(trimmed)}`);
+    const nextSearch =
+      overrides.search ??
+      (selectedMake !== "All"
+        ? [selectedMake, trimmed].filter(Boolean).join(" ").trim()
+        : trimmed);
+
+    if (nextSearch) params.set("search", nextSearch);
+    if ((overrides.type ?? selectedType) !== "All") {
+      params.set("type", overrides.type ?? selectedType);
+    }
+    if ((overrides.fuel ?? selectedFuel) !== "All") {
+      params.set("fuel", overrides.fuel ?? selectedFuel);
+    }
+    if ((overrides.minPrice ?? minPrice).trim()) {
+      params.set("minPrice", (overrides.minPrice ?? minPrice).trim());
+    }
+    if ((overrides.maxPrice ?? maxPrice).trim()) {
+      params.set("maxPrice", (overrides.maxPrice ?? maxPrice).trim());
+    }
+    if ((overrides.minYear ?? yearMin).trim()) {
+      params.set("minYear", (overrides.minYear ?? yearMin).trim());
+    }
+    if ((overrides.maxYear ?? yearMax).trim()) {
+      params.set("maxYear", (overrides.maxYear ?? yearMax).trim());
+    }
+
+    router.push(
+      `/dashboard/vehicles${params.toString() ? `?${params.toString()}` : ""}`,
+    );
+  };
+
+  const handleSearch = () => {
+    navigateToVehicleSearch();
   };
 
   const handleHeroMove = (event: React.MouseEvent<HTMLElement>) => {
@@ -138,6 +180,45 @@ export default function Home() {
     { href: "/#lane", label: "Live Shipping Lane" },
     { href: "/tax-calculator", label: "Tax Calculator" },
     { href: "/about", label: "About Us" },
+  ];
+  const quickCategories = [
+    { label: "Cars", type: "Sedan", icon: Car },
+    { label: "SUVs", type: "SUV", icon: Anchor },
+    { label: "Vans", type: "Van/minivan", icon: Truck },
+    { label: "Pickups", type: "Pickup", icon: Truck },
+  ];
+  const makeOptions = [
+    "All",
+    "Toyota",
+    "Honda",
+    "Nissan",
+    "Suzuki",
+    "Mazda",
+    "Mitsubishi",
+    "Subaru",
+    "Daihatsu",
+    "Isuzu",
+  ];
+  const fuelOptions = [
+    "All",
+    "Gasoline",
+    "Gasoline/Hybrid",
+    "Diesel",
+    "Electric",
+    "Plugin Hybrid",
+  ];
+  const typeOptions = [
+    "All",
+    "Sedan",
+    "SUV",
+    "Van/minivan",
+    "Pickup",
+    "Hatchback",
+    "Wagon",
+    "Coupe",
+    "Convertible",
+    "Bikes",
+    "Machinery",
   ];
 
   return (
@@ -491,45 +572,201 @@ export default function Home() {
             </span>
           </p>
 
-          <div className="max-w-2xl mx-auto mt-12 p-1 rounded-xl bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-xl border border-[#546a7b]/65 shadow-2xl group hover-glow focus-within:ring-1 focus-within:ring-[#62929e]/40">
-            <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[#62929e]/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="mx-auto mt-12 max-w-5xl rounded-[1.6rem] border border-[#546a7b]/65 bg-gradient-to-b from-white/15 to-white/5 p-1 shadow-2xl backdrop-blur-xl group hover-glow focus-within:ring-1 focus-within:ring-[#62929e]/40 dark:border-[#8fa3b1]/30 dark:from-[#162028]/85 dark:to-[#0f1417]/90">
+            <div className="pointer-events-none absolute inset-0 rounded-[1.6rem] ring-1 ring-[#62929e]/30 opacity-0 transition-opacity group-hover:opacity-100" />
             <div className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/2 bg-[linear-gradient(90deg,transparent,rgba(98,146,158,0.35),transparent)] animate-scanline" />
-            <div className="relative rounded-lg bg-[#fdfdff] p-1.5 sm:flex sm:items-center sm:gap-2">
-              <div className="flex min-w-0 flex-1 items-center">
-                <Search className="ml-3 h-5 w-5 shrink-0 text-[#546a7b]" />
-                <Input
-                  className="h-12 border-0 bg-transparent text-base text-[#393d3f] placeholder:text-[#393d3f] focus-visible:ring-0 sm:text-lg font-mono"
-                  placeholder="Search make, model, or chassis..."
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      handleSearch();
-                    }
-                  }}
-                />
-                <div className="hidden md:flex items-center gap-2 pr-2">
-                  <Badge
-                    variant="secondary"
-                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20"
-                  >
-                    Make/Model
-                  </Badge>
-                  <Badge
-                    variant="secondary"
-                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20"
-                  >
-                    Chassis
-                  </Badge>
+            <div className="relative rounded-[1.3rem] border border-[#546a7b]/15 bg-[#fdfdff]/95 p-4 text-left shadow-[0_18px_40px_rgba(15,23,42,0.08)] sm:p-5 dark:border-[#8fa3b1]/20 dark:bg-[#162028]/92 dark:shadow-[0_20px_44px_rgba(0,0,0,0.34)]">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#62929e]">
+                    Vehicle Search Deck
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-[#393d3f] dark:text-[#edf2f7]">
+                    Find the best vehicle for you
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm text-[#546a7b] dark:text-[#bdcad4]">
+                    Start with a model or make, then narrow by body type, fuel,
+                    year, and budget before entering the live auction catalog.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {quickCategories.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => {
+                        setSelectedType(item.type);
+                        navigateToVehicleSearch({ type: item.type });
+                      }}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+                        selectedType === item.type
+                          ? "border-[#62929e]/50 bg-[#62929e]/12 text-[#393d3f] dark:text-[#edf2f7]"
+                          : "border-[#546a7b]/30 bg-[#fdfdff] text-[#546a7b] hover:border-[#62929e]/35 hover:text-[#393d3f] dark:border-[#8fa3b1]/25 dark:bg-[#10191e]/85 dark:text-[#bdcad4] dark:hover:text-[#edf2f7]"
+                      }`}
+                    >
+                      <item.icon className="h-3.5 w-3.5 text-[#62929e]" />
+                      Buy {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <Button
-                onClick={handleSearch}
-                className="mt-2 h-11 w-full rounded-md bg-[#62929e] px-5 text-[#fdfdff] hover:bg-[#62929e]/90 sm:mt-0 sm:w-auto sm:px-8 font-bold"
-              >
-                Search Vehicles
-              </Button>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Model Search
+                  </span>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Search className="h-4 w-4 shrink-0 text-[#62929e]" />
+                    <Input
+                      className="h-auto border-0 bg-transparent px-0 py-0 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus-visible:ring-0 dark:text-[#edf2f7] dark:placeholder:text-[#8fa3b1]"
+                      placeholder="Model, make, or chassis"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleSearch();
+                        }
+                      }}
+                    />
+                  </div>
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Make
+                  </span>
+                  <select
+                    value={selectedMake}
+                    onChange={(event) => setSelectedMake(event.target.value)}
+                    className="mt-2 h-6 w-full bg-transparent text-sm text-[#393d3f] outline-none dark:text-[#edf2f7]"
+                  >
+                    {makeOptions.map((item) => (
+                      <option key={item} value={item}>
+                        {item === "All" ? "Any Make" : item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Body Type
+                  </span>
+                  <select
+                    value={selectedType}
+                    onChange={(event) => setSelectedType(event.target.value)}
+                    className="mt-2 h-6 w-full bg-transparent text-sm text-[#393d3f] outline-none dark:text-[#edf2f7]"
+                  >
+                    {typeOptions.map((item) => (
+                      <option key={item} value={item}>
+                        {item === "All" ? "Any Type" : item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Fuel
+                  </span>
+                  <select
+                    value={selectedFuel}
+                    onChange={(event) => setSelectedFuel(event.target.value)}
+                    className="mt-2 h-6 w-full bg-transparent text-sm text-[#393d3f] outline-none dark:text-[#edf2f7]"
+                  >
+                    {fuelOptions.map((item) => (
+                      <option key={item} value={item}>
+                        {item === "All" ? "Any Fuel" : item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Year Min
+                  </span>
+                  <Input
+                    className="mt-2 h-auto border-0 bg-transparent px-0 py-0 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus-visible:ring-0 dark:text-[#edf2f7] dark:placeholder:text-[#8fa3b1]"
+                    placeholder="2008"
+                    inputMode="numeric"
+                    value={yearMin}
+                    onChange={(event) => setYearMin(event.target.value)}
+                  />
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Year Max
+                  </span>
+                  <Input
+                    className="mt-2 h-auto border-0 bg-transparent px-0 py-0 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus-visible:ring-0 dark:text-[#edf2f7] dark:placeholder:text-[#8fa3b1]"
+                    placeholder="2024"
+                    inputMode="numeric"
+                    value={yearMax}
+                    onChange={(event) => setYearMax(event.target.value)}
+                  />
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Min Price
+                  </span>
+                  <Input
+                    className="mt-2 h-auto border-0 bg-transparent px-0 py-0 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus-visible:ring-0 dark:text-[#edf2f7] dark:placeholder:text-[#8fa3b1]"
+                    placeholder="2500000"
+                    inputMode="numeric"
+                    value={minPrice}
+                    onChange={(event) => setMinPrice(event.target.value)}
+                  />
+                </label>
+
+                <label className="rounded-2xl border border-[#546a7b]/25 bg-[#fdfdff] px-4 py-3 shadow-sm dark:border-[#8fa3b1]/20 dark:bg-[#10191e]/92 dark:shadow-[0_10px_24px_rgba(0,0,0,0.24)]">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#546a7b] dark:text-[#8fa3b1]">
+                    Max Price
+                  </span>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <Input
+                      className="h-auto border-0 bg-transparent px-0 py-0 text-sm text-[#393d3f] placeholder:text-[#546a7b] focus-visible:ring-0 dark:text-[#edf2f7] dark:placeholder:text-[#8fa3b1]"
+                      placeholder="8500000"
+                      inputMode="numeric"
+                      value={maxPrice}
+                      onChange={(event) => setMaxPrice(event.target.value)}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-[#546a7b] dark:text-[#8fa3b1]">
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20 dark:bg-[#10191e] dark:text-[#8fa3b1] dark:hover:bg-[#1a2730]"
+                  >
+                    Auction-ready filters
+                  </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20 dark:bg-[#10191e] dark:text-[#8fa3b1] dark:hover:bg-[#1a2730]"
+                  >
+                    Price and year prefill
+                  </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#fdfdff] text-[#546a7b] hover:bg-[#c6c5b9]/20 dark:bg-[#10191e] dark:text-[#8fa3b1] dark:hover:bg-[#1a2730]"
+                  >
+                    Direct to live inventory
+                  </Badge>
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  className="min-h-11 w-full min-w-[12rem] rounded-xl bg-[#62929e] px-5 text-center text-[#fdfdff] hover:bg-[#62929e]/90 sm:w-auto"
+                >
+                  Search Vehicles
+                </Button>
+              </div>
             </div>
           </div>
 

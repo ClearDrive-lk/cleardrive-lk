@@ -31,6 +31,7 @@ from app.modules.vehicles.models import (
 )
 from app.services.scraper.auction_scraper import AuctionSiteScraper
 from app.services.scraper.scheduler import ScraperScheduler, _normalize_row_enums
+from bs4 import BeautifulSoup
 
 
 @pytest.fixture(autouse=True)
@@ -1236,6 +1237,28 @@ def test_scrape_now_admin_endpoint(client, admin_headers, mocker):
     run_now.assert_called_once()
 
 
+def test_cleanup_images_admin_endpoint(client, admin_headers, mocker):
+    cleanup = mocker.patch(
+        "app.services.scraper.scheduler.scraper_scheduler.cleanup_invalid_vehicle_images"
+    )
+
+    class ImmediateThread:
+        def __init__(self, target, daemon=None):
+            self.target = target
+            self.daemon = daemon
+
+        def start(self):
+            self.target()
+
+    mocker.patch("app.modules.vehicles.routes.threading.Thread", ImmediateThread)
+
+    response = client.post("/api/v1/vehicles/cleanup-images", headers=admin_headers)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+    cleanup.assert_called_once()
+
+
 def test_scheduler_change_detection_thresholds():
     """Scheduler should update only when CD-23 thresholds are crossed."""
     scheduler = ScraperScheduler()
@@ -1438,6 +1461,97 @@ def test_scheduler_should_import_row_requires_price_and_available_status():
     assert ScraperScheduler._should_import_row({"price_jpy": 1000, "status": "SOLD"}) is False
 
 
+def test_auction_scraper_images_ignore_non_vehicle_assets():
+    html = """
+    <div>
+      <img src="/assets/logo.png" />
+      <img src="https://www.ramadbk.com/VIMGS/thumb/TA12345.jpg" />
+      <img data-src="https://www.ramadbk.com/VIMGS/medium/A54321.jpg" />
+    </div>
+    """
+    node = BeautifulSoup(html, "html.parser")
+
+    images = AuctionSiteScraper._images(node, "https://www.ramadbk.com/stock")
+
+    assert images == [
+        "https://www.ramadbk.com/VIMGS/images/A12345.jpg",
+        "https://www.ramadbk.com/VIMGS/images/A54321.jpg",
+    ]
+
+
+def test_scheduler_download_and_store_images_filters_placeholder_sources(mocker):
+    scheduler = ScraperScheduler()
+    mocker.patch.dict(
+        os.environ,
+        {
+            "CD23_UPLOAD_IMAGES_SUPABASE": "false",
+            "CD23_STORE_IMAGES_LOCAL": "false",
+        },
+    )
+
+    urls = scheduler._download_and_store_images(
+        {
+            "image_url": "https://www.ramadbk.com/assets/logo.png",
+            "images": [
+                "https://www.ramadbk.com/assets/hero.jpg",
+                "https://www.ramadbk.com/VIMGS/thumb/TA10001.jpg",
+            ],
+        }
+    )
+
+    assert urls == ["https://www.ramadbk.com/VIMGS/images/A10001.jpg"]
+
+
+def test_scheduler_delete_vehicle_images_removes_supabase_assets(mocker):
+    scheduler = ScraperScheduler()
+    delete_file = mocker.patch("app.services.scraper.scheduler.storage.delete_file")
+    vehicle = Vehicle(
+        stock_no="IMG-001",
+        make="Toyota",
+        model="Prius",
+        year=2024,
+        price_jpy=1000000,
+        status=VehicleStatus.AVAILABLE,
+        image_url="https://project.supabase.co/storage/v1/object/public/Photos/img-001/image_1.jpg",
+        gallery_images='["https://project.supabase.co/storage/v1/object/public/Photos/img-001/image_2.jpg"]',
+    )
+
+    scheduler._delete_vehicle_images(vehicle)
+
+    assert delete_file.call_count == 2
+    assert vehicle.image_url is None
+    assert vehicle.gallery_images is None
+
+
+def test_scheduler_skips_new_rows_without_valid_images(mocker):
+    scheduler = ScraperScheduler()
+    mocker.patch.dict(os.environ, {"CD23_REQUIRE_VALID_IMAGES": "true"})
+    mocker.patch.object(scheduler, "_find_existing_vehicle", return_value=None)
+    mocker.patch.object(scheduler, "_year_cutoff", return_value=None)
+    mocker.patch.object(
+        scheduler,
+        "_scrape_vehicle_rows",
+        return_value=[
+            {
+                "stock_no": "NO-IMG-001",
+                "make": "Toyota",
+                "model": "Corolla",
+                "year": 2024,
+                "price_jpy": 1000000,
+                "status": "AVAILABLE",
+                "image_url": "https://www.ramadbk.com/assets/logo.png",
+                "images": ["https://www.ramadbk.com/assets/logo.png"],
+            }
+        ],
+    )
+    mocker.patch.object(scheduler, "_download_and_store_images", return_value=[])
+
+    stats = scheduler.scrape_and_import()
+
+    assert stats["new"] == 0
+    assert stats["skipped"] >= 1
+
+
 def test_create_vehicle_authenticated(client, db, admin_headers):
     """Test creating a vehicle with admin authentication."""
 
@@ -1519,6 +1633,54 @@ def test_update_vehicle(client, db, admin_headers):
     data = response.json()
     assert float(data["price_jpy"]) == 2000000
     assert data["status"] == "RESERVED"
+
+
+def test_update_vehicle_details(client, db, admin_headers):
+    """Test updating broader vehicle details as admin."""
+
+    vehicle = Vehicle(
+        stock_no="TEST-DETAIL-001",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1850000,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    response = client.patch(
+        f"/api/v1/vehicles/{vehicle.id}",
+        json={
+            "stock_no": "TEST-DETAIL-002",
+            "make": "Honda",
+            "model": "Vezel",
+            "year": 2021,
+            "grade": "Z",
+            "fuel_type": "Hybrid",
+            "transmission": "Automatic",
+            "vehicle_type": "SUV",
+            "engine_cc": 1500,
+            "color": "Pearl White",
+            "location": "Tokyo",
+        },
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["stock_no"] == "TEST-DETAIL-002"
+    assert data["make"] == "Honda"
+    assert data["model"] == "Vezel"
+    assert data["year"] == 2021
+    assert data["grade"] == "Z"
+    assert data["fuel_type"] == "Gasoline/hybrid"
+    assert data["transmission"] == "Automatic"
+    assert data["vehicle_type"] == "SUV"
+    assert data["engine_cc"] == 1500
+    assert data["color"] == "Pearl White"
+    assert data["location"] == "Tokyo"
 
 
 def test_delete_vehicle(client, db, admin_headers):

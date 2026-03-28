@@ -8,6 +8,7 @@ import {
   Users,
   ShoppingBag,
   Truck,
+  Car,
   ShieldCheck,
   FileClock,
   ScrollText,
@@ -15,6 +16,7 @@ import {
   ClipboardCheck,
   History,
   Menu,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -23,6 +25,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
+import { useLogout } from "@/lib/hooks/useLogout";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/ui/brand";
 
@@ -55,6 +58,11 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Orders",
         href: "/admin/orders",
         icon: ShoppingBag,
+      },
+      {
+        label: "Vehicles",
+        href: "/admin/vehicles",
+        icon: Car,
       },
       {
         label: "Shipping",
@@ -110,6 +118,7 @@ function isActivePath(pathname: string, href: string) {
 
 function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
+  const { logout, isLoading } = useLogout();
 
   return (
     <div className="flex h-full flex-col">
@@ -175,6 +184,29 @@ function AdminNavContent({ isMobile = false }: { isMobile?: boolean }) {
       </nav>
 
       <div className="px-6 pb-6">
+        {isMobile ? (
+          <SheetClose asChild>
+            <button
+              type="button"
+              onClick={logout}
+              disabled={isLoading}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#546a7b]/65 bg-[#62929e] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#fdfdff] shadow-sm transition hover:bg-[#4f7d87] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <LogOut className="h-4 w-4" />
+              {isLoading ? "Signing Out" : "Sign Out"}
+            </button>
+          </SheetClose>
+        ) : (
+          <button
+            type="button"
+            onClick={logout}
+            disabled={isLoading}
+            className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#546a7b]/65 bg-[#62929e] px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#fdfdff] shadow-sm transition hover:bg-[#4f7d87] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <LogOut className="h-4 w-4" />
+            {isLoading ? "Signing Out" : "Sign Out"}
+          </button>
+        )}
         <div className="rounded-2xl border border-[#546a7b]/65 bg-[#c6c5b9]/20 p-4 text-xs text-[#546a7b] shadow-md shadow-black/5">
           <p className="text-[10px] uppercase tracking-[0.3em] text-[#546a7b]">
             System

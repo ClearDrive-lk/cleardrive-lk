@@ -1,18 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Vehicle } from "@/types/vehicle";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Fuel, Gauge, Calendar, Timer, Car } from "lucide-react";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
+  href?: string;
 }
 
-export function VehicleCard({ vehicle }: VehicleCardProps) {
+export function VehicleCard({
+  vehicle,
+  href = `/dashboard/vehicles/${vehicle.id}`,
+}: VehicleCardProps) {
   const [imageError, setImageError] = useState(false);
+  const router = useRouter();
 
   const formatJPY = new Intl.NumberFormat("ja-JP", {
     style: "currency",
@@ -43,7 +48,18 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
   const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
 
   return (
-    <Card className="group relative flex h-full flex-col overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] hover:border-[#62929e]/50 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]">
+    <Card
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(href)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          router.push(href);
+        }
+      }}
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden border-[#546a7b]/65 bg-[#fdfdff] transition-all duration-300 hover:border-[#62929e]/50 hover:shadow-[0_20px_40px_rgba(15,23,42,0.12)]"
+    >
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-900 transition-transform duration-700 group-hover:scale-[1.07] group-hover:translate-x-1">
         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -55,6 +71,7 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             src={vehicle.imageUrl}
             alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
             className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
             onError={() => setImageError(true)}
           />
@@ -143,10 +160,12 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
       </CardContent>
 
       <CardFooter className="mt-auto p-4 pt-0">
-        <Link href={`/dashboard/vehicles/${vehicle.id}`} className="w-full">
-          <Button className="w-full bg-[#c6c5b9]/20 hover:bg-[#62929e] hover:text-[#fdfdff] text-[#393d3f] border border-[#546a7b]/65 transition-colors font-mono text-xs h-9">
-            VIEW DETAILS &gt;
-          </Button>
+        <Link
+          href={href}
+          onClick={(event) => event.stopPropagation()}
+          className="flex h-9 w-full items-center justify-center rounded-md border border-[#546a7b]/65 bg-[#c6c5b9]/20 font-mono text-xs text-[#393d3f] transition-colors hover:bg-[#62929e] hover:text-[#fdfdff]"
+        >
+          VIEW DETAILS &gt;
         </Link>
       </CardFooter>
     </Card>

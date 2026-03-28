@@ -335,6 +335,7 @@ function VehicleDetail() {
                     alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
                     fill
                     priority
+                    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 60vw, 50vw"
                     className="object-cover"
                   />
                 ) : (
@@ -389,6 +390,7 @@ function VehicleDetail() {
                             src={img}
                             alt={`Vehicle image ${idx + 1}`}
                             fill
+                            sizes="96px"
                             className="object-cover"
                           />
                         </button>

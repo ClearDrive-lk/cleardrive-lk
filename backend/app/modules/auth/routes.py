@@ -286,22 +286,25 @@ async def google_auth(
             message="Verification code sent to your email",
         )
 
+    if settings.ENVIRONMENT == "development":
+        logger.info(
+            "Google OTP email unavailable in development for %s; returning OTP in response", email
+        )
+        return GoogleAuthResponse(
+            email=email,
+            name=name,
+            google_id=google_id,
+            message="Email service unavailable in development. Use the OTP shown in the verification screen.",
+            otp=otp,
+        )
+
     logger.warning(
-        "Failed to send OTP email to %s after Google authentication. Falling back to direct sign-in.",
+        "Failed to send OTP email to %s after Google authentication. Rejecting sign-in.",
         email,
     )
-    await clear_failed_login_state(user, db)
-    token_response = await _issue_auth_tokens_for_user(user, request, db)
-    return GoogleAuthResponse(
-        email=email,
-        name=name,
-        google_id=google_id,
-        message="Signed in with Google",
-        access_token=token_response.access_token,
-        refresh_token=token_response.refresh_token,
-        token_type=token_response.token_type,
-        expires_in=token_response.expires_in,
-        user=token_response.user,
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Google sign-in requires OTP verification, but the email service is unavailable. Please try again.",
     )
 
 
@@ -648,11 +651,26 @@ async def resend_otp(
     await store_otp(resend_request.email, otp)
     logger.info(f"OTP resent for {resend_request.email}")
 
-    await send_otp_email(resend_request.email, otp, user.name)
+    email_sent = await send_otp_email(resend_request.email, otp, user.name)
 
     if settings.ENVIRONMENT == "development":
         logger.info(f"ðŸ” OTP for {resend_request.email}: {otp}")
-        return {"message": "If the email exists, OTP has been sent", "otp": otp}
+        return {
+            "message": (
+                "A new OTP has been sent"
+                if email_sent
+                else "Email service unavailable in development. Use the OTP below."
+            ),
+            "otp": otp,
+            "email_sent": email_sent,
+        }
+
+    if not email_sent:
+        logger.error(f"Failed to resend OTP to {resend_request.email}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
 
     return {"message": "If the email exists, OTP has been sent"}
 
