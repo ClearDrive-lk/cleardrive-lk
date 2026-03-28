@@ -617,8 +617,8 @@ class ScraperScheduler:
             except Exception as exc:
                 logger.warning("Failed to delete stale vehicle image %s: %s", file_path, exc)
 
-        vehicle.image_url = None
-        vehicle.gallery_images = None
+        setattr(vehicle, "image_url", None)
+        setattr(vehicle, "gallery_images", None)
 
     def _replace_vehicle_images(self, vehicle: Vehicle, uploaded_urls: list[str]) -> bool:
         if not uploaded_urls:
@@ -639,9 +639,9 @@ class ScraperScheduler:
             except Exception as exc:
                 logger.warning("Failed to delete replaced vehicle image %s: %s", file_path, exc)
 
-        vehicle.image_url = uploaded_urls[0]
-        vehicle.gallery_images = json.dumps(uploaded_urls)
-        vehicle.updated_at = datetime.utcnow()
+        setattr(vehicle, "image_url", uploaded_urls[0])
+        setattr(vehicle, "gallery_images", json.dumps(uploaded_urls))
+        setattr(vehicle, "updated_at", datetime.utcnow())
         return True
 
     def cleanup_invalid_vehicle_images(self) -> dict[str, int]:
@@ -689,7 +689,7 @@ class ScraperScheduler:
 
                     if vehicle.image_url or vehicle.gallery_images:
                         self._delete_vehicle_images(vehicle)
-                        vehicle.updated_at = datetime.utcnow()
+                        setattr(vehicle, "updated_at", datetime.utcnow())
                         stats["cleared"] += 1
                 except Exception as exc:
                     stats["errors"] += 1

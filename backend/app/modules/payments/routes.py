@@ -12,7 +12,7 @@ import json
 import secrets
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 from urllib.parse import urlencode
 from uuid import UUID
 
@@ -255,7 +255,10 @@ async def _get_payment_otp(redis, user_id: UUID, order_id: UUID) -> dict[str, An
     payload = await redis.get(_get_payment_otp_key(user_id, order_id))
     if not payload:
         return None
-    return json.loads(payload)
+    loaded = json.loads(payload)
+    if not isinstance(loaded, dict):
+        return None
+    return cast(dict[str, Any], loaded)
 
 
 async def _delete_payment_otp(redis, user_id: UUID, order_id: UUID) -> None:
