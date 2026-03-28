@@ -1071,6 +1071,177 @@ def test_calculate_cost_uses_approved_catalog_rules(client, db, admin_headers, a
     assert float(data["com_exm_sel_lkr"]) == 1750.0
 
 
+def test_vehicle_cost_matches_public_calculator_for_hybrid_catalog_rules(
+    client, db, admin_headers, admin_user
+):
+    global_gazette = Gazette(
+        gazette_no="CATALOG/GLOBAL/MATCH/2026",
+        effective_date=date(2026, 4, 1),
+        raw_extracted={
+            "source": "CATALOG_GLOBAL_TAX_PARAMETERS",
+            "dataset": "global_tax_parameters",
+            "effective_date": "2026-04-01",
+            "catalog_rows": [
+                {
+                    "parameter_group": "CUSTOMS_RULE",
+                    "parameter_name": "SURCHARGE_RATE",
+                    "condition_or_type": "BRAND_NEW",
+                    "value": 50,
+                    "unit": "%",
+                    "calculation_order": 2,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "CUSTOMS_RULE",
+                    "parameter_name": "STATUTORY_UPLIFT_BASE",
+                    "condition_or_type": "ALL",
+                    "value": 10,
+                    "unit": "%",
+                    "calculation_order": 1,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "GENERAL_TAX",
+                    "parameter_name": "VAT",
+                    "condition_or_type": "STANDARD_RATE",
+                    "value": 18,
+                    "unit": "%",
+                    "calculation_order": 8,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "FIXED_FEES",
+                    "parameter_name": "VEL",
+                    "condition_or_type": "PER_UNIT",
+                    "value": 15000,
+                    "unit": "LKR",
+                    "calculation_order": 10,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "FIXED_FEES",
+                    "parameter_name": "COM_EXM_SEL",
+                    "condition_or_type": "PER_UNIT",
+                    "value": 1750,
+                    "unit": "LKR",
+                    "calculation_order": 11,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "LUXURY_TAX",
+                    "parameter_name": "THRESHOLD_HYBRID_PETROL",
+                    "condition_or_type": "HYBRID",
+                    "value": 5500000,
+                    "unit": "LKR",
+                    "calculation_order": 9,
+                    "applicability_flag": "PASSENGER_ONLY",
+                },
+                {
+                    "parameter_group": "LUXURY_TAX",
+                    "parameter_name": "RATE_HYBRID_PETROL",
+                    "condition_or_type": "ON_EXCESS_VALUE",
+                    "value": 80,
+                    "unit": "%",
+                    "calculation_order": 9,
+                    "applicability_flag": "PASSENGER_ONLY",
+                },
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    hs_gazette = Gazette(
+        gazette_no="CATALOG/HS/MATCH/2026",
+        effective_date=date(2026, 4, 1),
+        raw_extracted={
+            "source": "CATALOG_HS_CODE_MATRIX",
+            "dataset": "hs_code_matrix",
+            "effective_date": "2026-04-01",
+            "catalog_rows": [
+                {
+                    "vehicle_type": "HYBRID",
+                    "fuel_type": "PETROL",
+                    "age_condition": "<=1",
+                    "hs_code": "8703.40.35",
+                    "capacity_min": 0,
+                    "capacity_max": 1500,
+                    "capacity_unit": "CC",
+                    "cid_pct": 20,
+                    "pal_pct": 0,
+                    "cess_pct": 0,
+                    "excise_unit_rate_lkr": 2750,
+                    "min_excise_flat_rate_lkr": 0,
+                }
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    db.add_all([global_gazette, hs_gazette])
+    db.commit()
+    db.refresh(global_gazette)
+    db.refresh(hs_gazette)
+
+    assert (
+        client.post(
+            f"/api/v1/gazette/{global_gazette.id}/approve", headers=admin_headers
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(f"/api/v1/gazette/{hs_gazette.id}/approve", headers=admin_headers).status_code
+        == 200
+    )
+
+    vehicle = Vehicle(
+        stock_no="TEST-CATALOG-HYBRID-MATCH",
+        make="Honda",
+        model="Vezel",
+        year=date.today().year,
+        price_jpy=3660000,
+        engine_cc=1200,
+        vehicle_type=VehicleType.SUV,
+        fuel_type=FuelType.HYBRID,
+        transmission=Transmission.AUTOMATIC,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    vehicle_cost_response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
+    assert vehicle_cost_response.status_code == 200
+    vehicle_cost = vehicle_cost_response.json()
+
+    public_calc_response = client.post(
+        "/api/v1/calculate/tax",
+        json={
+            "vehicle_type": "SUV",
+            "fuel_type": "HYBRID",
+            "engine_cc": 1200,
+            "power_kw": None,
+            "vehicle_age_years": 0,
+            "vehicle_condition": "BRAND_NEW",
+            "import_date": str(date.today()),
+            "catalog_vehicle_type": "SUV",
+            "catalog_fuel_type": "Gasoline/hybrid",
+            "cif_value": float(vehicle_cost["vehicle_price_lkr"])
+            + float(vehicle_cost["shipping_cost_lkr"]),
+        },
+    )
+    assert public_calc_response.status_code == 200
+    public_calc = public_calc_response.json()
+
+    assert vehicle_cost["hs_code"] == public_calc["rule_used"]["hs_code"]
+    assert float(vehicle_cost["customs_duty_lkr"]) == public_calc["customs_duty"]
+    assert float(vehicle_cost["surcharge_lkr"]) == public_calc["surcharge"]
+    assert float(vehicle_cost["excise_duty_lkr"]) == public_calc["excise_duty"]
+    assert float(vehicle_cost["luxury_tax_lkr"]) == public_calc["luxury_tax"]
+    assert float(vehicle_cost["vat_lkr"]) == public_calc["vat"]
+    assert float(vehicle_cost["vel_lkr"]) == public_calc["vel"]
+    assert float(vehicle_cost["com_exm_sel_lkr"]) == public_calc["com_exm_sel"]
+
+
 def test_calculate_cost_uses_specific_electric_rule(client, db, admin_headers, admin_user):
     gazette = Gazette(
         gazette_no="2025/ELECTRIC-COST",

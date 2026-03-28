@@ -34,6 +34,16 @@ import { mapBackendVehicle, normalizeImageUrl } from "@/lib/vehicle-mapper";
 import { useAppSelector } from "@/lib/store/store";
 import { Vehicle } from "@/types/vehicle";
 
+type CostBreakdown = {
+  exchange_rate: number | string;
+  shipping_cost_lkr: number | string;
+};
+
+type TaxEstimate = {
+  total_duty: number;
+  total_landed_cost: number;
+};
+
 const formatJPY = new Intl.NumberFormat("ja-JP", {
   style: "currency",
   currency: "JPY",
@@ -76,6 +86,72 @@ const useVehicleImages = (id: string) =>
     enabled: Boolean(id),
   });
 
+const useVehicleCost = (id: string) =>
+  useQuery<CostBreakdown>({
+    queryKey: ["vehicle-cost", id],
+    queryFn: async () => {
+      const response = await apiClient.get(`/vehicles/${id}/cost`);
+      return response.data;
+    },
+    enabled: Boolean(id),
+    staleTime: 1000 * 60 * 5,
+  });
+
+function toNumber(value: number | string | undefined) {
+  return value === undefined ? 0 : Number(value);
+}
+
+function resolveImportDate(value: string | Date | undefined) {
+  const parsed = value ? new Date(value) : new Date();
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+  return parsed.toISOString().slice(0, 10);
+}
+
+function deriveTaxInputs(vehicle: Vehicle) {
+  const fuel = vehicle.fuel.trim().toLowerCase();
+  const vehicleType = (vehicle.vehicleType || "OTHER").trim().toUpperCase();
+
+  if (fuel.includes("electric")) {
+    return {
+      rawFuelType: "ELECTRIC",
+      catalogFuelType: "Electric",
+      vehicleType,
+    };
+  }
+
+  if (fuel.includes("diesel") && fuel.includes("hybrid")) {
+    return {
+      rawFuelType: "HYBRID",
+      catalogFuelType: "Diesel/hybrid",
+      vehicleType,
+    };
+  }
+
+  if (fuel.includes("hybrid")) {
+    return {
+      rawFuelType: "HYBRID",
+      catalogFuelType: "Gasoline/hybrid",
+      vehicleType,
+    };
+  }
+
+  if (fuel.includes("diesel")) {
+    return {
+      rawFuelType: "DIESEL",
+      catalogFuelType: "Diesel",
+      vehicleType,
+    };
+  }
+
+  return {
+    rawFuelType: "PETROL",
+    catalogFuelType: "Petrol",
+    vehicleType,
+  };
+}
+
 function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -91,6 +167,7 @@ function VehicleDetail() {
 
   const { data: vehicle, isLoading, isError } = useVehicle(id);
   const { data: galleryImages } = useVehicleImages(id);
+  const { data: costBreakdown } = useVehicleCost(id);
 
   const [selectedImageOverride, setSelectedImageOverride] = useState<
     string | null
@@ -167,15 +244,64 @@ function VehicleDetail() {
       ? `${vehicle.engineCC} cc`
       : "Spec pending";
   const canCreateOrder = isAuthed && isAvailable;
-  const estDuty =
-    hasPrice && vehicle ? Math.round(vehicle.estimatedLandedCostLKR * 0.3) : 0;
   const bidLabel =
     hasPrice && vehicle ? formatJPY(vehicle.priceJPY) : "Bid pending";
-  const landedLabel =
-    hasPrice && vehicle
-      ? formatLKR(vehicle.estimatedLandedCostLKR)
-      : "Awaiting bid";
-  const dutyLabel = hasPrice ? formatLKR(estDuty) : "Pending";
+  const taxInputs = vehicle ? deriveTaxInputs(vehicle) : null;
+  const { data: taxEstimate } = useQuery<TaxEstimate>({
+    queryKey: [
+      "vehicle-tax-summary",
+      id,
+      vehicle?.priceJPY,
+      vehicle?.engineCC,
+      vehicle?.fuel,
+      vehicle?.vehicleType,
+      costBreakdown?.exchange_rate,
+      costBreakdown?.shipping_cost_lkr,
+    ],
+    queryFn: async () => {
+      if (!vehicle || !taxInputs) {
+        throw new Error("Vehicle tax inputs unavailable");
+      }
+
+      const cifValueLkr = Math.round(
+        vehicle.priceJPY * toNumber(costBreakdown?.exchange_rate) +
+          toNumber(costBreakdown?.shipping_cost_lkr),
+      );
+
+      const response = await apiClient.post<TaxEstimate>("/calculate/tax", {
+        vehicle_type: taxInputs.vehicleType,
+        fuel_type: taxInputs.rawFuelType,
+        engine_cc: vehicle.engineCC ?? 0,
+        power_kw: null,
+        vehicle_age_years: 0,
+        vehicle_condition: "BRAND_NEW",
+        import_date: resolveImportDate(vehicle.endTime),
+        catalog_vehicle_type: taxInputs.vehicleType,
+        catalog_fuel_type: taxInputs.catalogFuelType,
+        cif_value: cifValueLkr,
+      });
+
+      return response.data;
+    },
+    enabled: Boolean(
+      id &&
+      vehicle &&
+      costBreakdown &&
+      Number.isFinite(toNumber(costBreakdown.exchange_rate)) &&
+      (vehicle.engineCC ?? 0) > 0,
+    ),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const hasTaxEstimate = Boolean(
+    taxEstimate && Number.isFinite(Number(taxEstimate.total_landed_cost)),
+  );
+  const landedLabel = hasTaxEstimate
+    ? formatLKR(Number(taxEstimate?.total_landed_cost))
+    : "Awaiting estimate";
+  const dutyLabel = hasTaxEstimate
+    ? formatLKR(Number(taxEstimate?.total_duty))
+    : "Pending";
   const displayImage = selectedImage || images[0] || null;
 
   if (isLoading) {
@@ -249,7 +375,7 @@ function VehicleDetail() {
   ];
 
   const readinessItems = [
-    { label: "Landed cost estimate available", done: hasPrice },
+    { label: "Landed cost estimate available", done: hasTaxEstimate },
     {
       label: "Core specs complete",
       done: Boolean(vehicle.make && vehicle.model && vehicle.year),
@@ -537,17 +663,16 @@ function VehicleDetail() {
 
         <section className="grid gap-5 xl:grid-cols-2">
           <article className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 p-1 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
-            <CostCalculator
-              vehicleId={vehicle.id}
-              priceJPY={vehicle.priceJPY}
-            />
+            <CostCalculator vehicleId={vehicle.id} vehicle={vehicle} />
           </article>
 
           <article className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]/90 p-1 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
             {canCreateOrder ? (
               <OrderCreateForm
                 vehicleId={vehicle.id}
-                estimatedTotalLkr={vehicle.estimatedLandedCostLKR}
+                estimatedTotalLkr={
+                  hasTaxEstimate ? Number(taxEstimate?.total_landed_cost) : null
+                }
               />
             ) : !isAuthed ? (
               <div className="p-6 space-y-3">
