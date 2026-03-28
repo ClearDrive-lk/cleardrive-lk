@@ -37,6 +37,8 @@ import { Vehicle } from "@/types/vehicle";
 type CostBreakdown = {
   exchange_rate: number | string;
   shipping_cost_lkr: number | string;
+  total_cost_lkr: number | string;
+  platform_fee_lkr?: number | string;
 };
 
 type TaxEstimate = {
@@ -294,10 +296,13 @@ function VehicleDetail() {
   });
 
   const hasTaxEstimate = Boolean(
-    taxEstimate && Number.isFinite(Number(taxEstimate.total_landed_cost)),
+    taxEstimate &&
+    Number.isFinite(Number(taxEstimate.total_landed_cost)) &&
+    costBreakdown &&
+    Number.isFinite(Number(costBreakdown.total_cost_lkr)),
   );
   const landedLabel = hasTaxEstimate
-    ? formatLKR(Number(taxEstimate?.total_landed_cost))
+    ? formatLKR(Number(costBreakdown?.total_cost_lkr))
     : "Awaiting estimate";
   const dutyLabel = hasTaxEstimate
     ? formatLKR(Number(taxEstimate?.total_duty))
@@ -577,6 +582,11 @@ function VehicleDetail() {
                   <p className="mt-1 text-xl font-bold">{landedLabel}</p>
                   <p className="mt-1 text-xs text-[hsl(var(--secondary))]">
                     Duty estimate: {dutyLabel}
+                    {costBreakdown?.platform_fee_lkr
+                      ? ` • Platform fee: ${formatLKR(
+                          Number(costBreakdown.platform_fee_lkr),
+                        )}`
+                      : ""}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/22 p-3">
@@ -671,7 +681,7 @@ function VehicleDetail() {
               <OrderCreateForm
                 vehicleId={vehicle.id}
                 estimatedTotalLkr={
-                  hasTaxEstimate ? Number(taxEstimate?.total_landed_cost) : null
+                  hasTaxEstimate ? Number(costBreakdown?.total_cost_lkr) : null
                 }
               />
             ) : !isAuthed ? (

@@ -25,6 +25,13 @@ interface CostCalculatorProps {
 type BaseCostBreakdown = {
   exchange_rate: number | string;
   shipping_cost_lkr: number | string;
+  total_cost_lkr: number | string;
+  platform_fee_lkr: number | string;
+  platform_fee_description?: string;
+  platform_fee?: {
+    tier?: string;
+    description?: string;
+  };
 };
 
 type TaxCalculationResponse = {
@@ -264,6 +271,12 @@ export function CostCalculator({ vehicleId, vehicle }: CostCalculatorProps) {
 
   const exchangeRate = toNumber(baseCost.exchange_rate);
   const shippingCostLkr = toNumber(baseCost.shipping_cost_lkr);
+  const platformFeeLkr = toNumber(baseCost.platform_fee_lkr);
+  const totalCostLkr = toNumber(baseCost.total_cost_lkr);
+  const platformFeeLabel =
+    baseCost.platform_fee?.description ||
+    baseCost.platform_fee_description ||
+    "Platform Fee";
   const vehiclePriceLkr = Math.round(vehicle.priceJPY * exchangeRate);
   const ruleUsed = result.rule_used ?? {};
   const luxuryThreshold = Number(ruleUsed.luxury_tax_threshold ?? 0);
@@ -424,10 +437,26 @@ export function CostCalculator({ vehicleId, vehicle }: CostCalculatorProps) {
           </div>
           <div className="rounded-lg border border-[#546a7b]/40 p-3">
             <p className="text-[10px] uppercase tracking-[0.16em] text-[#546a7b]">
-              CIF + Taxes Total
+              Platform Fee
             </p>
             <p className="mt-1 text-base font-bold text-[#62929e]">
-              {formatLKR(result.total_landed_cost)}
+              {formatLKR(platformFeeLkr)}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-[#546a7b]/40 bg-[#62929e]/5 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[#546a7b]">
+                Final Landed Cost
+              </p>
+              <p className="mt-1 text-base font-bold text-[#393d3f]">
+                CIF + taxes + fees + platform fee
+              </p>
+            </div>
+            <p className="text-lg font-bold text-[#62929e]">
+              {formatLKR(totalCostLkr)}
             </p>
           </div>
         </div>
@@ -459,6 +488,30 @@ export function CostCalculator({ vehicleId, vehicle }: CostCalculatorProps) {
                 <TableCell />
                 <TableCell className="text-right font-semibold">
                   {formatLKR(result.total_duty)}
+                </TableCell>
+              </TableRow>
+              <TableRow className="border-[#546a7b]/30">
+                <TableCell className="font-semibold">
+                  {platformFeeLabel}
+                </TableCell>
+                <TableCell />
+                <TableCell>
+                  {baseCost.platform_fee?.tier
+                    ? `${baseCost.platform_fee.tier} tier`
+                    : ""}
+                </TableCell>
+                <TableCell className="text-right font-semibold">
+                  {formatLKR(platformFeeLkr)}
+                </TableCell>
+              </TableRow>
+              <TableRow className="border-[#546a7b]/30">
+                <TableCell className="font-semibold">
+                  Final Landed Cost
+                </TableCell>
+                <TableCell />
+                <TableCell />
+                <TableCell className="text-right font-semibold text-[#62929e]">
+                  {formatLKR(totalCostLkr)}
                 </TableCell>
               </TableRow>
             </TableBody>
