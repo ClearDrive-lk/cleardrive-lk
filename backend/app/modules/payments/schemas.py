@@ -21,6 +21,34 @@ class PaymentInitiate(BaseModel):
     idempotency_key: Optional[str] = Field(default=None, min_length=16, max_length=255)
 
 
+class PaymentOTPRequest(BaseModel):
+    """Request a payment verification OTP for an order."""
+
+    order_id: UUID
+
+
+class PaymentOTPRequestResponse(BaseModel):
+    """Payment OTP request response."""
+
+    message: str
+    expires_in_seconds: int
+    otp: Optional[str] = None
+
+
+class PaymentOTPVerify(BaseModel):
+    """Verify a payment verification OTP for an order."""
+
+    order_id: UUID
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP")
+
+
+class PaymentOTPVerifyResponse(BaseModel):
+    """Payment OTP verification response."""
+
+    verified: bool
+    message: str
+
+
 class PaymentInitiateResponse(BaseModel):
     """Response after payment initiation."""
 

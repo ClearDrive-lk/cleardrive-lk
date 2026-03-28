@@ -86,6 +86,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+def _is_admin_user(user: User | None) -> bool:
+    return bool(user and getattr(user.role, "value", user.role) == Role.ADMIN.value)
+
+
 async def _issue_auth_tokens_for_user(
     user: User,
     request: Request,
@@ -368,34 +372,38 @@ async def verify_otp(
     12. Return tokens
     """
 
+    normalized_email = verify_request.email.strip().lower()
+    user = db.query(User).filter(User.email == normalized_email).first()
+    is_admin = _is_admin_user(user)
+
     # ========================================================================
     # STEP 1: Rate Limiting
     # ========================================================================
-    if settings.ENVIRONMENT != "development":
-        if not await check_otp_rate_limit(verify_request.email):
-            logger.warning(f"OTP rate limit exceeded for {verify_request.email}")
+    if settings.ENVIRONMENT != "development" and not is_admin:
+        if not await check_otp_rate_limit(normalized_email):
+            logger.warning(f"OTP rate limit exceeded for {normalized_email}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many verification attempts. Please try again in 5 minutes.",
             )
     else:
-        logger.debug(f"Skipping OTP rate limit in development for {verify_request.email}")
+        logger.debug("Skipping OTP rate limit for %s", normalized_email)
 
     # ========================================================================
     # STEP 2: Retrieve and Validate OTP
     # ========================================================================
-    otp_data = await get_otp(verify_request.email)
+    otp_data = await get_otp(normalized_email)
 
     if not otp_data:
-        logger.warning(f"No OTP found for {verify_request.email}")
+        logger.warning(f"No OTP found for {normalized_email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OTP expired or not found. Please request a new one.",
         )
 
     if otp_data.get("attempts", 0) >= 3:
-        logger.warning(f"Max OTP attempts exceeded for {verify_request.email}")
-        await delete_otp(verify_request.email)
+        logger.warning(f"Max OTP attempts exceeded for {normalized_email}")
+        await delete_otp(normalized_email)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Maximum verification attempts exceeded. Please request a new code.",
@@ -408,8 +416,8 @@ async def verify_otp(
     )
 
     if not verification_func(cast(str, stored_otp), verify_request.otp):
-        attempts = await increment_otp_attempts(verify_request.email)
-        logger.warning(f"Invalid OTP for {verify_request.email}. Attempt {attempts}/3")
+        attempts = await increment_otp_attempts(normalized_email)
+        logger.warning(f"Invalid OTP for {normalized_email}. Attempt {attempts}/3")
 
         remaining = 3 - attempts
         if remaining > 0:
@@ -423,16 +431,14 @@ async def verify_otp(
                 detail="Maximum verification attempts exceeded. Please request a new code.",
             )
 
-    await delete_otp(verify_request.email)
-    logger.info(f"OTP verified successfully for {verify_request.email}")
+    await delete_otp(normalized_email)
+    logger.info(f"OTP verified successfully for {normalized_email}")
 
     # ========================================================================
     # STEP 3: Get User
     # ========================================================================
-    user = db.query(User).filter(User.email == verify_request.email).first()
-
     if not user:
-        logger.error(f"User not found after OTP verification: {verify_request.email}")
+        logger.error(f"User not found after OTP verification: {normalized_email}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}

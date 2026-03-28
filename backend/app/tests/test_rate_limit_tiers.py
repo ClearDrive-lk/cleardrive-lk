@@ -68,3 +68,15 @@ def test_rate_limit_middleware_applies_to_authenticated_endpoints(client, auth_h
         .first()
     )
     assert event is not None
+
+
+def test_rate_limit_middleware_bypasses_admins(client, admin_headers):
+    last_response = None
+
+    for _ in range(60):
+        response = client.get("/api/v1/auth/sessions", headers=admin_headers)
+        last_response = response
+        assert response.status_code == 200
+        assert response.headers["X-RateLimit-Tier"] == "admin_bypass"
+
+    assert last_response is not None

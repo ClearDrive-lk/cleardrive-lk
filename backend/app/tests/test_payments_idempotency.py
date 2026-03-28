@@ -84,6 +84,10 @@ def _create_order_for_user(db, test_user, stock_no: str = "STOCK-001") -> Order:
     return order
 
 
+def _mark_payment_otp_verified(fake_redis: _FakeRedis, test_user, order: Order) -> None:
+    fake_redis.store[f"payment_otp_verified:{test_user.id}:{order.id}"] = "1"
+
+
 def test_initiate_requires_idempotency_header(client, auth_headers, db, test_user, monkeypatch):
     order = _create_order_for_user(db, test_user, stock_no="STOCK-101")
     _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
@@ -93,6 +97,7 @@ def test_initiate_requires_idempotency_header(client, auth_headers, db, test_use
         return fake_redis
 
     monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    _mark_payment_otp_verified(fake_redis, test_user, order)
 
     response = client.post(
         "/api/v1/payments/initiate",
@@ -115,6 +120,7 @@ def test_initiate_returns_cached_response_for_same_key(
         return fake_redis
 
     monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    _mark_payment_otp_verified(fake_redis, test_user, order)
 
     idem_key = "550e8400-e29b-41d4-a716-446655440000"
     headers = {**auth_headers, "Idempotency-Key": idem_key}
@@ -143,6 +149,7 @@ def test_initiate_returns_409_when_lock_not_acquired(
         return fake_redis
 
     monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    _mark_payment_otp_verified(fake_redis, test_user, order)
 
     headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-446655440001"}
     response = client.post(
@@ -170,6 +177,7 @@ def test_initiate_rejects_amount_above_payhere_limit(
         "app.modules.payments.routes.settings.PAYHERE_MAX_PAYMENT_AMOUNT_LKR",
         Decimal("10000000.00"),
     )
+    _mark_payment_otp_verified(fake_redis, test_user, order)
 
     headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-446655440002"}
     response = client.post(
@@ -190,6 +198,7 @@ def test_initiate_requires_existing_kyc(client, auth_headers, db, test_user, mon
         return fake_redis
 
     monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    _mark_payment_otp_verified(fake_redis, test_user, order)
 
     headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-44665544000A"}
     response = client.post(
@@ -212,6 +221,7 @@ def test_initiate_requires_approved_kyc(client, auth_headers, db, test_user, mon
         return fake_redis
 
     monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    _mark_payment_otp_verified(fake_redis, test_user, order)
 
     headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-44665544000B"}
     response = client.post(
@@ -220,6 +230,64 @@ def test_initiate_requires_approved_kyc(client, auth_headers, db, test_user, mon
 
     assert response.status_code == 400
     assert "Only APPROVED users can initiate payment." in response.json()["detail"]
+
+
+def test_initiate_requires_verified_payment_otp(client, auth_headers, db, test_user, monkeypatch):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-103D")
+    _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
+    fake_redis = _FakeRedis()
+
+    async def _get_redis():
+        return fake_redis
+
+    monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+
+    headers = {**auth_headers, "Idempotency-Key": "550e8400-e29b-41d4-a716-44665544000C"}
+    response = client.post(
+        "/api/v1/payments/initiate", headers=headers, json={"order_id": str(order.id)}
+    )
+
+    assert response.status_code == 403
+    assert (
+        response.json()["detail"] == "Payment OTP verification required before initiating payment."
+    )
+
+
+def test_request_and_verify_payment_otp(client, auth_headers, db, test_user, monkeypatch):
+    order = _create_order_for_user(db, test_user, stock_no="STOCK-103E")
+    _create_kyc_for_user(db, test_user, KYCStatus.APPROVED)
+    fake_redis = _FakeRedis()
+    sent_otps: list[str] = []
+
+    async def _get_redis():
+        return fake_redis
+
+    async def _send_otp_email(_email: str, otp: str, _name: str | None = None) -> bool:
+        sent_otps.append(otp)
+        return True
+
+    monkeypatch.setattr("app.modules.payments.routes.get_redis", _get_redis)
+    monkeypatch.setattr("app.modules.payments.routes.send_otp_email", _send_otp_email)
+
+    request_response = client.post(
+        "/api/v1/payments/request-otp",
+        headers=auth_headers,
+        json={"order_id": str(order.id)},
+    )
+
+    assert request_response.status_code == 200
+    assert request_response.json()["message"] == "Payment OTP sent to your email."
+    assert len(sent_otps) == 1
+
+    verify_response = client.post(
+        "/api/v1/payments/verify-otp",
+        headers=auth_headers,
+        json={"order_id": str(order.id), "otp": sent_otps[0]},
+    )
+
+    assert verify_response.status_code == 200
+    assert verify_response.json()["verified"] is True
+    assert fake_redis.store.get(f"payment_otp_verified:{test_user.id}:{order.id}") == "1"
 
 
 def test_webhook_dedup_returns_already_processed(client, db, test_user):

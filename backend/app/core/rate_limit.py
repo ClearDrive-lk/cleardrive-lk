@@ -108,6 +108,10 @@ def _is_full_user(user: RateLimitUser | None) -> TypeGuard[User]:
     return isinstance(user, User)
 
 
+def _is_admin_user(user: RateLimitUser | None) -> bool:
+    return _is_full_user(user) and getattr(user.role, "value", user.role) == "ADMIN"
+
+
 def _tier_to_reputation(tier: UserTier) -> ReputationTier:
     if tier == UserTier.SUSPICIOUS:
         return ReputationTier.SUSPICIOUS
@@ -513,6 +517,16 @@ async def check_rate_limit(
     """
     tier = UserTier.STANDARD
     limits = get_rate_limit(tier, endpoint_type)
+
+    if _is_admin_user(user):
+        request.state.rate_limit_context = {
+            "tier": "admin_bypass",
+            "minute_limit": "unlimited",
+            "minute_remaining": "unlimited",
+            "hour_limit": "unlimited",
+            "hour_remaining": "unlimited",
+        }
+        return True
 
     identifier = f"user:{user.id}" if user is not None else f"ip:{_client_ip(request)}"
     now = datetime.now(UTC)

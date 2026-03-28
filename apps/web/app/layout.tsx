@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans, Libre_Baskerville } from "next/font/google";
 import FloatingChatbot from "@/components/chat/FloatingChatbot";
 import AppBackdrop from "@/components/ui/app-backdrop";
 import ThemeInitScript from "@/components/ui/theme-init-script";
-import SplashScreen from "@/components/ui/splash-screen";
 import Footer from "@/components/layout/Footer";
 import "./globals.css";
 import StoreProvider from "@/lib/store/StoreProvider";
@@ -50,7 +49,6 @@ export default function RootLayout({
         <StoreProvider>
           <ToastStateProvider>
             <AuthBootstrap />
-            <SplashScreen />
             <AppBackdrop />
             {children}
             <Footer />
