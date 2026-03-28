@@ -46,6 +46,7 @@ export default function AdminVehiclesPage() {
   const search = searchParams.get("search") ?? "";
   const status = searchParams.get("status") ?? "all";
   const [cleanupPending, setCleanupPending] = useState(false);
+  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
 
   const query = useVehicles({
     page,
@@ -120,6 +121,35 @@ export default function AdminVehiclesPage() {
       });
     } finally {
       setCleanupPending(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId: string, label: string) => {
+    const confirmed = window.confirm(
+      `Delete ${label} from the catalog? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setDeletePendingId(vehicleId);
+    try {
+      await apiClient.delete(`/vehicles/${vehicleId}`);
+      toast({
+        title: "Vehicle deleted",
+        description: `${label} was removed from the catalog.`,
+        variant: "success",
+      });
+      await query.refetch();
+    } catch (error: unknown) {
+      toast({
+        title: "Delete failed",
+        description: isAxiosError(error)
+          ? ((error.response?.data as { detail?: string } | undefined)
+              ?.detail ?? "Failed to delete vehicle.")
+          : "Failed to delete vehicle.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletePendingId(null);
     }
   };
 
@@ -248,6 +278,13 @@ export default function AdminVehiclesPage() {
                 key={vehicle.id}
                 vehicle={vehicle}
                 href={`/admin/vehicles/${vehicle.id}`}
+                onDelete={(selectedVehicle) =>
+                  void handleDeleteVehicle(
+                    selectedVehicle.id,
+                    `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`,
+                  )
+                }
+                deleteDisabled={deletePendingId === vehicle.id}
               />
             ))}
           </div>

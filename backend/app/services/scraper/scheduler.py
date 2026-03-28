@@ -5,6 +5,7 @@ CD-23 scraper scheduler with duplicate prevention.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -37,6 +38,10 @@ from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
+KNOWN_PLACEHOLDER_IMAGE_HASHES = {
+    "35969b5dc4baac704d55e73ce0c421f0a6817628766d5c85d8adf8f1eb0d8a7d",  # pragma: allowlist secret
+}
+
 
 def _vehicle_bucket_name() -> str:
     return os.getenv("SUPABASE_STORAGE_VEHICLE_BUCKET", "Photos").strip() or "Photos"
@@ -64,6 +69,10 @@ def _normalize_vehicle_image_source(url: str) -> str | None:
         )
 
     return normalized
+
+
+def _is_known_placeholder_image_content(content: bytes) -> bool:
+    return hashlib.sha256(content).hexdigest() in KNOWN_PLACEHOLDER_IMAGE_HASHES
 
 
 def _extract_vehicle_storage_path(public_url: str, bucket: str) -> str | None:
@@ -508,6 +517,9 @@ class ScraperScheduler:
                 if content_type and not content_type.startswith("image/"):
                     logger.warning("Skipping non-image URL %s (content-type=%s)", src, content_type)
                     continue
+                if _is_known_placeholder_image_content(response.content):
+                    logger.info("Skipping known placeholder vehicle image %s", src)
+                    continue
 
                 suffix = Path(urlparse(src).path).suffix.lower()
                 if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
@@ -574,6 +586,9 @@ class ScraperScheduler:
             content_type = response.headers.get("Content-Type", "").lower()
             if content_type and not content_type.startswith("image/"):
                 logger.warning("Skipping non-image URL %s (content-type=%s)", src, content_type)
+                continue
+            if _is_known_placeholder_image_content(response.content):
+                logger.info("Skipping known placeholder vehicle image %s", src)
                 continue
 
             suffix = Path(urlparse(src).path).suffix.lower()

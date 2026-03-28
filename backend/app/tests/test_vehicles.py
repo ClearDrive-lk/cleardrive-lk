@@ -19,6 +19,7 @@ from app.models.gazette import (
     TaxVehicleType,
 )
 from app.models.tax_rule_catalog import GlobalTaxParameter, HSCodeMatrixRule
+from app.modules.orders.models import Order, OrderStatus, PaymentStatus
 from app.modules.vehicles.cost_calculator import calculate_platform_fee
 from app.modules.vehicles.models import (
     Drive,
@@ -1731,6 +1732,35 @@ def test_delete_vehicle(client, db, admin_headers):
     assert response.status_code == 404
 
 
+def test_delete_vehicle_with_existing_order_is_blocked(client, db, admin_headers, test_user):
+    vehicle = Vehicle(
+        stock_no="TEST-DEL-ORDER-001",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1850000,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    order = Order(
+        user_id=test_user.id,
+        vehicle_id=vehicle.id,
+        status=OrderStatus.CREATED,
+        payment_status=PaymentStatus.PENDING,
+        shipping_address="encrypted-address",
+        phone="0771234567",
+    )
+    db.add(order)
+    db.commit()
+
+    response = client.delete(f"/api/v1/vehicles/{vehicle.id}", headers=admin_headers)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot delete vehicle with existing orders"
+
+
 def test_delete_vehicle_unauthenticated(client, db):
     """Test deleting a vehicle without authentication."""
 
@@ -1751,3 +1781,37 @@ def test_delete_vehicle_unauthenticated(client, db):
 
     # Should be forbidden (403) or unauthorized (401)
     assert response.status_code in [401, 403]
+
+
+def test_scheduler_download_and_store_images_skips_known_placeholder_hash(monkeypatch):
+    scheduler = ScraperScheduler()
+    placeholder_bytes = b"verified-placeholder"
+
+    class DummyResponse:
+        headers = {"Content-Type": "image/jpeg"}
+        content = placeholder_bytes
+
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr(
+        "app.services.scraper.scheduler.KNOWN_PLACEHOLDER_IMAGE_HASHES",
+        {
+            "49b7f41848a8cb2f4d8ceb373ea23c99dca6f312604a9de5cdc802bdd41a5be1"  # pragma: allowlist secret
+        },  # pragma: allowlist secret
+    )
+    monkeypatch.setenv("CD23_UPLOAD_IMAGES_SUPABASE", "false")
+    monkeypatch.setattr(scheduler._http, "get", lambda *_args, **_kwargs: DummyResponse())
+
+    urls = scheduler._download_and_store_images(
+        {
+            "stock_no": "PH-001",
+            "make": "Placeholder",
+            "model": "Blocked",
+            "year": 2026,
+            "image_url": "https://www.ramadbk.com/VIMGS/images/placeholder.jpeg",
+            "images": ["https://www.ramadbk.com/VIMGS/images/placeholder.jpeg"],
+        }
+    )
+
+    assert urls == []

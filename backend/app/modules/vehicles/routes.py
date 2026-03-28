@@ -15,6 +15,7 @@ from app.core.cache import cache
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
 from app.models.gazette import TaxFuelType, TaxVehicleType
+from app.modules.orders.models import Order
 from app.modules.vehicles.models import Vehicle, VehicleStatus, VehicleType
 from app.modules.vehicles.schemas import (
     CostBreakdown,
@@ -1322,13 +1323,12 @@ async def delete_vehicle(
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
-    # Check if vehicle has orders
-    # TODO: Add this check when Order model is imported
-    # if vehicle.orders:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="Cannot delete vehicle with existing orders"
-    #     )
+    has_orders = db.query(Order.id).filter(Order.vehicle_id == vehicle.id).first() is not None
+    if has_orders:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete vehicle with existing orders",
+        )
 
     db.delete(vehicle)
     db.commit()

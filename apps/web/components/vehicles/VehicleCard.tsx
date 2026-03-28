@@ -5,16 +5,20 @@ import { useRouter } from "next/navigation";
 import { Vehicle } from "@/types/vehicle";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Fuel, Gauge, Calendar, Timer, Car } from "lucide-react";
+import { Fuel, Gauge, Calendar, Timer, Car, Trash2 } from "lucide-react";
 
 interface VehicleCardProps {
   vehicle: Vehicle;
   href?: string;
+  onDelete?: (vehicle: Vehicle) => void;
+  deleteDisabled?: boolean;
 }
 
 export function VehicleCard({
   vehicle,
   href = `/dashboard/vehicles/${vehicle.id}`,
+  onDelete,
+  deleteDisabled = false,
 }: VehicleCardProps) {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
@@ -83,22 +87,39 @@ export function VehicleCard({
         )}
 
         {/* Overlays */}
-        <div className="absolute top-2 left-2 flex gap-2 transition-transform duration-300 group-hover:-translate-y-0.5">
-          <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#546a7b]/65 font-mono">
-            {`Stock #${vehicle.lotNumber || "-"}`}
-          </Badge>
-          <Badge className="bg-[#62929e] text-[#fdfdff] font-bold border-0">
-            Grade {vehicle.grade}
-          </Badge>
-          {vehicle.condition === "New" ? (
-            <Badge className="bg-green-500/20 text-green-400 font-bold border-green-500/50">
-              NEW
+        <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2 transition-transform duration-300 group-hover:-translate-y-0.5">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-[#fdfdff]/60 backdrop-blur text-[#393d3f] border-[#546a7b]/65 font-mono">
+              {`Stock #${vehicle.lotNumber || "-"}`}
             </Badge>
-          ) : (
-            <Badge className="bg-gray-500/20 text-[#546a7b] font-bold border-gray-500/50">
-              USED
+            <Badge className="bg-[#62929e] text-[#fdfdff] font-bold border-0">
+              Grade {vehicle.grade}
             </Badge>
-          )}
+            {vehicle.condition === "New" ? (
+              <Badge className="bg-green-500/20 text-green-400 font-bold border-green-500/50">
+                NEW
+              </Badge>
+            ) : (
+              <Badge className="bg-gray-500/20 text-[#546a7b] font-bold border-gray-500/50">
+                USED
+              </Badge>
+            )}
+          </div>
+          {onDelete ? (
+            <button
+              type="button"
+              aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
+              disabled={deleteDisabled}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onDelete(vehicle);
+              }}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-500/35 bg-black/45 text-red-200 backdrop-blur transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          ) : null}
         </div>
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3 transition-opacity duration-300 group-hover:opacity-90">
           <div className="flex items-center gap-1 text-[#62929e] text-xs font-mono">
