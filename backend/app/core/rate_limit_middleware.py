@@ -69,10 +69,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         }
         request.state.rate_limit_context = default_context
 
-        db_generator = self._get_db_generator(request)
-        db = next(db_generator)
+        db_generator: Generator[Session, None, None] | None = None
+        db: Session | None = None
 
         try:
+            if self._has_bearer_token(request):
+                db_generator = self._get_db_generator(request)
+                db = next(db_generator)
             user = await self._resolve_token(request, db)
             await check_rate_limit(request, user, endpoint_type, db=db)
             context = getattr(request.state, "rate_limit_context", default_context)
@@ -92,9 +95,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             self._apply_headers(response, request, context)
             return response
         finally:
-            self._close_db_generator(db_generator)
+            if db_generator is not None:
+                self._close_db_generator(db_generator)
 
-    async def _resolve_token(self, request: Request, db: Session) -> RateLimitUser | None:
+    def _has_bearer_token(self, request: Request) -> bool:
+        auth_header = request.headers.get("Authorization")
+        return bool(auth_header and auth_header.startswith("Bearer "))
+
+    async def _resolve_token(self, request: Request, db: Session | None) -> RateLimitUser | None:
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
             return None
@@ -111,6 +119,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         user_id = payload.get("sub")
         if not user_id:
             return None
+
+        if db is None:
+            return SimpleNamespace(id=user_id)
 
         user = db.query(User).filter(User.id == user_id).first()
         if user is not None:
