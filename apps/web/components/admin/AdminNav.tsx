@@ -15,6 +15,7 @@ import {
   UploadCloud,
   ClipboardCheck,
   History,
+  FileText,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -103,6 +104,11 @@ const NAV_SECTIONS: NavSection[] = [
         label: "History",
         href: "/admin/gazette#history",
         icon: History,
+      },
+      {
+        label: "Reference Docs",
+        href: "/admin/reference-docs",
+        icon: FileText,
       },
     ],
   },
