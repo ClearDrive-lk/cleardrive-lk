@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
-import { getSriAttributes } from "@/lib/sri";
+import { saveTokens } from "@/lib/auth";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
+import { setCredentials } from "@/lib/store/features/auth/authSlice";
+import { useAppDispatch } from "@/lib/store/store";
 declare global {
   interface Window {
     google?: {
@@ -17,6 +20,17 @@ declare global {
             callback: (response: { credential: string }) => void;
             auto_select?: boolean;
           }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme?: "outline" | "filled_blue" | "filled_black";
+              size?: "large" | "medium" | "small";
+              shape?: "rectangular" | "pill" | "circle" | "square";
+              text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+              width?: number;
+              logo_alignment?: "left" | "center";
+            },
+          ) => void;
           prompt: (momentListener?: (value: unknown) => void) => void;
         };
       };
@@ -56,11 +70,6 @@ function ensureGoogleScript(src: string): Promise<void> {
 
     const script = document.createElement("script");
     script.src = src;
-    const { integrity, crossOrigin } = getSriAttributes(src);
-    if (integrity) {
-      script.integrity = integrity;
-      script.crossOrigin = crossOrigin ?? "anonymous";
-    }
     script.async = true;
     script.onload = () => {
       const waitUntilReady = () => {
@@ -86,6 +95,12 @@ function ensureGoogleScript(src: string): Promise<void> {
 export function GoogleLoginButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleReady, setGoogleReady] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement | null>(null);
+  const buttonShellRef = useRef<HTMLDivElement | null>(null);
+  const initializedRef = useRef(false);
+  const renderedWidthRef = useRef<number | null>(null);
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const clientId =
@@ -104,10 +119,48 @@ export function GoogleLoginButton() {
           name?: string;
           google_id: string;
           message: string;
+          access_token?: string;
+          refresh_token?: string;
+          expires_in?: number;
+          otp?: string;
+          user?: {
+            id: string;
+            email: string;
+            name?: string;
+            role: string;
+          };
         }>("/auth/google", { id_token: idToken });
+        if (data.access_token && data.refresh_token && data.user) {
+          saveTokens(
+            {
+              access_token: data.access_token,
+              refresh_token: data.refresh_token,
+            },
+            { persistAccess: true },
+          );
+          const role = normalizeRole(data.user.role);
+          dispatch(
+            setCredentials({
+              user: {
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.name || "User",
+                role,
+              },
+              token: data.access_token,
+            }),
+          );
+          router.push(roleHomePath(role));
+          return;
+        }
         if (data.email) {
           if (typeof window !== "undefined") {
             sessionStorage.setItem("otp_email", data.email);
+            if (data.otp) {
+              sessionStorage.setItem("dev_otp", data.otp);
+            } else {
+              sessionStorage.removeItem("dev_otp");
+            }
           }
           router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
           return;
@@ -144,23 +197,47 @@ export function GoogleLoginButton() {
         setLoading(false);
       }
     },
-    [router],
+    [dispatch, router],
   );
 
   useEffect(() => {
     if (!clientId || typeof window === "undefined") return;
     ensureGoogleScript(GSI_SRC)
       .then(() => {
-        if (window.google?.accounts?.id) {
-          window.google.accounts.id.initialize({
-            client_id: clientId,
-            callback: (response) => handleCredential(response.credential),
-            auto_select: false,
-          });
+        const googleId = window.google?.accounts?.id;
+        if (googleId && googleButtonRef.current) {
+          const width = Math.max(
+            buttonShellRef.current?.offsetWidth ?? 320,
+            240,
+          );
+          if (!initializedRef.current) {
+            googleId.initialize({
+              client_id: clientId,
+              callback: (response) => handleCredential(response.credential),
+              auto_select: false,
+            });
+            initializedRef.current = true;
+          }
+          if (renderedWidthRef.current !== width) {
+            googleButtonRef.current.innerHTML = "";
+            googleId.renderButton(googleButtonRef.current, {
+              theme: "outline",
+              size: "large",
+              shape: "rectangular",
+              text: "continue_with",
+              width,
+              logo_alignment: "left",
+            });
+            renderedWidthRef.current = width;
+          }
+          setGoogleReady(true);
           setError(null);
         }
       })
-      .catch(() => setError("Could not load Google Sign-In"));
+      .catch(() => {
+        setGoogleReady(false);
+        setError("Could not load Google Sign-In");
+      });
   }, [clientId, handleCredential]);
 
   const handleLogin = async () => {
@@ -171,39 +248,24 @@ export function GoogleLoginButton() {
       );
       return;
     }
+    if (!googleReady) {
+      setError("Google Sign-In is still loading. Try again.");
+      return;
+    }
     setLoading(true);
     try {
-      await ensureGoogleScript(GSI_SRC);
-      window.google?.accounts?.id?.initialize({
-        client_id: clientId,
-        callback: (response) => handleCredential(response.credential),
-        auto_select: false,
-      });
-      window.google?.accounts?.id?.prompt((notification: unknown) => {
-        const n = notification as {
-          isNotDisplayed?: () => boolean;
-          isSkippedMoment?: () => boolean;
-          getNotDisplayedReason?: () => string;
-          getSkippedReason?: () => string;
-        };
-
-        // FedCM can cancel prompt flow without this being an application error.
-        // Clear loading state and only surface actionable prompt issues.
+      const renderedButton =
+        googleButtonRef.current?.querySelector<HTMLElement>(
+          'div[role="button"], iframe, [tabindex="0"]',
+        );
+      if (!renderedButton) {
+        setError("Google Sign-In is still loading. Try again.");
         setLoading(false);
+        return;
+      }
 
-        if (n?.isNotDisplayed?.()) {
-          const reason = n.getNotDisplayedReason?.() || "unknown";
-          setError(`Google sign-in prompt unavailable (${reason}).`);
-          return;
-        }
-
-        if (n?.isSkippedMoment?.()) {
-          const reason = n.getSkippedReason?.();
-          if (reason && reason !== "user_cancel") {
-            setError(`Google sign-in was skipped (${reason}).`);
-          }
-        }
-      });
+      renderedButton.click();
+      setLoading(false);
     } catch {
       setError("Could not load Google Sign-In");
       setLoading(false);
@@ -212,41 +274,51 @@ export function GoogleLoginButton() {
 
   return (
     <div className="w-full space-y-2">
-      <Button
-        onClick={handleLogin}
-        disabled={loading}
-        variant="outline"
-        className="w-full bg-[#fdfdff] text-[#393d3f] hover:bg-gray-200 border-0 h-11 font-medium transition-all"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Connecting...
-          </>
-        ) : (
-          <div className="flex items-center gap-3">
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            Continue with Google
-          </div>
-        )}
-      </Button>
+      <div ref={buttonShellRef} className="relative w-full">
+        <Button
+          onClick={handleLogin}
+          disabled={loading}
+          variant="outline"
+          className="w-full bg-[#fdfdff] text-[#393d3f] hover:bg-gray-200 border-0 h-11 font-medium transition-all"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Connecting...
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              Continue with Google
+            </div>
+          )}
+        </Button>
+        <div
+          ref={googleButtonRef}
+          className={`google-signin-button absolute inset-0 overflow-hidden rounded-xl ${
+            loading || !googleReady ? "pointer-events-none" : ""
+          }`}
+          style={{ opacity: googleReady ? 0.01 : 0 }}
+          aria-hidden="true"
+        />
+      </div>
       {error && <p className="text-sm text-red-400">{error}</p>}
     </div>
   );

@@ -1,6 +1,7 @@
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const PERSIST_ACCESS_KEY = "auth:persist_access";
+const REFRESH_TOKEN_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 const getCookieValue = (name: string) => {
   if (typeof window === "undefined") return null;
@@ -11,7 +12,7 @@ const getCookieValue = (name: string) => {
 };
 
 const buildRefreshCookie = (token: string) => {
-  const base = `${REFRESH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
+  const base = `${REFRESH_TOKEN_KEY}=${encodeURIComponent(token)}; path=/; SameSite=Lax; Max-Age=${REFRESH_TOKEN_MAX_AGE_SECONDS}`;
   if (typeof window !== "undefined" && window.location.protocol === "https:") {
     return `${base}; Secure`;
   }
@@ -26,15 +27,13 @@ export const saveTokens = (
   options?: { persistAccess?: boolean },
 ) => {
   if (typeof window !== "undefined") {
-    const persistAccess =
-      options?.persistAccess ??
-      (localStorage.getItem(PERSIST_ACCESS_KEY) ?? "true") === "true";
-
     sessionStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token);
-    if (persistAccess) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token);
-    } else {
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token);
+    if (options?.persistAccess !== undefined) {
+      localStorage.setItem(
+        PERSIST_ACCESS_KEY,
+        options.persistAccess ? "true" : "false",
+      );
     }
     if (tokens.refresh_token) {
       localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);

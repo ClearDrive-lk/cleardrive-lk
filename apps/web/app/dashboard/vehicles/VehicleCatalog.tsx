@@ -278,7 +278,10 @@ function VehicleCatalog({
 
   // -- HANDLERS --
   const updateFilters = useCallback(
-    (newParams: Record<string, string | number | undefined>) => {
+    (
+      newParams: Record<string, string | number | undefined>,
+      options?: { replace?: boolean },
+    ) => {
       const baseParams: Record<string, string | number | undefined> = {
         page: currentPage,
         search: currentSearch || undefined,
@@ -346,7 +349,12 @@ function VehicleCatalog({
       });
 
       const query = params.toString();
-      router.push(`/dashboard/vehicles${query ? `?${query}` : ""}`);
+      const href = `/dashboard/vehicles${query ? `?${query}` : ""}`;
+      if (options?.replace) {
+        router.replace(href);
+        return;
+      }
+      router.push(href);
     },
     [
       router,
@@ -384,12 +392,12 @@ function VehicleCatalog({
       return;
     }
     if (debouncedSearch !== currentSearch) {
-      void updateFilters({ search: debouncedSearch });
+      void updateFilters({ search: debouncedSearch }, { replace: true });
     }
   }, [debouncedSearch, currentSearch, searchTerm, updateFilters]);
 
   // -- DATA FETCHING --
-  const { data, isLoading, isError, error, refetch } = useVehicles({
+  const { data, isLoading, isFetching, isError, error, refetch } = useVehicles({
     page: currentPage,
     limit: 8,
     search: currentSearch,
@@ -1051,7 +1059,7 @@ function VehicleCatalog({
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage === 1}
+                    disabled={currentPage === 1 || isFetching}
                     onClick={() => updateFilters({ page: currentPage - 1 })}
                     className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
                   >
@@ -1065,7 +1073,7 @@ function VehicleCatalog({
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={currentPage >= totalPages}
+                    disabled={currentPage >= totalPages || isFetching}
                     onClick={() => updateFilters({ page: currentPage + 1 })}
                     className="border-[#546a7b]/65 text-[#393d3f] hover:bg-[#c6c5b9]/20 disabled:opacity-30"
                   >

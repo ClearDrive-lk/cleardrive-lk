@@ -86,6 +86,95 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+def _is_admin_user(user: User | None) -> bool:
+    return bool(user and getattr(user.role, "value", user.role) == Role.ADMIN.value)
+
+
+async def _issue_auth_tokens_for_user(
+    user: User,
+    request: Request,
+    db: Session,
+) -> TokenResponse:
+    """Create the standard authenticated session/token bundle for a user."""
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email, "role": user.role.value}
+    )
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    refresh_payload = decode_refresh_token(refresh_token)
+    refresh_jti = refresh_payload.get("jti") if refresh_payload else None
+
+    session_id = None
+    limit_result: dict[str, Any] = {}
+
+    if refresh_jti:
+        await store_refresh_token(
+            token_jti=refresh_jti,
+            user_id=str(user.id),
+            device_info={
+                "ip": request.client.host if request.client else "unknown",
+                "user_agent": request.headers.get("user-agent", "unknown"),
+            },
+        )
+
+        session_id = str(uuid.uuid4())
+        await create_session(
+            user_id=str(user.id),
+            session_id=session_id,
+            token_jti=refresh_jti,
+            ip_address=request.client.host if request.client else "unknown",
+            user_agent=request.headers.get("user-agent", "unknown"),
+        )
+
+        limit_result = await enforce_session_limit(str(user.id), max_sessions=5)
+
+    db_session = UserSession(
+        user_id=user.id,
+        refresh_token_hash=hash_token(refresh_token),
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        device_info=extract_device_info(request),
+        is_active=True,
+        expires_at=datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
+    db.add(db_session)
+
+    session_count = (
+        db.query(UserSession)
+        .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
+        .count()
+    )
+
+    if session_count > 5:
+        oldest_session = (
+            db.query(UserSession)
+            .filter(UserSession.user_id == user.id, UserSession.is_active.is_(True))
+            .order_by(UserSession.created_at.asc())
+            .first()
+        )
+        if oldest_session:
+            oldest_session.is_active = False
+            logger.info("Revoked oldest session for %s (session limit exceeded)", user.email)
+
+    db.commit()
+
+    logger.info(
+        "Authentication successful for user %s. Session %s created. Active sessions: %s/%s",
+        user.email,
+        session_id or "N/A",
+        limit_result.get("current_count", "N/A"),
+        limit_result.get("limit", 5),
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=UserResponse.model_validate(user),
+    )
+
+
 # ============================================================================
 # GOOGLE OAUTH
 # ============================================================================
@@ -183,27 +272,39 @@ async def google_auth(
             detail="Verification service temporarily unavailable. Please try again.",
         )
 
+    email_sent = False
     try:
         email_sent = await send_otp_email(email, otp, name)
     except Exception as e:
         logger.exception(f"Unexpected Google OTP email failure for {email}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Email service temporarily unavailable. Please try again.",
+
+    if email_sent:
+        return GoogleAuthResponse(
+            email=email,
+            name=name,
+            google_id=google_id,
+            message="Verification code sent to your email",
         )
 
-    if not email_sent:
-        logger.error(f"Failed to send OTP email to {email}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Email service temporarily unavailable. Please try again.",
+    if settings.ENVIRONMENT == "development":
+        logger.info(
+            "Google OTP email unavailable in development for %s; returning OTP in response", email
+        )
+        return GoogleAuthResponse(
+            email=email,
+            name=name,
+            google_id=google_id,
+            message="Email service unavailable in development. Use the OTP shown in the verification screen.",
+            otp=otp,
         )
 
-    return GoogleAuthResponse(
-        email=email,
-        name=name,
-        google_id=google_id,
-        message="Verification code sent to your email",
+    logger.warning(
+        "Failed to send OTP email to %s after Google authentication. Rejecting sign-in.",
+        email,
+    )
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Google sign-in requires OTP verification, but the email service is unavailable. Please try again.",
     )
 
 
@@ -274,34 +375,38 @@ async def verify_otp(
     12. Return tokens
     """
 
+    normalized_email = verify_request.email.strip().lower()
+    user = db.query(User).filter(User.email == normalized_email).first()
+    is_admin = _is_admin_user(user)
+
     # ========================================================================
     # STEP 1: Rate Limiting
     # ========================================================================
-    if settings.ENVIRONMENT != "development":
-        if not await check_otp_rate_limit(verify_request.email):
-            logger.warning(f"OTP rate limit exceeded for {verify_request.email}")
+    if settings.ENVIRONMENT != "development" and not is_admin:
+        if not await check_otp_rate_limit(normalized_email):
+            logger.warning(f"OTP rate limit exceeded for {normalized_email}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Too many verification attempts. Please try again in 5 minutes.",
             )
     else:
-        logger.debug(f"Skipping OTP rate limit in development for {verify_request.email}")
+        logger.debug("Skipping OTP rate limit for %s", normalized_email)
 
     # ========================================================================
     # STEP 2: Retrieve and Validate OTP
     # ========================================================================
-    otp_data = await get_otp(verify_request.email)
+    otp_data = await get_otp(normalized_email)
 
     if not otp_data:
-        logger.warning(f"No OTP found for {verify_request.email}")
+        logger.warning(f"No OTP found for {normalized_email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OTP expired or not found. Please request a new one.",
         )
 
     if otp_data.get("attempts", 0) >= 3:
-        logger.warning(f"Max OTP attempts exceeded for {verify_request.email}")
-        await delete_otp(verify_request.email)
+        logger.warning(f"Max OTP attempts exceeded for {normalized_email}")
+        await delete_otp(normalized_email)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Maximum verification attempts exceeded. Please request a new code.",
@@ -314,8 +419,8 @@ async def verify_otp(
     )
 
     if not verification_func(cast(str, stored_otp), verify_request.otp):
-        attempts = await increment_otp_attempts(verify_request.email)
-        logger.warning(f"Invalid OTP for {verify_request.email}. Attempt {attempts}/3")
+        attempts = await increment_otp_attempts(normalized_email)
+        logger.warning(f"Invalid OTP for {normalized_email}. Attempt {attempts}/3")
 
         remaining = 3 - attempts
         if remaining > 0:
@@ -329,16 +434,14 @@ async def verify_otp(
                 detail="Maximum verification attempts exceeded. Please request a new code.",
             )
 
-    await delete_otp(verify_request.email)
-    logger.info(f"OTP verified successfully for {verify_request.email}")
+    await delete_otp(normalized_email)
+    logger.info(f"OTP verified successfully for {normalized_email}")
 
     # ========================================================================
     # STEP 3: Get User
     # ========================================================================
-    user = db.query(User).filter(User.email == verify_request.email).first()
-
     if not user:
-        logger.error(f"User not found after OTP verification: {verify_request.email}")
+        logger.error(f"User not found after OTP verification: {normalized_email}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     admin_emails = {e.strip().lower() for e in settings.ADMIN_EMAILS.split(",") if e.strip()}
@@ -548,11 +651,26 @@ async def resend_otp(
     await store_otp(resend_request.email, otp)
     logger.info(f"OTP resent for {resend_request.email}")
 
-    await send_otp_email(resend_request.email, otp, user.name)
+    email_sent = await send_otp_email(resend_request.email, otp, user.name)
 
     if settings.ENVIRONMENT == "development":
         logger.info(f"ðŸ” OTP for {resend_request.email}: {otp}")
-        return {"message": "If the email exists, OTP has been sent", "otp": otp}
+        return {
+            "message": (
+                "A new OTP has been sent"
+                if email_sent
+                else "Email service unavailable in development. Use the OTP below."
+            ),
+            "otp": otp,
+            "email_sent": email_sent,
+        }
+
+    if not email_sent:
+        logger.error(f"Failed to resend OTP to {resend_request.email}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Email service temporarily unavailable. Please try again.",
+        )
 
     return {"message": "If the email exists, OTP has been sent"}
 

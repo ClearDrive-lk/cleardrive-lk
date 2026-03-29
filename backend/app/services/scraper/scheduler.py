@@ -5,6 +5,7 @@ CD-23 scraper scheduler with duplicate prevention.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -14,7 +15,7 @@ from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from app.core.cache import cache
 from app.core.database import SessionLocal
@@ -37,9 +38,52 @@ from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
+KNOWN_PLACEHOLDER_IMAGE_HASHES = {
+    "35969b5dc4baac704d55e73ce0c421f0a6817628766d5c85d8adf8f1eb0d8a7d",  # pragma: allowlist secret
+}
+
 
 def _vehicle_bucket_name() -> str:
     return os.getenv("SUPABASE_STORAGE_VEHICLE_BUCKET", "Photos").strip() or "Photos"
+
+
+def _normalize_vehicle_image_source(url: str) -> str | None:
+    normalized = url.strip()
+    if not normalized.startswith(("http://", "https://")):
+        return None
+
+    lower = normalized.lower()
+    if "/vimgs/" not in lower and "/car_images/" not in lower:
+        return None
+
+    if "/vimgs/thumb/" in lower:
+        normalized = normalized.replace("/VIMGS/thumb/", "/VIMGS/images/").replace(
+            "/vimgs/thumb/", "/VIMGS/images/"
+        )
+        filename = normalized.rsplit("/", 1)[-1]
+        if filename.startswith("T"):
+            normalized = normalized.rsplit("/", 1)[0] + "/" + filename[1:]
+    elif "/vimgs/medium/" in lower:
+        normalized = normalized.replace("/VIMGS/medium/", "/VIMGS/images/").replace(
+            "/vimgs/medium/", "/VIMGS/images/"
+        )
+
+    return normalized
+
+
+def _is_known_placeholder_image_content(content: bytes) -> bool:
+    return hashlib.sha256(content).hexdigest() in KNOWN_PLACEHOLDER_IMAGE_HASHES
+
+
+def _extract_vehicle_storage_path(public_url: str, bucket: str) -> str | None:
+    parsed = urlparse(public_url)
+    marker = f"/storage/v1/object/public/{bucket}/"
+    if marker not in parsed.path:
+        return None
+    _, _, path = parsed.path.partition(marker)
+    if not path:
+        return None
+    return unquote(path.lstrip("/"))
 
 
 def _to_int(value: Any) -> int | None:
@@ -408,6 +452,11 @@ class ScraperScheduler:
         return datetime.utcnow().year - keep_years + 1
 
     @staticmethod
+    def _requires_valid_images() -> bool:
+        raw_value = os.getenv("CD23_REQUIRE_VALID_IMAGES", "true").strip().lower()
+        return raw_value not in {"0", "false", "no"}
+
+    @staticmethod
     def _safe_slug(value: str) -> str:
         compact = re.sub(r"[^a-zA-Z0-9]+", "-", value.strip().lower()).strip("-")
         return compact[:80] or "vehicle"
@@ -441,9 +490,10 @@ class ScraperScheduler:
         unique_sources = []
         seen: set[str] = set()
         for src in sources:
-            if src not in seen and src.startswith(("http://", "https://")):
-                seen.add(src)
-                unique_sources.append(src)
+            normalized = _normalize_vehicle_image_source(str(src))
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                unique_sources.append(normalized)
 
         if not unique_sources:
             return []
@@ -466,6 +516,9 @@ class ScraperScheduler:
                 content_type = response.headers.get("Content-Type", "").lower()
                 if content_type and not content_type.startswith("image/"):
                     logger.warning("Skipping non-image URL %s (content-type=%s)", src, content_type)
+                    continue
+                if _is_known_placeholder_image_content(response.content):
+                    logger.info("Skipping known placeholder vehicle image %s", src)
                     continue
 
                 suffix = Path(urlparse(src).path).suffix.lower()
@@ -506,7 +559,7 @@ class ScraperScheduler:
                 return uploaded_urls
             if require_supabase_upload:
                 raise RuntimeError("Supabase upload required but no images were uploaded")
-            # Fallback to remote URLs if upload mode is on but upload failed.
+            # Fallback to validated remote URLs if upload mode is on but upload failed.
             return unique_sources[:3]
 
         if not store_local:
@@ -534,6 +587,9 @@ class ScraperScheduler:
             if content_type and not content_type.startswith("image/"):
                 logger.warning("Skipping non-image URL %s (content-type=%s)", src, content_type)
                 continue
+            if _is_known_placeholder_image_content(response.content):
+                logger.info("Skipping known placeholder vehicle image %s", src)
+                continue
 
             suffix = Path(urlparse(src).path).suffix.lower()
             if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
@@ -546,6 +602,173 @@ class ScraperScheduler:
             )
 
         return local_paths
+
+    def _current_vehicle_storage_paths(self, vehicle: Vehicle) -> set[str]:
+        bucket = _vehicle_bucket_name()
+        candidates: list[str] = []
+
+        if vehicle.image_url:
+            candidates.append(str(vehicle.image_url))
+        if vehicle.gallery_images:
+            try:
+                gallery = json.loads(str(vehicle.gallery_images))
+                if isinstance(gallery, list):
+                    candidates.extend([str(item) for item in gallery if item])
+            except Exception:
+                pass
+
+        paths: set[str] = set()
+        for candidate in candidates:
+            file_path = _extract_vehicle_storage_path(candidate, bucket)
+            if file_path:
+                paths.add(file_path)
+        return paths
+
+    def _delete_vehicle_images(self, vehicle: Vehicle) -> None:
+        bucket = _vehicle_bucket_name()
+        for file_path in self._current_vehicle_storage_paths(vehicle):
+            try:
+                _run_async(storage.delete_file(bucket, file_path))
+            except Exception as exc:
+                logger.warning("Failed to delete stale vehicle image %s: %s", file_path, exc)
+
+        setattr(vehicle, "image_url", None)
+        setattr(vehicle, "gallery_images", None)
+
+    def _replace_vehicle_images(self, vehicle: Vehicle, uploaded_urls: list[str]) -> bool:
+        if not uploaded_urls:
+            return False
+
+        bucket = _vehicle_bucket_name()
+        previous_paths = self._current_vehicle_storage_paths(vehicle)
+        next_paths = {
+            path
+            for path in (_extract_vehicle_storage_path(url, bucket) for url in uploaded_urls)
+            if path
+        }
+
+        stale_paths = previous_paths - next_paths
+        for file_path in stale_paths:
+            try:
+                _run_async(storage.delete_file(bucket, file_path))
+            except Exception as exc:
+                logger.warning("Failed to delete replaced vehicle image %s: %s", file_path, exc)
+
+        setattr(vehicle, "image_url", uploaded_urls[0])
+        setattr(vehicle, "gallery_images", json.dumps(uploaded_urls))
+        setattr(vehicle, "updated_at", datetime.utcnow())
+        return True
+
+    def cleanup_invalid_vehicle_images(self) -> dict[str, int]:
+        stats = {"scanned": 0, "updated": 0, "cleared": 0, "errors": 0}
+        db = SessionLocal()
+        try:
+            vehicles = (
+                db.query(Vehicle)
+                .filter(
+                    Vehicle.vehicle_url.isnot(None),
+                    (Vehicle.image_url.isnot(None) | Vehicle.gallery_images.isnot(None)),
+                )
+                .all()
+            )
+
+            for vehicle in vehicles:
+                stats["scanned"] += 1
+                try:
+                    detail_data = self._live_scraper._scrape_detail_data(str(vehicle.vehicle_url))
+                    valid_remote_images = [
+                        normalized
+                        for normalized in (
+                            _normalize_vehicle_image_source(str(item))
+                            for item in (detail_data.get("images") or [])
+                        )
+                        if normalized
+                    ]
+
+                    if valid_remote_images:
+                        replacement_urls = self._download_and_store_images(
+                            {
+                                "stock_no": vehicle.stock_no,
+                                "make": vehicle.make,
+                                "model": vehicle.model,
+                                "year": vehicle.year,
+                                "image_url": valid_remote_images[0],
+                                "images": valid_remote_images,
+                            }
+                        )
+                        if replacement_urls and self._replace_vehicle_images(
+                            vehicle, replacement_urls
+                        ):
+                            stats["updated"] += 1
+                        continue
+
+                    if vehicle.image_url or vehicle.gallery_images:
+                        self._delete_vehicle_images(vehicle)
+                        setattr(vehicle, "updated_at", datetime.utcnow())
+                        stats["cleared"] += 1
+                except Exception as exc:
+                    stats["errors"] += 1
+                    logger.warning(
+                        "Vehicle image cleanup failed for %s: %s",
+                        vehicle.stock_no,
+                        exc,
+                    )
+
+            db.commit()
+            try:
+                _run_async(cache.clear_pattern("vehicles:*"))
+            except Exception as exc:
+                logger.warning("Failed to clear vehicle cache after image cleanup: %s", exc)
+            return stats
+        except Exception:
+            db.rollback()
+            stats["errors"] += 1
+            logger.exception("Vehicle image cleanup failed")
+            return stats
+        finally:
+            db.close()
+
+    def cleanup_placeholder_vehicles(self) -> dict[str, int]:
+        stats = {"scanned": 0, "deleted": 0, "errors": 0}
+        db = SessionLocal()
+        try:
+            vehicles = (
+                db.query(Vehicle)
+                .filter(Vehicle.vehicle_url.isnot(None))
+                .filter(~exists().where(Order.vehicle_id == Vehicle.id))
+                .filter(
+                    (Vehicle.image_url.is_(None) | (Vehicle.image_url == ""))
+                    & (Vehicle.gallery_images.is_(None) | (Vehicle.gallery_images == ""))
+                )
+                .all()
+            )
+
+            for vehicle in vehicles:
+                stats["scanned"] += 1
+                try:
+                    db.delete(vehicle)
+                    stats["deleted"] += 1
+                except Exception as exc:
+                    stats["errors"] += 1
+                    logger.warning(
+                        "Placeholder vehicle deletion failed for %s: %s",
+                        vehicle.stock_no,
+                        exc,
+                    )
+
+            db.commit()
+            try:
+                _run_async(cache.clear_pattern("vehicles:*"))
+            except Exception as exc:
+                logger.warning("Failed to clear vehicle cache after placeholder cleanup: %s", exc)
+            return stats
+        except Exception:
+            db.rollback()
+            stats["errors"] += 1
+            logger.exception("Placeholder vehicle cleanup failed")
+            return stats
+        finally:
+            db.close()
 
     def scrape_and_import(self) -> dict[str, int]:
         stats = {"scraped": 0, "new": 0, "updated": 0, "skipped": 0, "removed": 0, "errors": 0}
@@ -582,18 +805,25 @@ class ScraperScheduler:
                         stats["skipped"] += 1
                         continue
 
+                    existing = self._find_existing_vehicle(db, row)
+
+                    raw_image_candidates = bool(row.get("image_url")) or bool(row.get("images"))
                     downloaded_images = self._download_and_store_images(row)
                     if downloaded_images:
                         row["images"] = downloaded_images
                         row["image_url"] = downloaded_images[0]
                         row["gallery_images"] = json.dumps(downloaded_images)
                     else:
-                        raw_images = row.get("images")
-                        if isinstance(raw_images, list) and raw_images:
-                            row["gallery_images"] = json.dumps(raw_images)
+                        row["image_url"] = None
+                        row["gallery_images"] = None
+                        row["images"] = []
+                        if existing is None and self._requires_valid_images():
+                            stats["skipped"] += 1
+                            continue
 
-                    existing = self._find_existing_vehicle(db, row)
                     if existing:
+                        if raw_image_candidates and not downloaded_images:
+                            self._delete_vehicle_images(existing)
                         should_update, changed_fields = self._should_update_vehicle(existing, row)
                         if should_update:
                             self._apply_updates(existing, row, changed_fields)

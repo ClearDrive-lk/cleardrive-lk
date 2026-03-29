@@ -12,14 +12,15 @@ import json
 import secrets
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 from urllib.parse import urlencode
+from uuid import UUID
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.redis_client import get_redis
-from app.core.security import decrypt_field
+from app.core.security import constant_time_compare, decrypt_field, generate_otp
 from app.modules.auth.models import User
 from app.modules.kyc.models import KYCDocument, KYCStatus
 from app.modules.orders.models import Order, OrderStatus
@@ -28,8 +29,13 @@ from app.modules.payments.models import Payment, PaymentStatus
 from app.modules.payments.schemas import (
     PaymentInitiate,
     PaymentInitiateResponse,
+    PaymentOTPRequest,
+    PaymentOTPRequestResponse,
+    PaymentOTPVerify,
+    PaymentOTPVerifyResponse,
     PaymentResponse,
 )
+from app.services.email import send_otp_email
 from app.services.orders.status_history import status_history_service
 from app.services.payment_notifications import (
     send_payment_confirmation_email,
@@ -52,6 +58,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 LOG_DIVIDER = "=" * 70
+PAYMENT_OTP_TTL_SECONDS = settings.OTP_EXPIRY_MINUTES * 60
 
 
 # ===================================================================
@@ -197,6 +204,176 @@ def _ensure_kyc_approved(db: Session, current_user: User) -> None:
         )
 
 
+def _get_payment_otp_key(user_id: UUID, order_id: UUID) -> str:
+    return f"payment_otp:{user_id}:{order_id}"
+
+
+def _get_payment_otp_verified_key(user_id: UUID, order_id: UUID) -> str:
+    return f"payment_otp_verified:{user_id}:{order_id}"
+
+
+def _ensure_order_payable(order: Order, current_user: User, db: Session) -> None:
+    if order.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You can only pay for your own orders"
+        )
+
+    if order.status != OrderStatus.CREATED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Order status is {order.status}, payment not allowed",
+        )
+
+    existing_completed = (
+        db.query(Payment)
+        .filter(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED.value)
+        .first()
+    )
+    if existing_completed:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
+
+    _validate_payhere_payment_amount(order)
+
+
+def _get_order_for_payment(db: Session, order_id: UUID, current_user: User) -> Order:
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {order_id} not found"
+        )
+
+    _ensure_order_payable(order, current_user, db)
+    return order
+
+
+async def _store_payment_otp(redis, user_id: UUID, order_id: UUID, otp: str) -> None:
+    payload = json.dumps({"otp": otp, "attempts": 0, "created_at": datetime.utcnow().isoformat()})
+    await redis.setex(_get_payment_otp_key(user_id, order_id), PAYMENT_OTP_TTL_SECONDS, payload)
+
+
+async def _get_payment_otp(redis, user_id: UUID, order_id: UUID) -> dict[str, Any] | None:
+    payload = await redis.get(_get_payment_otp_key(user_id, order_id))
+    if not payload:
+        return None
+    loaded = json.loads(payload)
+    if not isinstance(loaded, dict):
+        return None
+    return cast(dict[str, Any], loaded)
+
+
+async def _delete_payment_otp(redis, user_id: UUID, order_id: UUID) -> None:
+    await redis.delete(_get_payment_otp_key(user_id, order_id))
+
+
+async def _increment_payment_otp_attempts(redis, user_id: UUID, order_id: UUID) -> int:
+    otp_data = await _get_payment_otp(redis, user_id, order_id)
+    if not otp_data:
+        return 0
+
+    otp_data["attempts"] = int(otp_data.get("attempts", 0)) + 1
+    if otp_data["attempts"] >= settings.OTP_MAX_ATTEMPTS:
+        await _delete_payment_otp(redis, user_id, order_id)
+        return int(otp_data["attempts"])
+
+    await redis.setex(
+        _get_payment_otp_key(user_id, order_id),
+        PAYMENT_OTP_TTL_SECONDS,
+        json.dumps(otp_data),
+    )
+    return int(otp_data["attempts"])
+
+
+async def _mark_payment_otp_verified(redis, user_id: UUID, order_id: UUID) -> None:
+    await redis.setex(
+        _get_payment_otp_verified_key(user_id, order_id), PAYMENT_OTP_TTL_SECONDS, "1"
+    )
+
+
+async def _clear_payment_otp_verified(redis, user_id: UUID, order_id: UUID) -> None:
+    await redis.delete(_get_payment_otp_verified_key(user_id, order_id))
+
+
+async def _is_payment_otp_verified(redis, user_id: UUID, order_id: UUID) -> bool:
+    return bool(await redis.get(_get_payment_otp_verified_key(user_id, order_id)))
+
+
+@router.post("/request-otp", response_model=PaymentOTPRequestResponse)
+async def request_payment_otp(
+    request_data: PaymentOTPRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Send a one-time payment verification code before PayHere checkout."""
+
+    _ensure_kyc_approved(db, current_user)
+    _get_order_for_payment(db, request_data.order_id, current_user)
+
+    redis = await get_redis()
+    await _clear_payment_otp_verified(redis, current_user.id, request_data.order_id)
+
+    otp = generate_otp()
+    await _store_payment_otp(redis, current_user.id, request_data.order_id, otp)
+
+    email_sent = await send_otp_email(current_user.email, otp, current_user.name)
+    if not email_sent:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Failed to send payment OTP. Please try again.",
+        )
+
+    response = PaymentOTPRequestResponse(
+        message="Payment OTP sent to your email.",
+        expires_in_seconds=PAYMENT_OTP_TTL_SECONDS,
+    )
+    if settings.ENVIRONMENT == "development":
+        response.otp = otp
+    return response
+
+
+@router.post("/verify-otp", response_model=PaymentOTPVerifyResponse)
+async def verify_payment_otp(
+    request_data: PaymentOTPVerify,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Verify a one-time payment code and unlock PayHere initiation."""
+
+    _ensure_kyc_approved(db, current_user)
+    _get_order_for_payment(db, request_data.order_id, current_user)
+    redis = await get_redis()
+
+    otp_data = await _get_payment_otp(redis, current_user.id, request_data.order_id)
+    if not otp_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment OTP expired or not found. Please request a new code.",
+        )
+
+    if int(otp_data.get("attempts", 0)) >= settings.OTP_MAX_ATTEMPTS:
+        await _delete_payment_otp(redis, current_user.id, request_data.order_id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum payment OTP attempts exceeded. Please request a new code.",
+        )
+
+    stored_otp = str(otp_data.get("otp") or "")
+    if not constant_time_compare(stored_otp, request_data.otp):
+        attempts = await _increment_payment_otp_attempts(
+            redis, current_user.id, request_data.order_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid payment OTP. Attempt {attempts}/{settings.OTP_MAX_ATTEMPTS}.",
+        )
+
+    await _delete_payment_otp(redis, current_user.id, request_data.order_id)
+    await _mark_payment_otp_verified(redis, current_user.id, request_data.order_id)
+    return PaymentOTPVerifyResponse(
+        verified=True,
+        message="Payment OTP verified. You can continue to PayHere.",
+    )
+
+
 # ===================================================================
 # ENDPOINT: INITIATE PAYMENT
 # ===================================================================
@@ -290,45 +467,18 @@ async def initiate_payment(
         await redis.delete(lock_key)
         return response
 
+    if not await _is_payment_otp_verified(redis, current_user.id, payment_data.order_id):
+        await redis.delete(lock_key)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Payment OTP verification required before initiating payment.",
+        )
+
     # ===============================================================
     # STEP 1: VERIFY ORDER
     # ===============================================================
-    order = db.query(Order).filter(Order.id == payment_data.order_id).first()
-
-    if not order:
-        await redis.delete(lock_key)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Order {payment_data.order_id} not found"
-        )
-
-    # Check ownership
-    if order.user_id != current_user.id:
-        await redis.delete(lock_key)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="You can only pay for your own orders"
-        )
-
-    # Check order status
-    if order.status != OrderStatus.CREATED:
-        await redis.delete(lock_key)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Order status is {order.status}, payment not allowed",
-        )
-
-    # Check if already paid
-    existing_completed = (
-        db.query(Payment)
-        .filter(Payment.order_id == order.id, Payment.status == PaymentStatus.COMPLETED.value)
-        .first()
-    )
-
-    if existing_completed:
-        await redis.delete(lock_key)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Order already paid")
-
+    order = _get_order_for_payment(db, payment_data.order_id, current_user)
     print(f"Order verified: {order.id}")
-    _validate_payhere_payment_amount(order)
 
     # ===============================================================
     # STEP 2: CREATE PAYMENT RECORD
@@ -368,6 +518,7 @@ async def initiate_payment(
         return response
 
     print(f"Payment created: {payment.id}")
+    await _clear_payment_otp_verified(redis, current_user.id, payment_data.order_id)
 
     # ===============================================================
     # STEP 3: GENERATE PAYHERE URL

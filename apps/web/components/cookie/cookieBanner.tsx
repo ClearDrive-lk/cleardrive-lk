@@ -8,14 +8,14 @@
  * Story: CD-101 - Cookie Consent Banner
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
-  hasConsented,
   acceptAll,
-  rejectNonEssential,
   getStoredConsent,
+  hasConsented,
+  rejectNonEssential,
 } from "@/lib/cookies/utils";
 import { CookieConsent } from "@/lib/cookies/types";
 import { getSriAttributes } from "@/lib/sri";
@@ -27,14 +27,10 @@ interface CookieBannerProps {
 export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
   const [visible, setVisible] = useState(false);
 
-  // ===============================================================
-  // LOAD ANALYTICS IF ACCEPTED (CD-101.4)
-  // ===============================================================
   const loadAnalytics = () => {
     const gaId = process.env.NEXT_PUBLIC_GA_ID;
     if (typeof window === "undefined" || !gaId) return;
 
-    // Prevent duplicate script injection on repeated renders/navigation.
     if (document.getElementById("ga-script")) {
       window.gtag?.("config", gaId);
       return;
@@ -62,9 +58,6 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     document.head.appendChild(script);
   };
 
-  // ===============================================================
-  // SHOW BANNER ONLY IF USER HASN'T CONSENTED YET
-  // ===============================================================
   useEffect(() => {
     const syncAnalyticsFromConsent = () => {
       const consent = getStoredConsent();
@@ -73,14 +66,12 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
       }
     };
 
-    // Returning users with analytics consent should initialize tracking automatically.
     syncAnalyticsFromConsent();
     window.addEventListener(
       "cleardrive:cookie-consent-updated",
       syncAnalyticsFromConsent,
     );
 
-    // Small delay so banner doesn't flash on page load
     const timer = setTimeout(() => {
       if (!hasConsented()) {
         setVisible(true);
@@ -96,13 +87,10 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     };
   }, []);
 
-  // ===============================================================
-  // HANDLE ACCEPT ALL (CD-101.2)
-  // ===============================================================
   const handleAcceptAll = () => {
-    acceptAll(); // Save to localStorage (CD-101.3)
+    acceptAll();
     setVisible(false);
-    loadAnalytics(); // Load analytics (CD-101.4)
+    loadAnalytics();
 
     const consent = getStoredConsent();
     if (consent && onConsentChange) {
@@ -110,13 +98,9 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     }
   };
 
-  // ===============================================================
-  // HANDLE REJECT NON-ESSENTIAL (CD-101.2)
-  // ===============================================================
   const handleRejectNonEssential = () => {
-    rejectNonEssential(); // Save to localStorage (CD-101.3)
+    rejectNonEssential();
     setVisible(false);
-    // Analytics NOT loaded
 
     const consent = getStoredConsent();
     if (consent && onConsentChange) {
@@ -124,54 +108,37 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
     }
   };
 
-  // Don't render if user already consented
   if (!visible) return null;
 
   return (
     <>
-      {/* ============================================================
-          BACKDROP (subtle overlay)
-          ============================================================ */}
-      <div className="fixed inset-0 bg-[#c6c5b9]/40 z-40 pointer-events-none" />
+      <div className="fixed inset-0 z-40 pointer-events-none bg-[#c6c5b9]/35 backdrop-blur-[2px] dark:bg-[#0f1417]/55" />
 
-      {/* ============================================================
-          COOKIE BANNER
-          ============================================================ */}
       <div
-        className="
-          fixed bottom-0 left-0 right-0 z-50
-          bg-[#fdfdff] border-t-2 border-gray-200
-          shadow-2xl
-          animate-in slide-in-from-bottom
-          duration-300
-        "
+        className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 animate-in slide-in-from-bottom duration-300 sm:px-4 sm:pb-4"
         role="dialog"
         aria-label="Cookie consent"
         aria-modal="false"
       >
-        <div className="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* Cookie Icon + Text */}
-            <div className="flex items-start gap-3 flex-1">
-              <span
-                className="text-3xl flex-shrink-0 mt-0.5"
-                aria-hidden="true"
-              >
-                {"\u{1F36A}"}
-              </span>
+        <div className="mx-auto max-w-6xl rounded-[1.6rem] border border-[#546a7b]/50 bg-[#fdfdff]/95 px-4 py-4 shadow-[0_22px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:px-6 sm:py-5 dark:border-[#8fa3b1]/28 dark:bg-[#162028]/94 dark:shadow-[0_24px_70px_rgba(0,0,0,0.4)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div className="flex flex-1 items-start gap-3">
+              <div className="mt-0.5 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-[#62929e]/30 bg-[#62929e]/10 text-xl shadow-sm dark:border-[#88d6e4]/25 dark:bg-[#88d6e4]/10">
+                <span aria-hidden="true">{"\u{1F36A}"}</span>
+              </div>
 
               <div>
-                <h2 className="text-base font-semibold text-gray-900">
+                <h2 className="text-base font-semibold text-[#393d3f] dark:text-[#edf2f7]">
                   We use cookies
                 </h2>
-                <p className="text-sm text-[#393d3f] mt-0.5 leading-relaxed">
+                <p className="mt-0.5 text-sm leading-relaxed text-[#546a7b] dark:text-[#bdcad4]">
                   We use cookies to improve your experience, analyse traffic,
                   and show relevant content. Essential cookies are always
                   active.{" "}
                   <Link
                     href="/api/v1/gdpr/cookie-policy"
                     target="_blank"
-                    className="text-blue-600 underline hover:text-blue-800"
+                    className="text-[#62929e] underline decoration-[#62929e]/45 underline-offset-4 hover:text-[#4f7d87] dark:text-[#88d6e4] dark:hover:text-[#b8ebf3]"
                   >
                     Cookie Policy
                   </Link>
@@ -179,7 +146,7 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
                   <Link
                     href="/api/v1/gdpr/privacy-policy"
                     target="_blank"
-                    className="text-blue-600 underline hover:text-blue-800"
+                    className="text-[#62929e] underline decoration-[#62929e]/45 underline-offset-4 hover:text-[#4f7d87] dark:text-[#88d6e4] dark:hover:text-[#b8ebf3]"
                   >
                     Privacy Policy
                   </Link>
@@ -187,13 +154,11 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto flex-shrink-0">
+            <div className="grid w-full flex-shrink-0 grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto lg:min-w-[24rem]">
               <Button
                 variant="outline"
-                size="sm"
                 onClick={handleRejectNonEssential}
-                className="text-sm border-gray-300 hover:border-gray-400 whitespace-nowrap"
+                className="h-10 border-[#546a7b]/35 bg-transparent text-sm text-[#393d3f] hover:border-[#546a7b]/55 hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/30 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
               >
                 Reject Non-Essential
               </Button>
@@ -201,17 +166,15 @@ export default function CookieBanner({ onConsentChange }: CookieBannerProps) {
               <Link href="/cookie-preferences">
                 <Button
                   variant="outline"
-                  size="sm"
-                  className="text-sm border-gray-300 hover:border-gray-400 w-full whitespace-nowrap"
+                  className="h-10 w-full border-[#546a7b]/35 bg-transparent text-sm text-[#393d3f] hover:border-[#546a7b]/55 hover:bg-[#c6c5b9]/20 dark:border-[#8fa3b1]/30 dark:text-[#edf2f7] dark:hover:bg-[#22313c]"
                 >
                   Customize
                 </Button>
               </Link>
 
               <Button
-                size="sm"
                 onClick={handleAcceptAll}
-                className="text-sm bg-blue-600 hover:bg-blue-700 text-[#393d3f] whitespace-nowrap"
+                className="h-10 bg-[#62929e] text-sm text-[#fdfdff] hover:bg-[#4f7d87]"
               >
                 Accept All
               </Button>

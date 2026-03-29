@@ -498,7 +498,22 @@ class AuctionSiteScraper:
         for img in node.select("img[src], img[data-src]"):
             src = img.get("src") or img.get("data-src")
             if src:
-                urls.append(urljoin(base_url, src))
+                full = urljoin(base_url, src)
+                lower = full.lower()
+                if "/vimgs/" not in lower and "/car_images/" not in lower:
+                    continue
+                if "/vimgs/thumb/" in lower:
+                    full = full.replace("/VIMGS/thumb/", "/VIMGS/images/").replace(
+                        "/vimgs/thumb/", "/VIMGS/images/"
+                    )
+                    filename = full.rsplit("/", 1)[-1]
+                    if filename.startswith("T"):
+                        full = full.rsplit("/", 1)[0] + "/" + filename[1:]
+                elif "/vimgs/medium/" in lower:
+                    full = full.replace("/VIMGS/medium/", "/VIMGS/images/").replace(
+                        "/vimgs/medium/", "/VIMGS/images/"
+                    )
+                urls.append(full)
         return urls[:5]
 
     @staticmethod

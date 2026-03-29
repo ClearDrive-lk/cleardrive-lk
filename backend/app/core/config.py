@@ -127,8 +127,15 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",  # Next.js dev
         "http://localhost:19006",  # Expo dev
+        "https://cleardrive.lk",
+        "https://www.cleardrive.lk",
+        "https://api.cleardrive.lk",
+        "https://cleardrive-lk.onrender.com",
+        "https://cleardrive-lk-staging.onrender.com",
     ]
-    BACKEND_CORS_ORIGIN_REGEX: str | None = None
+    BACKEND_CORS_ORIGIN_REGEX: str | None = (
+        r"https://([a-z0-9-]+\.)?cleardrive\.lk" r"|https://cleardrive-lk(-staging)?\.onrender\.com"
+    )
     BACKEND_ALLOWED_HOSTS: list[str] = [
         "localhost",
         "127.0.0.1",

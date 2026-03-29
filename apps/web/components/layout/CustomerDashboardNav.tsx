@@ -16,7 +16,7 @@ import {
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
 import { useLogout } from "@/lib/hooks/useLogout";
 import { useAppSelector } from "@/lib/store/store";
-import { normalizeRole } from "@/lib/roles";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
 import { LogOut, Menu } from "lucide-react";
 
 type NavItem = {
@@ -49,6 +49,7 @@ export default function CustomerDashboardNav() {
   const { user } = useAppSelector((state) => state.auth);
   const role = normalizeRole(user?.role);
   const isStaff = role === "EXPORTER" || role === "ADMIN";
+  const homePath = roleHomePath(role);
   const { logout, isLoading } = useLogout();
   const navItems = isStaff
     ? [
@@ -62,7 +63,7 @@ export default function CustomerDashboardNav() {
     <nav className="border-b border-[#546a7b]/45 dark:border-[#8fa3b1]/35 bg-[#fdfdff]/80 dark:bg-[#10191e]/80 backdrop-blur-md sticky top-0 z-50">
       <div className="cd-container flex min-h-16 items-center justify-between py-2">
         <Link
-          href="/"
+          href={homePath}
           className="font-bold text-xl tracking-tighter flex items-center gap-2 group text-[#1f2937] dark:text-[#edf2f7]"
         >
           <BrandMark className="h-10 w-10 transition-transform group-hover:scale-105 sm:h-12 sm:w-12" />

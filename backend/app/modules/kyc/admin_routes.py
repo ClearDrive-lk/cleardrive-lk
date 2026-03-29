@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from urllib.parse import urlparse
 
 from app.core.database import get_db
@@ -36,6 +36,18 @@ def _stringify(value: object | None) -> str | None:
 
 def _normalize(value: object | None) -> str:
     return (_stringify(value) or "").casefold()
+
+
+def _normalize_date_like(value: object | None) -> str | None:
+    raw = _stringify(value)
+    if not raw:
+        return None
+
+    candidate = raw.replace("/", "-")
+    try:
+        return date.fromisoformat(candidate).isoformat()
+    except ValueError:
+        return None
 
 
 def _merged_extracted_data(kyc: KYCDocument) -> dict[str, object]:
@@ -83,11 +95,17 @@ def _comparison_rows(kyc: KYCDocument) -> list[KYCAdminComparisonField]:
     for field_name, label in fields:
         extracted_value = _stringify(extracted.get(field_name))
         user_value = user_data.get(field_name)
-        matches = (
-            not extracted_value
-            or not user_value
-            or _normalize(extracted_value) == _normalize(user_value)
+        normalized_extracted = (
+            _normalize_date_like(extracted_value)
+            if field_name == "date_of_birth"
+            else _normalize(extracted_value)
         )
+        normalized_user = (
+            _normalize_date_like(user_value)
+            if field_name == "date_of_birth"
+            else _normalize(user_value)
+        )
+        matches = not extracted_value or not user_value or normalized_extracted == normalized_user
         rows.append(
             KYCAdminComparisonField(
                 label=label,

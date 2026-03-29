@@ -191,3 +191,28 @@ def test_upload_kyc_reuses_existing_file_integrity_rows_on_resubmission(
 
     assert response.status_code == 200
     assert db.query(FileIntegrity).count() == 3
+
+
+def test_kyc_status_treats_rejected_submission_as_resubmittable(
+    client, db, auth_headers, test_user
+):
+    rejected = KYCDocument(
+        user_id=test_user.id,
+        nic_number="old-nic",
+        full_name="Old Name",
+        nic_front_url="https://example.com/old-front.jpg",
+        nic_back_url="https://example.com/old-back.jpg",
+        selfie_url="https://example.com/old-selfie.jpg",
+        status=KYCStatus.REJECTED,
+        rejection_reason="NIC images are blurry and unreadable",
+    )
+    db.add(rejected)
+    db.commit()
+
+    response = client.get("/api/v1/kyc/status", headers=auth_headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["has_kyc"] is False
+    assert payload["status"] == KYCStatus.REJECTED.value
+    assert payload["rejection_reason"] == "NIC images are blurry and unreadable"

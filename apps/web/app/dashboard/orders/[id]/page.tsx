@@ -322,6 +322,7 @@ export default function OrderDetailPage() {
                               src={vehicle.imageUrl}
                               alt={`${vehicle.make} ${vehicle.model}`}
                               fill
+                              sizes="112px"
                               className="object-cover"
                             />
                           ) : (

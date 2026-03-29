@@ -206,3 +206,64 @@ async def test_impossible_travel_creates_security_event(async_client, db, mocker
         assert event is not None
     finally:
         await delete_otp(email)
+
+
+@pytest.mark.asyncio
+async def test_admin_verify_otp_bypasses_rate_limit(async_client, db, mocker):
+    mocked_rate_limit = mocker.patch(
+        "app.modules.auth.routes.check_otp_rate_limit",
+        return_value=False,
+        new_callable=AsyncMock,
+    )
+
+    email = "admin-otp@example.com"
+    user = User(email=email, name="Admin OTP", role=Role.ADMIN)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    otp = "123456"
+    await store_otp(email, otp)
+
+    try:
+        response = await async_client.post(
+            "/api/v1/auth/verify-otp", json={"email": email, "otp": otp}
+        )
+        assert response.status_code == 200
+        mocked_rate_limit.assert_not_awaited()
+    finally:
+        await delete_otp(email)
+
+
+@pytest.mark.asyncio
+async def test_google_auth_requires_otp_even_if_email_fails(async_client, db, mocker):
+    mocker.patch(
+        "app.modules.auth.routes.verify_google_token_v2",
+        return_value={
+            "email": "google-otp@example.com",
+            "sub": "google-sub-123",
+            "name": "Google OTP",
+            "email_verified": True,
+        },
+    )
+    mocker.patch(
+        "app.modules.auth.routes.store_otp",
+        new_callable=AsyncMock,
+    )
+    mocker.patch(
+        "app.modules.auth.routes.send_otp_email",
+        return_value=False,
+        new_callable=AsyncMock,
+    )
+    issue_tokens = mocker.patch(
+        "app.modules.auth.routes._issue_auth_tokens_for_user",
+        new_callable=AsyncMock,
+    )
+
+    response = await async_client.post(
+        "/api/v1/auth/google", json={"id_token": "fake-google-token"}
+    )
+
+    assert response.status_code == 503
+    assert "requires otp verification" in response.json()["detail"].lower()
+    issue_tokens.assert_not_awaited()

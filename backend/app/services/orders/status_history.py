@@ -88,7 +88,30 @@ class OrderStatusHistoryService:
             .all()
         )
 
-        return history
+        if len(history) <= 1:
+            return history
+
+        remaining = list(history)
+        timeline: list[OrderStatusHistory] = []
+
+        current = next((entry for entry in remaining if entry.from_status is None), remaining[0])
+        timeline.append(current)
+        remaining.remove(current)
+
+        while remaining:
+            next_entry = next(
+                (entry for entry in remaining if entry.from_status == timeline[-1].to_status),
+                None,
+            )
+
+            if next_entry is None:
+                timeline.extend(remaining)
+                break
+
+            timeline.append(next_entry)
+            remaining.remove(next_entry)
+
+        return timeline
 
 
 # Global instance

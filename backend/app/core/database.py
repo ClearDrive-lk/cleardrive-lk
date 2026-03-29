@@ -22,7 +22,18 @@ if db_url.startswith("postgres://"):
 url = make_url(db_url)
 host = (url.host or "").lower()
 is_sqlite = url.drivername.startswith("sqlite")
-is_supabase = "supabase.co" in host
+
+
+def _is_supabase_managed_host(hostname: str) -> bool:
+    normalized = hostname.strip().lower()
+    if not normalized:
+        return False
+    return any(
+        marker in normalized for marker in ("supabase.co", "supabase.com", "pooler.supabase")
+    )
+
+
+is_supabase = _is_supabase_managed_host(host)
 
 # Avoid psycopg2's hstore on-connect probe against Supabase/pooler connections.
 if is_supabase and url.drivername in {"postgresql", "postgresql+psycopg2"}:
@@ -46,10 +57,13 @@ elif not is_sqlite:
     )
 
 # Create engine
+create_engine_kwargs = dict(engine_kwargs)
+if not is_sqlite:
+    create_engine_kwargs["use_native_hstore"] = False
+
 engine = create_engine(
     url,
-    use_native_hstore=False,
-    **engine_kwargs,
+    **create_engine_kwargs,
 )
 
 # Create session factory

@@ -106,6 +106,37 @@ def test_get_kyc_detail_includes_comparison_rows(client, db, admin_headers, test
     assert any(row["matches"] is False for row in payload["comparison_rows"])
 
 
+def test_get_kyc_detail_treats_equivalent_date_formats_as_match(
+    client, db, admin_headers, test_user
+):
+    kyc = _create_kyc_document(
+        db,
+        test_user,
+        extracted_data={
+            "front": {
+                "nic_number": "200012345678",
+                "full_name": "Test User",
+                "date_of_birth": "2005/09/21",
+            },
+            "back": {"address": "No 1, Galle Road, Colombo", "gender": "M"},
+            "extraction_method": "vps_ollama",
+        },
+    )
+    kyc.user_provided_data = {
+        **(kyc.user_provided_data or {}),
+        "date_of_birth": "2005-09-21",
+    }
+    db.commit()
+
+    response = client.get(f"/api/v1/admin/kyc/{kyc.id}", headers=admin_headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    dob_row = next(row for row in payload["comparison_rows"] if row["label"] == "Date of Birth")
+    assert dob_row["matches"] is True
+    assert payload["discrepancies"]["date_of_birth"] is False
+
+
 def test_extract_manual_kyc_data_updates_payload_and_status(client, db, admin_headers, test_user):
     kyc = _create_kyc_document(
         db,

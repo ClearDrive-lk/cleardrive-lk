@@ -66,30 +66,26 @@ export default function DashboardKycPage() {
       setLoading(true);
       setError(null);
       try {
-        const [statusResponse, documentsResponse] = await Promise.allSettled([
-          apiClient.get<KycStatusResponse>("/kyc/status"),
-          apiClient.get<KycUploadResponse>("/kyc/my-documents"),
-        ]);
+        const statusResponse =
+          await apiClient.get<KycStatusResponse>("/kyc/status");
+        setStatus(statusResponse.data);
 
-        if (statusResponse.status === "fulfilled") {
-          setStatus(statusResponse.value.data);
-        }
-
-        if (documentsResponse.status === "fulfilled") {
-          setDocuments(documentsResponse.value.data);
+        if (statusResponse.data.has_kyc) {
+          const documentsResponse =
+            await apiClient.get<KycUploadResponse>("/kyc/my-documents");
+          setDocuments(documentsResponse.data);
           setForm({
             nic_number:
-              documentsResponse.value.data.user_provided_data?.nic_number ?? "",
+              documentsResponse.data.user_provided_data?.nic_number ?? "",
             full_name:
-              documentsResponse.value.data.user_provided_data?.full_name ?? "",
+              documentsResponse.data.user_provided_data?.full_name ?? "",
             date_of_birth:
-              documentsResponse.value.data.user_provided_data?.date_of_birth ??
-              "",
-            address:
-              documentsResponse.value.data.user_provided_data?.address ?? "",
-            gender:
-              documentsResponse.value.data.user_provided_data?.gender ?? "",
+              documentsResponse.data.user_provided_data?.date_of_birth ?? "",
+            address: documentsResponse.data.user_provided_data?.address ?? "",
+            gender: documentsResponse.data.user_provided_data?.gender ?? "",
           });
+        } else {
+          setDocuments(null);
         }
       } catch {
         setError("Failed to load your KYC data.");

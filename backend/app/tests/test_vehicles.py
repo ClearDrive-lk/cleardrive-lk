@@ -19,6 +19,7 @@ from app.models.gazette import (
     TaxVehicleType,
 )
 from app.models.tax_rule_catalog import GlobalTaxParameter, HSCodeMatrixRule
+from app.modules.orders.models import Order, OrderStatus, PaymentStatus
 from app.modules.vehicles.cost_calculator import calculate_platform_fee
 from app.modules.vehicles.models import (
     Drive,
@@ -31,6 +32,7 @@ from app.modules.vehicles.models import (
 )
 from app.services.scraper.auction_scraper import AuctionSiteScraper
 from app.services.scraper.scheduler import ScraperScheduler, _normalize_row_enums
+from bs4 import BeautifulSoup
 
 
 @pytest.fixture(autouse=True)
@@ -1069,6 +1071,177 @@ def test_calculate_cost_uses_approved_catalog_rules(client, db, admin_headers, a
     assert float(data["com_exm_sel_lkr"]) == 1750.0
 
 
+def test_vehicle_cost_matches_public_calculator_for_hybrid_catalog_rules(
+    client, db, admin_headers, admin_user
+):
+    global_gazette = Gazette(
+        gazette_no="CATALOG/GLOBAL/MATCH/2026",
+        effective_date=date(2026, 4, 1),
+        raw_extracted={
+            "source": "CATALOG_GLOBAL_TAX_PARAMETERS",
+            "dataset": "global_tax_parameters",
+            "effective_date": "2026-04-01",
+            "catalog_rows": [
+                {
+                    "parameter_group": "CUSTOMS_RULE",
+                    "parameter_name": "SURCHARGE_RATE",
+                    "condition_or_type": "BRAND_NEW",
+                    "value": 50,
+                    "unit": "%",
+                    "calculation_order": 2,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "CUSTOMS_RULE",
+                    "parameter_name": "STATUTORY_UPLIFT_BASE",
+                    "condition_or_type": "ALL",
+                    "value": 10,
+                    "unit": "%",
+                    "calculation_order": 1,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "GENERAL_TAX",
+                    "parameter_name": "VAT",
+                    "condition_or_type": "STANDARD_RATE",
+                    "value": 18,
+                    "unit": "%",
+                    "calculation_order": 8,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "FIXED_FEES",
+                    "parameter_name": "VEL",
+                    "condition_or_type": "PER_UNIT",
+                    "value": 15000,
+                    "unit": "LKR",
+                    "calculation_order": 10,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "FIXED_FEES",
+                    "parameter_name": "COM_EXM_SEL",
+                    "condition_or_type": "PER_UNIT",
+                    "value": 1750,
+                    "unit": "LKR",
+                    "calculation_order": 11,
+                    "applicability_flag": "ALL",
+                },
+                {
+                    "parameter_group": "LUXURY_TAX",
+                    "parameter_name": "THRESHOLD_HYBRID_PETROL",
+                    "condition_or_type": "HYBRID",
+                    "value": 5500000,
+                    "unit": "LKR",
+                    "calculation_order": 9,
+                    "applicability_flag": "PASSENGER_ONLY",
+                },
+                {
+                    "parameter_group": "LUXURY_TAX",
+                    "parameter_name": "RATE_HYBRID_PETROL",
+                    "condition_or_type": "ON_EXCESS_VALUE",
+                    "value": 80,
+                    "unit": "%",
+                    "calculation_order": 9,
+                    "applicability_flag": "PASSENGER_ONLY",
+                },
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    hs_gazette = Gazette(
+        gazette_no="CATALOG/HS/MATCH/2026",
+        effective_date=date(2026, 4, 1),
+        raw_extracted={
+            "source": "CATALOG_HS_CODE_MATRIX",
+            "dataset": "hs_code_matrix",
+            "effective_date": "2026-04-01",
+            "catalog_rows": [
+                {
+                    "vehicle_type": "HYBRID",
+                    "fuel_type": "PETROL",
+                    "age_condition": "<=1",
+                    "hs_code": "8703.40.35",
+                    "capacity_min": 0,
+                    "capacity_max": 1500,
+                    "capacity_unit": "CC",
+                    "cid_pct": 20,
+                    "pal_pct": 0,
+                    "cess_pct": 0,
+                    "excise_unit_rate_lkr": 2750,
+                    "min_excise_flat_rate_lkr": 0,
+                }
+            ],
+        },
+        status="PENDING",
+        uploaded_by=admin_user.id,
+    )
+    db.add_all([global_gazette, hs_gazette])
+    db.commit()
+    db.refresh(global_gazette)
+    db.refresh(hs_gazette)
+
+    assert (
+        client.post(
+            f"/api/v1/gazette/{global_gazette.id}/approve", headers=admin_headers
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(f"/api/v1/gazette/{hs_gazette.id}/approve", headers=admin_headers).status_code
+        == 200
+    )
+
+    vehicle = Vehicle(
+        stock_no="TEST-CATALOG-HYBRID-MATCH",
+        make="Honda",
+        model="Vezel",
+        year=date.today().year,
+        price_jpy=3660000,
+        engine_cc=1200,
+        vehicle_type=VehicleType.SUV,
+        fuel_type=FuelType.HYBRID,
+        transmission=Transmission.AUTOMATIC,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    vehicle_cost_response = client.get(f"/api/v1/vehicles/{vehicle.id}/cost")
+    assert vehicle_cost_response.status_code == 200
+    vehicle_cost = vehicle_cost_response.json()
+
+    public_calc_response = client.post(
+        "/api/v1/calculate/tax",
+        json={
+            "vehicle_type": "SUV",
+            "fuel_type": "HYBRID",
+            "engine_cc": 1200,
+            "power_kw": None,
+            "vehicle_age_years": 0,
+            "vehicle_condition": "BRAND_NEW",
+            "import_date": str(date.today()),
+            "catalog_vehicle_type": "SUV",
+            "catalog_fuel_type": "Gasoline/hybrid",
+            "cif_value": float(vehicle_cost["vehicle_price_lkr"])
+            + float(vehicle_cost["shipping_cost_lkr"]),
+        },
+    )
+    assert public_calc_response.status_code == 200
+    public_calc = public_calc_response.json()
+
+    assert vehicle_cost["hs_code"] == public_calc["rule_used"]["hs_code"]
+    assert float(vehicle_cost["customs_duty_lkr"]) == public_calc["customs_duty"]
+    assert float(vehicle_cost["surcharge_lkr"]) == public_calc["surcharge"]
+    assert float(vehicle_cost["excise_duty_lkr"]) == public_calc["excise_duty"]
+    assert float(vehicle_cost["luxury_tax_lkr"]) == public_calc["luxury_tax"]
+    assert float(vehicle_cost["vat_lkr"]) == public_calc["vat"]
+    assert float(vehicle_cost["vel_lkr"]) == public_calc["vel"]
+    assert float(vehicle_cost["com_exm_sel_lkr"]) == public_calc["com_exm_sel"]
+
+
 def test_calculate_cost_uses_specific_electric_rule(client, db, admin_headers, admin_user):
     gazette = Gazette(
         gazette_no="2025/ELECTRIC-COST",
@@ -1234,6 +1407,50 @@ def test_scrape_now_admin_endpoint(client, admin_headers, mocker):
     assert response.status_code == 202
     assert response.json()["status"] == "processing"
     run_now.assert_called_once()
+
+
+def test_cleanup_images_admin_endpoint(client, admin_headers, mocker):
+    cleanup = mocker.patch(
+        "app.services.scraper.scheduler.scraper_scheduler.cleanup_invalid_vehicle_images"
+    )
+
+    class ImmediateThread:
+        def __init__(self, target, daemon=None):
+            self.target = target
+            self.daemon = daemon
+
+        def start(self):
+            self.target()
+
+    mocker.patch("app.modules.vehicles.routes.threading.Thread", ImmediateThread)
+
+    response = client.post("/api/v1/vehicles/cleanup-images", headers=admin_headers)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+    cleanup.assert_called_once()
+
+
+def test_cleanup_placeholder_vehicles_admin_endpoint(client, admin_headers, mocker):
+    cleanup = mocker.patch(
+        "app.services.scraper.scheduler.scraper_scheduler.cleanup_placeholder_vehicles"
+    )
+
+    class ImmediateThread:
+        def __init__(self, target, daemon=None):
+            self.target = target
+            self.daemon = daemon
+
+        def start(self):
+            self.target()
+
+    mocker.patch("app.modules.vehicles.routes.threading.Thread", ImmediateThread)
+
+    response = client.post("/api/v1/vehicles/cleanup-placeholder-vehicles", headers=admin_headers)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+    cleanup.assert_called_once()
 
 
 def test_scheduler_change_detection_thresholds():
@@ -1438,6 +1655,97 @@ def test_scheduler_should_import_row_requires_price_and_available_status():
     assert ScraperScheduler._should_import_row({"price_jpy": 1000, "status": "SOLD"}) is False
 
 
+def test_auction_scraper_images_ignore_non_vehicle_assets():
+    html = """
+    <div>
+      <img src="/assets/logo.png" />
+      <img src="https://www.ramadbk.com/VIMGS/thumb/TA12345.jpg" />
+      <img data-src="https://www.ramadbk.com/VIMGS/medium/A54321.jpg" />
+    </div>
+    """
+    node = BeautifulSoup(html, "html.parser")
+
+    images = AuctionSiteScraper._images(node, "https://www.ramadbk.com/stock")
+
+    assert images == [
+        "https://www.ramadbk.com/VIMGS/images/A12345.jpg",
+        "https://www.ramadbk.com/VIMGS/images/A54321.jpg",
+    ]
+
+
+def test_scheduler_download_and_store_images_filters_placeholder_sources(mocker):
+    scheduler = ScraperScheduler()
+    mocker.patch.dict(
+        os.environ,
+        {
+            "CD23_UPLOAD_IMAGES_SUPABASE": "false",
+            "CD23_STORE_IMAGES_LOCAL": "false",
+        },
+    )
+
+    urls = scheduler._download_and_store_images(
+        {
+            "image_url": "https://www.ramadbk.com/assets/logo.png",
+            "images": [
+                "https://www.ramadbk.com/assets/hero.jpg",
+                "https://www.ramadbk.com/VIMGS/thumb/TA10001.jpg",
+            ],
+        }
+    )
+
+    assert urls == ["https://www.ramadbk.com/VIMGS/images/A10001.jpg"]
+
+
+def test_scheduler_delete_vehicle_images_removes_supabase_assets(mocker):
+    scheduler = ScraperScheduler()
+    delete_file = mocker.patch("app.services.scraper.scheduler.storage.delete_file")
+    vehicle = Vehicle(
+        stock_no="IMG-001",
+        make="Toyota",
+        model="Prius",
+        year=2024,
+        price_jpy=1000000,
+        status=VehicleStatus.AVAILABLE,
+        image_url="https://project.supabase.co/storage/v1/object/public/Photos/img-001/image_1.jpg",
+        gallery_images='["https://project.supabase.co/storage/v1/object/public/Photos/img-001/image_2.jpg"]',
+    )
+
+    scheduler._delete_vehicle_images(vehicle)
+
+    assert delete_file.call_count == 2
+    assert vehicle.image_url is None
+    assert vehicle.gallery_images is None
+
+
+def test_scheduler_skips_new_rows_without_valid_images(mocker):
+    scheduler = ScraperScheduler()
+    mocker.patch.dict(os.environ, {"CD23_REQUIRE_VALID_IMAGES": "true"})
+    mocker.patch.object(scheduler, "_find_existing_vehicle", return_value=None)
+    mocker.patch.object(scheduler, "_year_cutoff", return_value=None)
+    mocker.patch.object(
+        scheduler,
+        "_scrape_vehicle_rows",
+        return_value=[
+            {
+                "stock_no": "NO-IMG-001",
+                "make": "Toyota",
+                "model": "Corolla",
+                "year": 2024,
+                "price_jpy": 1000000,
+                "status": "AVAILABLE",
+                "image_url": "https://www.ramadbk.com/assets/logo.png",
+                "images": ["https://www.ramadbk.com/assets/logo.png"],
+            }
+        ],
+    )
+    mocker.patch.object(scheduler, "_download_and_store_images", return_value=[])
+
+    stats = scheduler.scrape_and_import()
+
+    assert stats["new"] == 0
+    assert stats["skipped"] >= 1
+
+
 def test_create_vehicle_authenticated(client, db, admin_headers):
     """Test creating a vehicle with admin authentication."""
 
@@ -1521,6 +1829,54 @@ def test_update_vehicle(client, db, admin_headers):
     assert data["status"] == "RESERVED"
 
 
+def test_update_vehicle_details(client, db, admin_headers):
+    """Test updating broader vehicle details as admin."""
+
+    vehicle = Vehicle(
+        stock_no="TEST-DETAIL-001",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1850000,
+        status=VehicleStatus.AVAILABLE,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    response = client.patch(
+        f"/api/v1/vehicles/{vehicle.id}",
+        json={
+            "stock_no": "TEST-DETAIL-002",
+            "make": "Honda",
+            "model": "Vezel",
+            "year": 2021,
+            "grade": "Z",
+            "fuel_type": "Hybrid",
+            "transmission": "Automatic",
+            "vehicle_type": "SUV",
+            "engine_cc": 1500,
+            "color": "Pearl White",
+            "location": "Tokyo",
+        },
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["stock_no"] == "TEST-DETAIL-002"
+    assert data["make"] == "Honda"
+    assert data["model"] == "Vezel"
+    assert data["year"] == 2021
+    assert data["grade"] == "Z"
+    assert data["fuel_type"] == "Gasoline/hybrid"
+    assert data["transmission"] == "Automatic"
+    assert data["vehicle_type"] == "SUV"
+    assert data["engine_cc"] == 1500
+    assert data["color"] == "Pearl White"
+    assert data["location"] == "Tokyo"
+
+
 def test_delete_vehicle(client, db, admin_headers):
     """Test deleting a vehicle."""
 
@@ -1547,6 +1903,35 @@ def test_delete_vehicle(client, db, admin_headers):
     assert response.status_code == 404
 
 
+def test_delete_vehicle_with_existing_order_is_blocked(client, db, admin_headers, test_user):
+    vehicle = Vehicle(
+        stock_no="TEST-DEL-ORDER-001",
+        make="Toyota",
+        model="Prius",
+        year=2020,
+        price_jpy=1850000,
+    )
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+
+    order = Order(
+        user_id=test_user.id,
+        vehicle_id=vehicle.id,
+        status=OrderStatus.CREATED,
+        payment_status=PaymentStatus.PENDING,
+        shipping_address="encrypted-address",
+        phone="0771234567",
+    )
+    db.add(order)
+    db.commit()
+
+    response = client.delete(f"/api/v1/vehicles/{vehicle.id}", headers=admin_headers)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot delete vehicle with existing orders"
+
+
 def test_delete_vehicle_unauthenticated(client, db):
     """Test deleting a vehicle without authentication."""
 
@@ -1567,3 +1952,37 @@ def test_delete_vehicle_unauthenticated(client, db):
 
     # Should be forbidden (403) or unauthorized (401)
     assert response.status_code in [401, 403]
+
+
+def test_scheduler_download_and_store_images_skips_known_placeholder_hash(monkeypatch):
+    scheduler = ScraperScheduler()
+    placeholder_bytes = b"verified-placeholder"
+
+    class DummyResponse:
+        headers = {"Content-Type": "image/jpeg"}
+        content = placeholder_bytes
+
+        def raise_for_status(self):
+            return None
+
+    monkeypatch.setattr(
+        "app.services.scraper.scheduler.KNOWN_PLACEHOLDER_IMAGE_HASHES",
+        {
+            "49b7f41848a8cb2f4d8ceb373ea23c99dca6f312604a9de5cdc802bdd41a5be1"  # pragma: allowlist secret
+        },  # pragma: allowlist secret
+    )
+    monkeypatch.setenv("CD23_UPLOAD_IMAGES_SUPABASE", "false")
+    monkeypatch.setattr(scheduler._http, "get", lambda *_args, **_kwargs: DummyResponse())
+
+    urls = scheduler._download_and_store_images(
+        {
+            "stock_no": "PH-001",
+            "make": "Placeholder",
+            "model": "Blocked",
+            "year": 2026,
+            "image_url": "https://www.ramadbk.com/VIMGS/images/placeholder.jpeg",
+            "images": ["https://www.ramadbk.com/VIMGS/images/placeholder.jpeg"],
+        }
+    )
+
+    assert urls == []

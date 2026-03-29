@@ -21,6 +21,11 @@ const resources = (sriResources.resources as SriResource[]).map((resource) => ({
 }));
 
 export function getSriAttributes(url: string): SriAttributes {
+  // Google Analytics / GTM loader URLs are mutable and should not be pinned with SRI.
+  if (url.startsWith("https://www.googletagmanager.com/gtag/js")) {
+    return {};
+  }
+
   const resource = resources.find((entry) => {
     if (entry.match === "startsWith") {
       return url.startsWith(entry.url);

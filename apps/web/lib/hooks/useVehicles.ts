@@ -155,10 +155,12 @@ export function useVehicles(params: VehiclesQueryParams) {
       });
       return mapBackendVehicleList(response.data);
     },
-    staleTime: 0,
+    placeholderData: (previousData) => previousData,
+    staleTime: 60_000,
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     retry: (failureCount, error) => {
       const status = (error as { response?: { status?: number } })?.response
         ?.status;

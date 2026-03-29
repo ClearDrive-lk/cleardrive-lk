@@ -349,8 +349,9 @@ async def get_kyc_status(
             "full_name": None,
         }
 
+    has_active_kyc = kyc.status != KYCStatus.REJECTED
     return {
-        "has_kyc": True,
+        "has_kyc": has_active_kyc,
         "status": kyc.status.value,
         "submitted_at": kyc.created_at,
         "reviewed_at": kyc.reviewed_at,

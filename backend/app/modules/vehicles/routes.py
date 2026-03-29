@@ -15,6 +15,7 @@ from app.core.cache import cache
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
 from app.models.gazette import TaxFuelType, TaxVehicleType
+from app.modules.orders.models import Order
 from app.modules.vehicles.models import Vehicle, VehicleStatus, VehicleType
 from app.modules.vehicles.schemas import (
     CostBreakdown,
@@ -24,7 +25,6 @@ from app.modules.vehicles.schemas import (
     VehicleResponse,
     VehicleUpdate,
 )
-from app.services.catalog_tax_calculator import calculate_catalog_tax
 from app.services.tax_calculator import (
     InsufficientVehicleDataError,
     NoTaxRuleError,
@@ -955,52 +955,30 @@ async def calculate_cost(
     category_codes = _derive_tax_category_codes(vehicle)
     catalog_vehicle_type, catalog_fuel_type = _derive_catalog_tax_identity(vehicle)
 
-    tax_result = None
-    catalog_error: Exception | None = None
     try:
-        tax_result = calculate_catalog_tax(
+        tax_result = calculate_tax(
             db=db,
-            vehicle=vehicle,
-            cif_value_lkr=cif_value,
-            vehicle_age_years=float(vehicle_age_years),
+            vehicle_type=tax_vehicle_type,
+            fuel_type=tax_fuel_type,
             engine_cc=engine_cc,
-            motor_power_kw=motor_power_kw,
+            cif_value=float(cif_value),
+            power_kw=motor_power_kw,
+            vehicle_age_years=float(vehicle_age_years),
+            category_codes=category_codes or None,
+            catalog_vehicle_type=catalog_vehicle_type,
+            catalog_fuel_type=catalog_fuel_type,
+            vehicle_condition="BRAND_NEW" if vehicle_age_years <= 1 else "USED",
+            import_date=date.today(),
         )
     except InsufficientVehicleDataError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except NoTaxRuleError as exc:
-        catalog_error = exc
-
-    if tax_result is None:
-        try:
-            tax_result = calculate_tax(
-                db=db,
-                vehicle_type=tax_vehicle_type,
-                fuel_type=tax_fuel_type,
-                engine_cc=engine_cc,
-                cif_value=float(cif_value),
-                power_kw=motor_power_kw,
-                vehicle_age_years=float(vehicle_age_years),
-                category_codes=category_codes or None,
-            )
-        except NoTaxRuleError:
-            if catalog_error:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail=str(catalog_error)
-                )
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=(
-                    "No approved gazette tax rule matches this vehicle yet. "
-                    "Review and approve the extracted gazette rules from the admin dashboard."
-                ),
-            )
-        except InsufficientVehicleDataError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        detail = str(exc)
+        if "No active tax rule found" in detail:
+            detail = "No approved tax rule matches this vehicle yet"
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
 
     port_charges_lkr = calculate_port_charges()
     clearance_fee_lkr = calculate_clearance_fee()
@@ -1112,6 +1090,34 @@ async def trigger_scrape_now(
     thread = threading.Thread(target=scraper_scheduler.run_now, daemon=True)
     thread.start()
     return {"message": "Vehicle scraping started", "status": "processing"}
+
+
+@router.post("/cleanup-images", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_vehicle_image_cleanup(
+    current_user=Depends(get_current_admin),
+):
+    """
+    Trigger cleanup of invalid/stale scraped vehicle images (admin only).
+    """
+    from app.services.scraper.scheduler import scraper_scheduler
+
+    thread = threading.Thread(target=scraper_scheduler.cleanup_invalid_vehicle_images, daemon=True)
+    thread.start()
+    return {"message": "Vehicle image cleanup started", "status": "processing"}
+
+
+@router.post("/cleanup-placeholder-vehicles", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_placeholder_vehicle_cleanup(
+    current_user=Depends(get_current_admin),
+):
+    """
+    Delete scraped placeholder vehicles that have no usable images and no linked orders.
+    """
+    from app.services.scraper.scheduler import scraper_scheduler
+
+    thread = threading.Thread(target=scraper_scheduler.cleanup_placeholder_vehicles, daemon=True)
+    thread.start()
+    return {"message": "Placeholder vehicle cleanup started", "status": "processing"}
 
 
 @router.post("", response_model=VehicleResponse, status_code=status.HTTP_201_CREATED)
@@ -1294,13 +1300,12 @@ async def delete_vehicle(
     if not vehicle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
-    # Check if vehicle has orders
-    # TODO: Add this check when Order model is imported
-    # if vehicle.orders:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="Cannot delete vehicle with existing orders"
-    #     )
+    has_orders = db.query(Order.id).filter(Order.vehicle_id == vehicle.id).first() is not None
+    if has_orders:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete vehicle with existing orders",
+        )
 
     db.delete(vehicle)
     db.commit()

@@ -18,7 +18,8 @@ import {
 import { useLogout } from "@/lib/hooks/useLogout";
 import { getAccessToken, getRefreshToken } from "@/lib/auth";
 import { BrandMark, BrandWordmark } from "@/components/ui/brand";
-import { normalizeRole } from "@/lib/roles";
+import { normalizeRole, roleHomePath } from "@/lib/roles";
+import CustomerDashboardNav from "@/components/layout/CustomerDashboardNav";
 
 type NavLink = {
   href: string;
@@ -32,10 +33,15 @@ export default function Header() {
   const pathname = usePathname();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const role = normalizeRole(user?.role);
+  const homePath = roleHomePath(role);
   const { logout, isLoading } = useLogout();
   const hasSession = Boolean(getAccessToken() || getRefreshToken());
   const showCustomerOnlyNav = isAuthenticated && role === "CUSTOMER";
   const isAuthed = isAuthenticated || hasSession;
+
+  if (isAuthed && role === "CUSTOMER") {
+    return <CustomerDashboardNav />;
+  }
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -73,7 +79,7 @@ export default function Header() {
       <div className="cd-container flex min-h-16 items-center justify-between py-2">
         {/* Logo */}
         <Link
-          href={isAuthed ? "/dashboard" : "/"}
+          href={isAuthed ? homePath : "/"}
           className="flex items-center gap-2 text-xl font-bold tracking-tighter text-[#393d3f] dark:text-[#edf2f7]"
         >
           <BrandMark className="h-10 w-10 sm:h-12 sm:w-12" />

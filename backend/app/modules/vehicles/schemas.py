@@ -111,15 +111,44 @@ class VehicleCreate(VehicleBase):
 class VehicleUpdate(BaseModel):
     """Schema for updating a vehicle (admin only)."""
 
+    stock_no: Optional[str] = Field(None, min_length=1, max_length=100)
+    chassis: Optional[str] = Field(None, max_length=100)
+    make: Optional[str] = Field(None, min_length=1, max_length=100)
+    model: Optional[str] = Field(None, min_length=1, max_length=100)
+    reg_year: Optional[int | str] = Field(None, description="Registration year (e.g., 2023/6)")
+    year: Optional[int] = Field(None, ge=1980, le=2027)
+    vehicle_type: Optional[VehicleType] = None
+    body_type: Optional[str] = Field(None, max_length=100)
+    grade: Optional[str] = Field(None, max_length=100)
     price_jpy: Optional[Decimal] = Field(None, gt=0)
     mileage_km: Optional[int] = Field(None, ge=0)
+    engine_cc: Optional[int] = Field(None, ge=0)
     motor_power_kw: Optional[Decimal] = Field(None, ge=0)
+    fuel_type: Optional[FuelType] = None
+    transmission: Optional[Transmission] = None
     status: Optional[VehicleStatus] = None
     image_url: Optional[str] = None
     color: Optional[str] = None
     location: Optional[str] = None
     options: Optional[str] = None
     other_remarks: Optional[str] = None
+    vehicle_url: Optional[str] = Field(None, max_length=500)
+    model_no: Optional[str] = Field(None, max_length=100)
+
+    @field_validator("reg_year", mode="before")
+    @classmethod
+    def normalize_update_reg_year(cls, v):
+        return VehicleBase.normalize_reg_year(v)
+
+    @field_validator("fuel_type", mode="before")
+    @classmethod
+    def normalize_update_fuel_type(cls, v):
+        return _coerce_enum_by_name(v, FuelType)
+
+    @field_validator("transmission", mode="before")
+    @classmethod
+    def normalize_update_transmission(cls, v):
+        return _coerce_enum_by_name(v, Transmission)
 
 
 class VehicleResponse(VehicleBase):
