@@ -12,7 +12,7 @@ from sqlalchemy.engine import make_url
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import settings  # noqa: E402
-from app.core.database import Base  # noqa: E402
+from app.core.database import Base, _is_supabase_managed_host  # noqa: E402
 
 # Import ALL models so Alembic can detect them
 from app.models.audit_log import AuditLog
@@ -47,7 +47,7 @@ config = context.config
 alembic_database_url = settings.ALEMBIC_DATABASE_URL or settings.DATABASE_URL
 alembic_url = make_url(alembic_database_url)
 alembic_host = (alembic_url.host or "").lower()
-is_supabase = "supabase.co" in alembic_host
+is_supabase = _is_supabase_managed_host(alembic_host)
 
 # Keep Alembic off psycopg2 for Supabase/pooler connections to avoid the
 # hstore probe path that can fail during SSL negotiation.
